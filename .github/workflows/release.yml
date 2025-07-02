@@ -37,21 +37,15 @@ jobs:
     - name: Build package
       run: uv build
     
-    - name: Add twine
-      run: uv add --dev twine
-    
     - name: Publish to Test PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-      run: uv run twine upload --repository testpypi dist/*
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
       continue-on-error: true
     
     - name: Publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: uv run twine upload dist/*
+      uses: pypa/gh-action-pypi-publish@release/v1
     
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
