@@ -3,7 +3,7 @@
 import pytest
 from click.testing import CliRunner
 
-from yt_cli.main import main
+from youtrack_cli.main import main
 
 
 def test_main_help() -> None:
