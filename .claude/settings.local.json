@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(gh:*)",
+      "Bash(uv:*)",
+      "Bash(mkdir:*)",
+      "Bash(PYTHONPATH=. uv run python -m yt_cli.main --help)"
+    ],
+    "deny": []
+  }
+}
