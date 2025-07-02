@@ -223,6 +223,50 @@ release version:
 
 # Documentation
 [group('docs')]
+docs-install:
+    #!/usr/bin/env bash
+    echo "Installing documentation dependencies..."
+    uv sync --extra docs
+    echo "✅ Documentation dependencies installed"
+
+[group('docs')]
+docs-build:
+    #!/usr/bin/env bash
+    echo "Building documentation..."
+    cd docs && uv run make html
+    echo "✅ Documentation built successfully"
+    echo "📖 Open docs/_build/html/index.html to view"
+
+[group('docs')]
+docs-serve:
+    #!/usr/bin/env bash
+    echo "Building and serving documentation with live reload..."
+    cd docs && uv run make livehtml
+    echo "🌐 Documentation server started at http://127.0.0.1:8000"
+
+[group('docs')]
+docs-clean:
+    #!/usr/bin/env bash
+    echo "Cleaning documentation build..."
+    cd docs && uv run make clean
+    echo "✅ Documentation build cleaned"
+
+[group('docs')]
+docs-check:
+    #!/usr/bin/env bash
+    echo "Checking documentation for broken links..."
+    cd docs && uv run make linkcheck
+    echo "✅ Documentation link check complete"
+
+[group('docs')]
+docs-test:
+    #!/usr/bin/env bash
+    echo "Testing documentation build..."
+    just docs-clean
+    just docs-build
+    echo "✅ Documentation test complete"
+
+[group('docs')]
 readme-update:
     #!/usr/bin/env bash
     echo "Updating README.md..."
@@ -267,6 +311,12 @@ workflow-help:
     echo "  just fix               # Auto-fix code issues"
     echo "  just test              # Run tests"
     echo "  just run --help        # Test the CLI"
+    echo ""
+    echo "📚 Documentation tasks:"
+    echo "  just docs-install      # Install documentation dependencies"
+    echo "  just docs-build        # Build documentation"
+    echo "  just docs-serve        # Serve docs with live reload"
+    echo "  just docs-test         # Test documentation build"
     echo ""
     echo "🌟 Starting a new feature:"
     echo "  just branch my-feature # Create feature branch"
