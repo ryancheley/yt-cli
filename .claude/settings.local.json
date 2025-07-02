@@ -10,7 +10,12 @@
       "Bash(git commit:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(just check)",
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
