@@ -6,19 +6,19 @@ This project uses trusted publishers for secure PyPI publishing without API toke
 
 ### PyPI (Production)
 - URL: https://pypi.org/manage/account/publishing/
-- Project name: `yt-cli`
+- Project name: `youtrack-cli`
 - Owner: `ryancheley`
 - Repository: `yt-cli`
 - Workflow: `release.yml`
-- Environment: (blank)
+- Environment: PyPI
 
 ### Test PyPI (Testing)
 - URL: https://test.pypi.org/manage/account/publishing/
-- Project name: `yt-cli`
+- Project name: `youtrack-cli`
 - Owner: `ryancheley`
 - Repository: `yt-cli`
 - Workflow: `release.yml`
-- Environment: (blank)
+- Environment: TestPyPI
 
 ## Creating a Release
 

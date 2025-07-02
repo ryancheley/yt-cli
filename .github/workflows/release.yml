@@ -10,8 +10,9 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  test-pypi:
     runs-on: ubuntu-latest
+    environment: TestPyPI
     steps:
     - uses: actions/checkout@v4
       with:
@@ -42,7 +43,35 @@ jobs:
       with:
         repository-url: https://test.pypi.org/legacy/
         skip-existing: true
-      continue-on-error: true
+
+  pypi:
+    runs-on: ubuntu-latest
+    environment: PyPI
+    needs: test-pypi
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: false
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: uv sync --dev
+    
+    - name: Run tests
+      run: uv run pytest
+    
+    - name: Build package
+      run: uv build
     
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,5 +1,5 @@
 [project]
-name = "yt-cli"
+name = "youtrack-cli"
 version = "0.1.0"
 description = "YouTrack CLI - Command line interface for JetBrains YouTrack issue tracking system"
 readme = "README.md"
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-yt = "yt_cli.main:main"
+yt = "youtrack_cli.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -77,7 +77,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["yt_cli"]
+source = ["youtrack_cli"]
 omit = ["tests/*", "*/test_*"]
 
 [tool.coverage.report]
@@ -97,4 +97,5 @@ dev = [
     "ruff>=0.12.1",
     "tox>=4.27.0",
     "zizmor>=1.11.0",
+    "twine>=6.1.0",
 ]
