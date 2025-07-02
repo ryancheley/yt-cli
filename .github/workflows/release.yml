@@ -5,19 +5,26 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.2
+      with:
+        persist-credentials: false
     
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@2f3d10d4cd35426eba4ea67fcc12fe77c83644a5 # v4.3.0
       with:
         version: "latest"
+        enable-cache: false
     
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: "3.11"
     
@@ -30,11 +37,15 @@ jobs:
     - name: Build package
       run: uv build
     
+    - name: Add twine
+      run: uv add --dev twine
+    
     - name: Publish to Test PyPI
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: uv run twine upload --repository testpypi dist/*
+      continue-on-error: true
     
     - name: Publish to PyPI
       env:
@@ -43,11 +54,8 @@ jobs:
       run: uv run twine upload dist/*
     
     - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        files: dist/*
         draft: false
         prerelease: false

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,15 +17,17 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.2
+      with:
+        persist-credentials: false
     
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@2f3d10d4cd35426eba4ea67fcc12fe77c83644a5 # v4.3.0
       with:
         version: "latest"
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -33,15 +38,20 @@ jobs:
       run: uv run pytest --cov=yt_cli --cov-report=xml
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d4895ce53c2b5c78e7ee04b2 # v4.6.0
       with:
         file: ./coverage.xml
-        fail_ci_if_error: true
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      continue-on-error: true
 
   lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     
     - name: Install uv
       uses: astral-sh/setup-uv@v4
@@ -49,7 +59,7 @@ jobs:
         version: "latest"
     
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: "3.11"
     
@@ -66,6 +76,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     
     - name: Install uv
       uses: astral-sh/setup-uv@v4
@@ -73,7 +85,7 @@ jobs:
         version: "latest"
     
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: "3.11"
     
@@ -87,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     
     - name: Install uv
       uses: astral-sh/setup-uv@v4
@@ -94,7 +108,7 @@ jobs:
         version: "latest"
     
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: "3.11"
     

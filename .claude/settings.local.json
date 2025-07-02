@@ -6,7 +6,8 @@
       "Bash(gh:*)",
       "Bash(uv:*)",
       "Bash(mkdir:*)",
-      "Bash(PYTHONPATH=. uv run python -m yt_cli.main --help)"
+      "Bash(PYTHONPATH=. uv run python -m yt_cli.main --help)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
