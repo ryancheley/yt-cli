@@ -713,4 +713,3 @@ class TestUsersDisplayMethods:
         }
 
         user_manager.display_user_details(user)
-

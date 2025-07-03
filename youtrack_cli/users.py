@@ -352,13 +352,13 @@ class UserManager:
         if action in ["add_to_group", "remove_from_group"] and not group_id:
             return {
                 "status": "error",
-                "message": "Group ID is required for group operations."
+                "message": "Group ID is required for group operations.",
             }
 
         if action in ["add_role", "remove_role"] and not role_id:
             return {
                 "status": "error",
-                "message": "Role ID is required for role operations."
+                "message": "Role ID is required for role operations.",
             }
 
         headers = {
@@ -387,7 +387,7 @@ class UserManager:
                 else:
                     return {
                         "status": "error",
-                        "message": f"Unsupported action: {action}"
+                        "message": f"Unsupported action: {action}",
                     }
 
                 response.raise_for_status()
@@ -517,4 +517,3 @@ class UserManager:
                     self.console.print(f"  • {group_name} - {group_desc}")
                 else:
                     self.console.print(f"  • {group_name}")
-
