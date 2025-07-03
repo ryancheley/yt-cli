@@ -72,7 +72,7 @@ class TestConfigManager:
             assert config_values == {
                 "KEY1": "value1",
                 "KEY2": "value2",
-                "KEY3": "value3"
+                "KEY3": "value3",
             }
 
     def test_list_config_ignores_comments(self):
@@ -91,10 +91,7 @@ class TestConfigManager:
 
             manager = ConfigManager(str(config_path))
             config_values = manager.list_config()
-            assert config_values == {
-                "KEY1": "value1",
-                "KEY2": "value2"
-            }
+            assert config_values == {"KEY1": "value1", "KEY2": "value2"}
 
     def test_unset_existing_config(self):
         """Test unsetting an existing configuration value."""

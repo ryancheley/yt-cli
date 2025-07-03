@@ -84,18 +84,24 @@ class TestConfigCommands:
             runner = CliRunner()
 
             # Set a configuration value
-            result = runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "set", "TEST_KEY", "test_value"
-            ])
+            result = runner.invoke(
+                main,
+                [
+                    "--config",
+                    str(config_path),
+                    "config",
+                    "set",
+                    "TEST_KEY",
+                    "test_value",
+                ],
+            )
             assert result.exit_code == 0
             assert "Set TEST_KEY = test_value" in result.output
 
             # Get the configuration value
-            result = runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "get", "TEST_KEY"
-            ])
+            result = runner.invoke(
+                main, ["--config", str(config_path), "config", "get", "TEST_KEY"]
+            )
             assert result.exit_code == 0
             assert "TEST_KEY = test_value" in result.output
 
@@ -105,10 +111,9 @@ class TestConfigCommands:
             config_path = Path(temp_dir) / "test_config.env"
             runner = CliRunner()
 
-            result = runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "get", "NONEXISTENT_KEY"
-            ])
+            result = runner.invoke(
+                main, ["--config", str(config_path), "config", "get", "NONEXISTENT_KEY"]
+            )
             assert result.exit_code == 1
             assert "Configuration key 'NONEXISTENT_KEY' not found" in result.output
 
@@ -118,10 +123,9 @@ class TestConfigCommands:
             config_path = Path(temp_dir) / "test_config.env"
             runner = CliRunner()
 
-            result = runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "list"
-            ])
+            result = runner.invoke(
+                main, ["--config", str(config_path), "config", "list"]
+            )
             assert result.exit_code == 0
             assert "No configuration values found" in result.output
 
@@ -132,20 +136,17 @@ class TestConfigCommands:
             runner = CliRunner()
 
             # Set multiple configuration values
-            runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "set", "KEY1", "value1"
-            ])
-            runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "set", "KEY2", "value2"
-            ])
+            runner.invoke(
+                main, ["--config", str(config_path), "config", "set", "KEY1", "value1"]
+            )
+            runner.invoke(
+                main, ["--config", str(config_path), "config", "set", "KEY2", "value2"]
+            )
 
             # List all configuration values
-            result = runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "list"
-            ])
+            result = runner.invoke(
+                main, ["--config", str(config_path), "config", "list"]
+            )
             assert result.exit_code == 0
             assert "Configuration values:" in result.output
             assert "KEY1 = value1" in result.output
@@ -158,16 +159,22 @@ class TestConfigCommands:
             runner = CliRunner()
 
             # Set a sensitive configuration value
-            runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "set", "API_TOKEN", "very-secret-token-123456789"
-            ])
+            runner.invoke(
+                main,
+                [
+                    "--config",
+                    str(config_path),
+                    "config",
+                    "set",
+                    "API_TOKEN",
+                    "very-secret-token-123456789",
+                ],
+            )
 
             # List configuration values
-            result = runner.invoke(main, [
-                "--config", str(config_path),
-                "config", "list"
-            ])
+            result = runner.invoke(
+                main, ["--config", str(config_path), "config", "list"]
+            )
             assert result.exit_code == 0
             assert "API_TOKEN = very-sec...6789" in result.output
             assert "very-secret-token-123456789" not in result.output
