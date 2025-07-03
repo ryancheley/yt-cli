@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.prompt import Prompt
 
 from .auth import AuthManager
+from .config import ConfigManager
 
 
 @click.group()
@@ -15,7 +16,7 @@ from .auth import AuthManager
 @click.option(
     "--config",
     "-c",
-    type=click.Path(exists=True),
+    type=click.Path(),
     help="Path to configuration file",
 )
 @click.option(
@@ -209,6 +210,72 @@ def token(ctx: click.Context, show: bool, update: bool) -> None:
 def config() -> None:
     """CLI configuration."""
     pass
+
+
+@config.command()
+@click.argument("key")
+@click.argument("value")
+@click.pass_context
+def set(ctx: click.Context, key: str, value: str) -> None:
+    """Set a configuration value."""
+    console = Console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        config_manager.set_config(key, value)
+        console.print(f"✅ Set {key} = {value}", style="green")
+    except Exception as e:
+        console.print(f"❌ Error setting configuration: {e}", style="red")
+        raise click.ClickException("Configuration set failed") from e
+
+
+@config.command()
+@click.argument("key")
+@click.pass_context
+def get(ctx: click.Context, key: str) -> None:
+    """Get a configuration value."""
+    console = Console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        value = config_manager.get_config(key)
+        if value is not None:
+            console.print(f"{key} = {value}", style="blue")
+        else:
+            console.print(f"❌ Configuration key '{key}' not found", style="red")
+            raise click.ClickException("Configuration key not found")
+    except Exception as e:
+        console.print(f"❌ Error getting configuration: {e}", style="red")
+        raise click.ClickException("Configuration get failed") from e
+
+
+@config.command()
+@click.pass_context
+def list(ctx: click.Context) -> None:
+    """List all configuration values."""
+    console = Console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        config_values = config_manager.list_config()
+        if config_values:
+            console.print("📋 Configuration values:", style="blue bold")
+            for key, value in sorted(config_values.items()):
+                # Mask sensitive values
+                sensitive_keys = ["token", "password", "secret"]
+                if any(sensitive in key.lower() for sensitive in sensitive_keys):
+                    if len(value) > 12:
+                        masked_value = value[:8] + "..." + value[-4:]
+                    else:
+                        masked_value = "***"
+                    console.print(f"  {key} = {masked_value}", style="yellow")
+                else:
+                    console.print(f"  {key} = {value}", style="blue")
+        else:
+            console.print("ℹ️  No configuration values found", style="yellow")
+    except Exception as e:
+        console.print(f"❌ Error listing configuration: {e}", style="red")
+        raise click.ClickException("Configuration list failed") from e
 
 
 @main.group()

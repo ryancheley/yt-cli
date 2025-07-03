@@ -46,6 +46,32 @@ yt auth token --update
 yt auth logout
 ```
 
+### Configuration
+
+The CLI supports configuration management to store settings and preferences:
+
+```bash
+# Set a configuration value
+yt config set KEY VALUE
+
+# Get a configuration value
+yt config get KEY
+
+# List all configuration values (sensitive values are masked)
+yt config list
+
+# Examples
+yt config set DEFAULT_PROJECT "MY-PROJECT"
+yt config set ITEMS_PER_PAGE "25"
+yt config get DEFAULT_PROJECT
+```
+
+Configuration is stored in `~/.config/youtrack-cli/.env` by default. You can specify a custom configuration file using the `--config` option:
+
+```bash
+yt --config /path/to/custom.env config set KEY VALUE
+```
+
 ### Available Commands
 
 - `yt issues` - Manage issues

@@ -16,7 +16,11 @@
       "Bash(git checkout:*)",
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(git pull:*)",
-      "mcp__github__list_issues"
+      "mcp__github__list_issues",
+      "mcp__github__get_issue",
+      "mcp__github__get_me",
+      "Bash(grep:*)",
+      "Bash(python -m pytest tests/test_config.py -v)"
     ],
     "deny": []
   }
