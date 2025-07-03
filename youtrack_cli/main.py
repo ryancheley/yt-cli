@@ -94,9 +94,7 @@ def list(
     try:
         result = asyncio.run(
             project_manager.list_projects(
-                fields=fields,
-                top=top,
-                show_archived=show_archived
+                fields=fields, top=top, show_archived=show_archived
             )
         )
 
@@ -108,6 +106,7 @@ def list(
                 console.print(f"\n[dim]Total: {result['count']} projects[/dim]")
             else:
                 import json
+
                 console.print(json.dumps(projects, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -163,7 +162,7 @@ def create(
                 short_name=short_name,
                 leader_id=leader,
                 description=description,
-                template=template
+                template=template,
             )
         )
 
@@ -242,7 +241,7 @@ def configure(
             console.print(
                 "Use --name, --description, or --leader options, "
                 "or --show-details to view current settings.",
-                style="blue"
+                style="blue",
             )
             return
 
@@ -254,7 +253,7 @@ def configure(
                     project_id=project_id,
                     name=name,
                     description=description,
-                    leader_id=leader
+                    leader_id=leader,
                 )
             )
 

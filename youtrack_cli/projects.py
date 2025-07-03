@@ -26,7 +26,7 @@ class ProjectManager:
         self,
         fields: Optional[str] = None,
         top: Optional[int] = None,
-        show_archived: bool = False
+        show_archived: bool = False,
     ) -> dict[str, Any]:
         """List all projects.
 
@@ -42,7 +42,7 @@ class ProjectManager:
         if not credentials:
             return {
                 "status": "error",
-                "message": "Not authenticated. Run 'yt auth login' first."
+                "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
         # Default fields to return
@@ -59,7 +59,7 @@ class ProjectManager:
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         async with httpx.AsyncClient() as client:
@@ -78,11 +78,7 @@ class ProjectManager:
                 if not show_archived:
                     projects = [p for p in projects if not p.get("archived", False)]
 
-                return {
-                    "status": "success",
-                    "data": projects,
-                    "count": len(projects)
-                }
+                return {"status": "success", "data": projects, "count": len(projects)}
 
             except httpx.HTTPError as e:
                 return {"status": "error", "message": f"HTTP error: {e}"}
@@ -95,7 +91,7 @@ class ProjectManager:
         short_name: str,
         leader_id: str,
         description: Optional[str] = None,
-        template: Optional[str] = None
+        template: Optional[str] = None,
     ) -> dict[str, Any]:
         """Create a new project.
 
@@ -113,14 +109,14 @@ class ProjectManager:
         if not credentials:
             return {
                 "status": "error",
-                "message": "Not authenticated. Run 'yt auth login' first."
+                "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
         # Prepare request body
         project_data = {
             "name": name,
             "shortName": short_name,
-            "leader": {"id": leader_id}
+            "leader": {"id": leader_id},
         }
 
         if description:
@@ -131,7 +127,7 @@ class ProjectManager:
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         async with httpx.AsyncClient() as client:
@@ -149,22 +145,22 @@ class ProjectManager:
                 return {
                     "status": "success",
                     "data": created_project,
-                    "message": f"Project '{name}' created successfully"
+                    "message": f"Project '{name}' created successfully",
                 }
 
             except httpx.HTTPError as e:
-                if e.response.status_code == 400:
-                    return {
-                        "status": "error",
-                        "message": "Invalid project data. Check name and short name."
-                    }
-                elif e.response.status_code == 403:
-                    return {
-                        "status": "error",
-                        "message": "Insufficient permissions to create projects."
-                    }
-                else:
-                    return {"status": "error", "message": f"HTTP error: {e}"}
+                if hasattr(e, 'response') and e.response is not None:
+                    if e.response.status_code == 400:
+                        return {
+                            "status": "error",
+                            "message": "Invalid project data. Check name and short name.",
+                        }
+                    elif e.response.status_code == 403:
+                        return {
+                            "status": "error",
+                            "message": "Insufficient permissions to create projects.",
+                        }
+                return {"status": "error", "message": f"HTTP error: {e}"}
             except Exception as e:
                 return {"status": "error", "message": f"Unexpected error: {e}"}
 
@@ -184,7 +180,7 @@ class ProjectManager:
         if not credentials:
             return {
                 "status": "error",
-                "message": "Not authenticated. Run 'yt auth login' first."
+                "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
         if not fields:
@@ -195,7 +191,7 @@ class ProjectManager:
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         async with httpx.AsyncClient() as client:
@@ -209,24 +205,21 @@ class ProjectManager:
                 response.raise_for_status()
 
                 project = response.json()
-                return {
-                    "status": "success",
-                    "data": project
-                }
+                return {"status": "success", "data": project}
 
             except httpx.HTTPError as e:
-                if e.response.status_code == 404:
-                    return {
-                        "status": "error",
-                        "message": f"Project '{project_id}' not found."
-                    }
-                elif e.response.status_code == 403:
-                    return {
-                        "status": "error",
-                        "message": "Insufficient permissions to view project."
-                    }
-                else:
-                    return {"status": "error", "message": f"HTTP error: {e}"}
+                if hasattr(e, 'response') and e.response is not None:
+                    if e.response.status_code == 404:
+                        return {
+                            "status": "error",
+                            "message": f"Project '{project_id}' not found.",
+                        }
+                    elif e.response.status_code == 403:
+                        return {
+                            "status": "error",
+                            "message": "Insufficient permissions to view project.",
+                        }
+                return {"status": "error", "message": f"HTTP error: {e}"}
             except Exception as e:
                 return {"status": "error", "message": f"Unexpected error: {e}"}
 
@@ -236,7 +229,7 @@ class ProjectManager:
         name: Optional[str] = None,
         description: Optional[str] = None,
         leader_id: Optional[str] = None,
-        archived: Optional[bool] = None
+        archived: Optional[bool] = None,
     ) -> dict[str, Any]:
         """Update a project configuration.
 
@@ -254,11 +247,11 @@ class ProjectManager:
         if not credentials:
             return {
                 "status": "error",
-                "message": "Not authenticated. Run 'yt auth login' first."
+                "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
         # Build update data
-        update_data = {}
+        update_data: dict[str, Any] = {}
         if name is not None:
             update_data["name"] = name
         if description is not None:
@@ -274,7 +267,7 @@ class ProjectManager:
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         async with httpx.AsyncClient() as client:
@@ -294,22 +287,22 @@ class ProjectManager:
                 return {
                     "status": "success",
                     "data": updated_project,
-                    "message": f"Project '{project_id}' updated successfully"
+                    "message": f"Project '{project_id}' updated successfully",
                 }
 
             except httpx.HTTPError as e:
-                if e.response.status_code == 404:
-                    return {
-                        "status": "error",
-                        "message": f"Project '{project_id}' not found."
-                    }
-                elif e.response.status_code == 403:
-                    return {
-                        "status": "error",
-                        "message": "Insufficient permissions to update project."
-                    }
-                else:
-                    return {"status": "error", "message": f"HTTP error: {e}"}
+                if hasattr(e, 'response') and e.response is not None:
+                    if e.response.status_code == 404:
+                        return {
+                            "status": "error",
+                            "message": f"Project '{project_id}' not found.",
+                        }
+                    elif e.response.status_code == 403:
+                        return {
+                            "status": "error",
+                            "message": "Insufficient permissions to update project.",
+                        }
+                return {"status": "error", "message": f"HTTP error: {e}"}
             except Exception as e:
                 return {"status": "error", "message": f"Unexpected error: {e}"}
 
@@ -365,7 +358,7 @@ class ProjectManager:
                 name,
                 leader_name,
                 Text(status, style=status_style),
-                description
+                description,
             )
 
         self.console.print(table)
@@ -414,4 +407,3 @@ class ProjectManager:
             for user in team["users"]:
                 user_name = user.get("fullName") or user.get("login", "N/A")
                 self.console.print(f"  • {user_name}")
-

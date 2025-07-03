@@ -149,7 +149,7 @@ class TestProjectManager:
                 short_name="NP",
                 leader_id="user1",
                 description="Test project",
-                template="scrum"
+                template="scrum",
             )
 
             assert result["status"] == "success"
@@ -171,9 +171,7 @@ class TestProjectManager:
             )
 
             result = await project_manager.create_project(
-                name="",
-                short_name="",
-                leader_id="invalid-user"
+                name="", short_name="", leader_id="invalid-user"
             )
 
             assert result["status"] == "error"
@@ -196,9 +194,7 @@ class TestProjectManager:
             )
 
             result = await project_manager.create_project(
-                name="New Project",
-                short_name="NP",
-                leader_id="user1"
+                name="New Project", short_name="NP", leader_id="user1"
             )
 
             assert result["status"] == "error"
@@ -278,9 +274,7 @@ class TestProjectManager:
             )
 
             result = await project_manager.update_project(
-                project_id="UP",
-                name="Updated Project",
-                leader_id="new-leader"
+                project_id="UP", name="Updated Project", leader_id="new-leader"
             )
 
             assert result["status"] == "success"
@@ -455,9 +449,7 @@ class TestProjectsCLI:
         with patch("asyncio.run", return_value=mock_result):
             with patch("youtrack_cli.auth.AuthManager"):
                 runner = CliRunner()
-                result = runner.invoke(
-                    main, ["projects", "archive", "TP", "--confirm"]
-                )
+                result = runner.invoke(main, ["projects", "archive", "TP", "--confirm"])
 
                 assert result.exit_code in [0, 1]
 
@@ -540,4 +532,3 @@ class TestProjectsDisplayMethods:
 
         # This should not raise an exception
         project_manager.display_project_details(project)
-
