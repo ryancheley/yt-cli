@@ -85,6 +85,55 @@ yt --config /path/to/custom.env config set KEY VALUE
 - `yt config` - CLI configuration
 - `yt admin` - Administrative operations
 
+### Projects
+
+Manage YouTrack projects with the `yt projects` command group:
+
+```bash
+# List all projects
+yt projects list
+
+# List projects in JSON format
+yt projects list --format json
+
+# List projects including archived ones
+yt projects list --show-archived
+
+# Limit number of projects returned
+yt projects list --top 10
+
+# Create a new project
+yt projects create "My New Project" "MNP" --leader john.doe
+
+# Create a project with description and template
+yt projects create "Scrum Project" "SP" --leader jane.smith \
+  --description "A new scrum project" --template scrum
+
+# View detailed project information
+yt projects configure PROJECT_KEY --show-details
+
+# Update project settings
+yt projects configure PROJECT_KEY --name "Updated Name"
+yt projects configure PROJECT_KEY --description "New description"
+yt projects configure PROJECT_KEY --leader new.leader
+
+# Archive a project
+yt projects archive PROJECT_KEY
+
+# Archive a project without confirmation prompt
+yt projects archive PROJECT_KEY --confirm
+```
+
+#### Project Management Features
+
+- **List Projects**: View all active projects with filtering options
+- **Create Projects**: Create new projects with customizable settings
+- **Configure Projects**: Update project name, description, and leader
+- **Archive Projects**: Archive projects to mark them as inactive
+- **Rich Output**: Beautiful table formatting with status indicators
+- **JSON Export**: Export project data in JSON format for scripting
+- **Error Handling**: Clear error messages for permissions and validation issues
+
 ## Development
 
 This project uses `uv` for dependency management.
