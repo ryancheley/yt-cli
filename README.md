@@ -25,6 +25,27 @@ uv pip install -e .
 yt --help
 ```
 
+### Authentication
+
+Before using most commands, you need to authenticate with your YouTrack instance:
+
+```bash
+# Login to YouTrack
+yt auth login
+
+# Login with pre-filled values
+yt auth login --base-url https://yourdomain.youtrack.cloud --username yourname
+
+# Show current authentication status (token is masked for security)
+yt auth token --show
+
+# Update your API token
+yt auth token --update
+
+# Logout and clear stored credentials
+yt auth logout
+```
+
 ### Available Commands
 
 - `yt issues` - Manage issues
