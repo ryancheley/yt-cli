@@ -29,7 +29,8 @@ Install from the latest source code:
 
    git clone https://github.com/your-org/youtrack-cli.git
    cd youtrack-cli
-   pip install -e .
+   uv sync
+   uv pip install -e .
 
 Development Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
