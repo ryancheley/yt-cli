@@ -149,11 +149,13 @@ class ProjectManager:
                 }
 
             except httpx.HTTPError as e:
-                if hasattr(e, 'response') and e.response is not None:
+                if hasattr(e, "response") and e.response is not None:
                     if e.response.status_code == 400:
                         return {
                             "status": "error",
-                            "message": "Invalid project data. Check name and short name.",
+                            "message": (
+                                "Invalid project data. Check name and short name."
+                            ),
                         }
                     elif e.response.status_code == 403:
                         return {
@@ -208,7 +210,7 @@ class ProjectManager:
                 return {"status": "success", "data": project}
 
             except httpx.HTTPError as e:
-                if hasattr(e, 'response') and e.response is not None:
+                if hasattr(e, "response") and e.response is not None:
                     if e.response.status_code == 404:
                         return {
                             "status": "error",
@@ -291,7 +293,7 @@ class ProjectManager:
                 }
 
             except httpx.HTTPError as e:
-                if hasattr(e, 'response') and e.response is not None:
+                if hasattr(e, "response") and e.response is not None:
                     if e.response.status_code == 404:
                         return {
                             "status": "error",
