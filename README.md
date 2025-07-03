@@ -134,6 +134,65 @@ yt projects archive PROJECT_KEY --confirm
 - **JSON Export**: Export project data in JSON format for scripting
 - **Error Handling**: Clear error messages for permissions and validation issues
 
+### Users
+
+Manage YouTrack users with the `yt users` command group:
+
+```bash
+# List all users
+yt users list
+
+# List users in JSON format
+yt users list --format json
+
+# Search for users
+yt users list --query "admin"
+
+# Limit number of users returned
+yt users list --top 20
+
+# Create a new user
+yt users create newuser "New User" "newuser@company.com"
+
+# Create a user with password and additional options
+yt users create johnsmith "John Smith" "john.smith@company.com" \
+  --password secretpass --force-change-password
+
+# Create a banned user
+yt users create spamuser "Spam User" "spam@example.com" --banned
+
+# View detailed user information
+yt users update USERNAME --show-details
+
+# Update user information
+yt users update USERNAME --full-name "Updated Name"
+yt users update USERNAME --email "newemail@company.com"
+yt users update USERNAME --password "newpassword"
+
+# Ban or unban a user
+yt users update USERNAME --banned
+yt users update USERNAME --unbanned
+
+# Force password change on next login
+yt users update USERNAME --force-change-password
+
+# Manage user permissions
+yt users permissions USERNAME --action add_to_group --group-id developers
+yt users permissions USERNAME --action remove_from_group --group-id admins
+```
+
+#### User Management Features
+
+- **List Users**: View all users with search and filtering options
+- **Create Users**: Create new users with customizable settings and permissions
+- **Update Users**: Modify user information, passwords, and status
+- **User Permissions**: Manage user group memberships and permissions
+- **User Status**: Ban/unban users and manage account status
+- **Rich Output**: Beautiful table formatting with status indicators
+- **JSON Export**: Export user data in JSON format for scripting
+- **Security**: Password prompts and secure credential handling
+- **Error Handling**: Clear error messages for permissions and validation issues
+
 ## Development
 
 This project uses `uv` for dependency management.
