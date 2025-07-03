@@ -15,7 +15,8 @@
       "Bash(find:*)",
       "Bash(git checkout:*)",
       "mcp__sequential-thinking__sequentialthinking",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "mcp__github__list_issues"
     ],
     "deny": []
   }
