@@ -401,6 +401,38 @@ Date inputs support multiple formats:
 - **Issue Integration**: Time tracking is tightly integrated with YouTrack issues
 - **Error Handling**: Clear validation for duration formats and date inputs
 
+### Boards
+
+Manage YouTrack agile boards with the `yt boards` command group:
+
+```bash
+# List all agile boards
+yt boards list
+
+# List boards for a specific project
+yt boards list --project-id PROJECT-123
+
+# View detailed information about a board
+yt boards view BOARD-456
+
+# Update a board's name
+yt boards update BOARD-456 --name "New Board Name"
+
+# Export board data in JSON format
+yt boards list --format json
+yt boards view BOARD-456 --format json
+```
+
+#### Board Management Features
+
+- **Board Discovery**: List all available agile boards in your YouTrack instance
+- **Project Filtering**: Filter boards by specific project IDs
+- **Detailed View**: Get comprehensive information about board configuration
+- **Board Updates**: Modify board settings like name and configuration
+- **Rich Display**: View board information in formatted tables with columns, sprints, and ownership details
+- **Multiple Output Formats**: View data in tables or export as JSON
+- **Error Handling**: Clear error messages for permissions and API issues
+
 ## Development
 
 This project uses `uv` for dependency management.
