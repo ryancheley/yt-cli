@@ -18,10 +18,14 @@ Added
 - Rich terminal output with tables and colors
 - Comprehensive test suite
 - Documentation with Sphinx and Read the Docs integration
+- Pre-commit hooks for automated code quality checks
+- zizmor security analysis for GitHub Actions
 
 Changed
 ~~~~~~~
-- None
+- Switched from mypy to ty for type checking (faster, modern type checker)
+- Enhanced CI workflow with comprehensive quality checks
+- Updated development documentation with pre-commit setup
 
 Deprecated
 ~~~~~~~~~~
@@ -48,6 +52,6 @@ Added
 - Core CLI framework using Click
 - Rich terminal output support
 - Basic project structure
-- Development tooling setup (ruff, mypy, pytest)
+- Development tooling setup (ruff, ty, pytest)
 - Documentation framework
 - CI/CD pipeline configuration

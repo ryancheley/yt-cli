@@ -150,6 +150,9 @@ cd yt-cli
 # Install dependencies
 uv sync --dev
 
+# Install pre-commit hooks
+uv run pre-commit install
+
 # Install the package in editable mode
 uv pip install -e .
 ```
@@ -167,17 +170,37 @@ uv run pytest --cov=yt_cli
 uv run tox
 ```
 
-### Linting and Formatting
+### Code Quality
+
+This project uses comprehensive pre-commit hooks for code quality:
 
 ```bash
-# Check code style
-uv run ruff check
+# Run all quality checks (automatically runs on commit)
+uv run pre-commit run --all-files
 
-# Format code
-uv run ruff format
+# Individual quality checks
+uv run ruff check      # Linting
+uv run ruff format     # Code formatting
+uv run ty check        # Type checking
+```
 
-# Type checking
-uv run mypy yt_cli
+### Pre-commit Hooks
+
+The project includes comprehensive pre-commit hooks that run automatically before each commit:
+
+- **File Quality**: Trailing whitespace, end-of-file fixes, YAML/TOML validation
+- **Code Quality**: Ruff linting and formatting, ty type checking
+- **Testing**: Full pytest test suite
+- **Security**: zizmor GitHub Actions security analysis
+
+To run pre-commit hooks manually:
+
+```bash
+# Run all hooks on all files
+uv run pre-commit run --all-files
+
+# Run specific hook
+uv run pre-commit run pytest
 ```
 
 ### Security
