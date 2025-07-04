@@ -20,12 +20,21 @@ Added
 - Documentation with Sphinx and Read the Docs integration
 - Pre-commit hooks for automated code quality checks
 - zizmor security analysis for GitHub Actions
+- **Enhanced error handling infrastructure with custom exceptions**
+- **Advanced logging system with Rich formatting and debug modes**
+- **Robust HTTP utilities with automatic retry logic and exponential backoff**
+- **Common CLI components and decorators for consistent command behavior**
+- **User-friendly error messages with actionable suggestions**
+- **Structured exception hierarchy (AuthenticationError, ConnectionError, etc.)**
 
 Changed
 ~~~~~~~
 - Switched from mypy to ty for type checking (faster, modern type checker)
 - Enhanced CI workflow with comprehensive quality checks
 - Updated development documentation with pre-commit setup
+- **Enhanced project metadata in pyproject.toml with comprehensive classifiers and URLs**
+- **Improved CLI architecture with global debug and verbose options**
+- **Updated troubleshooting documentation with new debugging features**
 
 Deprecated
 ~~~~~~~~~~

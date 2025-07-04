@@ -10,6 +10,7 @@ from rich.prompt import Prompt
 from .admin import AdminManager
 from .auth import AuthManager
 from .config import ConfigManager
+from .logging import setup_logging
 from .reports import ReportManager
 
 
@@ -27,8 +28,13 @@ from .reports import ReportManager
     is_flag=True,
     help="Enable verbose output",
 )
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Enable debug output",
+)
 @click.pass_context
-def main(ctx: click.Context, config: Optional[str], verbose: bool) -> None:
+def main(ctx: click.Context, config: Optional[str], verbose: bool, debug: bool) -> None:
     """YouTrack CLI - Command line interface for JetBrains YouTrack.
 
     A powerful command line tool for managing YouTrack issues, projects, users,
@@ -63,6 +69,10 @@ def main(ctx: click.Context, config: Optional[str], verbose: bool) -> None:
     ctx.ensure_object(dict)
     ctx.obj["config"] = config
     ctx.obj["verbose"] = verbose
+    ctx.obj["debug"] = debug
+
+    # Setup logging
+    setup_logging(verbose=verbose, debug=debug)
 
 
 @main.command()

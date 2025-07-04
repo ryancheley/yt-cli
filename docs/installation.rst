@@ -139,6 +139,53 @@ You should see output similar to:
 
    YouTrack CLI version 0.1.0
 
+Test Enhanced Features
+~~~~~~~~~~~~~~~~~~~~~~
+
+YouTrack CLI includes enhanced error handling and debugging capabilities:
+
+.. code-block:: bash
+
+   # Test help system
+   yt --help
+
+   # Test verbose mode
+   yt --verbose --help
+
+   # Test debug mode for detailed troubleshooting
+   yt --debug --help
+
+If you encounter any issues during installation, the CLI now provides helpful error messages with suggestions for resolution.
+
+Troubleshooting Installation
+----------------------------
+
+**Enhanced Error Messages**
+
+YouTrack CLI now provides user-friendly error messages with actionable suggestions:
+
+- **Module not found errors**: Includes suggestions for reinstallation
+- **Permission errors**: Suggests using virtual environments or user-local installation
+- **Python version issues**: Clearly indicates required Python version and upgrade steps
+
+**Debug Mode for Installation Issues**
+
+If you encounter problems, enable debug mode to see detailed information:
+
+.. code-block:: bash
+
+   # Enable debug output for troubleshooting
+   python -c "import youtrack_cli; print('Installation successful')" --debug
+
+**Common Installation Issues**
+
+The enhanced error handling helps with:
+
+- Missing dependencies (automatically suggests installation commands)
+- Python version compatibility issues
+- Virtual environment configuration
+- PATH and executable location problems
+
 Next Steps
 ----------
 
