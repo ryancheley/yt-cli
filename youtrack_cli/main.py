@@ -1395,7 +1395,7 @@ def tree(
         raise click.ClickException("Failed to fetch articles tree") from e
 
 
-@articles.command()
+@articles.command(name="search")
 @click.argument("query")
 @click.option(
     "--project-id",
@@ -1573,13 +1573,13 @@ def sort(
         raise click.ClickException("Failed to fetch child articles") from e
 
 
-@articles.group()
+@articles.group(name="comments")
 def article_comments() -> None:
     """Manage article comments."""
     pass
 
 
-@article_comments.command()
+@article_comments.command(name="add")
 @click.argument("article_id")
 @click.argument("text")
 @click.pass_context
@@ -1684,7 +1684,7 @@ def comments_update(ctx: click.Context, comment_id: str, text: str) -> None:
     console.print("This feature requires additional API endpoints", style="blue")
 
 
-@article_comments.command()
+@article_comments.command(name="delete")
 @click.argument("comment_id")
 @click.option(
     "--confirm",
@@ -1709,13 +1709,13 @@ def articles_comments_delete(
     console.print("This feature requires additional API endpoints", style="blue")
 
 
-@articles.group()
+@articles.group(name="attach")
 def article_attach() -> None:
     """Manage article attachments."""
     pass
 
 
-@article_attach.command()
+@article_attach.command(name="upload")
 @click.argument("article_id")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
@@ -1728,7 +1728,7 @@ def articles_attach_upload(ctx: click.Context, article_id: str, file_path: str) 
     )  # noqa: E501
 
 
-@article_attach.command()
+@article_attach.command(name="download")
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
@@ -1816,7 +1816,7 @@ def articles_attach_list(
         raise click.ClickException("Failed to list attachments") from e
 
 
-@article_attach.command()
+@article_attach.command(name="delete")
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
