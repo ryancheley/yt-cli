@@ -3,6 +3,29 @@ Quick Start Guide
 
 This guide will help you get started with YouTrack CLI quickly.
 
+Before You Begin
+----------------
+
+**What is YouTrack?**
+
+YouTrack is an issue tracking and project management tool by JetBrains. If you're new to YouTrack, we recommend reading the :doc:`youtrack-concepts` guide first for a comprehensive understanding.
+
+**Key Concepts (Quick Reference):**
+
+* **Issues**: Work items like bugs, features, or tasks that need to be tracked
+* **Projects**: Containers that organize related issues (e.g., "WEB-FRONTEND", "MOBILE-APP")  
+* **States**: Issue statuses like "Open", "In Progress", "Resolved", "Closed"
+* **Assignee**: The person responsible for working on an issue
+* **Priority**: Importance level (Critical, High, Medium, Low)
+* **Types**: Category of work (Bug, Feature, Task, Epic)
+
+**Prerequisites**
+
+* A YouTrack instance URL (ask your team lead or admin)
+* API token or login credentials (see Authentication section below)
+* Basic command line familiarity
+* Python 3.9+ installed on your system
+
 1. Authentication
 -----------------
 
@@ -13,7 +36,7 @@ First, authenticate with your YouTrack instance:
    yt auth login
 
 You'll be prompted to enter:
-- YouTrack URL (e.g., https://your-company.myjetbrains.com/youtrack)
+- YouTrack URL (e.g., https://yourcompany.youtrack.cloud)
 - Username
 - Password or API token
 
@@ -33,27 +56,37 @@ Search for specific issues:
 
 .. code-block:: bash
 
-   yt issues search --query "assignee:me state:open"
+   yt issues search "assignee:me state:open"
 
 Create an Issue
 ~~~~~~~~~~~~~~~
 
-Create a new issue:
+Create a bug report for a login issue:
 
 .. code-block:: bash
 
-   yt issues create --title "Fix login bug" --description "Users cannot log in"
+   yt issues create WEB-FRONTEND "Login button not responding on mobile Safari" \
+     --description "Users on iPhone 12 and 13 cannot tap login button. Error occurs on iOS Safari only." \
+     --priority "High" \
+     --type "Bug" \
+     --assignee "mobile-team-lead"
 
-With additional fields:
+**Expected output:**
+
+.. code-block:: text
+
+   🐛 Creating issue 'Login button not responding on mobile Safari' in project 'WEB-FRONTEND'...
+   ✅ Issue 'Login button not responding on mobile Safari' created successfully
+
+Create a feature request:
 
 .. code-block:: bash
 
-   yt issues create \
-     --title "Implement feature X" \
-     --description "Add new feature X to improve user experience" \
-     --project "PROJECT-ID" \
-     --assignee "john.doe" \
-     --priority "Major"
+   yt issues create API-BACKEND "Add user profile API endpoint" \
+     --description "Create REST API endpoint for user profile management with CRUD operations" \
+     --priority "Medium" \
+     --type "Feature" \
+     --assignee "backend-dev"
 
 Update an Issue
 ~~~~~~~~~~~~~~~
@@ -68,7 +101,7 @@ Add a comment:
 
 .. code-block:: bash
 
-   yt issues comments add ISSUE-123 --text "Working on this issue"
+   yt issues comments add ISSUE-123 "Working on this issue"
 
 3. Project Management
 ---------------------
@@ -99,7 +132,7 @@ Log time spent on an issue:
 
 .. code-block:: bash
 
-   yt time log ISSUE-123 --duration "2h 30m" --description "Fixed the bug"
+   yt time log ISSUE-123 "2h 30m" --description "Fixed the bug"
 
 View Time Reports
 ~~~~~~~~~~~~~~~~~
@@ -150,7 +183,7 @@ Daily Workflow
 
    .. code-block:: bash
 
-      yt time log ISSUE-123 --duration "4h" --description "Completed implementation"
+      yt time log ISSUE-123 "4h" --description "Completed implementation"
 
 4. Mark issue as resolved:
 

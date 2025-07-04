@@ -11,8 +11,12 @@ users, and more.
    :caption: Contents:
 
    installation
+   youtrack-concepts
    quickstart
    configuration
+   learning-path
+   workflows
+   troubleshooting
    commands/index
    api/index
    development
@@ -55,7 +59,7 @@ Create a new issue:
 
 .. code-block:: bash
 
-   yt issues create --title "Bug report" --description "Description here"
+   yt issues create PROJECT-ID "Bug report" --description "Description here"
 
 Command Categories
 ------------------
