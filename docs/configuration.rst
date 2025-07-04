@@ -10,42 +10,46 @@ Configuration Sources
 YouTrack CLI reads configuration from multiple sources in this order (later sources override earlier ones):
 
 1. Default values
-2. Configuration file (``~/.config/youtrack-cli/config.yaml``)
+2. Configuration file (``~/.config/youtrack-cli/.env``)
 3. Environment variables
 4. Command-line arguments
 
 Configuration File
 ------------------
 
-The configuration file is located at ``~/.config/youtrack-cli/config.yaml`` by default.
-You can specify a different location using the ``--config`` flag or the ``YT_CONFIG_FILE`` environment variable.
+The configuration file is an environment file located at ``~/.config/youtrack-cli/.env`` by default.
+You can specify a different location using the ``--config`` flag.
 
-Example configuration file:
+**Creating the Configuration File:**
 
-.. code-block:: yaml
+The easiest way to set up configuration is through the ``yt auth login`` command, which will automatically create the configuration file. Alternatively, you can create it manually:
 
-   # YouTrack instance settings
-   youtrack:
-     url: "https://your-company.myjetbrains.com/youtrack"
-     token: "your-api-token"
-     username: "your-username"
-     
-   # Default settings
-   defaults:
-     project: "PROJECT-ID"
-     assignee: "me"
-     output_format: "table"  # table, json, yaml
-     
-   # Display settings
-   display:
-     max_results: 50
-     show_colors: true
-     pager: true
-     
-   # Time tracking
-   time:
-     default_duration_format: "hours"  # hours, minutes
-     round_to_minutes: 15
+.. code-block:: bash
+
+   # Create configuration directory
+   mkdir -p ~/.config/youtrack-cli
+   
+   # Create the .env configuration file
+   cat > ~/.config/youtrack-cli/.env << EOF
+   YOUTRACK_BASE_URL=https://yourcompany.youtrack.cloud
+   YOUTRACK_TOKEN=your-api-token-here
+   YOUTRACK_USERNAME=your-username
+   EOF
+
+**Configuration File Format:**
+
+.. code-block:: bash
+
+   # YouTrack instance settings (required)
+   YOUTRACK_BASE_URL=https://yourcompany.youtrack.cloud
+   YOUTRACK_TOKEN=perm:your-api-token-here
+   YOUTRACK_USERNAME=your-username
+
+   # Optional: Default project for commands
+   DEFAULT_PROJECT=PROJECT-ID
+   
+   # Optional: Output format preference  
+   OUTPUT_FORMAT=table
 
 Authentication Methods
 ----------------------
@@ -92,7 +96,7 @@ All configuration options can be set via environment variables using the ``YT_``
 
 .. code-block:: bash
 
-   export YT_URL="https://your-company.myjetbrains.com/youtrack"
+   export YT_URL="https://yourcompany.youtrack.cloud"
    export YT_TOKEN="your-api-token"
    export YT_DEFAULT_PROJECT="PROJECT-ID"
    export YT_OUTPUT_FORMAT="json"
@@ -123,7 +127,7 @@ Set configuration values:
 
 .. code-block:: bash
 
-   yt config set youtrack.url "https://your-company.myjetbrains.com/youtrack"
+   yt config set youtrack.url "https://yourcompany.youtrack.cloud"
    yt config set defaults.project "PROJECT-ID"
    yt config set display.output_format "json"
 

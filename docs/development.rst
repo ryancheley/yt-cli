@@ -20,8 +20,8 @@ Clone and Setup
 
    .. code-block:: bash
 
-      git clone https://github.com/your-org/youtrack-cli.git
-      cd youtrack-cli
+      git clone https://github.com/ryancheley/yt-cli.git
+      cd yt-cli
 
 2. Install development dependencies:
 
@@ -48,23 +48,44 @@ Project Structure
 
 .. code-block:: text
 
-   youtrack-cli/
+   yt-cli/
    ├── youtrack_cli/           # Main package
    │   ├── __init__.py
-   │   ├── main.py            # CLI entry point
-   │   ├── client/            # YouTrack API client
-   │   ├── commands/          # CLI command implementations
-   │   ├── models/            # Data models
-   │   ├── config/            # Configuration management
-   │   └── utils/             # Utility functions
-   ├── tests/                 # Test suite
-   │   ├── unit/              # Unit tests
-   │   ├── integration/       # Integration tests
-   │   └── fixtures/          # Test fixtures
-   ├── docs/                  # Documentation
-   ├── pyproject.toml         # Project configuration
-   ├── tox.ini                # Multi-version testing
-   └── README.md
+   │   ├── main.py            # CLI entry point and command definitions
+   │   ├── admin.py           # Admin operations manager
+   │   ├── articles.py        # Articles management
+   │   ├── auth.py            # Authentication manager
+   │   ├── boards.py          # Boards management
+   │   ├── config.py          # Configuration management
+   │   ├── issues.py          # Issues management (core functionality)
+   │   ├── projects.py        # Projects management
+   │   ├── reports.py         # Reports generation
+   │   ├── time.py            # Time tracking
+   │   └── users.py           # User management
+   ├── tests/                 # Comprehensive test suite
+   │   ├── test_admin.py      # Admin functionality tests
+   │   ├── test_articles.py   # Articles tests
+   │   ├── test_auth.py       # Authentication tests
+   │   ├── test_boards.py     # Boards tests
+   │   ├── test_config.py     # Configuration tests
+   │   ├── test_issues.py     # Issues tests (48 test cases)
+   │   ├── test_main.py       # CLI interface tests
+   │   ├── test_projects.py   # Projects tests
+   │   ├── test_reports.py    # Reports tests
+   │   ├── test_time.py       # Time tracking tests
+   │   └── test_users.py      # User management tests
+   ├── docs/                  # Sphinx documentation
+   │   ├── commands/          # Command-specific documentation
+   │   ├── conf.py            # Sphinx configuration
+   │   ├── index.rst          # Documentation index
+   │   ├── installation.rst   # Installation guide
+   │   ├── quickstart.rst     # Quick start guide
+   │   └── development.rst    # This file
+   ├── pyproject.toml         # Project configuration and dependencies
+   ├── uv.lock                # Dependency lock file
+   ├── tox.ini                # Multi-version testing configuration
+   ├── justfile               # Task runner configuration
+   └── README.md              # Project overview
 
 Development Workflow
 --------------------
