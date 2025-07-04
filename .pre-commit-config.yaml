@@ -1,0 +1,49 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
+      - id: check-docstring-first
+      - id: check-json
+      - id: check-xml
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: mixed-line-ending
+      - id: fix-byte-order-marker
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.1
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty
+        entry: uv run ty check --ignore call-non-callable
+        language: system
+        types: [python]
+        exclude: ^tests/
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+        args: [--tb=short, --maxfail=1, -q]
+      - id: zizmor
+        name: zizmor
+        entry: uv run zizmor
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: true

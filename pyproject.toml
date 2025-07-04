@@ -23,8 +23,6 @@ dev = [
     "pytest-cov>=4.0.0",
     "pytest-asyncio>=0.21.0",
     "ruff>=0.1.0",
-    "mypy>=1.0.0",
-    "types-click>=7.0.0",
     "tox>=4.0.0",
     "zizmor>=0.1.0",
 ]
@@ -60,16 +58,8 @@ ignore = []
 quote-style = "double"
 indent-style = "space"
 
-[tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-check_untyped_defs = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-show_error_codes = true
+[tool.ty]
+# ty configuration can be added here if needed in the future
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -96,7 +86,7 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.16.1",
+    "ty>=0.0.1a13",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.2.1",
@@ -104,4 +94,5 @@ dev = [
     "tox>=4.27.0",
     "zizmor>=1.11.0",
     "twine>=6.1.0",
+    "pre-commit>=3.0.0",
 ]

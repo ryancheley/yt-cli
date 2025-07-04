@@ -41,7 +41,7 @@ Clone and Setup
 
       uv run pytest
       uv run ruff check
-      uv run mypy youtrack_cli
+      uv run ty check
 
 Project Structure
 -----------------
@@ -110,18 +110,101 @@ Code Quality
 The project uses several tools to maintain code quality:
 
 * **Ruff**: Linting and code formatting
-* **MyPy**: Type checking
+* **ty**: Type checking (modern replacement for MyPy)
 * **Pytest**: Testing framework
 * **Pre-commit**: Git hooks for quality checks
+* **zizmor**: GitHub Actions security analysis
 
 Run quality checks:
 
 .. code-block:: bash
 
+   # Run all pre-commit hooks
+   uv run pre-commit run --all-files
+
+   # Or run individual tools
    uv run ruff check .
    uv run ruff format .
-   uv run mypy youtrack_cli
+   uv run ty check
    uv run pytest
+
+Pre-commit Hooks
+----------------
+
+The project uses comprehensive pre-commit hooks to ensure code quality and consistency. These hooks run automatically before each commit and prevent commits with quality issues.
+
+Hook Categories
+~~~~~~~~~~~~~~~
+
+**File Quality Checks:**
+
+* Trailing whitespace removal
+* End-of-file fixing
+* YAML/TOML/JSON validation
+* Large file detection
+* Merge conflict detection
+* Case conflict detection
+* Executable shebang validation
+
+**Code Quality Checks:**
+
+* **Ruff linting** with auto-fix
+* **Ruff formatting**
+* **ty type checking** (excluding test files)
+* **Debug statement detection**
+
+**Testing:**
+
+* **pytest** execution with optimized settings for pre-commit
+
+**Security:**
+
+* **zizmor** GitHub Actions security analysis
+
+Managing Pre-commit Hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install hooks:
+
+.. code-block:: bash
+
+   uv run pre-commit install
+
+Run all hooks manually:
+
+.. code-block:: bash
+
+   uv run pre-commit run --all-files
+
+Run specific hook:
+
+.. code-block:: bash
+
+   uv run pre-commit run pytest
+   uv run pre-commit run ruff
+   uv run pre-commit run ty
+
+Skip hooks (not recommended):
+
+.. code-block:: bash
+
+   git commit --no-verify
+
+Update hook versions:
+
+.. code-block:: bash
+
+   uv run pre-commit autoupdate
+
+Hook Configuration
+~~~~~~~~~~~~~~~~~~
+
+Pre-commit hooks are configured in ``.pre-commit-config.yaml``. The configuration includes:
+
+* **Fast feedback**: Hooks are optimized for speed during development
+* **Comprehensive coverage**: All CI checks are replicated locally
+* **Auto-fixing**: Many issues are automatically corrected
+* **Selective exclusions**: Test files excluded from type checking
 
 Testing
 -------
@@ -255,7 +338,7 @@ API clients are organized by resource type:
            params = {}
            if assignee:
                params['assignee'] = assignee
-           
+
            response = self.http.get('/issues', params=params)
            return [Issue.parse_obj(item) for item in response.json()]
 
