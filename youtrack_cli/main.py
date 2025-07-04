@@ -9,6 +9,7 @@ from rich.prompt import Prompt
 
 from .auth import AuthManager
 from .config import ConfigManager
+from .reports import ReportManager
 
 
 @click.group()
@@ -1677,6 +1678,86 @@ def update_board(
 def reports() -> None:
     """Generate cross-entity reports."""
     pass
+
+
+@reports.command(name="burndown")
+@click.argument("project_id")
+@click.option(
+    "--sprint",
+    "-s",
+    help="Sprint ID or name to filter by",
+)
+@click.option(
+    "--start-date",
+    help="Start date in YYYY-MM-DD format",
+)
+@click.option(
+    "--end-date",
+    help="End date in YYYY-MM-DD format",
+)
+@click.pass_context
+def reports_burndown(
+    ctx: click.Context,
+    project_id: str,
+    sprint: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+) -> None:
+    """Generate a burndown report for a project or sprint."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    report_manager = ReportManager(auth_manager)
+    console = Console()
+
+    async def run_burndown() -> None:
+        result = await report_manager.generate_burndown_report(
+            project_id=project_id,
+            sprint_id=sprint,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        report_manager.display_burndown_report(result["data"])
+
+    asyncio.run(run_burndown())
+
+
+@reports.command(name="velocity")
+@click.argument("project_id")
+@click.option(
+    "--sprints",
+    "-n",
+    type=int,
+    default=5,
+    help="Number of recent sprints to analyze (default: 5)",
+)
+@click.pass_context
+def reports_velocity(
+    ctx: click.Context,
+    project_id: str,
+    sprints: int,
+) -> None:
+    """Generate a velocity report for recent sprints."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    report_manager = ReportManager(auth_manager)
+    console = Console()
+
+    async def run_velocity() -> None:
+        result = await report_manager.generate_velocity_report(
+            project_id=project_id,
+            sprints=sprints,
+        )
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        report_manager.display_velocity_report(result["data"])
+
+    asyncio.run(run_velocity())
 
 
 @main.group()
