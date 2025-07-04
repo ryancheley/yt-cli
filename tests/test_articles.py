@@ -50,7 +50,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -68,7 +68,7 @@ class TestArticleManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 400
             mock_resp.text.return_value = "Bad Request"
-            mock_client.return_value.__aenter__.return_value.post.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -99,7 +99,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.list_articles()
 
@@ -121,7 +121,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.get_article("123")
 
@@ -142,7 +142,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.update_article(
                 article_id="123",
@@ -169,7 +169,7 @@ class TestArticleManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.delete.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.delete.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.delete_article("123")
 
@@ -190,7 +190,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.publish_article("123")
 
@@ -214,7 +214,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.search_articles("search query")
 
@@ -238,7 +238,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.get_article_comments("123")
 
@@ -259,7 +259,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.add_comment("123", "Test comment")
 
@@ -284,7 +284,7 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (\n                mock_resp\n            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.get_article_attachments("123")
 
@@ -403,8 +403,8 @@ class TestArticlesCLI:
         runner = CliRunner()
 
         with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager") as mock_auth, \
-             patch("youtrack_cli.articles.ArticleManager") as mock_manager:
+             patch("youtrack_cli.main.AuthManager"), \
+             patch("youtrack_cli.articles.ArticleManager"):
 
             mock_run.return_value = {
                 "status": "success",
