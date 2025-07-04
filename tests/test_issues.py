@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from youtrack_cli.issues import IssueManager
 from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.issues import IssueManager
 
 
 @pytest.fixture
@@ -402,7 +402,9 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_upload_attachment_success(self, issue_manager):
         """Test successful attachment upload."""
-        with patch("httpx.AsyncClient") as mock_client, patch("builtins.open", create=True) as mock_open:
+        with patch("httpx.AsyncClient") as mock_client, patch(
+            "builtins.open", create=True
+        ) as mock_open:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
@@ -444,7 +446,9 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_download_attachment_success(self, issue_manager):
         """Test successful attachment download."""
-        with patch("httpx.AsyncClient") as mock_client, patch("builtins.open", create=True) as mock_open:
+        with patch("httpx.AsyncClient") as mock_client, patch(
+            "builtins.open", create=True
+        ) as mock_open:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.content = b"file content"
@@ -564,7 +568,7 @@ class TestIssueManager:
         """Test issues table display."""
         issues = [sample_issue]
         issue_manager.display_issues_table(issues)
-        
+
         captured = capsys.readouterr()
         assert "PROJ-123" in captured.out
         assert "Test Issue" in captured.out
@@ -572,14 +576,14 @@ class TestIssueManager:
     def test_display_issues_table_empty(self, issue_manager, capsys):
         """Test empty issues table display."""
         issue_manager.display_issues_table([])
-        
+
         captured = capsys.readouterr()
         assert "No issues found" in captured.out
 
     def test_display_issue_details(self, issue_manager, sample_issue, capsys):
         """Test issue details display."""
         issue_manager.display_issue_details(sample_issue)
-        
+
         captured = capsys.readouterr()
         assert "PROJ-123" in captured.out
         assert "Test Issue" in captured.out
@@ -596,7 +600,7 @@ class TestIssueManager:
             }
         ]
         issue_manager.display_comments_table(comments)
-        
+
         captured = capsys.readouterr()
         assert "comment-1" in captured.out
         assert "Test comment" in captured.out
@@ -613,7 +617,7 @@ class TestIssueManager:
             }
         ]
         issue_manager.display_attachments_table(attachments)
-        
+
         captured = capsys.readouterr()
         assert "attach-1" in captured.out
         assert "test.txt" in captured.out
@@ -628,7 +632,7 @@ class TestIssueManager:
             }
         ]
         issue_manager.display_links_table(links)
-        
+
         captured = capsys.readouterr()
         assert "depends on" in captured.out
         assert "PROJ-124" in captured.out
@@ -643,7 +647,7 @@ class TestIssueManager:
             }
         ]
         issue_manager.display_link_types_table(link_types)
-        
+
         captured = capsys.readouterr()
         assert "depends on" in captured.out
         assert "is required for" in captured.out
@@ -655,188 +659,188 @@ class TestIssuesCLI:
     def test_issues_create_command(self):
         """Test the issues create CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Issue created successfully",
                 "data": {"id": "PROJ-123"},
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "create", "PROJ", "Test Issue",
                 "-d", "Test description",
                 "-t", "Bug",
                 "-p", "High"
             ])
-            
+
             assert result.exit_code == 0
             assert "creating issue" in result.output.lower()
 
     def test_issues_list_command(self):
         """Test the issues list CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
                 "count": 0,
             }
-            
+
             with patch("youtrack_cli.issues.IssueManager.display_issues_table"):
                 result = runner.invoke(main, [
                     "issues", "list", "-p", "PROJ"
                 ])
-            
+
             assert result.exit_code == 0
             assert "fetching issues" in result.output.lower()
 
     def test_issues_update_command(self):
         """Test the issues update CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Issue updated successfully",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "update", "PROJ-123",
                 "-s", "Updated summary",
                 "-p", "Critical"
             ])
-            
+
             assert result.exit_code == 0
             assert "updating issue" in result.output.lower()
 
     def test_issues_delete_command_with_confirm(self):
         """Test the issues delete CLI command with confirmation."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Issue deleted successfully",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "delete", "PROJ-123", "--confirm"
             ])
-            
+
             assert result.exit_code == 0
             assert "deleting issue" in result.output.lower()
 
     def test_issues_search_command(self):
         """Test the issues search CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
                 "count": 0,
             }
-            
+
             with patch("youtrack_cli.issues.IssueManager.display_issues_table"):
                 result = runner.invoke(main, [
                     "issues", "search", "priority:High"
                 ])
-            
+
             assert result.exit_code == 0
             assert "searching issues" in result.output.lower()
 
     def test_issues_assign_command(self):
         """Test the issues assign CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Issue assigned successfully",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "assign", "PROJ-123", "test-user"
             ])
-            
+
             assert result.exit_code == 0
             assert "assigning issue" in result.output.lower()
 
     def test_issues_tag_add_command(self):
         """Test the issues tag add CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Tag added successfully",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "tag", "add", "PROJ-123", "urgent"
             ])
-            
+
             assert result.exit_code == 0
             assert "adding tag" in result.output.lower()
 
     def test_issues_comments_add_command(self):
         """Test the issues comments add CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Comment added successfully",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "comments", "add", "PROJ-123", "Test comment"
             ])
-            
+
             assert result.exit_code == 0
             assert "adding comment" in result.output.lower()
 
     def test_issues_attach_upload_command(self):
         """Test the issues attach upload CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "File uploaded successfully",
             }
-            
+
             # Create a temporary file for testing
             import tempfile
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
                 tmp_file.write(b"test content")
                 tmp_file_path = tmp_file.name
-            
+
             try:
                 result = runner.invoke(main, [
                     "issues", "attach", "upload", "PROJ-123", tmp_file_path
                 ])
-                
+
                 assert result.exit_code == 0
                 assert "uploading file" in result.output.lower()
             finally:
@@ -846,19 +850,19 @@ class TestIssuesCLI:
     def test_issues_links_create_command(self):
         """Test the issues links create CLI command."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "success",
                 "message": "Link created successfully",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "links", "create", "PROJ-123", "PROJ-124", "depends on"
             ])
-            
+
             assert result.exit_code == 0
             assert "creating" in result.output.lower()
             assert "link" in result.output.lower()
@@ -866,37 +870,38 @@ class TestIssuesCLI:
     def test_command_authentication_error(self):
         """Test CLI command with authentication error."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "error",
                 "message": "Not authenticated",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "create", "PROJ", "Test Issue"
             ])
-            
+
             assert result.exit_code == 1
             assert "not authenticated" in result.output.lower()
 
     def test_command_api_error(self):
         """Test CLI command with API error."""
         from youtrack_cli.main import main
-        
+
         runner = CliRunner()
-        
+
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
                 "status": "error",
                 "message": "API request failed",
             }
-            
+
             result = runner.invoke(main, [
                 "issues", "list"
             ])
-            
+
             assert result.exit_code == 1
             assert "api request failed" in result.output.lower()
+
