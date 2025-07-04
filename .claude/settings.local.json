@@ -25,7 +25,11 @@
       "mcp__github__search_issues",
       "mcp__filesystem__directory_tree",
       "WebFetch(domain:www.jetbrains.com)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "mcp__git__git_create_branch",
+      "mcp__git__git_checkout",
+      "Bash(pytest:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

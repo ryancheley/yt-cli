@@ -85,6 +85,142 @@ yt --config /path/to/custom.env config set KEY VALUE
 - `yt config` - CLI configuration
 - `yt admin` - Administrative operations
 
+### Articles
+
+Manage YouTrack knowledge base articles with the `yt articles` command group:
+
+```bash
+# Create a new article
+yt articles create "Getting Started Guide" --content "This is a comprehensive guide..."
+
+# Create an article in a specific project
+yt articles create "API Documentation" --content "API usage guide" --project-id PROJECT-123
+
+# Create a nested article (child of another article)
+yt articles create "Advanced Features" --content "Advanced guide" --parent-id ARTICLE-456
+
+# Create a draft article (private visibility)
+yt articles create "Draft Article" --content "Work in progress" --visibility private
+
+# List all articles
+yt articles list
+
+# List articles in table format (default)
+yt articles list --format table
+
+# List articles in JSON format
+yt articles list --format json
+
+# Filter articles by project
+yt articles list --project-id PROJECT-123
+
+# Filter articles by parent
+yt articles list --parent-id ARTICLE-456
+
+# Limit number of articles returned
+yt articles list --top 20
+
+# Display articles in hierarchical tree structure
+yt articles tree
+
+# Filter tree view by project
+yt articles tree --project-id PROJECT-123
+
+# Search articles
+yt articles search "getting started"
+
+# Search articles in a specific project
+yt articles search "API" --project-id PROJECT-123
+
+# Limit search results
+yt articles search "documentation" --top 10
+
+# Edit an article
+yt articles edit ARTICLE-123 --title "Updated Title"
+yt articles edit ARTICLE-123 --content "Updated content"
+yt articles edit ARTICLE-123 --visibility public
+
+# View detailed article information
+yt articles edit ARTICLE-123 --show-details
+
+# Publish a draft article
+yt articles publish ARTICLE-123
+
+# List draft articles
+yt articles draft
+
+# Filter drafts by project
+yt articles draft --project-id PROJECT-123
+
+# Sort child articles under a parent (preview mode)
+yt articles sort PARENT-ARTICLE-123
+
+# Sort child articles and apply changes (requires manual confirmation in YouTrack web interface)
+yt articles sort PARENT-ARTICLE-123 --update
+```
+
+#### Article Comments
+
+Manage comments on articles:
+
+```bash
+# Add a comment to an article
+yt articles comments add ARTICLE-123 "This is a helpful article!"
+
+# List comments on an article
+yt articles comments list ARTICLE-123
+
+# List comments in JSON format
+yt articles comments list ARTICLE-123 --format json
+
+# Update a comment (not yet implemented)
+yt articles comments update COMMENT-456 "Updated comment text"
+
+# Delete a comment (not yet implemented)
+yt articles comments delete COMMENT-456
+yt articles comments delete COMMENT-456 --confirm  # Skip confirmation
+```
+
+#### Article Attachments
+
+Manage file attachments on articles:
+
+```bash
+# List attachments for an article
+yt articles attach list ARTICLE-123
+
+# List attachments in JSON format
+yt articles attach list ARTICLE-123 --format json
+
+# Upload a file to an article (not yet implemented)
+yt articles attach upload ARTICLE-123 /path/to/file.pdf
+
+# Download an attachment (not yet implemented)
+yt articles attach download ARTICLE-123 ATTACHMENT-456
+yt articles attach download ARTICLE-123 ATTACHMENT-456 --output /path/to/save/
+
+# Delete an attachment (not yet implemented)
+yt articles attach delete ARTICLE-123 ATTACHMENT-456
+yt articles attach delete ARTICLE-123 ATTACHMENT-456 --confirm  # Skip confirmation
+```
+
+#### Article Management Features
+
+- **Create Articles**: Create new articles with customizable settings and hierarchy
+- **List Articles**: View all articles with filtering and formatting options
+- **Tree View**: Display articles in hierarchical tree structure showing parent-child relationships
+- **Search Articles**: Full-text search across article content and metadata
+- **Edit Articles**: Update article content, titles, and visibility settings
+- **Draft Management**: Create and manage draft articles before publication
+- **Publish Articles**: Convert draft articles to published state
+- **Comments**: Add and view comments on articles for collaboration
+- **Attachments**: Manage file attachments (list functionality implemented)
+- **Sorting**: View and organize child articles under parent articles
+- **Rich Output**: Beautiful table and tree formatting with status indicators
+- **JSON Export**: Export article data in JSON format for scripting
+- **Error Handling**: Clear error messages for permissions and validation issues
+- **Hierarchical Organization**: Support for nested article structures
+
 ### Projects
 
 Manage YouTrack projects with the `yt projects` command group:
