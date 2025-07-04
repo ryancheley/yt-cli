@@ -96,11 +96,58 @@ Permission Issues
       source youtrack-env/bin/activate  # Linux/macOS
       pip install youtrack-cli
 
-3. **Use uv** (fastest):
+3. **Use uv** (fastest and recommended):
 
    .. code-block:: bash
 
+      # Install uv first (if not already installed)
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      # Install YouTrack CLI using uv
       uv tool install youtrack-cli
+
+      # Or for development
+      git clone https://github.com/ryancheley/yt-cli.git
+      cd yt-cli
+      uv sync --dev
+      uv pip install -e .
+
+Dependency Issues
+~~~~~~~~~~~~~~~~~
+
+**Problem**: CLI fails to run due to missing dependencies (e.g., ``ModuleNotFoundError: No module named 'click'``).
+
+**Solutions**:
+
+1. **Verify complete installation**:
+
+   .. code-block:: bash
+
+      # Check if all dependencies are installed
+      pip list | grep -E "(click|rich|textual|pydantic|httpx)"
+
+2. **Reinstall with all dependencies**:
+
+   .. code-block:: bash
+
+      pip uninstall youtrack-cli
+      pip install --upgrade youtrack-cli
+
+3. **Use uv for reliable dependency management**:
+
+   .. code-block:: bash
+
+      uv tool install youtrack-cli --force
+
+4. **Development installation**:
+
+   .. code-block:: bash
+
+      git clone https://github.com/ryancheley/yt-cli.git
+      cd yt-cli
+      uv sync --dev
+      uv pip install -e .
+      yt --version  # Should work without errors
 
 Authentication Issues
 ---------------------

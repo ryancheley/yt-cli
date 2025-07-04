@@ -32,7 +32,8 @@
       "Bash(rg:*)",
       "Bash(python:*)",
       "Bash(tree:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(yt:*)"
     ],
     "deny": []
   }

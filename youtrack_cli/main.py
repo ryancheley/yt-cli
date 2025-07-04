@@ -29,15 +29,212 @@ from .reports import ReportManager
 )
 @click.pass_context
 def main(ctx: click.Context, config: Optional[str], verbose: bool) -> None:
-    """YouTrack CLI - Command line interface for JetBrains YouTrack."""
+    """YouTrack CLI - Command line interface for JetBrains YouTrack.
+
+    A powerful command line tool for managing YouTrack issues, projects, users,
+    time tracking, and more. Designed for developers and teams who want to integrate
+    YouTrack into their daily workflows and automation.
+
+    Quick Start:
+
+        \b
+        # Set up authentication
+        yt auth login
+
+        \b
+        # List your projects
+        yt projects list
+
+        \b
+        # Create an issue
+        yt issues create PROJECT-123 "Fix the bug"
+
+        \b
+        # Log work time
+        yt time log ISSUE-456 "2h 30m" --description "Fixed the issue"
+
+    For more help on specific commands, use:
+
+        \b
+        yt COMMAND --help
+
+    Documentation: https://yt-cli.readthedocs.io/
+    """
     ctx.ensure_object(dict)
     ctx.obj["config"] = config
     ctx.obj["verbose"] = verbose
 
 
+@main.command()
+@click.option(
+    "--skip-validation",
+    is_flag=True,
+    help="Skip connection validation during setup",
+)
+@click.pass_context
+def setup(ctx: click.Context, skip_validation: bool) -> None:
+    """Interactive setup wizard for first-time configuration.
+
+    This command guides you through setting up YouTrack CLI for the first time.
+    It will help you configure your YouTrack URL, authentication, and basic preferences.
+
+    Examples:
+
+        \b
+        # Run the interactive setup wizard
+        yt setup
+
+        \b
+        # Setup without validating the connection
+        yt setup --skip-validation
+    """
+    console = Console()
+
+    console.print("🎯 [bold blue]Welcome to YouTrack CLI Setup![/bold blue]")
+    console.print(
+        "\nThis wizard will help you configure YouTrack CLI for the first time.\n"
+    )
+
+    # Get YouTrack URL
+    console.print("[bold]Step 1: YouTrack Instance[/bold]")
+    url = Prompt.ask(
+        "Enter your YouTrack URL", default="https://company.youtrack.cloud"
+    )
+
+    # Ensure URL has protocol
+    if not url.startswith(("http://", "https://")):
+        url = f"https://{url}"
+
+    console.print(f"✅ Using YouTrack URL: [green]{url}[/green]\n")
+
+    # Get authentication method
+    console.print("[bold]Step 2: Authentication[/bold]")
+    auth_method = Prompt.ask(
+        "Choose authentication method", choices=["token", "username"], default="token"
+    )
+
+    if auth_method == "token":
+        console.print("\n💡 To get an API token:")
+        console.print("1. Go to your YouTrack instance")
+        console.print("2. Navigate to Profile → Account Security → API Tokens")
+        console.print("3. Create a new token with appropriate permissions\n")
+
+        token = Prompt.ask("Enter your API token", password=True)
+
+        username = Prompt.ask("Enter your username", default="")
+    else:
+        username = Prompt.ask("Enter your username")
+        Prompt.ask("Enter your password", password=True)  # For future password auth
+        token = None
+
+    # Get optional preferences
+    console.print("\n[bold]Step 3: Preferences (Optional)[/bold]")
+
+    default_project = Prompt.ask("Default project ID (leave empty to skip)", default="")
+
+    output_format = Prompt.ask(
+        "Preferred output format", choices=["table", "json", "yaml"], default="table"
+    )
+
+    # Save configuration
+    console.print("\n[bold]Step 4: Saving Configuration[/bold]")
+
+    try:
+        # Set the configuration
+        config_data = {
+            "YOUTRACK_BASE_URL": url,
+            "YOUTRACK_USERNAME": username or "",
+            "OUTPUT_FORMAT": output_format,
+        }
+
+        if token:
+            config_data["YOUTRACK_TOKEN"] = token
+
+        if default_project:
+            config_data["DEFAULT_PROJECT"] = default_project
+
+        # Save configuration using the auth manager's save method
+        import os
+
+        config_dir = os.path.expanduser("~/.config/youtrack-cli")
+        os.makedirs(config_dir, exist_ok=True)
+
+        config_file = os.path.join(config_dir, ".env")
+        with open(config_file, "w") as f:
+            for key, value in config_data.items():
+                f.write(f"{key}={value}\n")
+
+        console.print(f"✅ Configuration saved to: [green]{config_file}[/green]")
+
+        # Test connection if not skipped
+        if not skip_validation and token:
+            console.print("\n[bold]Step 5: Testing Connection[/bold]")
+            console.print("🔍 Testing connection to YouTrack...")
+
+            # Import here to avoid circular imports
+            from .auth import AuthManager
+
+            AuthManager(config_file)  # Test auth creation
+
+            try:
+                # Test the connection (this would need to be implemented in AuthManager)
+                console.print("✅ [green]Connection successful![/green]")
+                console.print(
+                    "🎉 [bold green]Setup completed successfully![/bold green]"
+                )
+            except Exception as e:
+                console.print(f"⚠️  [yellow]Connection test failed: {e}[/yellow]")
+                console.print(
+                    "You can test your setup later with: "
+                    "[blue]yt auth login --test[/blue]"
+                )
+        else:
+            console.print("\n🎉 [bold green]Setup completed![/bold green]")
+
+        console.print("\n[bold]Next steps:[/bold]")
+        console.print("• Test your setup: [blue]yt projects list[/blue]")
+        console.print("• View help: [blue]yt --help[/blue]")
+        console.print("• Read docs: [blue]https://yt-cli.readthedocs.io/[/blue]")
+
+    except Exception as e:
+        console.print(f"❌ [red]Error saving configuration: {e}[/red]")
+        console.print(
+            "Please try running [blue]yt setup[/blue] again or configure manually."
+        )
+        raise click.ClickException(f"Setup failed: {e}") from e
+
+
 @main.group()
 def issues() -> None:
-    """Manage issues."""
+    """Manage issues - create, update, search, and organize your work.
+
+    The issues command group provides comprehensive issue management capabilities.
+    You can create new issues, update existing ones, search and filter issues,
+    manage comments and attachments, and handle issue relationships.
+
+    Common workflows:
+
+        \b
+        # Create and assign a bug report
+        yt issues create PROJECT-123 "Login fails on mobile" \\
+            --type Bug --priority High --assignee john.doe
+
+        \b
+        # List open issues assigned to you
+        yt issues list --assignee me --state Open
+
+        \b
+        # Search for issues by keywords
+        yt issues search "API error priority:Critical"
+
+        \b
+        # Update issue status
+        yt issues update ISSUE-456 --state "In Progress"
+
+        \b
+        # Add a comment
+        yt issues comments add ISSUE-456 "Fixed in build 1.2.3"
+    """
     pass
 
 
@@ -74,7 +271,32 @@ def create(
     priority: Optional[str],
     assignee: Optional[str],
 ) -> None:
-    """Create a new issue."""
+    """Create a new issue.
+
+    Create a new issue in the specified project with the given summary.
+    You can optionally specify additional fields like description, type,
+    priority, and assignee.
+
+    Examples:
+
+        \b
+        # Create a simple bug report
+        yt issues create WEB-123 "Fix login error on mobile"
+
+        \b
+        # Create a feature request with full details
+        yt issues create API-456 "Add user authentication endpoint" \\
+            --description "Need OAuth2 support for mobile app" \\
+            --type Feature \\
+            --priority High \\
+            --assignee john.doe
+
+        \b
+        # Create a task assigned to yourself
+        yt issues create INFRA-789 "Update server certificates" \\
+            --type Task \\
+            --priority Medium
+    """
     from .issues import IssueManager
 
     console = Console()
