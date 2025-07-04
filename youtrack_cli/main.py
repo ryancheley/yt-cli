@@ -82,7 +82,7 @@ def create(
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"🐛 Creating issue '{summary}' in project '{project_id}'...", 
+        f"🐛 Creating issue '{summary}' in project '{project_id}'...",
         style="blue"
     )
 
@@ -528,7 +528,7 @@ def remove(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...", 
+        f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...",
         style="blue"
     )
 
@@ -747,7 +747,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"📎 Uploading file '{file_path}' to issue '{issue_id}'...", 
+        f"📎 Uploading file '{file_path}' to issue '{issue_id}'...",
         style="blue"
     )
 
@@ -789,7 +789,7 @@ def download(
         output = f"attachment_{attachment_id}"
 
     console.print(
-        f"📥 Downloading attachment '{attachment_id}' to '{output}'...", 
+        f"📥 Downloading attachment '{attachment_id}' to '{output}'...",
         style="blue"
     )
 
@@ -906,9 +906,9 @@ def links() -> None:
 @click.argument("link_type")
 @click.pass_context
 def create_link(
-    ctx: click.Context, 
-    source_issue_id: str, 
-    target_issue_id: str, 
+    ctx: click.Context,
+    source_issue_id: str,
+    target_issue_id: str,
     link_type: str
 ) -> None:
     """Create a link between two issues."""
@@ -920,7 +920,7 @@ def create_link(
 
     console.print(
         f"🔗 Creating '{link_type}' link between '{source_issue_id}' "
-        f"and '{target_issue_id}'...", 
+        f"and '{target_issue_id}'...",
         style="blue"
     )
 
@@ -1415,7 +1415,7 @@ def tree(
     help="Output format",
 )
 @click.pass_context
-def search(
+def articles_search(
     ctx: click.Context,
     query: str,
     project_id: Optional[str],
@@ -1574,16 +1574,16 @@ def sort(
 
 
 @articles.group()
-def comments() -> None:
+def article_comments() -> None:
     """Manage article comments."""
     pass
 
 
-@comments.command()
+@article_comments.command()
 @click.argument("article_id")
 @click.argument("text")
 @click.pass_context
-def add(ctx: click.Context, article_id: str, text: str) -> None:
+def articles_comments_add(ctx: click.Context, article_id: str, text: str) -> None:
     """Add a comment to an article."""
     from .articles import ArticleManager
 
@@ -1607,7 +1607,7 @@ def add(ctx: click.Context, article_id: str, text: str) -> None:
         raise click.ClickException("Failed to add comment") from e
 
 
-@comments.command("list")
+@article_comments.command("list")
 @click.argument("article_id")
 @click.option(
     "--format",
@@ -1673,7 +1673,7 @@ def list_comments(
         raise click.ClickException("Failed to list comments") from e
 
 
-@comments.command(name="update")
+@article_comments.command(name="update")
 @click.argument("comment_id")
 @click.argument("text")
 @click.pass_context
@@ -1684,7 +1684,7 @@ def comments_update(ctx: click.Context, comment_id: str, text: str) -> None:
     console.print("This feature requires additional API endpoints", style="blue")
 
 
-@comments.command()
+@article_comments.command()
 @click.argument("comment_id")
 @click.option(
     "--confirm",
@@ -1692,7 +1692,9 @@ def comments_update(ctx: click.Context, comment_id: str, text: str) -> None:
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete(ctx: click.Context, comment_id: str, confirm: bool) -> None:
+def articles_comments_delete(
+    ctx: click.Context, comment_id: str, confirm: bool
+) -> None:
     """Delete a comment."""
     console = Console()
 
@@ -1708,16 +1710,16 @@ def delete(ctx: click.Context, comment_id: str, confirm: bool) -> None:
 
 
 @articles.group()
-def attach() -> None:
+def article_attach() -> None:
     """Manage article attachments."""
     pass
 
 
-@attach.command()
+@article_attach.command()
 @click.argument("article_id")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
-def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
+def articles_attach_upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
     console = Console()
     console.print("⚠️  File upload functionality not yet implemented", style="yellow")
@@ -1726,7 +1728,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     )  # noqa: E501
 
 
-@attach.command()
+@article_attach.command()
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
@@ -1736,7 +1738,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(
+def articles_attach_download(
     ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]
 ) -> None:  # noqa: E501
     """Download an attachment from an article."""
@@ -1745,7 +1747,7 @@ def download(
     console.print("This feature requires binary file handling", style="blue")
 
 
-@attach.command("list")
+@article_attach.command("list")
 @click.argument("article_id")
 @click.option(
     "--format",
@@ -1754,7 +1756,7 @@ def download(
     help="Output format",
 )
 @click.pass_context
-def list_attachments(
+def articles_attach_list(
     ctx: click.Context,
     article_id: str,
     format: str,
@@ -1814,7 +1816,7 @@ def list_attachments(
         raise click.ClickException("Failed to list attachments") from e
 
 
-@attach.command()
+@article_attach.command()
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
@@ -1823,7 +1825,7 @@ def list_attachments(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(
+def articles_attach_delete(
     ctx: click.Context, article_id: str, attachment_id: str, confirm: bool
 ) -> None:  # noqa: E501
     """Delete an attachment from an article."""
