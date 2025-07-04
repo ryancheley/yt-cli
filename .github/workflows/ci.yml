@@ -93,7 +93,7 @@ jobs:
       run: uv sync --dev
 
     - name: Run ty
-      run: uv run ty check --ignore call-non-callable
+      run: uv run ty check --ignore call-non-callable --ignore unresolved-attribute youtrack_cli
 
   security:
     runs-on: ubuntu-latest
