@@ -1,6 +1,6 @@
 """Article management for YouTrack CLI."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import httpx
 from rich.console import Console
@@ -25,7 +25,7 @@ class ArticleManager:
         parent_id: Optional[str] = None,
         summary: Optional[str] = None,
         visibility: str = "public",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a new article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -76,7 +76,7 @@ class ArticleManager:
         fields: Optional[str] = None,
         top: Optional[int] = None,
         query: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """List articles with optional filtering."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -116,7 +116,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error listing articles: {str(e)}"}
 
-    async def get_article(self, article_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_article(self, article_id: str, fields: Optional[str] = None) -> dict[str, Any]:  # noqa: E501
         """Get a specific article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -151,13 +151,13 @@ class ArticleManager:
         content: Optional[str] = None,
         summary: Optional[str] = None,
         visibility: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Update an existing article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        article_data: Dict[str, Any] = {}
+        article_data: dict[str, Any] = {}
         if title:
             article_data["summary"] = title
         elif summary:
@@ -195,7 +195,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error updating article: {str(e)}"}
 
-    async def delete_article(self, article_id: str) -> Dict[str, Any]:
+    async def delete_article(self, article_id: str) -> dict[str, Any]:
         """Delete an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -221,7 +221,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error deleting article: {str(e)}"}
 
-    async def publish_article(self, article_id: str) -> Dict[str, Any]:
+    async def publish_article(self, article_id: str) -> dict[str, Any]:
         """Publish a draft article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -259,7 +259,7 @@ class ArticleManager:
         query: str,
         project_id: Optional[str] = None,
         top: Optional[int] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Search articles."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -293,7 +293,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error searching articles: {str(e)}"}
 
-    async def get_article_comments(self, article_id: str) -> Dict[str, Any]:
+    async def get_article_comments(self, article_id: str) -> dict[str, Any]:
         """Get comments for an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -317,7 +317,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error getting comments: {str(e)}"}
 
-    async def add_comment(self, article_id: str, text: str) -> Dict[str, Any]:
+    async def add_comment(self, article_id: str, text: str) -> dict[str, Any]:
         """Add a comment to an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -350,7 +350,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error adding comment: {str(e)}"}
 
-    async def get_article_attachments(self, article_id: str) -> Dict[str, Any]:
+    async def get_article_attachments(self, article_id: str) -> dict[str, Any]:
         """Get attachments for an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -372,9 +372,9 @@ class ArticleManager:
                         "message": f"Failed to get attachments: {error_text}",
                     }
         except Exception as e:
-            return {"status": "error", "message": f"Error getting attachments: {str(e)}"}
+            return {"status": "error", "message": f"Error getting attachments: {str(e)}"}  # noqa: E501
 
-    def display_articles_table(self, articles: List[Dict[str, Any]]) -> None:
+    def display_articles_table(self, articles: list[dict[str, Any]]) -> None:
         """Display articles in a table format."""
         if not articles:
             self.console.print("No articles found.", style="yellow")
@@ -403,7 +403,7 @@ class ArticleManager:
 
         self.console.print(table)
 
-    def display_articles_tree(self, articles: List[Dict[str, Any]]) -> None:
+    def display_articles_tree(self, articles: list[dict[str, Any]]) -> None:
         """Display articles in a tree format."""
         if not articles:
             self.console.print("No articles found.", style="yellow")
@@ -413,7 +413,7 @@ class ArticleManager:
 
         # Group articles by parent
         root_articles = []
-        child_articles: Dict[str, List[Dict[str, Any]]] = {}
+        child_articles: dict[str, list[dict[str, Any]]] = {}
 
         for article in articles:
             parent_id = article.get("parentArticle", {}).get("id")
@@ -424,12 +424,12 @@ class ArticleManager:
             else:
                 root_articles.append(article)
 
-        def add_article_to_tree(parent_node: Any, article: Dict[str, Any]) -> None:
+        def add_article_to_tree(parent_node: Any, article: dict[str, Any]) -> None:
             article_id = article.get("id")
             title = article.get("summary", "Untitled")
             visibility = article.get("visibility", {}).get("type", "unknown")
 
-            node_text = f"[green]{title}[/green] [dim]({article_id})[/dim] [yellow]({visibility})[/yellow]"
+            node_text = f"[green]{title}[/green] [dim]({article_id})[/dim] [yellow]({visibility})[/yellow]"  # noqa: E501
             child_node = parent_node.add(node_text)
 
             # Add children if any
@@ -443,21 +443,21 @@ class ArticleManager:
 
         self.console.print(tree)
 
-    def display_article_details(self, article: Dict[str, Any]) -> None:
+    def display_article_details(self, article: dict[str, Any]) -> None:
         """Display detailed information about an article."""
         self.console.print("\n[bold blue]Article Details[/bold blue]")
         self.console.print(f"ID: {article.get('id', 'N/A')}")
         self.console.print(f"Title: {article.get('summary', 'N/A')}")
-        self.console.print(f"Author: {article.get('author', {}).get('fullName', 'N/A')}")
+        self.console.print(f"Author: {article.get('author', {}).get('fullName', 'N/A')}")  # noqa: E501
         self.console.print(f"Created: {article.get('created', 'N/A')}")
         self.console.print(f"Updated: {article.get('updated', 'N/A')}")
-        self.console.print(f"Visibility: {article.get('visibility', {}).get('type', 'N/A')}")
+        self.console.print(f"Visibility: {article.get('visibility', {}).get('type', 'N/A')}")  # noqa: E501
 
         if article.get("project"):
-            self.console.print(f"Project: {article.get('project', {}).get('name', 'N/A')}")
+            self.console.print(f"Project: {article.get('project', {}).get('name', 'N/A')}")  # noqa: E501
 
         if article.get("parentArticle"):
-            self.console.print(f"Parent: {article.get('parentArticle', {}).get('summary', 'N/A')}")
+            self.console.print(f"Parent: {article.get('parentArticle', {}).get('summary', 'N/A')}")  # noqa: E501
 
         self.console.print("\n[bold]Content:[/bold]")
         self.console.print(article.get("content", "No content available"))
