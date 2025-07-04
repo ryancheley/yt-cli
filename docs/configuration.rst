@@ -262,3 +262,111 @@ Test your configuration by running:
 .. code-block:: bash
 
    yt auth login --test
+
+Configuration Examples
+-----------------------
+
+Basic Setup Example
+~~~~~~~~~~~~~~~~~~~
+
+Simple configuration for a single YouTrack instance:
+
+.. code-block:: bash
+
+   # ~/.config/youtrack-cli/.env
+   YOUTRACK_BASE_URL=https://company.youtrack.cloud
+   YOUTRACK_TOKEN=perm:cm9vdC5yb290.UGVybWlzc2lvbnM=.1234567890abcdef
+   YOUTRACK_USERNAME=john.doe
+   DEFAULT_PROJECT=WEB
+   OUTPUT_FORMAT=table
+
+Team Development Example
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Configuration optimized for team development workflows:
+
+.. code-block:: bash
+
+   # ~/.config/youtrack-cli/.env
+   YOUTRACK_BASE_URL=https://company.youtrack.cloud
+   YOUTRACK_TOKEN=perm:your-token-here
+   YOUTRACK_USERNAME=team.developer
+
+   # Project defaults
+   DEFAULT_PROJECT=TEAM-PROJECT
+
+   # Issue defaults
+   DEFAULTS_ASSIGNEE=john.doe
+   DEFAULTS_PRIORITY=Medium
+   DEFAULTS_TYPE=Task
+
+   # Display preferences
+   OUTPUT_FORMAT=table
+   MAX_RESULTS=25
+   SHOW_COLORS=true
+   DATE_FORMAT=%Y-%m-%d %H:%M
+
+   # Time tracking
+   TIME_ROUND_TO_MINUTES=15
+   TIME_DEFAULT_DURATION_FORMAT=hours
+
+CI/CD Pipeline Example
+~~~~~~~~~~~~~~~~~~~~~~
+
+Configuration for automated CI/CD integration:
+
+.. code-block:: bash
+
+   # CI environment variables
+   export YT_URL="https://company.youtrack.cloud"
+   export YT_TOKEN="${YOUTRACK_API_TOKEN}"  # From CI secrets
+   export YT_OUTPUT_FORMAT="json"
+   export YT_MAX_RESULTS="100"
+   export YT_SHOW_COLORS="false"
+   export YT_VERIFY_SSL="true"
+
+Multi-Environment Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using different configurations for different environments:
+
+.. code-block:: bash
+
+   # Development environment
+   # ~/.config/youtrack-cli/dev.env
+   YOUTRACK_BASE_URL=https://dev.youtrack.company.com
+   YOUTRACK_TOKEN=perm:dev-token-here
+   DEFAULT_PROJECT=DEV-PROJECT
+   OUTPUT_FORMAT=table
+
+   # Production environment
+   # ~/.config/youtrack-cli/prod.env
+   YOUTRACK_BASE_URL=https://youtrack.company.com
+   YOUTRACK_TOKEN=perm:prod-token-here
+   DEFAULT_PROJECT=PROD-PROJECT
+   OUTPUT_FORMAT=json
+
+   # Usage with different configs:
+   # yt --config ~/.config/youtrack-cli/dev.env issues list
+   # yt --config ~/.config/youtrack-cli/prod.env issues list
+
+Corporate Proxy Example
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Configuration for environments behind corporate proxy:
+
+.. code-block:: bash
+
+   # ~/.config/youtrack-cli/.env
+   YOUTRACK_BASE_URL=https://youtrack.company.com
+   YOUTRACK_TOKEN=perm:your-token-here
+   YOUTRACK_USERNAME=corporate.user
+
+   # Proxy settings (via environment variables)
+   export HTTP_PROXY=http://proxy.company.com:8080
+   export HTTPS_PROXY=http://proxy.company.com:8080
+   export NO_PROXY=localhost,127.0.0.1,.company.com
+
+   # SSL settings for corporate certificates
+   YOUTRACK_VERIFY_SSL=true
+   YOUTRACK_TIMEOUT=60

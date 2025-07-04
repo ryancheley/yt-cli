@@ -17,15 +17,48 @@ A powerful command line interface for JetBrains YouTrack issue tracking system.
 
 ### Installation
 
+#### Using uv (Recommended)
+
+The fastest and most reliable way to install YouTrack CLI:
+
+```bash
+# Install uv first (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install YouTrack CLI as a tool
+uv tool install youtrack-cli
+
+# Verify installation
+yt --version
+```
+
+#### Traditional pip installation
+
 ```bash
 # From PyPI (when available)
 pip install yt-cli
 
-# From source
+# With virtual environment (recommended for pip)
+python -m venv youtrack-env
+source youtrack-env/bin/activate  # Linux/macOS
+# or
+youtrack-env\Scripts\activate     # Windows
+pip install yt-cli
+```
+
+#### Development installation
+
+```bash
+# Clone and set up for development
 git clone https://github.com/YOUR_USERNAME/yt-cli.git
 cd yt-cli
+
+# Using uv (recommended)
 uv sync --dev
 uv pip install -e .
+
+# Or using pip
+pip install -e .[dev]
 ```
 
 ### Authentication
