@@ -488,6 +488,92 @@ yt reports velocity PROJECT-123 --sprints 3
 - **Error Handling**: Clear error messages for authentication and API issues
 - **Flexible Time Periods**: Support for custom date ranges and sprint counts
 
+### Administrative Operations
+
+Manage YouTrack system administration with the `yt admin` command group. These commands require administrative privileges in YouTrack:
+
+#### Global Settings Management
+
+```bash
+# Get all global settings
+yt admin global-settings get
+
+# Get a specific setting
+yt admin global-settings get server.name
+
+# Set a global setting
+yt admin global-settings set server.name "My YouTrack Instance"
+yt admin global-settings set server.maxUploadFileSize "50MB"
+```
+
+#### License Management
+
+```bash
+# Display license information
+yt admin license show
+
+# Show license usage statistics
+yt admin license usage
+```
+
+#### System Maintenance
+
+```bash
+# Clear system caches (with confirmation prompt)
+yt admin maintenance clear-cache
+
+# Clear caches without confirmation
+yt admin maintenance clear-cache --confirm
+```
+
+#### System Health Checks
+
+```bash
+# Run comprehensive health diagnostics
+yt admin health check
+```
+
+#### User Groups Management
+
+```bash
+# List all user groups
+yt admin user-groups list
+
+# List groups with specific fields
+yt admin user-groups list --fields "id,name,description,users(login)"
+
+# Create a new user group
+yt admin user-groups create "DevOps Team"
+
+# Create a group with description
+yt admin user-groups create "QA Team" --description "Quality Assurance Team"
+```
+
+#### Custom Fields Management
+
+```bash
+# List all custom fields
+yt admin fields list
+
+# List fields with specific information
+yt admin fields list --fields "id,name,fieldType,isPrivate"
+```
+
+#### Administrative Features
+
+- **Global Settings**: View and modify YouTrack server configuration
+- **License Management**: Monitor license status, usage, and expiration
+- **System Maintenance**: Perform system maintenance operations like cache clearing
+- **Health Monitoring**: Check system health and component status
+- **User Groups**: Manage user groups and team organization
+- **Custom Fields**: Oversee custom fields across all projects
+- **Permission Control**: Requires administrative privileges for all operations
+- **Rich Display**: Formatted tables and status indicators for all information
+- **Error Handling**: Clear error messages for permission and access issues
+- **Confirmation Prompts**: Safety prompts for destructive operations
+
+**Note**: Administrative commands require YouTrack administrator privileges. Users without sufficient permissions will receive appropriate error messages.
+
 ## Development
 
 This project uses `uv` for dependency management.

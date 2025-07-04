@@ -7,6 +7,7 @@ import click
 from rich.console import Console
 from rich.prompt import Prompt
 
+from .admin import AdminManager
 from .auth import AuthManager
 from .config import ConfigManager
 from .reports import ReportManager
@@ -1967,6 +1968,251 @@ def list_config(ctx: click.Context) -> None:
 def admin() -> None:
     """Administrative operations."""
     pass
+
+
+# Global Settings Commands
+@admin.group(name="global-settings")
+def admin_global_settings() -> None:
+    """Manage global YouTrack settings."""
+    pass
+
+
+@admin_global_settings.command(name="get")
+@click.argument("setting_key", required=False)
+@click.pass_context
+def admin_global_settings_get(ctx: click.Context, setting_key: Optional[str]) -> None:
+    """Get global settings."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_get_settings() -> None:
+        result = await admin_manager.get_global_settings(setting_key)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_global_settings(result["data"])
+
+    asyncio.run(run_get_settings())
+
+
+@admin_global_settings.command(name="set")
+@click.argument("setting_key")
+@click.argument("value")
+@click.pass_context
+def admin_global_settings_set(ctx: click.Context, setting_key: str, value: str) -> None:
+    """Set a global setting."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_set_setting() -> None:
+        result = await admin_manager.set_global_setting(setting_key, value)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        console.print(f"[green]Success:[/green] {result['message']}")
+
+    asyncio.run(run_set_setting())
+
+
+# License Commands
+@admin.group(name="license")
+def admin_license() -> None:
+    """License management."""
+    pass
+
+
+@admin_license.command(name="show")
+@click.pass_context
+def admin_license_show(ctx: click.Context) -> None:
+    """Display license information."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_show_license() -> None:
+        result = await admin_manager.get_license_info()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_license_info(result["data"])
+
+    asyncio.run(run_show_license())
+
+
+@admin_license.command(name="usage")
+@click.pass_context
+def admin_license_usage(ctx: click.Context) -> None:
+    """Show license usage statistics."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_license_usage() -> None:
+        result = await admin_manager.get_license_usage()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_license_info(result["data"])
+
+    asyncio.run(run_license_usage())
+
+
+# Maintenance Commands
+@admin.group(name="maintenance")
+def admin_maintenance() -> None:
+    """System maintenance operations."""
+    pass
+
+
+@admin_maintenance.command(name="clear-cache")
+@click.option(
+    "--confirm",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@click.pass_context
+def admin_maintenance_clear_cache(ctx: click.Context, confirm: bool) -> None:
+    """Clear system caches."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    if not confirm:
+        console.print("[yellow]Warning:[/yellow] This will clear all system caches.")
+        if not click.confirm("Continue?"):
+            console.print("Operation cancelled.")
+            return
+
+    async def run_clear_cache() -> None:
+        result = await admin_manager.clear_caches()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        console.print(f"[green]Success:[/green] {result['message']}")
+
+    asyncio.run(run_clear_cache())
+
+
+# Health Commands
+@admin.group(name="health")
+def admin_health() -> None:
+    """System health checks and diagnostics."""
+    pass
+
+
+@admin_health.command(name="check")
+@click.pass_context
+def admin_health_check(ctx: click.Context) -> None:
+    """Run health diagnostics."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_health_check() -> None:
+        result = await admin_manager.get_system_health()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_system_health(result["data"])
+
+    asyncio.run(run_health_check())
+
+
+# User Groups Commands
+@admin.group(name="user-groups")
+def admin_user_groups() -> None:
+    """Manage user groups and permissions."""
+    pass
+
+
+@admin_user_groups.command(name="list")
+@click.option(
+    "--fields",
+    "-f",
+    help="Comma-separated list of fields to return",
+)
+@click.pass_context
+def admin_user_groups_list(ctx: click.Context, fields: Optional[str]) -> None:
+    """List all user groups."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_list_groups() -> None:
+        result = await admin_manager.list_user_groups(fields)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_user_groups(result["data"])
+
+    asyncio.run(run_list_groups())
+
+
+@admin_user_groups.command(name="create")
+@click.argument("name")
+@click.option(
+    "--description",
+    "-d",
+    help="Group description",
+)
+@click.pass_context
+def admin_user_groups_create(
+    ctx: click.Context, name: str, description: Optional[str]
+) -> None:
+    """Create a new user group."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_create_group() -> None:
+        result = await admin_manager.create_user_group(name, description)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        console.print(f"[green]Success:[/green] {result['message']}")
+
+    asyncio.run(run_create_group())
+
+
+# Custom Fields Commands
+@admin.group(name="fields")
+def admin_fields() -> None:
+    """Manage custom fields across projects."""
+    pass
+
+
+@admin_fields.command(name="list")
+@click.option(
+    "--fields",
+    "-f",
+    help="Comma-separated list of fields to return",
+)
+@click.pass_context
+def admin_fields_list(ctx: click.Context, fields: Optional[str]) -> None:
+    """List all custom fields."""
+    admin_manager = AdminManager(ctx.obj.get("config"))
+    console = Console()
+
+    async def run_list_fields() -> None:
+        result = await admin_manager.list_custom_fields(fields)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_custom_fields(result["data"])
+
+    asyncio.run(run_list_fields())
 
 
 if __name__ == "__main__":
