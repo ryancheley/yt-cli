@@ -28,7 +28,7 @@ The easiest way to set up configuration is through the ``yt auth login`` command
 
    # Create configuration directory
    mkdir -p ~/.config/youtrack-cli
-   
+
    # Create the .env configuration file
    cat > ~/.config/youtrack-cli/.env << EOF
    YOUTRACK_BASE_URL=https://yourcompany.youtrack.cloud
@@ -47,8 +47,8 @@ The easiest way to set up configuration is through the ``yt auth login`` command
 
    # Optional: Default project for commands
    DEFAULT_PROJECT=PROJECT-ID
-   
-   # Optional: Output format preference  
+
+   # Optional: Output format preference
    OUTPUT_FORMAT=table
 
 Authentication Methods

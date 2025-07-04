@@ -183,7 +183,7 @@ Burndown Report Format
    Burndown Report: PROJECT-123 (Sprint 1)
    =======================================
    Period: 2024-01-15 to 2024-01-29
-   
+
    Progress Overview:
    ┌─────────────────┬─────────┬─────────────┬─────────────────┐
    │ Metric          │ Value   │ Target      │ Status          │
@@ -193,7 +193,7 @@ Burndown Report Format
    │ Remaining       │ 5       │ 0           │ ⚠ 5 remaining  │
    │ Completion      │ 80%     │ 100%        │ ⚠ 80% complete │
    └─────────────────┴─────────┴─────────────┴─────────────────┘
-   
+
    Daily Progress:
    ┌────────────┬─────────────┬─────────────┬─────────────────┐
    │ Date       │ Resolved    │ Remaining   │ Progress Bar    │
@@ -212,7 +212,7 @@ Velocity Report Format
 
    Velocity Report: PROJECT-123 (Last 5 Sprints)
    =============================================
-   
+
    Sprint Performance:
    ┌─────────────────┬─────────────┬─────────────┬─────────────────┐
    │ Sprint          │ Completed   │ Planned     │ Velocity        │
@@ -223,7 +223,7 @@ Velocity Report Format
    │ Sprint 4        │ 25 issues   │ 25 issues   │ 100% (Perfect)  │
    │ Sprint 5        │ 24 issues   │ 25 issues   │ 96% (Excellent) │
    └─────────────────┴─────────────┴─────────────┴─────────────────┘
-   
+
    Summary Metrics:
    ┌─────────────────────┬─────────────────┐
    │ Metric              │ Value           │
@@ -441,13 +441,13 @@ Automated Reporting
 
    #!/bin/bash
    # Daily burndown report automation
-   
+
    PROJECT_ID="PROJECT-123"
    CURRENT_SPRINT="Sprint 3"
-   
+
    # Generate daily burndown
    yt reports burndown "$PROJECT_ID" --sprint "$CURRENT_SPRINT" > daily_burndown.txt
-   
+
    # Email to stakeholders
    mail -s "Daily Burndown Report" stakeholders@company.com < daily_burndown.txt
 
@@ -458,9 +458,9 @@ Weekly Reporting
 
    #!/bin/bash
    # Weekly velocity and burndown summary
-   
+
    PROJECTS=("PROJECT-A" "PROJECT-B" "PROJECT-C")
-   
+
    for project in "${PROJECTS[@]}"; do
      echo "=== $project Report ===" >> weekly_report.txt
      yt reports velocity "$project" --sprints 3 >> weekly_report.txt
@@ -475,11 +475,11 @@ Data Export for Analysis
 
    # Export report data for external analysis
    PROJECT="ANALYSIS-PROJECT"
-   
+
    # Generate multiple report types
    yt reports burndown "$PROJECT" --start-date "2024-01-01" --end-date "2024-03-31" > burndown_q1.txt
    yt reports velocity "$PROJECT" --sprints 12 > velocity_annual.txt
-   
+
    # Process for dashboard systems
    # (Additional processing scripts would parse the output for BI tools)
 

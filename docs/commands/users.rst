@@ -492,7 +492,7 @@ Bulk User Management
 
    #!/bin/bash
    # Bulk user creation from CSV
-   
+
    while IFS=',' read -r login fullname email; do
      yt users create "$login" "$fullname" "$email" --force-change-password
      yt users permissions "$login" --action add_to_group --group-id employees
@@ -505,17 +505,17 @@ User Audit Script
 
    #!/bin/bash
    # Generate user audit report
-   
+
    echo "User Audit Report - $(date)"
    echo "================================"
-   
+
    # List all users
    yt users list --format json > users_audit.json
-   
+
    # Count active vs banned users
    echo "Active users: $(jq '[.[] | select(.banned == false)] | length' users_audit.json)"
    echo "Banned users: $(jq '[.[] | select(.banned == true)] | length' users_audit.json)"
-   
+
    # Users requiring password change
    echo "Users requiring password change:"
    jq -r '.[] | select(.forcePasswordChange == true) | .login' users_audit.json
@@ -527,11 +527,11 @@ Permission Cleanup
 
    # Remove departed employee from all sensitive groups
    DEPARTED_USER="former.employee"
-   
+
    # Remove from administrative groups
    yt users permissions "$DEPARTED_USER" --action remove_from_group --group-id administrators
    yt users permissions "$DEPARTED_USER" --action remove_from_group --group-id project-managers
-   
+
    # Ban the account
    yt users update "$DEPARTED_USER" --banned
 

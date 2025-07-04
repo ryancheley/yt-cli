@@ -20,23 +20,23 @@ Command Not Found
 1. **Check if installation was successful**:
 
    .. code-block:: bash
-   
+
       pip list | grep youtrack-cli
 
 2. **Verify PATH configuration**:
 
    .. code-block:: bash
-   
+
       # Check where pip installed the package
       pip show -f youtrack-cli
-      
+
       # Add to PATH if needed (add to ~/.bashrc or ~/.zshrc)
       export PATH="$HOME/.local/bin:$PATH"
 
 3. **Use full path temporarily**:
 
    .. code-block:: bash
-   
+
       python -m youtrack_cli --help
 
 Python Version Issues
@@ -50,7 +50,7 @@ Python Version Issues
 
    # Check Python version
    python --version
-   
+
    # If using multiple Python versions
    python3.9 -m pip install youtrack-cli
    python3.9 -m youtrack_cli --help
@@ -68,10 +68,10 @@ Virtual Environment Issues
    source venv/bin/activate  # Linux/macOS
    # or
    venv\Scripts\activate     # Windows
-   
+
    # Then install
    pip install youtrack-cli
-   
+
    # Verify installation
    yt --help
 
@@ -85,13 +85,13 @@ Permission Issues
 1. **Install for current user only**:
 
    .. code-block:: bash
-   
+
       pip install --user youtrack-cli
 
 2. **Use virtual environment** (recommended):
 
    .. code-block:: bash
-   
+
       python -m venv youtrack-env
       source youtrack-env/bin/activate  # Linux/macOS
       pip install youtrack-cli
@@ -99,7 +99,7 @@ Permission Issues
 3. **Use uv** (fastest):
 
    .. code-block:: bash
-   
+
       uv tool install youtrack-cli
 
 Authentication Issues
@@ -115,11 +115,11 @@ Login Failed
 1. **Wrong YouTrack URL**:
 
    .. code-block:: bash
-   
+
       # Ensure URL includes protocol and correct domain
       # ✅ Correct:
       https://yourcompany.youtrack.cloud
-      
+
       # ❌ Wrong:
       yourcompany.youtrack.cloud
       www.yourcompany.youtrack.cloud
@@ -133,10 +133,10 @@ Login Failed
 3. **Network connectivity**:
 
    .. code-block:: bash
-   
+
       # Test connection
       curl https://yourcompany.youtrack.cloud/api/admin/projects
-      
+
       # Check proxy settings if behind corporate firewall
 
 API Token Issues
@@ -155,17 +155,17 @@ API Token Issues
 2. **Verify token format**:
 
    .. code-block:: bash
-   
+
       # Tokens should start with 'perm:'
       # ✅ Correct format:
       perm:cm9vdC5yb290.UGVybWlzc2lvbnM=.1234567890abcdef
-      
+
       # ❌ Wrong: Missing 'perm:' prefix
 
 3. **Test token manually**:
 
    .. code-block:: bash
-   
+
       curl -H "Authorization: Bearer perm:your-token-here" \
            https://yourcompany.youtrack.cloud/api/admin/projects
 
@@ -179,13 +179,13 @@ Configuration File Issues
 1. **Check configuration file location**:
 
    .. code-block:: bash
-   
+
       yt config list --show-file
 
 2. **Verify file permissions**:
 
    .. code-block:: bash
-   
+
       # Configuration should be readable
       ls -la ~/.config/youtrack-cli/.env
       chmod 600 ~/.config/youtrack-cli/.env
@@ -193,7 +193,7 @@ Configuration File Issues
 3. **Validate configuration format**:
 
    .. code-block:: bash
-   
+
       # .env file format (NOT YAML):
       YOUTRACK_BASE_URL=https://yourcompany.youtrack.cloud
       YOUTRACK_TOKEN=perm:your-token-here
@@ -209,17 +209,17 @@ SSL Certificate Issues
 1. **Update certificates**:
 
    .. code-block:: bash
-   
+
       # Linux
       sudo apt-get update && sudo apt-get install ca-certificates
-      
+
       # macOS
       brew install ca-certificates
 
 2. **Temporary workaround** (not recommended for production):
 
    .. code-block:: bash
-   
+
       export PYTHONHTTPSVERIFY=0
       yt --help
 
@@ -253,26 +253,26 @@ Invalid Project or Issue ID
 1. **Verify project exists**:
 
    .. code-block:: bash
-   
+
       yt projects list
 
 2. **Check project key format**:
 
    .. code-block:: bash
-   
+
       # ✅ Correct format:
       yt issues create WEB-FRONTEND "Issue title"
-      
+
       # ❌ Wrong format:
       yt issues create "Web Frontend" "Issue title"
 
 3. **Verify issue ID format**:
 
    .. code-block:: bash
-   
+
       # ✅ Correct:
       yt issues update WEB-123 --state "In Progress"
-      
+
       # ❌ Wrong:
       yt issues update 123 --state "In Progress"
 
@@ -289,19 +289,19 @@ Connection Timeout
 1. **Check network connectivity**:
 
    .. code-block:: bash
-   
+
       ping yourcompany.youtrack.cloud
 
 2. **Test YouTrack API directly**:
 
    .. code-block:: bash
-   
+
       curl -I https://yourcompany.youtrack.cloud/api/admin/projects
 
 3. **Corporate proxy configuration**:
 
    .. code-block:: bash
-   
+
       # Set proxy environment variables
       export HTTP_PROXY=http://proxy.company.com:8080
       export HTTPS_PROXY=http://proxy.company.com:8080
@@ -317,7 +317,7 @@ Rate Limiting
 1. **Add delays between commands**:
 
    .. code-block:: bash
-   
+
       # Use in scripts
       yt issues list --limit 10
       sleep 1
@@ -341,14 +341,14 @@ Empty Results
 1. **Check user permissions**:
 
    .. code-block:: bash
-   
+
       # You might not have access to see certain projects/issues
       yt projects list  # See what projects you can access
 
 2. **Verify search parameters**:
 
    .. code-block:: bash
-   
+
       # Start with broader searches
       yt issues list --limit 5
       yt issues search "created: today"
@@ -356,7 +356,7 @@ Empty Results
 3. **Check project context**:
 
    .. code-block:: bash
-   
+
       # Specify project explicitly
       yt issues list --project PROJECT-KEY
 
@@ -370,21 +370,21 @@ Output Formatting Issues
 1. **Check terminal encoding**:
 
    .. code-block:: bash
-   
+
       export LANG=en_US.UTF-8
       export LC_ALL=en_US.UTF-8
 
 2. **Try different output formats**:
 
    .. code-block:: bash
-   
+
       yt issues list --format json
       yt issues list --format table
 
 3. **Disable colors if needed**:
 
    .. code-block:: bash
-   
+
       yt issues list --no-color
 
 Command-Specific Issues
@@ -400,7 +400,7 @@ Issue Creation Fails
 1. **Missing required fields**:
 
    .. code-block:: bash
-   
+
       # ✅ Include all required fields:
       yt issues create PROJECT-KEY "Issue summary" \
         --description "Detailed description" \
@@ -409,7 +409,7 @@ Issue Creation Fails
 2. **Invalid field values**:
 
    .. code-block:: bash
-   
+
       # Check valid values first:
       yt projects list  # For project keys
       yt issues list --limit 1  # To see valid field examples
@@ -417,7 +417,7 @@ Issue Creation Fails
 3. **Special characters in summary**:
 
    .. code-block:: bash
-   
+
       # Quote strings with special characters:
       yt issues create PROJECT-KEY "Fix: API returns 500 error"
 
@@ -431,12 +431,12 @@ Time Tracking Issues
 1. **Use correct time format**:
 
    .. code-block:: bash
-   
+
       # ✅ Correct formats:
       yt time log ISSUE-123 "2h 30m"
       yt time log ISSUE-123 "4h"
       yt time log ISSUE-123 "90m"
-      
+
       # ❌ Wrong formats:
       yt time log ISSUE-123 "2.5h"
       yt time log ISSUE-123 "2:30"
@@ -470,7 +470,7 @@ Check log files for detailed error information:
    # Default log location (varies by OS)
    # Linux/macOS:
    tail -f ~/.local/share/youtrack-cli/logs/youtrack-cli.log
-   
+
    # Windows:
    type %APPDATA%\youtrack-cli\logs\youtrack-cli.log
 
@@ -483,11 +483,11 @@ Every command has built-in help:
 
    # General help
    yt --help
-   
+
    # Command group help
    yt issues --help
    yt projects --help
-   
+
    # Specific command help
    yt issues create --help
    yt time log --help
@@ -501,7 +501,7 @@ Verify your setup is working:
 
    # Test authentication
    yt auth login --test
-   
+
    # Test basic operations
    yt projects list --limit 1
    yt issues list --limit 1
@@ -583,6 +583,6 @@ When reporting issues, include:
    yt --version
    python --version
    pip list | grep youtrack-cli
-   
+
    # Error output with debug flag
    yt --debug [your-command-here]

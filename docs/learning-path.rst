@@ -17,7 +17,7 @@ Learning Levels Overview
 
 **Intermediate (Level 2)**: Comfortable with basics, ready for workflows
 - Focus: Team collaboration, automation basics
-- Time: 4-6 hours  
+- Time: 4-6 hours
 - Goal: Participate effectively in team workflows
 
 **Advanced (Level 3)**: Power users, automation and integration
@@ -53,21 +53,21 @@ Module 1.1: Installation and Setup (30 minutes)
 1. **Install YouTrack CLI**:
 
    .. code-block:: bash
-   
+
       pip install youtrack-cli
       yt --version
 
 2. **First authentication**:
 
    .. code-block:: bash
-   
+
       yt auth login
       # Follow prompts to enter YouTrack URL, username, password
 
 3. **Verify connection**:
 
    .. code-block:: bash
-   
+
       yt projects list
 
 **Success Criteria**: You can see a list of projects you have access to.
@@ -88,13 +88,13 @@ Module 1.2: Understanding YouTrack Concepts (45 minutes)
 1. **Explore existing data**:
 
    .. code-block:: bash
-   
+
       # See what projects exist
       yt projects list
-      
+
       # Look at issues in a project (replace PROJECT-KEY with actual project)
       yt issues list --project PROJECT-KEY --limit 5
-      
+
       # Examine one issue in detail
       yt issues get ISSUE-ID
 
@@ -165,10 +165,10 @@ Module 1.4: Searching and Filtering (45 minutes)
 
    # Find issues assigned to you
    yt issues list --assignee me
-   
+
    # Find issues in a specific state
    yt issues list --state "Open"
-   
+
    # Find issues with specific priority
    yt issues list --priority "High"
 
@@ -178,10 +178,10 @@ Module 1.4: Searching and Filtering (45 minutes)
 
    # Use search query syntax
    yt issues search "assignee:me state:Open"
-   
+
    # Search by date
    yt issues search "created:today"
-   
+
    # Search in description text
    yt issues search "login bug"
 
@@ -237,7 +237,7 @@ Module 2.1: Team Workflows (60 minutes)
    yt issues update YOUR-ISSUE --state "In Review" \
      --assignee "team-lead" \
      --tags "ready-for-review"
-   
+
    # Add review request
    yt issues comments add YOUR-ISSUE "Ready for review. Changes in payment processing module. Focus on error handling."
 
@@ -247,7 +247,7 @@ Module 2.1: Team Workflows (60 minutes)
 
    # Find bugs needing triage
    yt issues search "type:Bug state:Open priority:Unassigned"
-   
+
    # Add triage comment
    yt issues comments add BUG-ID "Can reproduce on Chrome 120. Affects checkout flow. Suggest priority: High"
 
@@ -278,7 +278,7 @@ Module 2.2: Time Tracking and Reporting (45 minutes)
 
    # Personal time report
    yt time report --from "2024-01-01" --to "2024-01-07" --assignee me
-   
+
    # Project time report
    yt time report --project PROJECT-KEY --from "this-week"
 
@@ -302,7 +302,7 @@ Module 2.3: Advanced Issue Management (75 minutes)
    yt issues create PROJECT "Epic: User Authentication System" --type "Epic"
    yt issues create PROJECT "Implement login page" --type "Task"
    yt issues create PROJECT "Add password reset" --type "Task"
-   
+
    # Link them together
    yt issues links create TASK-1 "subtask of" EPIC-1
    yt issues links create TASK-2 "subtask of" EPIC-1
@@ -313,7 +313,7 @@ Module 2.3: Advanced Issue Management (75 minutes)
 
    # Add organization tags
    yt issues update ISSUE-ID --tags "frontend,sprint-15,critical-path"
-   
+
    # Search by tags
    yt issues search "tag:{frontend,urgent}"
 
@@ -323,7 +323,7 @@ Module 2.3: Advanced Issue Management (75 minutes)
 
    # Upload screenshot of bug
    yt issues attach upload ISSUE-ID ~/Desktop/bug-screenshot.png
-   
+
    # List attachments
    yt issues attach list ISSUE-ID
 
@@ -345,7 +345,7 @@ Module 2.4: Project Management Basics (60 minutes)
 
    # List project details
    yt projects list --detailed
-   
+
    # View project configuration
    yt projects configure PROJECT-KEY --show
 
@@ -355,7 +355,7 @@ Module 2.4: Project Management Basics (60 minutes)
 
    # List agile boards
    yt boards list
-   
+
    # View board details
    yt boards view BOARD-ID
 
@@ -403,23 +403,23 @@ Module 3.1: Automation and Scripting (90 minutes)
 
    #!/bin/bash
    # Script to update multiple issues
-   
+
    set -e  # Exit on error
-   
+
    # Find issues to update
    ISSUES=$(yt issues search "tag:legacy-code state:Open" --format json)
-   
+
    # Process each issue
    echo "$ISSUES" | jq -r '.[].id' | while read issue_id; do
      echo "Updating $issue_id..."
-     
+
      # Update with error handling
      if yt issues update "$issue_id" --tags "technical-debt" --priority "Medium"; then
        echo "✅ Updated $issue_id"
      else
        echo "❌ Failed to update $issue_id"
      fi
-     
+
      sleep 1  # Rate limiting
    done
 
@@ -429,23 +429,23 @@ Module 3.1: Automation and Scripting (90 minutes)
 
    #!/bin/bash
    # Generate daily team report
-   
+
    DATE=$(date +%Y-%m-%d)
    REPORT_FILE="daily-report-$DATE.md"
-   
+
    cat << EOF > "$REPORT_FILE"
    # Daily Report - $DATE
-   
+
    ## Issues Completed
    $(yt issues search "resolved:today" --format json | jq 'length') issues
-   
+
    ## Active Issues
    $(yt issues search "state:\"In Progress\" updated:today" --format json | jq 'length') issues
-   
+
    ## Time Logged
    $(yt time report --from today --to today --format json | jq '[.[] | .duration] | add // 0') hours
    EOF
-   
+
    echo "Report generated: $REPORT_FILE"
 
 **Success Criteria**: You can automate repetitive YouTrack operations.
@@ -467,39 +467,39 @@ Create `.github/workflows/youtrack.yml`:
 .. code-block:: yaml
 
    name: YouTrack Integration
-   
+
    on:
      pull_request:
        types: [opened, synchronize, closed]
      push:
        branches: [main]
-   
+
    jobs:
      youtrack-update:
        runs-on: ubuntu-latest
        if: contains(github.head_ref, 'WEB-') || contains(github.head_ref, 'API-')
-       
+
        steps:
          - name: Extract Issue ID
            run: |
              ISSUE_ID=$(echo "${{ github.head_ref }}" | grep -oE '[A-Z]+-[0-9]+')
              echo "ISSUE_ID=$ISSUE_ID" >> $GITHUB_ENV
-         
+
          - name: Install YouTrack CLI
            run: pip install youtrack-cli
-         
+
          - name: Configure YouTrack CLI
            run: |
              mkdir -p ~/.config/youtrack-cli
              echo "YOUTRACK_BASE_URL=${{ secrets.YOUTRACK_URL }}" >> ~/.config/youtrack-cli/.env
              echo "YOUTRACK_TOKEN=${{ secrets.YOUTRACK_TOKEN }}" >> ~/.config/youtrack-cli/.env
-         
+
          - name: Update Issue on PR
            if: github.event.action == 'opened'
            run: |
              yt issues update $ISSUE_ID --state "In Review"
              yt issues comments add $ISSUE_ID "🔄 PR opened: ${{ github.event.pull_request.html_url }}"
-         
+
          - name: Update Issue on Merge
            if: github.event.action == 'closed' && github.event.pull_request.merged
            run: |
@@ -512,13 +512,13 @@ Create `.github/workflows/youtrack.yml`:
 
    # deployment-script.sh
    #!/bin/bash
-   
+
    VERSION=$1
    ENVIRONMENT=$2
-   
+
    # Get issues included in this deployment
    ISSUES=$(git log --oneline "$PREVIOUS_VERSION..$VERSION" | grep -oE '[A-Z]+-[0-9]+' | sort -u)
-   
+
    # Update each issue
    for issue in $ISSUES; do
      if [[ "$ENVIRONMENT" == "production" ]]; then
@@ -547,12 +547,12 @@ Module 3.3: Advanced Reporting and Analytics (90 minutes)
 
    #!/bin/bash
    # Calculate team velocity over last 4 sprints
-   
+
    for sprint in {12..15}; do
      COMPLETED=$(yt issues search "tag:sprint-$sprint state:{Done,Resolved}" --format json | jq 'length')
      POINTS=$(yt issues search "tag:sprint-$sprint state:{Done,Resolved}" --format json | \
               jq '[.[] | .storyPoints // 1] | add')
-     
+
      echo "Sprint $sprint: $COMPLETED issues, $POINTS points"
    done
 
@@ -562,16 +562,16 @@ Module 3.3: Advanced Reporting and Analytics (90 minutes)
 
    #!/bin/bash
    # Generate bug trend data for last 30 days
-   
+
    echo "Date,Created,Resolved,Open" > bug-trends.csv
-   
+
    for i in {30..0}; do
      DATE=$(date -d "$i days ago" +%Y-%m-%d)
-     
+
      CREATED=$(yt issues search "type:Bug created:$DATE" --format json | jq 'length')
      RESOLVED=$(yt issues search "type:Bug resolved:$DATE" --format json | jq 'length')
      OPEN=$(yt issues search "type:Bug state:Open created:..$DATE" --format json | jq 'length')
-     
+
      echo "$DATE,$CREATED,$RESOLVED,$OPEN" >> bug-trends.csv
    done
 
@@ -593,14 +593,14 @@ Module 3.4: Integration with External Tools (120 minutes)
 
    #!/bin/bash
    # Send daily summary to Slack
-   
+
    SLACK_WEBHOOK="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-   
+
    # Get today's stats
    CREATED_TODAY=$(yt issues search "created:today" --format json | jq 'length')
    COMPLETED_TODAY=$(yt issues search "resolved:today" --format json | jq 'length')
    IN_PROGRESS=$(yt issues search "state:\"In Progress\"" --format json | jq 'length')
-   
+
    # Format Slack message
    MESSAGE=$(cat << EOF
    {
@@ -616,7 +616,7 @@ Module 3.4: Integration with External Tools (120 minutes)
    }
    EOF
    )
-   
+
    # Send to Slack
    curl -X POST -H 'Content-type: application/json' \
         --data "$MESSAGE" "$SLACK_WEBHOOK"
@@ -627,15 +627,15 @@ Module 3.4: Integration with External Tools (120 minutes)
 
    #!/bin/bash
    # Create incidents from monitoring alerts
-   
+
    # Read alert from monitoring system (example)
    ALERT_DATA=$(cat /tmp/alert.json)
-   
+
    # Parse alert details
    SERVICE=$(echo "$ALERT_DATA" | jq -r '.service')
    SEVERITY=$(echo "$ALERT_DATA" | jq -r '.severity')
    MESSAGE=$(echo "$ALERT_DATA" | jq -r '.message')
-   
+
    # Create incident in YouTrack
    INCIDENT_ID=$(yt issues create INFRA "Service Alert: $SERVICE" \
      --description "Automated incident from monitoring: $MESSAGE" \
@@ -644,7 +644,7 @@ Module 3.4: Integration with External Tools (120 minutes)
      --assignee "oncall-engineer" \
      --tags "auto-created,monitoring" \
      --format json | jq -r '.id')
-   
+
    # Add monitoring data as comment
    yt issues comments add "$INCIDENT_ID" "$(echo "$ALERT_DATA" | jq .)"
 
@@ -714,7 +714,7 @@ Study Schedule Recommendations
 
 **Part-Time Learning** (30 minutes/day):
 - Week 1-2: Level 1 (Beginner)
-- Week 3-5: Level 2 (Intermediate)  
+- Week 3-5: Level 2 (Intermediate)
 - Week 6-10: Level 3 (Advanced)
 
 **Intensive Learning** (2 hours/day):

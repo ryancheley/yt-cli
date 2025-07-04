@@ -221,7 +221,7 @@ Project Features
 
 **Project Templates**
   YouTrack supports different project templates that configure workflows, fields, and boards:
-  
+
   * **scrum** - Configured for Scrum methodology with sprints and story points
   * **kanban** - Configured for Kanban workflow with continuous flow
 
@@ -437,17 +437,17 @@ Scripting and Automation
 
    #!/bin/bash
    # Project setup script
-   
+
    PROJECT_NAME="New Development Project"
    PROJECT_KEY="NDP"
    LEADER="project.manager"
-   
+
    # Create project
    yt projects create "$PROJECT_NAME" "$PROJECT_KEY" \
      --leader "$LEADER" \
      --template scrum \
      --description "Automated project creation"
-   
+
    # Verify creation
    yt projects configure "$PROJECT_KEY" --show-details
 
@@ -460,7 +460,7 @@ Project Reporting
    yt projects list --format json \
      --fields "name,shortName,leader(fullName),created,archived" \
      > project_inventory.json
-   
+
    # List only archived projects
    yt projects list --show-archived --format json | \
      jq '.[] | select(.archived == true)'
@@ -474,7 +474,7 @@ Bulk Operations
    for project in OLD1 OLD2 OLD3; do
      yt projects archive "$project" --confirm
    done
-   
+
    # Update descriptions for multiple projects
    while read -r project desc; do
      yt projects configure "$project" --description "$desc"

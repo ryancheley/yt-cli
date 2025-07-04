@@ -15,7 +15,7 @@ Windows
 ~~~~~~~
 
 1. **Install Python** (if not already installed):
-   
+
    Download Python from https://python.org/downloads/ and ensure "Add Python to PATH" is checked during installation.
 
 2. **Verify Python installation**:

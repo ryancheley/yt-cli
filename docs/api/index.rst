@@ -144,10 +144,10 @@ Creating custom automation scripts:
    def auto_assign_issues():
        settings = Settings()
        client = YouTrackClient.from_settings(settings)
-       
+
        # Get unassigned issues
        issues = client.issues.list(assignee=None, state="Open")
-       
+
        for issue in issues:
            if "frontend" in issue.summary.lower():
                client.issues.update(issue.id, assignee="frontend-team")
@@ -171,10 +171,10 @@ Using YouTrack CLI in data analysis:
 
    # Get issues data
    issues = client.issues.list(project="PROJECT-ID")
-   
+
    # Convert to DataFrame
    df = pd.DataFrame([issue.dict() for issue in issues])
-   
+
    # Analyze issue metrics
    state_counts = df.groupby('state').size()
    print(state_counts)

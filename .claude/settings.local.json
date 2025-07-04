@@ -30,7 +30,9 @@
       "mcp__git__git_checkout",
       "Bash(pytest:*)",
       "Bash(rg:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

@@ -157,7 +157,7 @@ Board Types
 
 **Scrum Boards**
   Designed for teams using Scrum methodology with time-boxed sprints:
-  
+
   * Sprint planning and management
   * Story points and estimation
   * Burndown charts
@@ -165,7 +165,7 @@ Board Types
 
 **Kanban Boards**
   Designed for continuous flow methodology:
-  
+
   * Work-in-progress (WIP) limits
   * Cycle time tracking
   * Cumulative flow diagrams
@@ -394,12 +394,12 @@ When viewing a specific board, detailed information is displayed:
 
    Board: Development Board (BOARD-123)
    =====================================
-   
+
    Owner: John Doe (john.doe)
    Project: Web Project (WEB-PROJ)
    Type: Scrum
    Created: 2024-01-15
-   
+
    Columns:
    ┌─────────────┬─────────────────┬─────────────────┐
    │ Name        │ ID              │ WIP Limit       │
@@ -409,7 +409,7 @@ When viewing a specific board, detailed information is displayed:
    │ Review      │ col-review      │ 2               │
    │ Done        │ col-done        │ None            │
    └─────────────┴─────────────────┴─────────────────┘
-   
+
    Active Sprint: Sprint 3 (2024-01-15 - 2024-01-29)
 
 Error Handling
@@ -445,17 +445,17 @@ Board Monitoring Script
 
    #!/bin/bash
    # Monitor board health and configuration
-   
+
    echo "Board Health Report - $(date)"
    echo "=============================="
-   
+
    # List all boards
    BOARDS=$(yt boards list --format json | jq -r '.[].id')
-   
+
    for board in $BOARDS; do
      echo "Checking board: $board"
      yt boards view "$board" --format json > "/tmp/board_${board}.json"
-     
+
      # Check for empty boards or configuration issues
      COLUMNS=$(jq '.columns | length' "/tmp/board_${board}.json")
      echo "  Columns: $COLUMNS"
@@ -468,18 +468,18 @@ Board Backup Script
 
    #!/bin/bash
    # Backup board configurations
-   
+
    BACKUP_DIR="board_backups_$(date +%Y%m%d)"
    mkdir -p "$BACKUP_DIR"
-   
+
    # Export all board configurations
    yt boards list --format json > "$BACKUP_DIR/boards_list.json"
-   
+
    # Export individual board details
    yt boards list --format json | jq -r '.[].id' | while read board_id; do
      yt boards view "$board_id" --format json > "$BACKUP_DIR/board_${board_id}.json"
    done
-   
+
    echo "Board backup completed in $BACKUP_DIR"
 
 Project Board Analysis
@@ -489,23 +489,23 @@ Project Board Analysis
 
    #!/bin/bash
    # Analyze boards by project
-   
+
    PROJECT_ID="$1"
    if [ -z "$PROJECT_ID" ]; then
      echo "Usage: $0 PROJECT_ID"
      exit 1
    fi
-   
+
    echo "Board Analysis for Project: $PROJECT_ID"
    echo "======================================="
-   
+
    # List project boards
    yt boards list --project-id "$PROJECT_ID" --format json > project_boards.json
-   
+
    # Count boards
    BOARD_COUNT=$(jq '. | length' project_boards.json)
    echo "Total boards: $BOARD_COUNT"
-   
+
    # List board owners
    echo "Board owners:"
    jq -r '.[] | "\(.name): \(.owner.fullName)"' project_boards.json

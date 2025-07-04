@@ -101,34 +101,34 @@ YouTrack is an issue tracking and project management tool by JetBrains. If you'r
   ```rst
   Command Group
   =============
-  
+
   .. contents:: Table of Contents
      :local:
      :depth: 2
-  
+
   Overview
   --------
-  
+
   Base Command
   ------------
-  
+
   Commands
   --------
-  
+
   [Individual Commands with Examples]
-  
+
   Common Workflows
   ----------------
-  
+
   Best Practices
   --------------
-  
+
   Output Formats
   --------------
-  
+
   Error Handling
   --------------
-  
+
   See Also
   --------
   ```
@@ -292,7 +292,7 @@ The codebase review revealed **exceptional implementation quality**:
 
 **🏗️ Architecture Strengths:**
 - **Consistent Manager Pattern**: All modules follow a clean `*Manager` class pattern
-- **Standardized Error Handling**: Uniform error response structure across all commands  
+- **Standardized Error Handling**: Uniform error response structure across all commands
 - **Rich Console Integration**: Beautiful table formatting with consistent styling
 - **Async/HTTP Best Practices**: Proper httpx usage with authentication handling
 - **Pydantic Integration**: Robust configuration and validation throughout
@@ -308,7 +308,7 @@ The codebase review revealed **exceptional implementation quality**:
 Based on the actual codebase quality, the documentation needs are **less critical** than initially assumed:
 
 1. **Most Critical Issues Are Already Resolved** ✅
-2. **Documentation Accurately Reflects Reality** ✅  
+2. **Documentation Accurately Reflects Reality** ✅
 3. **Focus Should Shift to Enhancement** rather than correction
 4. **Code Quality Documentation** should be prioritized to showcase the excellent architecture
 
@@ -329,7 +329,7 @@ This YouTrack CLI project demonstrates **outstanding software engineering practi
 
 **Issues Found:**
 - **`yt issues create`**: Documentation shows `--title` and `--description` as options, but implementation requires `PROJECT_ID` and `SUMMARY` as positional arguments
-- **`yt issues search`**: Documentation shows `--query` as option, but implementation requires `QUERY` as positional argument  
+- **`yt issues search`**: Documentation shows `--query` as option, but implementation requires `QUERY` as positional argument
 - **`yt time log`**: Documentation shows `--duration` as option, but implementation requires `ISSUE_ID` and `DURATION` as positional arguments
 - **Multiple commands**: Inconsistent option flag syntax between docs and implementation
 
@@ -345,7 +345,7 @@ yt issues create PROJECT_ID "Fix login bug" --description "Users cannot log in"
 # WRONG (as documented):
 yt issues search --query "assignee:me state:open"
 
-# CORRECT (actual implementation): 
+# CORRECT (actual implementation):
 yt issues search "assignee:me state:open"
 
 # WRONG (as documented):
@@ -754,7 +754,7 @@ Changelog
 **Documentation Metrics**:
 - **Total documentation**: 10 comprehensive guides (3,000+ lines)
 - **Learning path**: 835 lines of structured education
-- **Workflow examples**: 581 lines of real-world scenarios  
+- **Workflow examples**: 581 lines of real-world scenarios
 - **Troubleshooting**: 588 lines of problem-solving
 - **Command accuracy**: 100% verified against implementation
 - **Example quality**: All realistic, contextual scenarios

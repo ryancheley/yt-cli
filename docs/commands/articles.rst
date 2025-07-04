@@ -604,7 +604,7 @@ Article Features
 
 **Visibility Control**
   Articles can have different visibility levels:
-  
+
   * **public** - Visible to all users
   * **private** - Visible only to the author (draft mode)
   * **project** - Visible to project members only

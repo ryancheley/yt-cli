@@ -17,7 +17,7 @@ Issues
 **Issues** are the fundamental work items in YouTrack. They represent:
 
 * **Bugs** - Software defects that need to be fixed
-* **Features** - New functionality to be implemented  
+* **Features** - New functionality to be implemented
 * **Tasks** - General work items or to-do items
 * **Epics** - Large features broken down into smaller issues
 
@@ -36,7 +36,7 @@ Projects
 **Projects** are containers that organize related issues. Examples:
 
 * ``WEB-FRONTEND`` - Issues related to the web application UI
-* ``API-BACKEND`` - Issues for backend API development  
+* ``API-BACKEND`` - Issues for backend API development
 * ``MOBILE-APP`` - Mobile application issues
 * ``INFRA`` - Infrastructure and DevOps issues
 
@@ -140,13 +140,13 @@ Here's how YouTrack concepts map to CLI commands:
 
    # Create an issue
    yt issues create PROJECT-ID "Issue summary" --type Bug --priority High
-   
+
    # List issues in a project
    yt issues list --project PROJECT-ID
-   
+
    # Update issue state
    yt issues update ISSUE-ID --state "In Progress"
-   
+
    # Assign issue to someone
    yt issues assign ISSUE-ID username
 
@@ -156,7 +156,7 @@ Here's how YouTrack concepts map to CLI commands:
 
    # List all projects
    yt projects list
-   
+
    # Create a new project
    yt projects create --name "My Project" --key "MP"
 
@@ -166,7 +166,7 @@ Here's how YouTrack concepts map to CLI commands:
 
    # Add a comment
    yt issues comments add ISSUE-ID "Comment text"
-   
+
    # List comments
    yt issues comments list ISSUE-ID
 
@@ -176,7 +176,7 @@ Here's how YouTrack concepts map to CLI commands:
 
    # Log work time
    yt time log ISSUE-ID "2h 30m" --description "Fixed the bug"
-   
+
    # Generate time report
    yt time report --from "2024-01-01" --to "2024-01-31"
 

@@ -637,7 +637,7 @@ Monitoring and Auditing
    for check in "${COMPLIANCE_CHECKS[@]}"; do
      IFS=':' read key requirement <<< "$check"
      value=$(yt config get "$key")
-     
+
      if [ "$requirement" = "required" ] && [ -z "$value" ]; then
        echo "❌ $key: Missing (required)"
      else

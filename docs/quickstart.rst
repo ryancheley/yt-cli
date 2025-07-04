@@ -13,7 +13,7 @@ YouTrack is an issue tracking and project management tool by JetBrains. If you'r
 **Key Concepts (Quick Reference):**
 
 * **Issues**: Work items like bugs, features, or tasks that need to be tracked
-* **Projects**: Containers that organize related issues (e.g., "WEB-FRONTEND", "MOBILE-APP")  
+* **Projects**: Containers that organize related issues (e.g., "WEB-FRONTEND", "MOBILE-APP")
 * **States**: Issue statuses like "Open", "In Progress", "Resolved", "Closed"
 * **Assignee**: The person responsible for working on an issue
 * **Priority**: Importance level (Critical, High, Medium, Low)

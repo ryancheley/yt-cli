@@ -427,14 +427,14 @@ User Group Management
 
    # Set up new project team
    PROJECT_NAME="Alpha"
-   
+
    # Create project-specific groups
    yt admin user-groups create "${PROJECT_NAME} Developers" \
      --description "Development team for ${PROJECT_NAME} project"
-   
+
    yt admin user-groups create "${PROJECT_NAME} Testers" \
      --description "QA team for ${PROJECT_NAME} project"
-   
+
    yt admin user-groups create "${PROJECT_NAME} Managers" \
      --description "Project managers for ${PROJECT_NAME} project"
 
