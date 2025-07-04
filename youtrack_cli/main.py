@@ -45,7 +45,7 @@ def articles() -> None:
     pass
 
 
-@articles.command()
+@articles.command(name="create")
 @click.argument("title")
 @click.option(
     "--content",
@@ -74,7 +74,7 @@ def articles() -> None:
     help="Article visibility level",
 )
 @click.pass_context
-def create(
+def articles_create(
     ctx: click.Context,
     title: str,
     content: str,
@@ -237,7 +237,7 @@ def publish(ctx: click.Context, article_id: str) -> None:
         raise click.ClickException("Failed to publish article") from e
 
 
-@articles.command()
+@articles.command(name="list")
 @click.option(
     "--project-id",
     "-p",
@@ -270,7 +270,7 @@ def publish(ctx: click.Context, article_id: str) -> None:
     help="Output format",
 )
 @click.pass_context
-def list(
+def articles_list(
     ctx: click.Context,
     project_id: Optional[str],
     parent_id: Optional[str],
@@ -530,10 +530,10 @@ def sort(
             article_manager.display_articles_table(articles)
 
             if update:
-                console.print("\n⚠️  Article sorting functionality requires manual reordering", style="yellow")
-                console.print("Use the YouTrack web interface to drag and drop articles to reorder them.", style="blue")
+                console.print("\n⚠️  Article sorting functionality requires manual reordering", style="yellow")  # noqa: E501
+                console.print("Use the YouTrack web interface to drag and drop articles to reorder them.", style="blue")  # noqa: E501
             else:
-                console.print("\n[dim]Use --update flag to apply sorting changes[/dim]", style="blue")
+                console.print("\n[dim]Use --update flag to apply sorting changes[/dim]", style="blue")  # noqa: E501
 
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -623,7 +623,7 @@ def list_comments(
                     table.add_row(
                         comment.get("id", "N/A"),
                         comment.get("author", {}).get("fullName", "N/A"),
-                        comment.get("text", "N/A")[:100] + ("..." if len(comment.get("text", "")) > 100 else ""),
+                        comment.get("text", "N/A")[:100] + ("..." if len(comment.get("text", "")) > 100 else ""),  # noqa: E501
                         comment.get("created", "N/A"),
                     )
 
@@ -641,11 +641,11 @@ def list_comments(
         raise click.ClickException("Failed to list comments") from e
 
 
-@comments.command()
+@comments.command(name="update")
 @click.argument("comment_id")
 @click.argument("text")
 @click.pass_context
-def update(ctx: click.Context, comment_id: str, text: str) -> None:
+def comments_update(ctx: click.Context, comment_id: str, text: str) -> None:
     """Update an existing comment."""
     console = Console()
     console.print("⚠️  Comment update functionality not yet implemented", style="yellow")
@@ -665,7 +665,7 @@ def delete(ctx: click.Context, comment_id: str, confirm: bool) -> None:
     console = Console()
 
     if not confirm:
-        if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
+        if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):  # noqa: E501
             console.print("Delete cancelled.", style="yellow")
             return
 
@@ -687,7 +687,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
     console = Console()
     console.print("⚠️  File upload functionality not yet implemented", style="yellow")
-    console.print("This feature requires multipart form upload implementation", style="blue")
+    console.print("This feature requires multipart form upload implementation", style="blue")  # noqa: E501
 
 
 @attach.command()
@@ -700,7 +700,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]) -> None:
+def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]) -> None:  # noqa: E501
     """Download an attachment from an article."""
     console = Console()
     console.print("⚠️  File download functionality not yet implemented", style="yellow")
@@ -728,7 +728,7 @@ def list_attachments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print(f"📎 Fetching attachments for article '{article_id}'...", style="blue")
+    console.print(f"📎 Fetching attachments for article '{article_id}'...", style="blue")  # noqa: E501
 
     try:
         result = asyncio.run(article_manager.get_article_attachments(article_id))
@@ -781,16 +781,16 @@ def list_attachments(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, confirm: bool) -> None:
+def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, confirm: bool) -> None:  # noqa: E501
     """Delete an attachment from an article."""
     console = Console()
 
     if not confirm:
-        if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):
+        if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):  # noqa: E501
             console.print("Delete cancelled.", style="yellow")
             return
 
-    console.print("⚠️  Attachment delete functionality not yet implemented", style="yellow")
+    console.print("⚠️  Attachment delete functionality not yet implemented", style="yellow")  # noqa: E501
     console.print("This feature requires additional API endpoints", style="blue")
 
 
@@ -800,7 +800,7 @@ def projects() -> None:
     pass
 
 
-@projects.command()
+@projects.command(name="list")
 @click.option(
     "--fields",
     "-f",
@@ -824,7 +824,7 @@ def projects() -> None:
     help="Output format",
 )
 @click.pass_context
-def list(
+def projects_list(
     ctx: click.Context,
     fields: Optional[str],
     top: Optional[int],
@@ -866,7 +866,7 @@ def list(
         raise click.ClickException("Failed to list projects") from e
 
 
-@projects.command()
+@projects.command(name="create")
 @click.argument("name")
 @click.argument("short_name")
 @click.option(
@@ -887,7 +887,7 @@ def list(
     help="Project template",
 )
 @click.pass_context
-def create(
+def projects_create(
     ctx: click.Context,
     name: str,
     short_name: str,
@@ -1205,7 +1205,7 @@ def create_user(
         raise click.ClickException("Failed to create user") from e
 
 
-@users.command()
+@users.command(name="update")
 @click.argument("user_id")
 @click.option(
     "--full-name",
@@ -1238,7 +1238,7 @@ def create_user(
     help="Show detailed user information",
 )
 @click.pass_context
-def update(
+def users_update(
     ctx: click.Context,
     user_id: str,
     full_name: Optional[str],
