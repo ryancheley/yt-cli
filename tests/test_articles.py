@@ -50,7 +50,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.post.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -68,7 +70,9 @@ class TestArticleManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 400
             mock_resp.text.return_value = "Bad Request"
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.post.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -99,7 +103,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.get.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.list_articles()
 
@@ -121,7 +127,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.get.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.get_article("123")
 
@@ -142,7 +150,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.post.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.update_article(
                 article_id="123",
@@ -169,7 +179,9 @@ class TestArticleManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.delete.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.delete.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.delete_article("123")
 
@@ -190,7 +202,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.post.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.publish_article("123")
 
@@ -214,7 +228,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.get.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.search_articles("search query")
 
@@ -238,7 +254,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.get.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.get_article_comments("123")
 
@@ -259,7 +277,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.post.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.add_comment("123", "Test comment")
 
@@ -284,7 +304,9 @@ class TestArticleManager:
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client.return_value.__aenter__.return_value.get.return_value = (
+                mock_resp  # noqa: E501
+            )
 
             result = await article_manager.get_article_attachments("123")
 
@@ -327,9 +349,10 @@ class TestArticleManager:
             }
         ]
 
-        with patch("youtrack_cli.articles.Console") as mock_console, \
-             patch("youtrack_cli.articles.Table") as mock_table:
-
+        with (
+            patch("youtrack_cli.articles.Console") as mock_console,
+            patch("youtrack_cli.articles.Table") as mock_table,
+        ):
             article_manager.console = mock_console.return_value
             article_manager.display_articles_table(articles)
 
@@ -362,9 +385,10 @@ class TestArticleManager:
             },
         ]
 
-        with patch("youtrack_cli.articles.Console") as mock_console, \
-             patch("youtrack_cli.articles.Tree") as mock_tree:
-
+        with (
+            patch("youtrack_cli.articles.Console") as mock_console,
+            patch("youtrack_cli.articles.Tree") as mock_tree,
+        ):
             article_manager.console = mock_console.return_value
             article_manager.display_articles_tree(articles)
 
@@ -402,20 +426,20 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "message": "Article created successfully",
                 "data": {"id": "123"},
             }
 
-            result = runner.invoke(main, [
-                "articles", "create", "Test Title",
-                "--content", "Test content"
-            ])
+            result = runner.invoke(
+                main, ["articles", "create", "Test Title", "--content", "Test content"]
+            )
 
             assert result.exit_code == 0
             assert "Creating article" in result.output
@@ -426,10 +450,11 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -447,10 +472,11 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -468,10 +494,11 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -489,19 +516,20 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "message": "Comment added successfully",
                 "data": {"id": "comment-1"},
             }
 
-            result = runner.invoke(main, [
-                "articles", "comments", "add", "123", "Test comment"
-            ])
+            result = runner.invoke(
+                main, ["articles", "comments", "add", "123", "Test comment"]
+            )
 
             assert result.exit_code == 0
             assert "Adding comment" in result.output
@@ -512,10 +540,11 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -532,10 +561,11 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        with patch("youtrack_cli.main.asyncio.run") as mock_run, \
-             patch("youtrack_cli.main.AuthManager"), \
-             patch("youtrack_cli.articles.ArticleManager"):
-
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
             mock_run.return_value = {
                 "status": "success",
                 "data": [],

@@ -515,9 +515,7 @@ def sort(
     console.print(f"📋 Fetching child articles for '{parent_id}'...", style="blue")
 
     try:
-        result = asyncio.run(
-            article_manager.list_articles(parent_id=parent_id)
-        )
+        result = asyncio.run(article_manager.list_articles(parent_id=parent_id))
 
         if result["status"] == "success":
             articles = result["data"]
@@ -530,10 +528,19 @@ def sort(
             article_manager.display_articles_table(articles)
 
             if update:
-                console.print("\n⚠️  Article sorting functionality requires manual reordering", style="yellow")  # noqa: E501
-                console.print("Use the YouTrack web interface to drag and drop articles to reorder them.", style="blue")  # noqa: E501
+                console.print(
+                    "\n⚠️  Article sorting functionality requires manual reordering",
+                    style="yellow",
+                )  # noqa: E501
+                console.print(
+                    "Use the YouTrack web interface to drag and drop articles to reorder them.",  # noqa: E501
+                    style="blue",
+                )
             else:
-                console.print("\n[dim]Use --update flag to apply sorting changes[/dim]", style="blue")  # noqa: E501
+                console.print(
+                    "\n[dim]Use --update flag to apply sorting changes[/dim]",
+                    style="blue",
+                )  # noqa: E501
 
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -613,6 +620,7 @@ def list_comments(
                     return
 
                 from rich.table import Table
+
                 table = Table(title="Article Comments")
                 table.add_column("ID", style="cyan")
                 table.add_column("Author", style="green")
@@ -623,13 +631,15 @@ def list_comments(
                     table.add_row(
                         comment.get("id", "N/A"),
                         comment.get("author", {}).get("fullName", "N/A"),
-                        comment.get("text", "N/A")[:100] + ("..." if len(comment.get("text", "")) > 100 else ""),  # noqa: E501
+                        comment.get("text", "N/A")[:100]
+                        + ("..." if len(comment.get("text", "")) > 100 else ""),  # noqa: E501
                         comment.get("created", "N/A"),
                     )
 
                 console.print(table)
             else:
                 import json
+
                 console.print(json.dumps(comments, indent=2))
 
         else:
@@ -665,7 +675,9 @@ def delete(ctx: click.Context, comment_id: str, confirm: bool) -> None:
     console = Console()
 
     if not confirm:
-        if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):  # noqa: E501
+        if not click.confirm(
+            f"Are you sure you want to delete comment '{comment_id}'?"
+        ):  # noqa: E501
             console.print("Delete cancelled.", style="yellow")
             return
 
@@ -687,7 +699,9 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
     console = Console()
     console.print("⚠️  File upload functionality not yet implemented", style="yellow")
-    console.print("This feature requires multipart form upload implementation", style="blue")  # noqa: E501
+    console.print(
+        "This feature requires multipart form upload implementation", style="blue"
+    )  # noqa: E501
 
 
 @attach.command()
@@ -700,7 +714,9 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]) -> None:  # noqa: E501
+def download(
+    ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]
+) -> None:  # noqa: E501
     """Download an attachment from an article."""
     console = Console()
     console.print("⚠️  File download functionality not yet implemented", style="yellow")
@@ -728,7 +744,9 @@ def list_attachments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print(f"📎 Fetching attachments for article '{article_id}'...", style="blue")  # noqa: E501
+    console.print(
+        f"📎 Fetching attachments for article '{article_id}'...", style="blue"
+    )  # noqa: E501
 
     try:
         result = asyncio.run(article_manager.get_article_attachments(article_id))
@@ -742,6 +760,7 @@ def list_attachments(
                     return
 
                 from rich.table import Table
+
                 table = Table(title="Article Attachments")
                 table.add_column("ID", style="cyan")
                 table.add_column("Name", style="green")
@@ -761,6 +780,7 @@ def list_attachments(
                 console.print(table)
             else:
                 import json
+
                 console.print(json.dumps(attachments, indent=2))
 
         else:
@@ -781,16 +801,22 @@ def list_attachments(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, confirm: bool) -> None:  # noqa: E501
+def delete_attachment(
+    ctx: click.Context, article_id: str, attachment_id: str, confirm: bool
+) -> None:  # noqa: E501
     """Delete an attachment from an article."""
     console = Console()
 
     if not confirm:
-        if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):  # noqa: E501
+        if not click.confirm(
+            f"Are you sure you want to delete attachment '{attachment_id}'?"
+        ):  # noqa: E501
             console.print("Delete cancelled.", style="yellow")
             return
 
-    console.print("⚠️  Attachment delete functionality not yet implemented", style="yellow")  # noqa: E501
+    console.print(
+        "⚠️  Attachment delete functionality not yet implemented", style="yellow"
+    )  # noqa: E501
     console.print("This feature requires additional API endpoints", style="blue")
 
 

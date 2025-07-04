@@ -116,7 +116,9 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error listing articles: {str(e)}"}
 
-    async def get_article(self, article_id: str, fields: Optional[str] = None) -> dict[str, Any]:  # noqa: E501
+    async def get_article(
+        self, article_id: str, fields: Optional[str] = None
+    ) -> dict[str, Any]:  # noqa: E501
         """Get a specific article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -372,7 +374,10 @@ class ArticleManager:
                         "message": f"Failed to get attachments: {error_text}",
                     }
         except Exception as e:
-            return {"status": "error", "message": f"Error getting attachments: {str(e)}"}  # noqa: E501
+            return {
+                "status": "error",
+                "message": f"Error getting attachments: {str(e)}",
+            }  # noqa: E501
 
     def display_articles_table(self, articles: list[dict[str, Any]]) -> None:
         """Display articles in a table format."""
@@ -448,16 +453,24 @@ class ArticleManager:
         self.console.print("\n[bold blue]Article Details[/bold blue]")
         self.console.print(f"ID: {article.get('id', 'N/A')}")
         self.console.print(f"Title: {article.get('summary', 'N/A')}")
-        self.console.print(f"Author: {article.get('author', {}).get('fullName', 'N/A')}")  # noqa: E501
+        self.console.print(
+            f"Author: {article.get('author', {}).get('fullName', 'N/A')}"
+        )  # noqa: E501
         self.console.print(f"Created: {article.get('created', 'N/A')}")
         self.console.print(f"Updated: {article.get('updated', 'N/A')}")
-        self.console.print(f"Visibility: {article.get('visibility', {}).get('type', 'N/A')}")  # noqa: E501
+        self.console.print(
+            f"Visibility: {article.get('visibility', {}).get('type', 'N/A')}"
+        )  # noqa: E501
 
         if article.get("project"):
-            self.console.print(f"Project: {article.get('project', {}).get('name', 'N/A')}")  # noqa: E501
+            self.console.print(
+                f"Project: {article.get('project', {}).get('name', 'N/A')}"
+            )  # noqa: E501
 
         if article.get("parentArticle"):
-            self.console.print(f"Parent: {article.get('parentArticle', {}).get('summary', 'N/A')}")  # noqa: E501
+            self.console.print(
+                f"Parent: {article.get('parentArticle', {}).get('summary', 'N/A')}"
+            )  # noqa: E501
 
         self.console.print("\n[bold]Content:[/bold]")
         self.console.print(article.get("content", "No content available"))
