@@ -41,6 +41,1025 @@ def issues() -> None:
     pass
 
 
+@issues.command()
+@click.argument("project_id")
+@click.argument("summary")
+@click.option(
+    "--description",
+    "-d",
+    help="Issue description",
+)
+@click.option(
+    "--type",
+    "-t",
+    help="Issue type (e.g., Bug, Feature, Task)",
+)
+@click.option(
+    "--priority",
+    "-p",
+    help="Issue priority (e.g., Critical, High, Medium, Low)",
+)
+@click.option(
+    "--assignee",
+    "-a",
+    help="Assignee username",
+)
+@click.pass_context
+def create(
+    ctx: click.Context,
+    project_id: str,
+    summary: str,
+    description: Optional[str],
+    type: Optional[str],
+    priority: Optional[str],
+    assignee: Optional[str],
+) -> None:
+    """Create a new issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(
+        f"🐛 Creating issue '{summary}' in project '{project_id}'...", style="blue"
+    )
+
+    try:
+        result = asyncio.run(
+            issue_manager.create_issue(
+                project_id=project_id,
+                summary=summary,
+                description=description,
+                issue_type=type,
+                priority=priority,
+                assignee=assignee,
+            )
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+            issue = result["data"]
+            console.print(f"Issue ID: {issue.get('id', 'N/A')}", style="blue")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to create issue")
+
+    except Exception as e:
+        console.print(f"❌ Error creating issue: {e}", style="red")
+        raise click.ClickException("Failed to create issue") from e
+
+
+@issues.command(name="list")
+@click.option(
+    "--project-id",
+    "-p",
+    help="Filter by project ID",
+)
+@click.option(
+    "--state",
+    "-s",
+    help="Filter by issue state",
+)
+@click.option(
+    "--assignee",
+    "-a",
+    help="Filter by assignee",
+)
+@click.option(
+    "--fields",
+    "-f",
+    help="Comma-separated list of fields to return",
+)
+@click.option(
+    "--top",
+    "-t",
+    type=int,
+    help="Maximum number of issues to return",
+)
+@click.option(
+    "--query",
+    "-q",
+    help="Advanced query filter",
+)
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def list_issues(
+    ctx: click.Context,
+    project_id: Optional[str],
+    state: Optional[str],
+    assignee: Optional[str],
+    fields: Optional[str],
+    top: Optional[int],
+    query: Optional[str],
+    format: str,
+) -> None:
+    """List issues with filtering."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print("🔍 Fetching issues...", style="blue")
+
+    try:
+        result = asyncio.run(
+            issue_manager.list_issues(
+                project_id=project_id,
+                fields=fields,
+                top=top,
+                query=query,
+                state=state,
+                assignee=assignee,
+            )
+        )
+
+        if result["status"] == "success":
+            issues = result["data"]
+
+            if format == "table":
+                issue_manager.display_issues_table(issues)
+                console.print(f"\n[dim]Total: {result['count']} issues[/dim]")
+            else:
+                import json
+
+                console.print(json.dumps(issues, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list issues")
+
+    except Exception as e:
+        console.print(f"❌ Error listing issues: {e}", style="red")
+        raise click.ClickException("Failed to list issues") from e
+
+
+@issues.command()
+@click.argument("issue_id")
+@click.option(
+    "--summary",
+    "-s",
+    help="New issue summary",
+)
+@click.option(
+    "--description",
+    "-d",
+    help="New issue description",
+)
+@click.option(
+    "--state",
+    help="New issue state",
+)
+@click.option(
+    "--priority",
+    "-p",
+    help="New issue priority",
+)
+@click.option(
+    "--assignee",
+    "-a",
+    help="New assignee username",
+)
+@click.option(
+    "--type",
+    "-t",
+    help="New issue type",
+)
+@click.option(
+    "--show-details",
+    is_flag=True,
+    help="Show detailed issue information",
+)
+@click.pass_context
+def update(
+    ctx: click.Context,
+    issue_id: str,
+    summary: Optional[str],
+    description: Optional[str],
+    state: Optional[str],
+    priority: Optional[str],
+    assignee: Optional[str],
+    type: Optional[str],
+    show_details: bool,
+) -> None:
+    """Update an existing issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if show_details:
+        console.print(f"📋 Fetching issue '{issue_id}' details...", style="blue")
+
+        try:
+            result = asyncio.run(issue_manager.get_issue(issue_id))
+
+            if result["status"] == "success":
+                issue_manager.display_issue_details(result["data"])
+            else:
+                console.print(f"❌ {result['message']}", style="red")
+                raise click.ClickException("Failed to get issue details")
+
+        except Exception as e:
+            console.print(f"❌ Error getting issue details: {e}", style="red")
+            raise click.ClickException("Failed to get issue details") from e
+    else:
+        if not any([summary, description, state, priority, assignee, type]):
+            console.print("❌ No updates specified.", style="red")
+            console.print(
+                "Use --summary, --description, --state, --priority, --assignee, "
+                "or --type options, or --show-details to view current issue.",
+                style="blue",
+            )
+            return
+
+        console.print(f"✏️  Updating issue '{issue_id}'...", style="blue")
+
+        try:
+            result = asyncio.run(
+                issue_manager.update_issue(
+                    issue_id=issue_id,
+                    summary=summary,
+                    description=description,
+                    state=state,
+                    priority=priority,
+                    assignee=assignee,
+                    issue_type=type,
+                )
+            )
+
+            if result["status"] == "success":
+                console.print(f"✅ {result['message']}", style="green")
+            else:
+                console.print(f"❌ {result['message']}", style="red")
+                raise click.ClickException("Failed to update issue")
+
+        except Exception as e:
+            console.print(f"❌ Error updating issue: {e}", style="red")
+            raise click.ClickException("Failed to update issue") from e
+
+
+@issues.command()
+@click.argument("issue_id")
+@click.option(
+    "--confirm",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@click.pass_context
+def delete(ctx: click.Context, issue_id: str, confirm: bool) -> None:
+    """Delete an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if not confirm:
+        if not click.confirm(f"Are you sure you want to delete issue '{issue_id}'?"):
+            console.print("Delete cancelled.", style="yellow")
+            return
+
+    console.print(f"🗑️  Deleting issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.delete_issue(issue_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to delete issue")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting issue: {e}", style="red")
+        raise click.ClickException("Failed to delete issue") from e
+
+
+@issues.command()
+@click.argument("query")
+@click.option(
+    "--project-id",
+    "-p",
+    help="Filter by project ID",
+)
+@click.option(
+    "--top",
+    "-t",
+    type=int,
+    help="Maximum number of results to return",
+)
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def search(
+    ctx: click.Context,
+    query: str,
+    project_id: Optional[str],
+    top: Optional[int],
+    format: str,
+) -> None:
+    """Advanced issue search."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"🔍 Searching issues for '{query}'...", style="blue")
+
+    try:
+        result = asyncio.run(
+            issue_manager.search_issues(
+                query=query,
+                project_id=project_id,
+                top=top,
+            )
+        )
+
+        if result["status"] == "success":
+            issues = result["data"]
+
+            if format == "table":
+                issue_manager.display_issues_table(issues)
+                console.print(f"\n[dim]Found: {result['count']} issues[/dim]")
+            else:
+                import json
+
+                console.print(json.dumps(issues, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to search issues")
+
+    except Exception as e:
+        console.print(f"❌ Error searching issues: {e}", style="red")
+        raise click.ClickException("Failed to search issues") from e
+
+
+@issues.command()
+@click.argument("issue_id")
+@click.argument("assignee")
+@click.pass_context
+def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
+    """Assign an issue to a user."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"👤 Assigning issue '{issue_id}' to '{assignee}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.assign_issue(issue_id, assignee))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to assign issue")
+
+    except Exception as e:
+        console.print(f"❌ Error assigning issue: {e}", style="red")
+        raise click.ClickException("Failed to assign issue") from e
+
+
+@issues.command()
+@click.argument("issue_id")
+@click.option(
+    "--state",
+    "-s",
+    help="New state for the issue",
+)
+@click.option(
+    "--project-id",
+    "-p",
+    help="Move to different project",
+)
+@click.pass_context
+def move(
+    ctx: click.Context,
+    issue_id: str,
+    state: Optional[str],
+    project_id: Optional[str],
+) -> None:
+    """Move an issue between states or projects."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if not state and not project_id:
+        console.print("❌ Must specify either --state or --project-id", style="red")
+        return
+
+    console.print(f"🚚 Moving issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(
+            issue_manager.move_issue(issue_id, state=state, project_id=project_id)
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to move issue")
+
+    except Exception as e:
+        console.print(f"❌ Error moving issue: {e}", style="red")
+        raise click.ClickException("Failed to move issue") from e
+
+
+@issues.group()
+def tag() -> None:
+    """Manage issue tags."""
+    pass
+
+
+@tag.command()
+@click.argument("issue_id")
+@click.argument("tag_name")
+@click.pass_context
+def add(ctx: click.Context, issue_id: str, tag_name: str) -> None:
+    """Add a tag to an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"🏷️  Adding tag '{tag_name}' to issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.add_tag(issue_id, tag_name))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to add tag")
+
+    except Exception as e:
+        console.print(f"❌ Error adding tag: {e}", style="red")
+        raise click.ClickException("Failed to add tag") from e
+
+
+@tag.command()
+@click.argument("issue_id")
+@click.argument("tag_name")
+@click.pass_context
+def remove(ctx: click.Context, issue_id: str, tag_name: str) -> None:
+    """Remove a tag from an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(
+        f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...", style="blue"
+    )
+
+    try:
+        result = asyncio.run(issue_manager.remove_tag(issue_id, tag_name))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to remove tag")
+
+    except Exception as e:
+        console.print(f"❌ Error removing tag: {e}", style="red")
+        raise click.ClickException("Failed to remove tag") from e
+
+
+@tag.command(name="list")
+@click.argument("issue_id")
+@click.pass_context
+def list_tags(ctx: click.Context, issue_id: str) -> None:
+    """List all tags for an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"🏷️  Fetching tags for issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.list_tags(issue_id))
+
+        if result["status"] == "success":
+            tags = result["data"]
+            if tags:
+                tag_names = [tag.get("name", "") for tag in tags]
+                console.print(f"Tags: {', '.join(tag_names)}", style="green")
+            else:
+                console.print("No tags found.", style="yellow")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list tags")
+
+    except Exception as e:
+        console.print(f"❌ Error listing tags: {e}", style="red")
+        raise click.ClickException("Failed to list tags") from e
+
+
+@issues.group()
+def comments() -> None:
+    """Manage issue comments."""
+    pass
+
+
+@comments.command(name="add")
+@click.argument("issue_id")
+@click.argument("text")
+@click.pass_context
+def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
+    """Add a comment to an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"💬 Adding comment to issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.add_comment(issue_id, text))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to add comment")
+
+    except Exception as e:
+        console.print(f"❌ Error adding comment: {e}", style="red")
+        raise click.ClickException("Failed to add comment") from e
+
+
+@comments.command(name="list")
+@click.argument("issue_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def list_issue_comments(
+    ctx: click.Context,
+    issue_id: str,
+    format: str,
+) -> None:
+    """List comments on an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"💬 Fetching comments for issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.list_comments(issue_id))
+
+        if result["status"] == "success":
+            comments = result["data"]
+
+            if format == "table":
+                issue_manager.display_comments_table(comments)
+            else:
+                import json
+
+                console.print(json.dumps(comments, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list comments")
+
+    except Exception as e:
+        console.print(f"❌ Error listing comments: {e}", style="red")
+        raise click.ClickException("Failed to list comments") from e
+
+
+@comments.command(name="update")
+@click.argument("issue_id")
+@click.argument("comment_id")
+@click.argument("text")
+@click.pass_context
+def update_comment(
+    ctx: click.Context, issue_id: str, comment_id: str, text: str
+) -> None:
+    """Update an existing comment."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"✏️  Updating comment '{comment_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.update_comment(issue_id, comment_id, text))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to update comment")
+
+    except Exception as e:
+        console.print(f"❌ Error updating comment: {e}", style="red")
+        raise click.ClickException("Failed to update comment") from e
+
+
+@comments.command()
+@click.argument("issue_id")
+@click.argument("comment_id")
+@click.option(
+    "--confirm",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@click.pass_context
+def delete_comment(
+    ctx: click.Context, issue_id: str, comment_id: str, confirm: bool
+) -> None:
+    """Delete a comment."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if not confirm:
+        if not click.confirm(
+            f"Are you sure you want to delete comment '{comment_id}'?"
+        ):
+            console.print("Delete cancelled.", style="yellow")
+            return
+
+    console.print(f"🗑️  Deleting comment '{comment_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.delete_comment(issue_id, comment_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to delete comment")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting comment: {e}", style="red")
+        raise click.ClickException("Failed to delete comment") from e
+
+
+@issues.group()
+def attach() -> None:
+    """Manage issue attachments."""
+    pass
+
+
+@attach.command()
+@click.argument("issue_id")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.pass_context
+def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
+    """Upload a file to an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(
+        f"📎 Uploading file '{file_path}' to issue '{issue_id}'...", style="blue"
+    )
+
+    try:
+        result = asyncio.run(issue_manager.upload_attachment(issue_id, file_path))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to upload attachment")
+
+    except Exception as e:
+        console.print(f"❌ Error uploading attachment: {e}", style="red")
+        raise click.ClickException("Failed to upload attachment") from e
+
+
+@attach.command()
+@click.argument("issue_id")
+@click.argument("attachment_id")
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    help="Output file path",
+)
+@click.pass_context
+def download(
+    ctx: click.Context, issue_id: str, attachment_id: str, output: Optional[str]
+) -> None:
+    """Download an attachment from an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if not output:
+        output = f"attachment_{attachment_id}"
+
+    console.print(
+        f"📥 Downloading attachment '{attachment_id}' to '{output}'...", style="blue"
+    )
+
+    try:
+        result = asyncio.run(
+            issue_manager.download_attachment(issue_id, attachment_id, output)
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to download attachment")
+
+    except Exception as e:
+        console.print(f"❌ Error downloading attachment: {e}", style="red")
+        raise click.ClickException("Failed to download attachment") from e
+
+
+@attach.command(name="list")
+@click.argument("issue_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def list_attachments(
+    ctx: click.Context,
+    issue_id: str,
+    format: str,
+) -> None:
+    """List attachments for an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"📎 Fetching attachments for issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.list_attachments(issue_id))
+
+        if result["status"] == "success":
+            attachments = result["data"]
+
+            if format == "table":
+                issue_manager.display_attachments_table(attachments)
+            else:
+                import json
+
+                console.print(json.dumps(attachments, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list attachments")
+
+    except Exception as e:
+        console.print(f"❌ Error listing attachments: {e}", style="red")
+        raise click.ClickException("Failed to list attachments") from e
+
+
+@attach.command()
+@click.argument("issue_id")
+@click.argument("attachment_id")
+@click.option(
+    "--confirm",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@click.pass_context
+def delete_attachment(
+    ctx: click.Context, issue_id: str, attachment_id: str, confirm: bool
+) -> None:
+    """Delete an attachment from an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if not confirm:
+        if not click.confirm(
+            f"Are you sure you want to delete attachment '{attachment_id}'?"
+        ):
+            console.print("Delete cancelled.", style="yellow")
+            return
+
+    console.print(f"🗑️  Deleting attachment '{attachment_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.delete_attachment(issue_id, attachment_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to delete attachment")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting attachment: {e}", style="red")
+        raise click.ClickException("Failed to delete attachment") from e
+
+
+@issues.group()
+def links() -> None:
+    """Manage issue relationships."""
+    pass
+
+
+@links.command(name="create")
+@click.argument("source_issue_id")
+@click.argument("target_issue_id")
+@click.argument("link_type")
+@click.pass_context
+def create_link(
+    ctx: click.Context, source_issue_id: str, target_issue_id: str, link_type: str
+) -> None:
+    """Create a link between two issues."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(
+        f"🔗 Creating '{link_type}' link between '{source_issue_id}' "
+        f"and '{target_issue_id}'...",
+        style="blue",
+    )
+
+    try:
+        result = asyncio.run(
+            issue_manager.create_link(source_issue_id, target_issue_id, link_type)
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to create link")
+
+    except Exception as e:
+        console.print(f"❌ Error creating link: {e}", style="red")
+        raise click.ClickException("Failed to create link") from e
+
+
+@links.command(name="list")
+@click.argument("issue_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def list_links(
+    ctx: click.Context,
+    issue_id: str,
+    format: str,
+) -> None:
+    """Show all links for an issue."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"🔗 Fetching links for issue '{issue_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.list_links(issue_id))
+
+        if result["status"] == "success":
+            links = result["data"]
+
+            if format == "table":
+                issue_manager.display_links_table(links)
+            else:
+                import json
+
+                console.print(json.dumps(links, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list links")
+
+    except Exception as e:
+        console.print(f"❌ Error listing links: {e}", style="red")
+        raise click.ClickException("Failed to list links") from e
+
+
+@links.command()
+@click.argument("source_issue_id")
+@click.argument("link_id")
+@click.option(
+    "--confirm",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@click.pass_context
+def delete_link(
+    ctx: click.Context, source_issue_id: str, link_id: str, confirm: bool
+) -> None:
+    """Remove a link between issues."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    if not confirm:
+        if not click.confirm(f"Are you sure you want to delete link '{link_id}'?"):
+            console.print("Delete cancelled.", style="yellow")
+            return
+
+    console.print(f"🔗 Deleting link '{link_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.delete_link(source_issue_id, link_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to delete link")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting link: {e}", style="red")
+        raise click.ClickException("Failed to delete link") from e
+
+
+@links.command()
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def types(ctx: click.Context, format: str) -> None:
+    """List available link types."""
+    from .issues import IssueManager
+
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print("🔗 Fetching available link types...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.list_link_types())
+
+        if result["status"] == "success":
+            link_types = result["data"]
+
+            if format == "table":
+                issue_manager.display_link_types_table(link_types)
+            else:
+                import json
+
+                console.print(json.dumps(link_types, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list link types")
+
+    except Exception as e:
+        console.print(f"❌ Error listing link types: {e}", style="red")
+        raise click.ClickException("Failed to list link types") from e
+
+
 @main.group()
 def articles() -> None:
     """Manage knowledge base articles."""
@@ -375,7 +1394,7 @@ def tree(
         raise click.ClickException("Failed to fetch articles tree") from e
 
 
-@articles.command()
+@articles.command(name="search")
 @click.argument("query")
 @click.option(
     "--project-id",
@@ -395,7 +1414,7 @@ def tree(
     help="Output format",
 )
 @click.pass_context
-def search(
+def articles_search(
     ctx: click.Context,
     query: str,
     project_id: Optional[str],
@@ -553,17 +1572,17 @@ def sort(
         raise click.ClickException("Failed to fetch child articles") from e
 
 
-@articles.group()
-def comments() -> None:
+@articles.group(name="comments")
+def article_comments() -> None:
     """Manage article comments."""
     pass
 
 
-@comments.command()
+@article_comments.command(name="add")
 @click.argument("article_id")
 @click.argument("text")
 @click.pass_context
-def add(ctx: click.Context, article_id: str, text: str) -> None:
+def articles_comments_add(ctx: click.Context, article_id: str, text: str) -> None:
     """Add a comment to an article."""
     from .articles import ArticleManager
 
@@ -587,7 +1606,7 @@ def add(ctx: click.Context, article_id: str, text: str) -> None:
         raise click.ClickException("Failed to add comment") from e
 
 
-@comments.command("list")
+@article_comments.command("list")
 @click.argument("article_id")
 @click.option(
     "--format",
@@ -653,7 +1672,7 @@ def list_comments(
         raise click.ClickException("Failed to list comments") from e
 
 
-@comments.command(name="update")
+@article_comments.command(name="update")
 @click.argument("comment_id")
 @click.argument("text")
 @click.pass_context
@@ -664,7 +1683,7 @@ def comments_update(ctx: click.Context, comment_id: str, text: str) -> None:
     console.print("This feature requires additional API endpoints", style="blue")
 
 
-@comments.command()
+@article_comments.command(name="delete")
 @click.argument("comment_id")
 @click.option(
     "--confirm",
@@ -672,7 +1691,9 @@ def comments_update(ctx: click.Context, comment_id: str, text: str) -> None:
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete(ctx: click.Context, comment_id: str, confirm: bool) -> None:
+def articles_comments_delete(
+    ctx: click.Context, comment_id: str, confirm: bool
+) -> None:
     """Delete a comment."""
     console = Console()
 
@@ -687,17 +1708,17 @@ def delete(ctx: click.Context, comment_id: str, confirm: bool) -> None:
     console.print("This feature requires additional API endpoints", style="blue")
 
 
-@articles.group()
-def attach() -> None:
+@articles.group(name="attach")
+def article_attach() -> None:
     """Manage article attachments."""
     pass
 
 
-@attach.command()
+@article_attach.command(name="upload")
 @click.argument("article_id")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
-def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
+def articles_attach_upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
     console = Console()
     console.print("⚠️  File upload functionality not yet implemented", style="yellow")
@@ -706,7 +1727,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     )  # noqa: E501
 
 
-@attach.command()
+@article_attach.command(name="download")
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
@@ -716,7 +1737,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(
+def articles_attach_download(
     ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]
 ) -> None:  # noqa: E501
     """Download an attachment from an article."""
@@ -725,7 +1746,7 @@ def download(
     console.print("This feature requires binary file handling", style="blue")
 
 
-@attach.command("list")
+@article_attach.command("list")
 @click.argument("article_id")
 @click.option(
     "--format",
@@ -734,7 +1755,7 @@ def download(
     help="Output format",
 )
 @click.pass_context
-def list_attachments(
+def articles_attach_list(
     ctx: click.Context,
     article_id: str,
     format: str,
@@ -794,7 +1815,7 @@ def list_attachments(
         raise click.ClickException("Failed to list attachments") from e
 
 
-@attach.command()
+@article_attach.command(name="delete")
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
@@ -803,7 +1824,7 @@ def list_attachments(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(
+def articles_attach_delete(
     ctx: click.Context, article_id: str, attachment_id: str, confirm: bool
 ) -> None:  # noqa: E501
     """Delete an attachment from an article."""

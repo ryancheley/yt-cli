@@ -29,7 +29,8 @@
       "mcp__git__git_create_branch",
       "mcp__git__git_checkout",
       "Bash(pytest:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }
