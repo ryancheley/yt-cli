@@ -329,6 +329,78 @@ yt users permissions USERNAME --action remove_from_group --group-id admins
 - **Security**: Password prompts and secure credential handling
 - **Error Handling**: Clear error messages for permissions and validation issues
 
+### Time Tracking
+
+Track and manage work time on YouTrack issues with the `yt time` command group:
+
+```bash
+# Log time to an issue
+yt time log ISSUE-123 "2h" --description "Implemented new feature"
+
+# Log time with work type
+yt time log ISSUE-123 "1h 30m" --work-type "Development" --description "Code review"
+
+# Log time for a specific date
+yt time log ISSUE-123 "45m" --date "2024-01-15" --description "Bug fixing"
+
+# Log time for yesterday
+yt time log ISSUE-123 "2h" --date "yesterday" --description "Testing"
+
+# Generate time reports for specific issues
+yt time report --issue-id ISSUE-123
+
+# Generate time reports for a user
+yt time report --user-id USER-456
+
+# Generate time reports for a date range
+yt time report --start-date "2024-01-01" --end-date "2024-01-31"
+
+# View time summary grouped by user (default)
+yt time summary
+
+# View time summary grouped by issue
+yt time summary --group-by issue
+
+# View time summary grouped by work type
+yt time summary --group-by type
+
+# Filter summary by date range
+yt time summary --start-date "2024-01-01" --end-date "2024-01-31"
+
+# Export reports in JSON format
+yt time report --format json
+yt time summary --format json
+```
+
+#### Duration Formats
+
+The time logging supports various duration formats:
+
+- **Hours**: `2h`, `1.5h`, `0.25h`
+- **Minutes**: `30m`, `45m`, `120m`
+- **Combined**: `2h 30m`, `1h 15m`
+- **Numeric**: `90` (assumed to be minutes)
+
+#### Date Formats
+
+Date inputs support multiple formats:
+
+- **ISO Format**: `2024-01-15`
+- **US Format**: `01/15/2024`
+- **European Format**: `15.01.2024`
+- **Relative**: `today`, `yesterday`
+
+#### Time Tracking Features
+
+- **Flexible Duration Input**: Support for hours, minutes, and combined formats
+- **Work Type Classification**: Categorize work by type (Development, Testing, etc.)
+- **Date Flexibility**: Log time for any date, including relative dates
+- **Rich Reporting**: Generate detailed reports with filtering options
+- **Time Summaries**: Aggregate time data by user, issue, or work type
+- **Multiple Output Formats**: View data in tables or export as JSON
+- **Issue Integration**: Time tracking is tightly integrated with YouTrack issues
+- **Error Handling**: Clear validation for duration formats and date inputs
+
 ## Development
 
 This project uses `uv` for dependency management.
