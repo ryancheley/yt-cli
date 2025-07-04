@@ -433,6 +433,61 @@ yt boards view BOARD-456 --format json
 - **Multiple Output Formats**: View data in tables or export as JSON
 - **Error Handling**: Clear error messages for permissions and API issues
 
+### Reports
+
+Generate cross-entity reports for analytics and project insights with the `yt reports` command group:
+
+```bash
+# Generate a burndown report for a project
+yt reports burndown PROJECT-123
+
+# Generate a burndown report for a specific sprint
+yt reports burndown PROJECT-123 --sprint "Sprint 1"
+
+# Generate a burndown report for a date range
+yt reports burndown PROJECT-123 --start-date "2024-01-01" --end-date "2024-01-31"
+
+# Generate a burndown report with all filters combined
+yt reports burndown PROJECT-123 --sprint "Sprint 2" --start-date "2024-02-01" --end-date "2024-02-15"
+
+# Generate a velocity report for the last 5 sprints (default)
+yt reports velocity PROJECT-123
+
+# Generate a velocity report for the last 10 sprints
+yt reports velocity PROJECT-123 --sprints 10
+
+# Generate a velocity report for fewer sprints
+yt reports velocity PROJECT-123 --sprints 3
+```
+
+#### Report Types
+
+**Burndown Reports**
+- Show project or sprint progress over time
+- Display total, resolved, and remaining issues
+- Calculate completion rates and effort metrics
+- Support filtering by sprint and date ranges
+- Visual progress bar showing completion percentage
+
+**Velocity Reports**
+- Analyze team performance across recent sprints
+- Show issues completed and effort expended per sprint
+- Calculate average velocity metrics
+- Help with sprint planning and capacity estimation
+- Display trends in team productivity
+
+#### Report Features
+
+- **Project-Based Analysis**: Generate reports for specific projects
+- **Sprint Filtering**: Focus on specific sprints or date ranges
+- **Completion Metrics**: Track progress with completion rates and effort analysis
+- **Velocity Tracking**: Monitor team velocity across multiple sprints
+- **Rich Visualization**: Beautiful tables with progress indicators and status displays
+- **Trend Analysis**: Identify patterns in team performance and project progress
+- **Planning Support**: Use historical data for better sprint planning
+- **Error Handling**: Clear error messages for authentication and API issues
+- **Flexible Time Periods**: Support for custom date ranges and sprint counts
+
 ## Development
 
 This project uses `uv` for dependency management.
