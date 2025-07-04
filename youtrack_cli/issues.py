@@ -404,8 +404,7 @@ class IssueManager:
                     return {
                         "status": "success",
                         "message": (
-                            f"Tag '{tag}' removed from issue '{issue_id}' "
-                            "successfully"
+                            f"Tag '{tag}' removed from issue '{issue_id}' successfully"
                         ),
                     }
                 else:
@@ -619,7 +618,7 @@ class IssueManager:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"Error listing attachments: {str(e)}"
+                "message": f"Error listing attachments: {str(e)}",
             }
 
     async def download_attachment(
@@ -631,8 +630,7 @@ class IssueManager:
             return {"status": "error", "message": "Not authenticated"}
 
         url = (
-            f"{credentials.base_url}/api/issues/{issue_id}/attachments/"
-            f"{attachment_id}"
+            f"{credentials.base_url}/api/issues/{issue_id}/attachments/{attachment_id}"
         )
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
@@ -657,7 +655,7 @@ class IssueManager:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"Error downloading attachment: {str(e)}"
+                "message": f"Error downloading attachment: {str(e)}",
             }
 
     async def delete_attachment(
@@ -669,8 +667,7 @@ class IssueManager:
             return {"status": "error", "message": "Not authenticated"}
 
         url = (
-            f"{credentials.base_url}/api/issues/{issue_id}/attachments/"
-            f"{attachment_id}"
+            f"{credentials.base_url}/api/issues/{issue_id}/attachments/{attachment_id}"
         )
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
@@ -691,7 +688,7 @@ class IssueManager:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"Error deleting attachment: {str(e)}"
+                "message": f"Error deleting attachment: {str(e)}",
             }
 
     # Links functionality
@@ -710,7 +707,7 @@ class IssueManager:
         }
         link_data = {
             "linkType": {"name": link_type},
-            "issues": [{"id": target_issue_id}]
+            "issues": [{"id": target_issue_id}],
         }
 
         try:
@@ -829,8 +826,7 @@ class IssueManager:
         for issue in issues:
             assignee = issue.get("assignee", {})
             assignee_name = (
-                assignee.get("fullName", "Unassigned")
-                if assignee else "Unassigned"
+                assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
             )
 
             project = issue.get("project", {})
@@ -846,9 +842,7 @@ class IssueManager:
             type_name = issue_type.get("name", "N/A") if issue_type else "N/A"
 
             summary = issue.get("summary", "N/A")
-            truncated_summary = (
-                summary[:50] + ("..." if len(summary) > 50 else "")
-            )
+            truncated_summary = summary[:50] + ("..." if len(summary) > 50 else "")
 
             table.add_row(
                 issue.get("id", "N/A"),
@@ -865,9 +859,7 @@ class IssueManager:
     def display_issue_details(self, issue: dict[str, Any]) -> None:
         """Display detailed information about a single issue."""
         issue_id = issue.get("id", "N/A")
-        self.console.print(
-            f"[bold blue]Issue Details: {issue_id}[/bold blue]"
-        )
+        self.console.print(f"[bold blue]Issue Details: {issue_id}[/bold blue]")
 
         summary = issue.get("summary", "N/A")
         self.console.print(f"[bold]Summary:[/bold] {summary}")
@@ -881,21 +873,16 @@ class IssueManager:
         self.console.print(f"[bold]State:[/bold] {state_name}")
 
         priority = issue.get("priority", {})
-        priority_name = (
-            priority.get("name", "N/A") if priority else "N/A"
-        )
+        priority_name = priority.get("name", "N/A") if priority else "N/A"
         self.console.print(f"[bold]Priority:[/bold] {priority_name}")
 
         issue_type = issue.get("type", {})
-        type_name = (
-            issue_type.get("name", "N/A") if issue_type else "N/A"
-        )
+        type_name = issue_type.get("name", "N/A") if issue_type else "N/A"
         self.console.print(f"[bold]Type:[/bold] {type_name}")
 
         assignee = issue.get("assignee", {})
         assignee_name = (
-            assignee.get("fullName", "Unassigned")
-            if assignee else "Unassigned"
+            assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
         )
         self.console.print(f"[bold]Assignee:[/bold] {assignee_name}")
 
@@ -1016,4 +1003,3 @@ class IssueManager:
             )
 
         self.console.print(table)
-

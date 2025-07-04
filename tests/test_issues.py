@@ -402,9 +402,10 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_upload_attachment_success(self, issue_manager):
         """Test successful attachment upload."""
-        with patch("httpx.AsyncClient") as mock_client, patch(
-            "builtins.open", create=True
-        ) as mock_open:
+        with (
+            patch("httpx.AsyncClient") as mock_client,
+            patch("builtins.open", create=True) as mock_open,
+        ):
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
@@ -446,9 +447,10 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_download_attachment_success(self, issue_manager):
         """Test successful attachment download."""
-        with patch("httpx.AsyncClient") as mock_client, patch(
-            "builtins.open", create=True
-        ) as mock_open:
+        with (
+            patch("httpx.AsyncClient") as mock_client,
+            patch("builtins.open", create=True) as mock_open,
+        ):
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.content = b"file content"
@@ -669,12 +671,21 @@ class TestIssuesCLI:
                 "data": {"id": "PROJ-123"},
             }
 
-            result = runner.invoke(main, [
-                "issues", "create", "PROJ", "Test Issue",
-                "-d", "Test description",
-                "-t", "Bug",
-                "-p", "High"
-            ])
+            result = runner.invoke(
+                main,
+                [
+                    "issues",
+                    "create",
+                    "PROJ",
+                    "Test Issue",
+                    "-d",
+                    "Test description",
+                    "-t",
+                    "Bug",
+                    "-p",
+                    "High",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "creating issue" in result.output.lower()
@@ -693,9 +704,7 @@ class TestIssuesCLI:
             }
 
             with patch("youtrack_cli.issues.IssueManager.display_issues_table"):
-                result = runner.invoke(main, [
-                    "issues", "list", "-p", "PROJ"
-                ])
+                result = runner.invoke(main, ["issues", "list", "-p", "PROJ"])
 
             assert result.exit_code == 0
             assert "fetching issues" in result.output.lower()
@@ -712,11 +721,18 @@ class TestIssuesCLI:
                 "message": "Issue updated successfully",
             }
 
-            result = runner.invoke(main, [
-                "issues", "update", "PROJ-123",
-                "-s", "Updated summary",
-                "-p", "Critical"
-            ])
+            result = runner.invoke(
+                main,
+                [
+                    "issues",
+                    "update",
+                    "PROJ-123",
+                    "-s",
+                    "Updated summary",
+                    "-p",
+                    "Critical",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "updating issue" in result.output.lower()
@@ -733,9 +749,7 @@ class TestIssuesCLI:
                 "message": "Issue deleted successfully",
             }
 
-            result = runner.invoke(main, [
-                "issues", "delete", "PROJ-123", "--confirm"
-            ])
+            result = runner.invoke(main, ["issues", "delete", "PROJ-123", "--confirm"])
 
             assert result.exit_code == 0
             assert "deleting issue" in result.output.lower()
@@ -754,9 +768,7 @@ class TestIssuesCLI:
             }
 
             with patch("youtrack_cli.issues.IssueManager.display_issues_table"):
-                result = runner.invoke(main, [
-                    "issues", "search", "priority:High"
-                ])
+                result = runner.invoke(main, ["issues", "search", "priority:High"])
 
             assert result.exit_code == 0
             assert "searching issues" in result.output.lower()
@@ -773,9 +785,7 @@ class TestIssuesCLI:
                 "message": "Issue assigned successfully",
             }
 
-            result = runner.invoke(main, [
-                "issues", "assign", "PROJ-123", "test-user"
-            ])
+            result = runner.invoke(main, ["issues", "assign", "PROJ-123", "test-user"])
 
             assert result.exit_code == 0
             assert "assigning issue" in result.output.lower()
@@ -792,9 +802,7 @@ class TestIssuesCLI:
                 "message": "Tag added successfully",
             }
 
-            result = runner.invoke(main, [
-                "issues", "tag", "add", "PROJ-123", "urgent"
-            ])
+            result = runner.invoke(main, ["issues", "tag", "add", "PROJ-123", "urgent"])
 
             assert result.exit_code == 0
             assert "adding tag" in result.output.lower()
@@ -811,9 +819,9 @@ class TestIssuesCLI:
                 "message": "Comment added successfully",
             }
 
-            result = runner.invoke(main, [
-                "issues", "comments", "add", "PROJ-123", "Test comment"
-            ])
+            result = runner.invoke(
+                main, ["issues", "comments", "add", "PROJ-123", "Test comment"]
+            )
 
             assert result.exit_code == 0
             assert "adding comment" in result.output.lower()
@@ -832,19 +840,21 @@ class TestIssuesCLI:
 
             # Create a temporary file for testing
             import tempfile
+
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
                 tmp_file.write(b"test content")
                 tmp_file_path = tmp_file.name
 
             try:
-                result = runner.invoke(main, [
-                    "issues", "attach", "upload", "PROJ-123", tmp_file_path
-                ])
+                result = runner.invoke(
+                    main, ["issues", "attach", "upload", "PROJ-123", tmp_file_path]
+                )
 
                 assert result.exit_code == 0
                 assert "uploading file" in result.output.lower()
             finally:
                 import os
+
                 os.unlink(tmp_file_path)
 
     def test_issues_links_create_command(self):
@@ -859,9 +869,10 @@ class TestIssuesCLI:
                 "message": "Link created successfully",
             }
 
-            result = runner.invoke(main, [
-                "issues", "links", "create", "PROJ-123", "PROJ-124", "depends on"
-            ])
+            result = runner.invoke(
+                main,
+                ["issues", "links", "create", "PROJ-123", "PROJ-124", "depends on"],
+            )
 
             assert result.exit_code == 0
             assert "creating" in result.output.lower()
@@ -879,9 +890,7 @@ class TestIssuesCLI:
                 "message": "Not authenticated",
             }
 
-            result = runner.invoke(main, [
-                "issues", "create", "PROJ", "Test Issue"
-            ])
+            result = runner.invoke(main, ["issues", "create", "PROJ", "Test Issue"])
 
             assert result.exit_code == 1
             assert "not authenticated" in result.output.lower()
@@ -898,10 +907,7 @@ class TestIssuesCLI:
                 "message": "API request failed",
             }
 
-            result = runner.invoke(main, [
-                "issues", "list"
-            ])
+            result = runner.invoke(main, ["issues", "list"])
 
             assert result.exit_code == 1
             assert "api request failed" in result.output.lower()
-

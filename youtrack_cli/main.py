@@ -82,8 +82,7 @@ def create(
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"🐛 Creating issue '{summary}' in project '{project_id}'...",
-        style="blue"
+        f"🐛 Creating issue '{summary}' in project '{project_id}'...", style="blue"
     )
 
     try:
@@ -189,6 +188,7 @@ def list_issues(
                 console.print(f"\n[dim]Total: {result['count']} issues[/dim]")
             else:
                 import json
+
                 console.print(json.dumps(issues, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -395,6 +395,7 @@ def search(
                 console.print(f"\n[dim]Found: {result['count']} issues[/dim]")
             else:
                 import json
+
                 console.print(json.dumps(issues, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -528,8 +529,7 @@ def remove(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...",
-        style="blue"
+        f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...", style="blue"
     )
 
     try:
@@ -645,6 +645,7 @@ def list_issue_comments(
                 issue_manager.display_comments_table(comments)
             else:
                 import json
+
                 console.print(json.dumps(comments, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -747,8 +748,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"📎 Uploading file '{file_path}' to issue '{issue_id}'...",
-        style="blue"
+        f"📎 Uploading file '{file_path}' to issue '{issue_id}'...", style="blue"
     )
 
     try:
@@ -789,8 +789,7 @@ def download(
         output = f"attachment_{attachment_id}"
 
     console.print(
-        f"📥 Downloading attachment '{attachment_id}' to '{output}'...",
-        style="blue"
+        f"📥 Downloading attachment '{attachment_id}' to '{output}'...", style="blue"
     )
 
     try:
@@ -842,6 +841,7 @@ def list_attachments(
                 issue_manager.display_attachments_table(attachments)
             else:
                 import json
+
                 console.print(json.dumps(attachments, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -906,10 +906,7 @@ def links() -> None:
 @click.argument("link_type")
 @click.pass_context
 def create_link(
-    ctx: click.Context,
-    source_issue_id: str,
-    target_issue_id: str,
-    link_type: str
+    ctx: click.Context, source_issue_id: str, target_issue_id: str, link_type: str
 ) -> None:
     """Create a link between two issues."""
     from .issues import IssueManager
@@ -921,7 +918,7 @@ def create_link(
     console.print(
         f"🔗 Creating '{link_type}' link between '{source_issue_id}' "
         f"and '{target_issue_id}'...",
-        style="blue"
+        style="blue",
     )
 
     try:
@@ -973,6 +970,7 @@ def list_links(
                 issue_manager.display_links_table(links)
             else:
                 import json
+
                 console.print(json.dumps(links, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -1051,6 +1049,7 @@ def types(ctx: click.Context, format: str) -> None:
                 issue_manager.display_link_types_table(link_types)
             else:
                 import json
+
                 console.print(json.dumps(link_types, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
