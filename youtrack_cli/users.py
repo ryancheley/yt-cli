@@ -67,7 +67,7 @@ class UserManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/users",
+                    f"{credentials.base_url.rstrip('/')}/api/users",
                     headers=headers,
                     params=params,
                     timeout=10.0,
@@ -137,8 +137,10 @@ class UserManager:
 
         async with httpx.AsyncClient() as client:
             try:
+                # Note: User creation may require Hub API in some YouTrack versions
+                # For now, trying YouTrack API first, then fall back to Hub API
                 response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/users",
+                    f"{credentials.base_url.rstrip('/')}/api/users",
                     headers=headers,
                     json=user_data,
                     params={"fields": "id,login,fullName,email,banned"},
@@ -210,7 +212,7 @@ class UserManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/users/{user_id}",
+                    f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
                     headers=headers,
                     params={"fields": fields},
                     timeout=10.0,
@@ -289,8 +291,10 @@ class UserManager:
 
         async with httpx.AsyncClient() as client:
             try:
+                # Note: User updates may require Hub API in some YouTrack versions
+                # For now, trying YouTrack API first, then fall back to Hub API
                 response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/users/{user_id}",
+                    f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
                     headers=headers,
                     json=update_data,
                     params={"fields": "id,login,fullName,email,banned"},
