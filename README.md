@@ -74,6 +74,17 @@ yt auth login
 yt auth token --show
 ```
 
+### Shell Completion
+
+YouTrack CLI supports tab completion for bash, zsh, and fish shells:
+
+```bash
+# Enable shell completion (see docs for full instructions)
+yt completion bash --install
+```
+
+📖 **[Complete shell completion guide](https://yt-cli.readthedocs.io/en/latest/installation.html#shell-completion)**
+
 ### Basic Usage
 
 ```bash
