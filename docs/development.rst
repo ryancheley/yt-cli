@@ -508,23 +508,150 @@ Version Management
 
 The project uses semantic versioning (MAJOR.MINOR.PATCH):
 
-* MAJOR: Breaking changes
-* MINOR: New features (backward compatible)
-* PATCH: Bug fixes (backward compatible)
+* **MAJOR**: Breaking changes
+* **MINOR**: New features (backward compatible)
+* **PATCH**: Bug fixes (backward compatible)
 
-Creating Releases
-~~~~~~~~~~~~~~~~~
+Release Workflow
+~~~~~~~~~~~~~~~~
 
-1. Update version in ``pyproject.toml``
-2. Update ``CHANGELOG.md``
-3. Create and push a version tag:
+The project uses an automated release process via ``justfile`` recipes that handle all aspects of releasing.
 
-   .. code-block:: bash
+**Step 1: Pre-Release Validation**
 
-      git tag -a v0.2.0 -m "Release version 0.2.0"
-      git push origin v0.2.0
+Before creating a release, validate your intended version:
 
-4. GitHub Actions will automatically build and publish to PyPI
+.. code-block:: bash
+
+   # Check if version is valid and ready for release
+   just release-check 0.2.3
+
+   # Check current project status
+   just release-status
+
+**Step 2: Automated Release**
+
+Create a complete release with safety checks:
+
+.. code-block:: bash
+
+   # Full automated release process
+   just release 0.2.3
+
+This command will:
+
+1. **Pre-flight checks**: Verify you're on main branch, working directory is clean, and up-to-date with remote
+2. **Quality checks**: Run all linting, formatting, type checking, and tests
+3. **Version bump**: Update ``pyproject.toml`` and ``uv.lock``
+4. **Commit and push**: Create version bump commit and push to main
+5. **Tag creation**: Create and push the release tag
+6. **Trigger automation**: GitHub Actions automatically builds and publishes to PyPI
+
+**Step 3: Monitor Release**
+
+The release process provides helpful links:
+
+.. code-block:: text
+
+   ✅ Release 0.2.3 created and published!
+   🔗 Monitor release progress: https://github.com/ryancheley/yt-cli/actions
+   📦 Package will be available at: https://pypi.org/project/youtrack-cli/0.2.3/
+
+Emergency Rollback
+~~~~~~~~~~~~~~~~~~
+
+If a release needs to be rolled back (before PyPI publication):
+
+.. code-block:: bash
+
+   # Emergency rollback - deletes tag and reverts version commit
+   just rollback-release 0.2.3
+
+.. warning::
+   Rollback is only effective before the package is published to PyPI. Once published, you must create a new version.
+
+Release Safety Features
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The release process includes multiple safety checks:
+
+**Branch Protection**:
+  * Must be on ``main`` branch
+  * Working directory must be clean
+  * Must be up-to-date with ``origin/main``
+
+**Version Validation**:
+  * Semantic versioning format (e.g., ``1.2.3``)
+  * Version must not already exist as a tag
+  * Must be a proper version increment
+
+**Quality Gates**:
+  * All tests must pass
+  * Code must pass linting
+  * Type checking must succeed
+  * No security issues detected
+
+Manual Release Steps (Advanced)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For advanced users who need manual control:
+
+.. code-block:: bash
+
+   # Individual steps
+   just version-bump 0.2.3    # Update pyproject.toml only
+   just tag 0.2.3             # Create and push tag only
+
+   # Quality checks
+   just check                  # Run all quality checks
+
+Release Troubleshooting
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Common Issues and Solutions**:
+
+*Working directory not clean*:
+  .. code-block:: bash
+
+     # Check what files are uncommitted
+     git status
+
+     # Commit or stash changes
+     git add . && git commit -m "commit message"
+     # or
+     git stash
+
+*Not up-to-date with remote*:
+  .. code-block:: bash
+
+     git pull origin main
+
+*Quality checks failing*:
+  .. code-block:: bash
+
+     # Run individual checks to identify issues
+     just lint           # Fix linting issues
+     just format         # Fix formatting
+     just typecheck      # Fix type issues
+     just test          # Fix failing tests
+
+*Tag already exists*:
+  .. code-block:: bash
+
+     # List existing tags
+     git tag -l
+
+     # Use the next appropriate version number
+
+GitHub Actions Integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The release process automatically triggers GitHub Actions workflows:
+
+1. **Test PyPI Deployment**: Validates package and publishes to Test PyPI
+2. **PyPI Deployment**: After Test PyPI succeeds, publishes to main PyPI
+3. **GitHub Release**: Creates GitHub release with assets and attestations
+4. **Security Attestations**: Generates digital attestations for packages
 
 Contributing Guidelines
 -----------------------
