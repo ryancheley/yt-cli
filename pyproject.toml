@@ -35,6 +35,8 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "tomli>=1.2.0; python_version<'3.11'",
     "structlog>=25.4.0",
+    "keyring>=25.0.0",
+    "cryptography>=41.0.0",
 ]
 
 [project.urls]

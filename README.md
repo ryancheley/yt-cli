@@ -7,7 +7,8 @@ A powerful command line interface for JetBrains YouTrack issue tracking system.
 ## Features
 
 - **Complete YouTrack Management**: Issues, articles, projects, users, time tracking, boards, and reporting
-- **Flexible Authentication**: Secure token-based authentication with credential management
+- **Enterprise Security Features**: Command audit logging, credential encryption, token expiration warnings
+- **Flexible Authentication**: Secure token-based authentication with keyring integration
 - **Rich Output Formats**: Beautiful tables and JSON export for automation
 - **Progress Indicators**: Visual feedback for long-running operations with Rich progress bars
 - **Comprehensive Configuration**: Customizable defaults and environment-specific settings

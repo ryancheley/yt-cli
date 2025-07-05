@@ -14,6 +14,7 @@ from .config import ConfigManager
 from .logging import setup_logging
 from .progress import set_progress_enabled
 from .reports import ReportManager
+from .security import AuditLogger, SecurityConfig
 
 __all__ = [
     "main",
@@ -55,6 +56,11 @@ __all__ = [
     is_flag=True,
     help="Disable progress indicators",
 )
+@click.option(
+    "--secure",
+    is_flag=True,
+    help="Enable enhanced security mode (prevents credential logging)",
+)
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -62,6 +68,7 @@ def main(
     verbose: bool,
     debug: bool,
     no_progress: bool,
+    secure: bool,
 ) -> None:
     """YouTrack CLI - Command line interface for JetBrains YouTrack.
 
@@ -99,12 +106,36 @@ def main(
     ctx.obj["verbose"] = verbose
     ctx.obj["debug"] = debug
     ctx.obj["no_progress"] = no_progress
+    ctx.obj["secure"] = secure
 
     # Setup logging
     setup_logging(verbose=verbose, debug=debug)
 
     # Configure progress indicators
     set_progress_enabled(not no_progress)
+
+    # Initialize audit logging
+    security_config = SecurityConfig(enable_audit_logging=not secure)
+    audit_logger = AuditLogger(security_config)
+    ctx.obj["audit_logger"] = audit_logger
+
+    # Log the command execution
+    command_args = []
+    if ctx.params:
+        for key, value in ctx.params.items():
+            if key == "secure" and value:
+                command_args.append("--secure")
+            elif key == "verbose" and value:
+                command_args.append("--verbose")
+            elif key == "debug" and value:
+                command_args.append("--debug")
+            elif key == "no_progress" and value:
+                command_args.append("--no-progress")
+            elif key == "config" and value:
+                command_args.extend(["-c", str(value)])
+
+    if ctx.info_name:
+        audit_logger.log_command(ctx.info_name, command_args)
 
 
 # Register command groups
@@ -780,6 +811,139 @@ def list_config(ctx: click.Context) -> None:
 def admin() -> None:
     """Administrative operations."""
     pass
+
+
+@main.group()
+def security() -> None:
+    """Security and audit management."""
+    pass
+
+
+@security.command()
+@click.option(
+    "--limit",
+    "-l",
+    type=int,
+    default=50,
+    help="Number of recent entries to show",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def audit(ctx: click.Context, limit: int, output_format: str) -> None:
+    """View command audit log."""
+    console = Console()
+    audit_logger = ctx.obj.get("audit_logger") or AuditLogger()
+
+    try:
+        entries = audit_logger.get_audit_log(limit=limit)
+
+        if not entries:
+            console.print("📋 No audit entries found", style="yellow")
+            return
+
+        if output_format == "json":
+            import json
+
+            audit_data = [entry.model_dump(mode="json") for entry in entries]
+            console.print(json.dumps(audit_data, indent=2, default=str))
+        else:
+            from rich.table import Table
+
+            table = Table(title=f"Command Audit Log (Last {len(entries)} entries)")
+            table.add_column("Timestamp", style="cyan")
+            table.add_column("Command", style="yellow")
+            table.add_column("Arguments", style="blue")
+            table.add_column("User", style="green")
+            table.add_column("Status", style="red")
+
+            for entry in entries[-limit:]:
+                status = "✅" if entry.success else "❌"
+                user = entry.user or "Unknown"
+                args_str = " ".join(entry.arguments) if entry.arguments else ""
+
+                table.add_row(
+                    entry.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    entry.command,
+                    args_str,
+                    user,
+                    status,
+                )
+
+            console.print(table)
+
+    except Exception as e:
+        console.print(f"❌ Error retrieving audit log: {e}", style="red")
+        raise click.ClickException("Failed to retrieve audit log") from e
+
+
+@security.command()
+@click.option("--force", is_flag=True, help="Force clear without confirmation")
+@click.pass_context
+def clear_audit(ctx: click.Context, force: bool) -> None:
+    """Clear the command audit log."""
+    console = Console()
+
+    if not force:
+        if not click.confirm("Are you sure you want to clear the audit log?"):
+            console.print("Operation cancelled", style="yellow")
+            return
+
+    try:
+        audit_logger = ctx.obj.get("audit_logger") or AuditLogger()
+        # Clear by writing empty file
+        audit_logger._audit_file.write_text("")
+        console.print("✅ Audit log cleared successfully", style="green")
+    except Exception as e:
+        console.print(f"❌ Error clearing audit log: {e}", style="red")
+        raise click.ClickException("Failed to clear audit log") from e
+
+
+@security.command()
+@click.pass_context
+def token_status(ctx: click.Context) -> None:
+    """Check token expiration status."""
+    console = Console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+
+    try:
+        credentials = auth_manager.load_credentials()
+        if not credentials:
+            console.print("❌ No authentication credentials found", style="red")
+            console.print("Run 'yt auth login' to authenticate first", style="blue")
+            return
+
+        if credentials.token_expiry:
+            from .security import TokenManager
+
+            token_manager = TokenManager()
+            status = token_manager.check_token_expiration(credentials.token_expiry)
+
+            if status["status"] == "expired":
+                console.print(f"🔴 {status['message']}", style="red")
+            elif status["status"] == "expiring":
+                console.print(f"🟡 {status['message']}", style="yellow")
+            else:
+                days = status.get("days", 0)
+                console.print(
+                    f"🟢 Token is valid (expires in {days} days)",
+                    style="green",
+                )
+        else:
+            console.print("⚪ Token expiration date unknown", style="blue")
+            console.print(
+                "Consider updating your token to include expiration information",
+                style="dim",
+            )
+
+    except Exception as e:
+        console.print(f"❌ Error checking token status: {e}", style="red")
+        raise click.ClickException("Failed to check token status") from e
 
 
 # Admin subcommand groups

@@ -14,6 +14,7 @@ users, and more.
    youtrack-concepts
    quickstart
    configuration
+   security
    logging
    learning-path
    workflows
@@ -32,6 +33,7 @@ Features
 * **Time Tracking**: Log work time and generate reports
 * **Agile Boards**: View and manage agile boards
 * **Knowledge Base**: Manage YouTrack articles and documentation
+* **Security Features**: Command audit logging, credential encryption, and token management
 * **Rich CLI Interface**: Beautiful terminal output with rich text formatting
 * **Flexible Configuration**: Multiple authentication methods and configuration options
 

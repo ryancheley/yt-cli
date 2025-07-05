@@ -75,8 +75,12 @@ class TestAuthManager:
 
     def test_save_credentials(self):
         """Test saving credentials to config file."""
+        # Force file storage instead of keyring for this test
         self.auth_manager.save_credentials(
-            "https://example.youtrack.cloud", "test-token-123", "testuser"
+            "https://example.youtrack.cloud",
+            "test-token-123",
+            "testuser",
+            use_keyring=False,
         )
 
         with open(self.config_path) as f:
@@ -88,8 +92,9 @@ class TestAuthManager:
 
     def test_save_credentials_without_username(self):
         """Test saving credentials without username."""
+        # Force file storage instead of keyring for this test
         self.auth_manager.save_credentials(
-            "https://example.youtrack.cloud", "test-token-123"
+            "https://example.youtrack.cloud", "test-token-123", use_keyring=False
         )
 
         with open(self.config_path) as f:
@@ -139,8 +144,11 @@ class TestAuthManager:
         assert config is None
 
     @patch.dict(os.environ, {"YOUTRACK_BASE_URL": "https://example.youtrack.cloud"})
-    def test_load_credentials_incomplete(self):
+    @patch("youtrack_cli.security.keyring")
+    def test_load_credentials_incomplete(self, mock_keyring):
         """Test loading incomplete credentials."""
+        # Mock keyring to return None (no stored credentials)
+        mock_keyring.get_password.return_value = None
         config = self.auth_manager.load_credentials()
         assert config is None
 
