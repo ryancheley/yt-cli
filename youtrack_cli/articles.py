@@ -17,6 +17,26 @@ class ArticleManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    def _parse_json_response(self, response: httpx.Response) -> Any:
+        """Safely parse JSON response, handling empty or non-JSON responses."""
+        try:
+            content_type = response.headers.get("content-type", "")
+            if not response.text:
+                raise ValueError("Empty response body")
+
+            if "application/json" not in content_type:
+                raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
+
+            return response.json()
+        except Exception as e:
+            # Try to provide more context about the error
+            status_code = response.status_code
+            preview = response.text[:200] if response.text else "empty"
+            raise ValueError(
+                f"Failed to parse JSON response (status {status_code}): {str(e)}. "
+                f"Response preview: {preview}"
+            ) from e
+
     async def create_article(
         self,
         title: str,
@@ -54,7 +74,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=article_data, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "message": f"Article '{title}' created successfully",
@@ -101,7 +121,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "data": data,
@@ -135,7 +155,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text
@@ -182,7 +202,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=article_data, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "message": "Article updated successfully",
@@ -241,7 +261,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=article_data, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "message": "Article published successfully",
@@ -280,7 +300,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "data": data,
@@ -308,7 +328,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text
@@ -337,7 +357,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=comment_data, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "message": "Comment added successfully",
@@ -365,7 +385,7 @@ class ArticleManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text

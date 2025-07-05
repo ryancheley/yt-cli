@@ -1,6 +1,6 @@
 """Tests for board management functionality."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -48,9 +48,11 @@ class TestBoardManager:
         ]
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
             mock_client.return_value.__aenter__.return_value.get.return_value = (
@@ -75,9 +77,11 @@ class TestBoardManager:
         ]
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
             mock_client.return_value.__aenter__.return_value.get.return_value = (
@@ -113,9 +117,11 @@ class TestBoardManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
             mock_client.return_value.__aenter__.return_value.get.return_value = (
@@ -148,9 +154,11 @@ class TestBoardManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
             mock_client.return_value.__aenter__.return_value.post.return_value = (
