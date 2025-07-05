@@ -74,6 +74,27 @@ yt auth login
 yt auth token --show
 ```
 
+### Shell Completion
+
+Enable tab completion for commands, options, and arguments:
+
+```bash
+# Generate completion script for your shell
+yt completion bash   # For Bash
+yt completion zsh    # For Zsh
+yt completion fish   # For Fish
+
+# Install completion script automatically
+yt completion bash --install   # Installs to appropriate system location
+yt completion zsh --install    # May require shell restart to take effect
+yt completion fish --install
+
+# Manual installation (alternative)
+yt completion bash > ~/.local/share/bash-completion/completions/yt
+yt completion zsh > ~/.local/share/zsh/site-functions/_yt
+yt completion fish > ~/.config/fish/completions/yt.fish
+```
+
 ### Basic Usage
 
 ```bash

@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 
-@click.group()
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option()
 @click.option(
     "--config",
@@ -98,6 +98,258 @@ main.add_command(projects)
 main.add_command(users)
 main.add_command(time)
 main.add_command(boards)
+
+
+@main.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
+@click.option(
+    "--install",
+    is_flag=True,
+    help="Install the completion script to the appropriate location",
+)
+def completion(shell: str, install: bool) -> None:
+    """Generate shell completion script.
+
+    Generate completion scripts for bash, zsh, or fish shells.
+
+    Examples:
+
+        \b
+        # Generate bash completion script
+        yt completion bash
+
+        \b
+        # Install bash completion (requires sudo on some systems)
+        yt completion bash --install
+
+        \b
+        # For manual installation, redirect output to file:
+        yt completion bash > ~/.local/share/bash-completion/completions/yt
+        yt completion zsh > ~/.zsh/completions/_yt
+        yt completion fish > ~/.config/fish/completions/yt.fish
+    """
+    import os
+    from pathlib import Path
+
+    console = Console()
+
+    # Use Click's shell completion
+    completion_script = None
+
+    if shell == "bash":
+        completion_script = """
+_yt_completion() {
+    local IFS=$'\\n'
+    local response
+
+    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD \\
+        _YT_COMPLETE=bash_complete $1)
+
+    for completion in $response; do
+        IFS=',' read type value <<< "$completion"
+
+        if [[ $type == 'dir' ]]; then
+            COMPREPLY=()
+            compopt -o dirnames
+        elif [[ $type == 'file' ]]; then
+            COMPREPLY=()
+            compopt -o default
+        elif [[ $type == 'plain' ]]; then
+            COMPREPLY+=($value)
+        fi
+    done
+
+    return 0
+}
+
+complete -o nosort -F _yt_completion yt
+"""
+    elif shell == "zsh":
+        completion_script = """
+#compdef yt
+
+_yt_completion() {
+    local -a completions
+    local -a completions_with_descriptions
+    local -a response
+    (( ! $+commands[yt] )) && return 1
+
+    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) \\
+        _YT_COMPLETE=zsh_complete yt)}")
+
+    for type_and_arg in $response; do
+        completions_with_descriptions+=("$type_and_arg")
+        completions+=("${type_and_arg%%:*}")
+    done
+
+    if [ "$completions" ]; then
+        _describe '' completions_with_descriptions -V unsorted
+    fi
+}
+
+compdef _yt_completion yt
+"""
+    elif shell == "fish":
+        completion_script = """
+function _yt_completion
+    set -l response (env _YT_COMPLETE=fish_complete \\
+        COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) yt)
+
+    for completion in $response
+        set -l metadata (string split "," $completion)
+
+        if test $metadata[1] = "dir"
+            __fish_complete_directories $metadata[2]
+        else if test $metadata[1] = "file"
+            __fish_complete_path $metadata[2]
+        else if test $metadata[1] = "plain"
+            echo $metadata[2]
+        end
+    end
+end
+
+complete --no-files --command yt --arguments "(_yt_completion)"
+"""
+
+    if not completion_script:
+        console.print(f"❌ [red]Unsupported shell: {shell}[/red]")
+        raise click.ClickException(f"Shell '{shell}' is not supported")
+
+    if install:
+        # Install the completion script
+        try:
+            home = Path.home()
+
+            if shell == "bash":
+                # Try multiple locations for bash completion
+                completion_dirs = [
+                    Path("/usr/share/bash-completion/completions"),
+                    Path("/usr/local/share/bash-completion/completions"),
+                    home / ".local/share/bash-completion/completions",
+                    home / ".bash_completion.d",
+                ]
+
+                # Find the first writable directory
+                target_dir = None
+                for comp_dir in completion_dirs:
+                    if comp_dir.exists() and os.access(comp_dir, os.W_OK):
+                        target_dir = comp_dir
+                        break
+                    elif comp_dir.parent.exists() and os.access(
+                        comp_dir.parent, os.W_OK
+                    ):
+                        comp_dir.mkdir(parents=True, exist_ok=True)
+                        target_dir = comp_dir
+                        break
+
+                if not target_dir:
+                    # Create user-local completion directory
+                    target_dir = home / ".local/share/bash-completion/completions"
+                    target_dir.mkdir(parents=True, exist_ok=True)
+
+                target_file = target_dir / "yt"
+
+            elif shell == "zsh":
+                # Zsh completion directories
+                completion_dirs = [
+                    Path("/usr/share/zsh/site-functions"),
+                    Path("/usr/local/share/zsh/site-functions"),
+                    home / ".local/share/zsh/site-functions",
+                    home / ".zsh/completions",
+                ]
+
+                # Find the first writable directory
+                target_dir = None
+                for comp_dir in completion_dirs:
+                    if comp_dir.exists() and os.access(comp_dir, os.W_OK):
+                        target_dir = comp_dir
+                        break
+                    elif comp_dir.parent.exists() and os.access(
+                        comp_dir.parent, os.W_OK
+                    ):
+                        comp_dir.mkdir(parents=True, exist_ok=True)
+                        target_dir = comp_dir
+                        break
+
+                if not target_dir:
+                    # Create user-local completion directory
+                    target_dir = home / ".local/share/zsh/site-functions"
+                    target_dir.mkdir(parents=True, exist_ok=True)
+
+                target_file = target_dir / "_yt"
+
+            elif shell == "fish":
+                # Fish completion directories
+                completion_dirs = [
+                    Path("/usr/share/fish/completions"),
+                    Path("/usr/local/share/fish/completions"),
+                    home / ".config/fish/completions",
+                ]
+
+                # Find the first writable directory
+                target_dir = None
+                for comp_dir in completion_dirs:
+                    if comp_dir.exists() and os.access(comp_dir, os.W_OK):
+                        target_dir = comp_dir
+                        break
+                    elif comp_dir.parent.exists() and os.access(
+                        comp_dir.parent, os.W_OK
+                    ):
+                        comp_dir.mkdir(parents=True, exist_ok=True)
+                        target_dir = comp_dir
+                        break
+
+                if not target_dir:
+                    # Create user-local completion directory
+                    target_dir = home / ".config/fish/completions"
+                    target_dir.mkdir(parents=True, exist_ok=True)
+
+                target_file = target_dir / "yt.fish"
+
+            # Write the completion script
+            target_file.write_text(completion_script)
+            console.print(
+                f"✅ [green]Completion script installed to: {target_file}[/green]"
+            )
+
+            # Provide instructions
+            if shell == "bash":
+                console.print("\n📋 [blue]To enable completion, run:[/blue]")
+                console.print("  source ~/.bashrc")
+                console.print("  # OR")
+                console.print("  exec bash")
+
+            elif shell == "zsh":
+                console.print("\n📋 [blue]To enable completion:[/blue]")
+                console.print("  1. Ensure the completion directory is in your fpath")
+                console.print(
+                    f"     Add this to your ~/.zshrc: fpath=({target_dir} $fpath)"
+                )
+                console.print("  2. Reload your shell:")
+                console.print("     exec zsh")
+
+            elif shell == "fish":
+                console.print(
+                    "\n📋 [blue]Completion will be available in new fish "
+                    "sessions.[/blue]"
+                )
+                console.print("  To enable immediately, run: exec fish")
+
+        except PermissionError:
+            console.print(
+                "❌ [red]Permission denied. Try running with sudo or use "
+                "manual installation:[/red]"
+            )
+            console.print(f"  yt completion {shell} > /path/to/completion/file")
+            raise click.ClickException(
+                "Installation failed due to permissions"
+            ) from None
+        except Exception as e:
+            console.print(f"❌ [red]Installation failed: {e}[/red]")
+            raise click.ClickException("Installation failed") from e
+    else:
+        # Just output the completion script
+        console.print(completion_script, highlight=False)
 
 
 @main.command()

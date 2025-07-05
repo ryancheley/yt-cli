@@ -37,6 +37,8 @@ def test_main_version() -> None:
         "auth",
         "config",
         "admin",
+        "completion",
+        "setup",
     ],
 )
 def test_command_groups_exist(command: str) -> None:
@@ -178,3 +180,114 @@ class TestConfigCommands:
             assert result.exit_code == 0
             assert "API_TOKEN = very-sec...6789" in result.output
             assert "very-secret-token-123456789" not in result.output
+
+
+class TestCompletionCommands:
+    """Test shell completion functionality."""
+
+    def test_completion_help(self):
+        """Test completion command help."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", "--help"])
+        assert result.exit_code == 0
+        assert "Generate shell completion script" in result.output
+
+    @pytest.mark.parametrize("shell", ["bash", "zsh", "fish"])
+    def test_completion_generation(self, shell: str):
+        """Test completion script generation for all supported shells."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", shell])
+        assert result.exit_code == 0
+        assert len(result.output.strip()) > 0
+
+        # Check for shell-specific content
+        if shell == "bash":
+            assert "_yt_completion" in result.output
+            assert "complete" in result.output
+        elif shell == "zsh":
+            assert "#compdef yt" in result.output
+            assert "_yt_completion" in result.output
+        elif shell == "fish":
+            assert "function _yt_completion" in result.output
+            assert "complete --no-files --command yt" in result.output
+
+    def test_completion_invalid_shell(self):
+        """Test completion with invalid shell."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", "invalid_shell"])
+        assert result.exit_code == 2  # Click argument validation error
+
+    @pytest.mark.parametrize("shell", ["bash", "zsh", "fish"])
+    def test_completion_install_flag(self, shell: str):
+        """Test completion installation flag."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            runner = CliRunner()
+
+            # Mock the home directory to our temp directory
+            import os
+
+            original_home = os.environ.get("HOME")
+            os.environ["HOME"] = temp_dir
+
+            try:
+                result = runner.invoke(main, ["completion", shell, "--install"])
+                # Should succeed or fail gracefully with permission/path error
+                # We can't guarantee success since it depends on system paths
+                assert result.exit_code in [
+                    0,
+                    1,
+                ]  # 0 for success, 1 for expected failure
+
+                if result.exit_code == 0:
+                    assert "Completion script installed" in result.output
+                else:
+                    # Check it failed for expected reasons
+                    assert (
+                        "Permission denied" in result.output
+                        or "Installation failed" in result.output
+                        or "Error" in result.output
+                    )
+            finally:
+                # Restore original HOME
+                if original_home:
+                    os.environ["HOME"] = original_home
+                else:
+                    os.environ.pop("HOME", None)
+
+    def test_completion_script_content_bash(self):
+        """Test that bash completion script contains required elements."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", "bash"])
+        assert result.exit_code == 0
+
+        script = result.output
+        # Check for essential bash completion elements
+        assert "_YT_COMPLETE=bash_complete" in script
+        assert "COMP_WORDS" in script
+        assert "COMP_CWORD" in script
+        assert "complete -o nosort -F _yt_completion yt" in script
+
+    def test_completion_script_content_zsh(self):
+        """Test that zsh completion script contains required elements."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", "zsh"])
+        assert result.exit_code == 0
+
+        script = result.output
+        # Check for essential zsh completion elements
+        assert "_YT_COMPLETE=zsh_complete" in script
+        assert "compdef _yt_completion yt" in script
+        assert "COMP_WORDS" in script
+        assert "COMP_CWORD" in script
+
+    def test_completion_script_content_fish(self):
+        """Test that fish completion script contains required elements."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", "fish"])
+        assert result.exit_code == 0
+
+        script = result.output
+        # Check for essential fish completion elements
+        assert "_YT_COMPLETE=fish_complete" in script
+        assert "function _yt_completion" in script
+        assert "complete --no-files --command yt" in script
