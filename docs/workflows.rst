@@ -572,10 +572,310 @@ Error Handling Patterns
      fi
    done
 
+Release Management Workflow
+---------------------------
+
+Project Release Process
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Scenario**: Complete workflow for releasing a new version of YouTrack CLI.
+
+.. code-block:: bash
+
+   # 1. Pre-release preparation
+   # Check current project status
+   just release-status
+
+   # Validate intended version
+   just release-check 0.2.3
+
+   # 2. Update changelog
+   # Edit docs/changelog.rst to document changes
+   vim docs/changelog.rst
+
+   # Add entry for new version:
+   # [0.2.3] - 2024-07-05
+   # ---------------------
+   # Fixed
+   # ~~~~~
+   # - Type checker mismatch in tox.ini
+   # - Version consistency between files
+
+   # 3. Commit changelog updates
+   git add docs/changelog.rst
+   git commit -m "📝 Update changelog for v0.2.3"
+   git push origin main
+
+   # 4. Create release
+   just release 0.2.3
+
+   # 5. Monitor release process
+   # Watch GitHub Actions progress
+   gh run list --limit 3
+
+   # Check release status
+   gh release view v0.2.3
+
+   # 6. Verify package publication
+   # Check Test PyPI
+   pip index versions --pre youtrack-cli
+
+   # Verify main PyPI (may take a few minutes)
+   pip install --upgrade youtrack-cli
+   yt --version
+
+**Expected Output**:
+
+.. code-block:: text
+
+   🚀 Creating release 0.2.3...
+   🔍 Running pre-release checks...
+   ✅ Pre-flight checks passed
+   📝 Updating version to 0.2.3...
+   🔄 Updating uv.lock...
+   ⬆️ Pushing version bump commit...
+   🏷️ Creating and pushing tag...
+   ✅ Release 0.2.3 created and published!
+   🔗 Monitor release progress: https://github.com/ryancheley/yt-cli/actions
+   📦 Package will be available at: https://pypi.org/project/youtrack-cli/0.2.3/
+
+Hotfix Release Workflow
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Scenario**: Emergency fix that needs immediate release.
+
+.. code-block:: bash
+
+   # 1. Identify critical issue
+   # Create hotfix issue in YouTrack
+   yt issues create INFRA "Critical: Memory leak in article parser" \
+     --type "Bug" \
+     --priority "Critical" \
+     --assignee "dev-team"
+
+   # 2. Create hotfix branch (following CLAUDE.md guidelines)
+   just branch hotfix-memory-leak-issue-456
+
+   # 3. Implement fix with tests
+   # ... make code changes ...
+
+   # 4. Verify fix locally
+   just check  # Run all quality checks
+
+   # 5. Commit and push
+   git add .
+   git commit -m "🐛 Fix memory leak in article parser (#456)"
+   git push origin feature/hotfix-memory-leak-issue-456
+
+   # 6. Create PR
+   just pr
+
+   # 7. After PR approval and merge, switch to main
+   git checkout main
+   git pull origin main
+
+   # 8. Create hotfix release (patch version)
+   just release-check 0.2.4  # Validate version
+   just release 0.2.4        # Create release
+
+   # 9. Update YouTrack issue
+   yt issues update INFRA-456 --state "Fixed"
+   yt issues comments add INFRA-456 "✅ Fixed in v0.2.4. Released to PyPI."
+
+Development Release Workflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Scenario**: Creating a development/preview release for testing.
+
+.. code-block:: bash
+
+   # Note: Current release process doesn't support pre-release versions
+   # For development testing, use direct installation from git
+
+   # 1. Create feature branch
+   just branch new-feature-implementation
+
+   # 2. Implement feature
+   # ... development work ...
+
+   # 3. Test installation from branch
+   pip install git+https://github.com/ryancheley/yt-cli.git@feature/new-feature-implementation
+
+   # 4. Share with team for testing
+   echo "Test this feature branch:"
+   echo "pip install git+https://github.com/ryancheley/yt-cli.git@feature/new-feature-implementation"
+
+   # 5. After testing and PR merge, create full release
+   git checkout main
+   git pull origin main
+   just release 0.3.0  # Minor version for new feature
+
+Release Rollback Workflow
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Scenario**: Emergency rollback of a problematic release.
+
+.. code-block:: bash
+
+   # 1. Identify the problem
+   # Monitor for issues after release
+
+   # 2. Quick assessment
+   # Check if package was published to PyPI
+   pip index versions youtrack-cli
+
+   # 3a. If not yet published (tag exists but workflow failed)
+   just rollback-release 0.2.3
+
+   # 3b. If already published to PyPI
+   # PyPI doesn't allow deletion - create fix version
+
+   # Create hotfix
+   # ... implement urgent fix ...
+
+   # Release hotfix
+   just release 0.2.4
+
+   # 4. Communication
+   # Update users about the issue
+   gh release create v0.2.4 --notes "Hotfix release addressing critical issue in v0.2.3"
+
+   # Update documentation
+   echo "⚠️ v0.2.3 has known issues. Please upgrade to v0.2.4" >> README.md
+
+Automated Release Monitoring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Scenario**: Monitor release health and automate notifications.
+
+.. code-block:: bash
+
+   # Create monitoring script (save as scripts/release-monitor.sh)
+   cat << 'EOF' > scripts/release-monitor.sh
+   #!/bin/bash
+
+   # Get latest release
+   LATEST_TAG=$(git describe --tags --abbrev=0)
+   LATEST_VERSION=${LATEST_TAG#v}
+
+   # Check PyPI availability
+   echo "Checking PyPI availability for version $LATEST_VERSION..."
+   if pip index versions youtrack-cli | grep -q "$LATEST_VERSION"; then
+       echo "✅ Version $LATEST_VERSION available on PyPI"
+
+       # Test installation
+       if pip install --dry-run youtrack-cli==$LATEST_VERSION; then
+           echo "✅ Installation test passed"
+       else
+           echo "❌ Installation test failed"
+           exit 1
+       fi
+   else
+       echo "⏳ Version $LATEST_VERSION not yet available on PyPI"
+       exit 1
+   fi
+
+   # Check GitHub release
+   if gh release view "$LATEST_TAG" >/dev/null 2>&1; then
+       echo "✅ GitHub release created"
+   else
+       echo "❌ GitHub release missing"
+       exit 1
+   fi
+
+   echo "🎉 Release $LATEST_VERSION is healthy!"
+   EOF
+
+   chmod +x scripts/release-monitor.sh
+
+   # Run monitoring
+   ./scripts/release-monitor.sh
+
+CI/CD Integration for Releases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Scenario**: Integrate release process with external CI/CD systems.
+
+**GitHub Actions Integration**:
+
+.. code-block:: yaml
+
+   # .github/workflows/notify-release.yml
+   name: Release Notifications
+
+   on:
+     release:
+       types: [published]
+
+   jobs:
+     notify:
+       runs-on: ubuntu-latest
+       steps:
+         - name: Notify Slack
+           run: |
+             curl -X POST -H 'Content-type: application/json' \
+               --data '{"text":"🚀 YouTrack CLI ${{ github.event.release.tag_name }} released! Download: ${{ github.event.release.html_url }}"}' \
+               ${{ secrets.SLACK_WEBHOOK }}
+
+         - name: Update YouTrack
+           run: |
+             pip install youtrack-cli
+             yt issues create RELEASE "Version ${{ github.event.release.tag_name }} Released" \
+               --description "Automated release notification. Package available at PyPI." \
+               --type "Task" \
+               --state "Done"
+
+**Jenkins Pipeline Integration**:
+
+.. code-block:: groovy
+
+   // Jenkinsfile.release
+   pipeline {
+       agent any
+
+       parameters {
+           string(name: 'VERSION', description: 'Version to release (e.g., 0.2.3)')
+       }
+
+       stages {
+           stage('Pre-Release Checks') {
+               steps {
+                   sh 'just release-check ${VERSION}'
+               }
+           }
+
+           stage('Release') {
+               steps {
+                   sh 'just release ${VERSION}'
+               }
+           }
+
+           stage('Verify') {
+               steps {
+                   sleep time: 5, unit: 'MINUTES'  // Wait for PyPI propagation
+                   sh 'pip install --upgrade youtrack-cli'
+                   sh 'yt --version | grep ${VERSION}'
+               }
+           }
+       }
+
+       post {
+           success {
+               emailext subject: "Release ${params.VERSION} Successful",
+                        body: "YouTrack CLI version ${params.VERSION} has been successfully released."
+           }
+           failure {
+               emailext subject: "Release ${params.VERSION} Failed",
+                        body: "Release process failed. Check Jenkins logs for details."
+           }
+       }
+   }
+
 See Also
 --------
 
 - :doc:`quickstart` - Basic CLI usage
 - :doc:`configuration` - Setting up your environment
 - :doc:`troubleshooting` - Resolving common issues
+- :doc:`development` - Release process documentation
 - :doc:`commands/index` - Complete command reference

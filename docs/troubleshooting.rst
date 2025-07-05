@@ -499,11 +499,11 @@ Getting Help
 Debugging and Logging
 ~~~~~~~~~~~~~~~~~~~~~
 
-YouTrack CLI includes enhanced logging and debugging capabilities to help troubleshoot issues:
+YouTrack CLI includes a comprehensive logging system built with structured logging to help troubleshoot issues.
 
-**Debug Mode**
+**Quick Debugging**
 
-Enable detailed debug output to see what's happening under the hood:
+For immediate troubleshooting, use these flags:
 
 .. code-block:: bash
 
@@ -511,19 +511,30 @@ Enable detailed debug output to see what's happening under the hood:
    yt --debug issues list
    yt --debug auth login
 
-**Verbose Mode**
-
-Enable verbose output for more information without full debug details:
-
-.. code-block:: bash
-
    # Verbose mode shows progress information and warnings
    yt --verbose projects list
    yt --verbose issues create PROJECT-KEY "New issue"
 
+   # Set specific log levels
+   yt --log-level ERROR issues list
+   yt --log-level DEBUG auth login
+
+**Comprehensive Logging Documentation**
+
+For detailed information about the logging system, including:
+
+- Advanced log level control
+- File-based logging with rotation
+- Sensitive data masking
+- API call tracking
+- Performance monitoring
+- Log aggregation for external tools
+
+See the complete :doc:`logging` guide.
+
 **Enhanced Error Messages**
 
-YouTrack CLI now provides user-friendly error messages with actionable suggestions:
+YouTrack CLI provides user-friendly error messages with actionable suggestions:
 
 .. code-block:: bash
 
@@ -545,7 +556,7 @@ The CLI categorizes errors to provide better context:
 
 **Automatic Retry Logic**
 
-Network requests now include automatic retry with exponential backoff:
+Network requests include automatic retry with exponential backoff:
 
 .. code-block:: bash
 
@@ -660,6 +671,337 @@ Common Error Messages
 2. Check API token permissions
 3. Test login in YouTrack web interface
 
+Release and Development Issues
+-------------------------------
+
+Release Creation Problems
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``just release`` command fails during pre-flight checks.
+
+**Common Issues and Solutions**:
+
+*Not on main branch*:
+  .. code-block:: bash
+
+     # Check current branch
+     git branch --show-current
+
+     # Switch to main
+     git checkout main
+
+*Working directory not clean*:
+  .. code-block:: bash
+
+     # Check what files are uncommitted
+     git status --short
+
+     # Commit changes or stash them
+     git add . && git commit -m "Pre-release cleanup"
+     # or
+     git stash
+
+*Local branch not up-to-date*:
+  .. code-block:: bash
+
+     # Pull latest changes
+     git pull origin main
+
+*Quality checks failing*:
+  .. code-block:: bash
+
+     # Run checks individually to identify issues
+     just lint          # Fix linting issues
+     just format        # Fix formatting
+     just typecheck     # Fix type issues
+     just test         # Fix failing tests
+     just security     # Fix security issues
+
+**Problem**: Version validation fails.
+
+**Solutions**:
+
+*Invalid version format*:
+  .. code-block:: bash
+
+     # ✅ Correct semantic versioning:
+     just release 0.2.3
+     just release 1.0.0
+
+     # ❌ Wrong formats:
+     just release 0.2    # Missing patch version
+     just release v0.2.3 # Don't include 'v' prefix
+     just release 0.2.3-beta # Pre-release versions not supported
+
+*Version already exists*:
+  .. code-block:: bash
+
+     # Check existing tags
+     git tag -l | sort -V
+
+     # Use next appropriate version
+     just release 0.2.4
+
+*Not a proper version increment*:
+  .. code-block:: bash
+
+     # Check current version
+     just release-status
+
+     # Use proper increment (patch, minor, or major)
+     just release-check 0.2.3  # Validate before running
+
+GitHub Actions Failures
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: Release workflow fails after tag is pushed.
+
+**Diagnostic Steps**:
+
+1. **Check workflow status**:
+
+   .. code-block:: bash
+
+      # View recent workflow runs
+      gh run list --limit 5
+
+      # View specific run details
+      gh run view <run-id>
+
+      # View failed job logs
+      gh run view <run-id> --log-failed
+
+2. **Common failure causes**:
+
+   *Tests failing in CI*:
+     - Tests may pass locally but fail in CI due to environment differences
+     - Check the test logs in GitHub Actions
+     - Run tests locally with exact CI conditions
+
+   *Build failures*:
+     - Missing dependencies in CI environment
+     - Check ``pyproject.toml`` for correct dependency versions
+
+   *PyPI publishing failures*:
+     - API token permissions or expiration
+     - Package name conflicts
+     - Missing repository secrets (``PYPI_TOKEN``)
+
+**Problem**: Package published to Test PyPI but not main PyPI.
+
+**Solutions**:
+
+1. **Check Test PyPI results**:
+
+   .. code-block:: bash
+
+      # View Test PyPI package
+      # https://test.pypi.org/project/youtrack-cli/
+
+2. **Manual PyPI troubleshooting**:
+
+   .. code-block:: bash
+
+      # Check if package exists on main PyPI
+      pip index versions youtrack-cli
+
+      # Test installation from Test PyPI
+      pip install -i https://test.pypi.org/simple/ youtrack-cli
+
+Release Rollback Issues
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: Need to rollback a failed release.
+
+**Solutions**:
+
+1. **Before PyPI publication** (tag exists but package not published):
+
+   .. code-block:: bash
+
+      # Use automated rollback
+      just rollback-release 0.2.3
+
+2. **After PyPI publication** (package already live):
+
+   .. code-block:: bash
+
+      # PyPI doesn't allow deletion - create new version
+      just release-check 0.2.4  # Validate next version
+      just release 0.2.4        # Create hotfix release
+
+3. **Manual rollback steps** (if automated rollback fails):
+
+   .. code-block:: bash
+
+      # Delete remote tag
+      git push origin :refs/tags/v0.2.3
+
+      # Delete local tag
+      git tag -d v0.2.3
+
+      # Revert version commit (if it's the last commit)
+      git reset --hard HEAD~1
+      git push --force-with-lease origin main
+
+Development Environment Issues
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``just`` command not found.
+
+**Solutions**:
+
+1. **Install just**:
+
+   .. code-block:: bash
+
+      # macOS
+      brew install just
+
+      # Linux
+      curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/bin
+
+      # Windows (using cargo)
+      cargo install just
+
+2. **Alternative - use make**:
+
+   .. code-block:: bash
+
+      # Manual commands instead of just recipes
+      uv sync --dev
+      uv run pytest
+      uv run ruff check
+
+**Problem**: Pre-commit hooks failing.
+
+**Solutions**:
+
+1. **Install pre-commit hooks**:
+
+   .. code-block:: bash
+
+      uv run pre-commit install
+
+2. **Run hooks manually**:
+
+   .. code-block:: bash
+
+      # Run all hooks
+      uv run pre-commit run --all-files
+
+      # Run specific hook
+      uv run pre-commit run ruff
+
+3. **Skip hooks temporarily** (not recommended):
+
+   .. code-block:: bash
+
+      git commit --no-verify -m "message"
+
+**Problem**: Type checking failures with ``ty``.
+
+**Solutions**:
+
+1. **Install correct type checker**:
+
+   .. code-block:: bash
+
+      # Project uses 'ty', not 'mypy'
+      uv sync --dev
+      uv run ty check
+
+2. **Common type issues**:
+
+   .. code-block:: bash
+
+      # Ignore specific issues during development
+      uv run ty check --ignore call-non-callable --ignore unresolved-attribute
+
+Version Management Issues
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: Version mismatch between files.
+
+**Solutions**:
+
+1. **Check version consistency**:
+
+   .. code-block:: bash
+
+      # Check pyproject.toml version
+      grep '^version =' pyproject.toml
+
+      # Check package version
+      python -c "import youtrack_cli; print(youtrack_cli.__version__)"
+
+2. **Fix version inconsistencies**:
+
+   .. code-block:: bash
+
+      # Use justfile version bump
+      just version-bump 0.2.3
+
+      # This updates pyproject.toml correctly
+
+**Problem**: uv.lock file out of sync.
+
+**Solutions**:
+
+.. code-block:: bash
+
+   # Update lock file
+   uv sync
+
+   # Or regenerate completely
+   rm uv.lock
+   uv sync --dev
+
+CI/CD Integration Issues
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: GitHub Actions workflow not triggering.
+
+**Solutions**:
+
+1. **Check workflow triggers**:
+
+   .. code-block:: bash
+
+      # Ensure tag was pushed correctly
+      git ls-remote --tags origin
+
+      # Check if tag follows correct format
+      git tag -l | grep "^v[0-9]"
+
+2. **Verify workflow files**:
+
+   .. code-block:: bash
+
+      # Check workflow syntax
+      cat .github/workflows/release.yml
+
+      # Test with GitHub CLI
+      gh workflow list
+
+**Problem**: Secrets not available in workflow.
+
+**Solutions**:
+
+1. **Check repository secrets**:
+
+   - Go to GitHub repo → Settings → Secrets and variables → Actions
+   - Ensure ``PYPI_TOKEN`` exists and is valid
+   - Verify environment protection rules
+
+2. **Test secrets locally** (for debugging):
+
+   .. code-block:: bash
+
+      # Test PyPI token manually
+      twine check dist/*
+      twine upload --repository testpypi dist/*
+
 Still Need Help?
 ----------------
 
@@ -678,5 +1020,15 @@ When reporting issues, include:
    python --version
    pip list | grep youtrack-cli
 
+   # Development environment info (if relevant)
+   just --version
+   uv --version
+   git --version
+
    # Error output with debug flag
    yt --debug [your-command-here]
+
+   # Release-specific debugging
+   just release-status
+   git status
+   git log --oneline -5

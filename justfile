@@ -213,13 +213,185 @@ tag version:
 [group('release')]
 release version:
     #!/usr/bin/env bash
-    echo "Creating release {{ version }}..."
+    echo "🚀 Creating release {{ version }}..."
+
+    # Pre-flight checks
+    echo "🔍 Running pre-release checks..."
+
+    # Check if we're on main branch
+    if [ "$(git branch --show-current)" != "main" ]; then
+        echo "❌ Must be on main branch for releases"
+        exit 1
+    fi
+
+    # Check if working directory is clean
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "❌ Working directory is not clean. Please commit or stash changes."
+        git status --short
+        exit 1
+    fi
+
+    # Check if we're up to date with remote
+    git fetch origin main
+    if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+        echo "❌ Local main branch is not up to date with origin/main"
+        echo "Please run: git pull origin main"
+        exit 1
+    fi
+
+    # Run quality checks
+    echo "🔍 Running quality checks..."
+    just check
+
+    echo "✅ Pre-flight checks passed"
+
+    # Version bump and commit
+    echo "📝 Updating version to {{ version }}..."
     just version-bump {{ version }}
-    git add pyproject.toml
-    git commit -m "🔖: Bump version to {{ version }}"
-    git push
+
+    # Update uv.lock if it exists
+    if [ -f "uv.lock" ]; then
+        echo "🔄 Updating uv.lock..."
+        uv sync
+    fi
+
+    # Stage all changes (pyproject.toml and uv.lock)
+    git add pyproject.toml uv.lock
+
+    # Create commit
+    git commit -m "🔖 Bump version to {{ version }}"
+
+    # Push commit
+    echo "⬆️  Pushing version bump commit..."
+    git push origin main
+
+    # Create and push tag
+    echo "🏷️  Creating and pushing tag..."
     just tag {{ version }}
-    echo "✅ Release {{ version }} created and published"
+
+    echo "✅ Release {{ version }} created and published!"
+    echo "🔗 Monitor release progress: https://github.com/ryancheley/yt-cli/actions"
+    echo "📦 Package will be available at: https://pypi.org/project/youtrack-cli/{{ version }}/"
+
+[group('release')]
+release-check version:
+    #!/usr/bin/env bash
+    echo "🔍 Pre-release validation for version {{ version }}..."
+
+    # Check version format
+    if ! echo "{{ version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "❌ Invalid version format. Use semantic versioning (e.g., 1.2.3)"
+        exit 1
+    fi
+
+    # Check if version already exists
+    if git tag -l | grep -q "^v{{ version }}$"; then
+        echo "❌ Version {{ version }} already exists as a git tag"
+        exit 1
+    fi
+
+    # Check current version in pyproject.toml
+    current_version=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+    echo "📋 Current version: $current_version"
+    echo "📋 Target version: {{ version }}"
+
+    # Verify it's a version bump
+    if [ "$current_version" = "{{ version }}" ]; then
+        echo "❌ Target version is the same as current version"
+        exit 1
+    fi
+
+    # Check what type of release this is
+    IFS='.' read -r curr_major curr_minor curr_patch <<< "$current_version"
+    IFS='.' read -r new_major new_minor new_patch <<< "{{ version }}"
+
+    if [ "$new_major" -gt "$curr_major" ]; then
+        echo "🚨 MAJOR version bump detected (breaking changes)"
+    elif [ "$new_minor" -gt "$curr_minor" ]; then
+        echo "✨ MINOR version bump detected (new features)"
+    elif [ "$new_patch" -gt "$curr_patch" ]; then
+        echo "🐛 PATCH version bump detected (bug fixes)"
+    else
+        echo "❌ Version is not a proper increment"
+        exit 1
+    fi
+
+    echo "✅ Version {{ version }} is valid for release"
+
+[group('release')]
+release-status:
+    #!/usr/bin/env bash
+    echo "📊 Release Status Check"
+    echo "======================"
+
+    # Current version
+    current_version=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+    echo "📋 Current version: $current_version"
+
+    # Check if there are unreleased changes
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "⚠️  Uncommitted changes present:"
+        git status --short
+    else
+        echo "✅ Working directory clean"
+    fi
+
+    # Check recent commits since last tag
+    last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "No tags found")
+    if [ "$last_tag" != "No tags found" ]; then
+        echo "🏷️  Last tag: $last_tag"
+        commit_count=$(git rev-list ${last_tag}..HEAD --count)
+        echo "📈 Commits since last tag: $commit_count"
+
+        if [ "$commit_count" -gt 0 ]; then
+            echo "📝 Recent changes:"
+            git log --oneline ${last_tag}..HEAD | head -5
+        fi
+    else
+        echo "🏷️  No previous tags found"
+    fi
+
+    # Check GitHub Actions status
+    echo ""
+    echo "🤖 Recent GitHub Actions:"
+    gh run list --limit 3 2>/dev/null || echo "⚠️  GitHub CLI not available or not authenticated"
+
+[group('release')]
+rollback-release version:
+    #!/usr/bin/env bash
+    echo "⚠️  Rolling back release {{ version }}..."
+    echo "This will:"
+    echo "  1. Delete the git tag v{{ version }}"
+    echo "  2. Revert the version bump commit"
+    echo ""
+    read -p "Are you sure? This cannot be undone. [y/N]: " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # Delete remote tag
+        echo "🗑️  Deleting remote tag..."
+        git push origin :refs/tags/v{{ version }} || echo "Tag may not exist on remote"
+
+        # Delete local tag
+        git tag -d v{{ version }} 2>/dev/null || echo "Local tag may not exist"
+
+        # Revert last commit if it's a version bump
+        last_commit_msg=$(git log -1 --pretty=%B)
+        if echo "$last_commit_msg" | grep -q "Bump version to {{ version }}"; then
+            echo "⏪ Reverting version bump commit..."
+            git reset --hard HEAD~1
+            echo "⬆️  Force pushing to remote..."
+            git push --force-with-lease origin main
+        else
+            echo "⚠️  Last commit doesn't appear to be the version bump for {{ version }}"
+            echo "    Manual intervention may be required"
+        fi
+
+        echo "✅ Rollback completed"
+        echo "⚠️  Note: If the release was already published to PyPI, you'll need to create a new version"
+    else
+        echo "❌ Rollback cancelled"
+    fi
 
 # Documentation
 [group('docs')]
@@ -327,7 +499,10 @@ workflow-help:
     echo "  just pr                # Create pull request"
     echo ""
     echo "🚀 Creating a release:"
-    echo "  just release 0.2.0     # Bump version, commit, tag, and trigger release"
+    echo "  just release-check 0.2.3  # Validate version and check readiness"
+    echo "  just release-status        # Check current status and recent changes"
+    echo "  just release 0.2.3         # Full automated release process"
+    echo "  just rollback-release 0.2.3  # Emergency rollback (if needed)"
     echo ""
     echo "🆘 Troubleshooting:"
     echo "  just doctor            # Check project health"
