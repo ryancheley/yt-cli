@@ -9,6 +9,8 @@ from rich.text import Text
 
 from .auth import AuthManager
 
+__all__ = ["UserManager"]
+
 
 class UserManager:
     """Manages YouTrack user operations."""

@@ -11,6 +11,15 @@ from typing import Any, Optional
 import structlog
 from rich.logging import RichHandler
 
+__all__ = [
+    "SensitiveDataFilter",
+    "setup_logging",
+    "get_logger",
+    "log_operation",
+    "log_api_call",
+    "get_log_file_path",
+]
+
 
 class SensitiveDataFilter(logging.Filter):
     """Filter to mask sensitive data in log records."""

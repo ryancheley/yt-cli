@@ -8,6 +8,8 @@ from rich.table import Table
 
 from .auth import AuthManager
 
+__all__ = ["ReportManager"]
+
 
 class ReportManager:
     """Manages YouTrack report generation operations."""

@@ -9,6 +9,8 @@ from rich.tree import Tree
 
 from .auth import AuthManager
 
+__all__ = ["ArticleManager"]
+
 
 class ArticleManager:
     """Manages YouTrack articles operations."""

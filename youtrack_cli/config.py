@@ -6,6 +6,8 @@ from typing import Optional
 
 from dotenv import load_dotenv, set_key, unset_key
 
+__all__ = ["ConfigManager"]
+
 
 class ConfigManager:
     """Manages configuration for YouTrack CLI."""
