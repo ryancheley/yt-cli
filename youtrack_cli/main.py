@@ -3235,7 +3235,8 @@ def admin_global_settings() -> None:
 @click.pass_context
 def admin_global_settings_get(ctx: click.Context, setting_key: Optional[str]) -> None:
     """Get global settings."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_get_settings() -> None:
@@ -3256,7 +3257,8 @@ def admin_global_settings_get(ctx: click.Context, setting_key: Optional[str]) ->
 @click.pass_context
 def admin_global_settings_set(ctx: click.Context, setting_key: str, value: str) -> None:
     """Set a global setting."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_set_setting() -> None:
@@ -3282,7 +3284,8 @@ def admin_license() -> None:
 @click.pass_context
 def admin_license_show(ctx: click.Context) -> None:
     """Display license information."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_show_license() -> None:
@@ -3301,7 +3304,8 @@ def admin_license_show(ctx: click.Context) -> None:
 @click.pass_context
 def admin_license_usage(ctx: click.Context) -> None:
     """Show license usage statistics."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_license_usage() -> None:
@@ -3332,7 +3336,8 @@ def admin_maintenance() -> None:
 @click.pass_context
 def admin_maintenance_clear_cache(ctx: click.Context, confirm: bool) -> None:
     """Clear system caches."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     if not confirm:
@@ -3364,7 +3369,8 @@ def admin_health() -> None:
 @click.pass_context
 def admin_health_check(ctx: click.Context) -> None:
     """Run health diagnostics."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_health_check() -> None:
@@ -3395,7 +3401,8 @@ def admin_user_groups() -> None:
 @click.pass_context
 def admin_user_groups_list(ctx: click.Context, fields: Optional[str]) -> None:
     """List all user groups."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_list_groups() -> None:
@@ -3422,7 +3429,8 @@ def admin_user_groups_create(
     ctx: click.Context, name: str, description: Optional[str]
 ) -> None:
     """Create a new user group."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_create_group() -> None:
@@ -3453,7 +3461,8 @@ def admin_fields() -> None:
 @click.pass_context
 def admin_fields_list(ctx: click.Context, fields: Optional[str]) -> None:
     """List all custom fields."""
-    admin_manager = AdminManager(ctx.obj.get("config"))
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
     console = Console()
 
     async def run_list_fields() -> None:
