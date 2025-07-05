@@ -24,7 +24,7 @@ class AliasedGroup(click.Group):
         return super().get_command(ctx, cmd_name)
 
     def list_commands(self, ctx: click.Context) -> list[str]:
-        """List all commands including aliases."""
-        commands = super().list_commands(ctx)
-        commands.extend(self.aliases.keys())
-        return sorted(commands)
+        """List all commands, excluding aliases to avoid duplicates in help."""
+        # Only return actual commands, not aliases
+        # This prevents duplicates in help output while still allowing alias resolution
+        return super().list_commands(ctx)

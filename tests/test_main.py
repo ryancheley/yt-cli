@@ -101,9 +101,7 @@ class TestConfigCommands:
             assert "Set TEST_KEY = test_value" in result.output
 
             # Get the configuration value
-            result = runner.invoke(
-                main, ["--config", str(config_path), "config", "get", "TEST_KEY"]
-            )
+            result = runner.invoke(main, ["--config", str(config_path), "config", "get", "TEST_KEY"])
             assert result.exit_code == 0
             assert "TEST_KEY = test_value" in result.output
 
@@ -113,9 +111,7 @@ class TestConfigCommands:
             config_path = Path(temp_dir) / "test_config.env"
             runner = CliRunner()
 
-            result = runner.invoke(
-                main, ["--config", str(config_path), "config", "get", "NONEXISTENT_KEY"]
-            )
+            result = runner.invoke(main, ["--config", str(config_path), "config", "get", "NONEXISTENT_KEY"])
             assert result.exit_code == 1
             assert "Configuration key 'NONEXISTENT_KEY' not found" in result.output
 
@@ -125,9 +121,7 @@ class TestConfigCommands:
             config_path = Path(temp_dir) / "test_config.env"
             runner = CliRunner()
 
-            result = runner.invoke(
-                main, ["--config", str(config_path), "config", "list"]
-            )
+            result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
             assert result.exit_code == 0
             assert "No configuration values found" in result.output
 
@@ -138,17 +132,11 @@ class TestConfigCommands:
             runner = CliRunner()
 
             # Set multiple configuration values
-            runner.invoke(
-                main, ["--config", str(config_path), "config", "set", "KEY1", "value1"]
-            )
-            runner.invoke(
-                main, ["--config", str(config_path), "config", "set", "KEY2", "value2"]
-            )
+            runner.invoke(main, ["--config", str(config_path), "config", "set", "KEY1", "value1"])
+            runner.invoke(main, ["--config", str(config_path), "config", "set", "KEY2", "value2"])
 
             # List all configuration values
-            result = runner.invoke(
-                main, ["--config", str(config_path), "config", "list"]
-            )
+            result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
             assert result.exit_code == 0
             assert "Configuration values:" in result.output
             assert "KEY1 = value1" in result.output
@@ -174,9 +162,7 @@ class TestConfigCommands:
             )
 
             # List configuration values
-            result = runner.invoke(
-                main, ["--config", str(config_path), "config", "list"]
-            )
+            result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
             assert result.exit_code == 0
             assert "API_TOKEN = very-sec...6789" in result.output
             assert "very-secret-token-123456789" not in result.output
@@ -350,7 +336,7 @@ class TestCommandAliases:
         assert result.exit_code in [0, 1, 2]  # Help should work, or fail gracefully
 
     def test_alias_completion_listing(self) -> None:
-        """Test that aliases appear in command completion."""
+        """Test that aliases do NOT appear in command listing to prevent duplicates."""
         # Get the main CLI object to test list_commands
         # Create a mock context
         import click
@@ -362,9 +348,46 @@ class TestCommandAliases:
         # Get the list of available commands
         commands = main_cli.list_commands(ctx)
 
-        # Check that our aliases are in the list
-        assert "i" in commands
-        assert "a" in commands
-        assert "p" in commands
-        assert "c" in commands
-        assert "login" in commands
+        # Check that aliases are NOT in the list (to prevent duplicates in help)
+        assert "i" not in commands
+        assert "a" not in commands
+        assert "p" not in commands
+        assert "c" not in commands
+        assert "login" not in commands
+
+        # But the actual commands should be present
+        assert "issues" in commands
+        assert "articles" in commands
+        assert "projects" in commands
+        assert "config" in commands
+        assert "auth" in commands
+
+    def test_alias_resolution_still_works(self) -> None:
+        """Test that aliases still resolve to correct commands despite not appearing in list."""
+        import click
+
+        from youtrack_cli.main import main as main_cli
+
+        ctx = click.Context(main_cli)
+
+        # Test that aliases resolve to the correct commands
+        test_cases = [
+            ("i", "issues"),
+            ("a", "articles"),
+            ("p", "projects"),
+            ("u", "users"),
+            ("t", "time"),
+            ("b", "boards"),
+            ("c", "config"),
+            ("cfg", "config"),
+            ("login", "auth"),
+        ]
+
+        for alias, expected_command in test_cases:
+            resolved_cmd = main_cli.get_command(ctx, alias)
+            expected_cmd = main_cli.get_command(ctx, expected_command)
+
+            # Both should resolve to the same command object
+            assert resolved_cmd is not None, f"Alias '{alias}' should resolve to a command"
+            assert expected_cmd is not None, f"Command '{expected_command}' should exist"
+            assert resolved_cmd is expected_cmd, f"Alias '{alias}' should resolve to '{expected_command}'"
