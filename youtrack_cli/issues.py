@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
+from .progress import get_progress_manager
 
 __all__ = ["IssueManager"]
 
@@ -101,57 +102,60 @@ class IssueManager:
         assignee: Optional[str] = None,
     ) -> dict[str, Any]:
         """List issues with optional filtering."""
+        progress_manager = get_progress_manager()
+
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        params = {}
-        if fields:
-            params["fields"] = fields
-        else:
-            params["fields"] = (
-                "id,summary,description,state,priority,type,"
-                "assignee(login,fullName),project(id,name),created,updated"
-            )
+        with progress_manager.spinner("Fetching issues..."):
+            params = {}
+            if fields:
+                params["fields"] = fields
+            else:
+                params["fields"] = (
+                    "id,summary,description,state,priority,type,"
+                    "assignee(login,fullName),project(id,name),created,updated"
+                )
 
-        if top:
-            params["$top"] = str(top)
+            if top:
+                params["$top"] = str(top)
 
-        # Build query string
-        query_parts = []
-        if project_id:
-            query_parts.append(f"project:{project_id}")
-        if state:
-            query_parts.append(f"state:{state}")
-        if assignee:
-            query_parts.append(f"assignee:{assignee}")
-        if query:
-            query_parts.append(query)
+            # Build query string
+            query_parts = []
+            if project_id:
+                query_parts.append(f"project:{project_id}")
+            if state:
+                query_parts.append(f"state:{state}")
+            if assignee:
+                query_parts.append(f"assignee:{assignee}")
+            if query:
+                query_parts.append(query)
 
-        if query_parts:
-            params["query"] = " AND ".join(query_parts)
+            if query_parts:
+                params["query"] = " AND ".join(query_parts)
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues"
-        headers = {"Authorization": f"Bearer {credentials.token}"}
+            url = f"{credentials.base_url.rstrip('/')}/api/issues"
+            headers = {"Authorization": f"Bearer {credentials.token}"}
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "data": data,
-                        "count": len(data),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list issues: {error_text}",
-                    }
-        except Exception as e:
-            return {"status": "error", "message": f"Error listing issues: {str(e)}"}
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(url, params=params, headers=headers)
+                    if response.status_code == 200:
+                        data = self._parse_json_response(response)
+                        return {
+                            "status": "success",
+                            "data": data,
+                            "count": len(data),
+                        }
+                    else:
+                        error_text = response.text
+                        return {
+                            "status": "error",
+                            "message": f"Failed to list issues: {error_text}",
+                        }
+            except Exception as e:
+                return {"status": "error", "message": f"Error listing issues: {str(e)}"}
 
     async def get_issue(self, issue_id: str) -> dict[str, Any]:
         """Get details of a specific issue."""

@@ -12,6 +12,7 @@ from .auth import AuthManager
 from .commands import articles, boards, issues, projects, time, users
 from .config import ConfigManager
 from .logging import setup_logging
+from .progress import set_progress_enabled
 from .reports import ReportManager
 
 __all__ = [
@@ -49,8 +50,19 @@ __all__ = [
     is_flag=True,
     help="Enable debug output",
 )
+@click.option(
+    "--no-progress",
+    is_flag=True,
+    help="Disable progress indicators",
+)
 @click.pass_context
-def main(ctx: click.Context, config: Optional[str], verbose: bool, debug: bool) -> None:
+def main(
+    ctx: click.Context,
+    config: Optional[str],
+    verbose: bool,
+    debug: bool,
+    no_progress: bool,
+) -> None:
     """YouTrack CLI - Command line interface for JetBrains YouTrack.
 
     A powerful command line tool for managing YouTrack issues, projects, users,
@@ -86,9 +98,13 @@ def main(ctx: click.Context, config: Optional[str], verbose: bool, debug: bool) 
     ctx.obj["config"] = config
     ctx.obj["verbose"] = verbose
     ctx.obj["debug"] = debug
+    ctx.obj["no_progress"] = no_progress
 
     # Setup logging
     setup_logging(verbose=verbose, debug=debug)
+
+    # Configure progress indicators
+    set_progress_enabled(not no_progress)
 
 
 # Register command groups

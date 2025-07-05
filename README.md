@@ -9,6 +9,7 @@ A powerful command line interface for JetBrains YouTrack issue tracking system.
 - **Complete YouTrack Management**: Issues, articles, projects, users, time tracking, boards, and reporting
 - **Flexible Authentication**: Secure token-based authentication with credential management
 - **Rich Output Formats**: Beautiful tables and JSON export for automation
+- **Progress Indicators**: Visual feedback for long-running operations with Rich progress bars
 - **Comprehensive Configuration**: Customizable defaults and environment-specific settings
 - **Administrative Tools**: System management, user groups, and health monitoring
 - **Developer-Friendly**: Built with modern Python practices and extensive documentation
@@ -97,8 +98,11 @@ yt articles create "Getting Started" --content "Welcome to our documentation"
 # Log work time
 yt time log ISSUE-123 "2h" --description "Feature development"
 
-# Generate reports
+# Generate reports with progress indicators
 yt reports burndown PROJECT-123
+
+# Disable progress indicators for automation
+yt --no-progress reports velocity PROJECT-123
 
 # Enable debug logging for troubleshooting
 yt --debug issues list
