@@ -7,9 +7,10 @@ import click
 from rich.console import Console
 
 from ..auth import AuthManager
+from ..cli_utils import AliasedGroup
 
 
-@click.group()
+@click.group(cls=AliasedGroup)
 def issues() -> None:
     """Manage issues - create, update, search, and organize your work.
 
@@ -1085,3 +1086,17 @@ def types(ctx: click.Context, format: str) -> None:
     except Exception as e:
         console.print(f"❌ Error listing link types: {e}", style="red")
         raise click.ClickException("Failed to list link types") from e
+
+
+# Add aliases for common subcommands
+issues.add_alias("c", "create")
+issues.add_alias("new", "create")
+issues.add_alias("l", "list")
+issues.add_alias("ls", "list")
+issues.add_alias("u", "update")
+issues.add_alias("edit", "update")
+issues.add_alias("s", "search")
+issues.add_alias("find", "search")
+issues.add_alias("d", "delete")
+issues.add_alias("del", "delete")
+issues.add_alias("rm", "delete")
