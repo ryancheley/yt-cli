@@ -44,7 +44,7 @@ class IssueManager:
         if assignee:
             issue_data["assignee"] = {"login": assignee}
 
-        url = f"{credentials.base_url}/api/issues"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -53,8 +53,8 @@ class IssueManager:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=issue_data, headers=headers)
-                if response.status_code == 200:
-                    data = await response.json()
+                if response.status_code in [200, 201]:
+                    data = response.json()
                     return {
                         "status": "success",
                         "message": f"Issue '{summary}' created successfully",
@@ -109,7 +109,7 @@ class IssueManager:
         if query_parts:
             params["query"] = " AND ".join(query_parts)
 
-        url = f"{credentials.base_url}/api/issues"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -137,7 +137,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
         params = {
             "fields": (
@@ -194,7 +194,7 @@ class IssueManager:
         if not update_data:
             return {"status": "error", "message": "No fields to update"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -225,7 +225,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -273,7 +273,7 @@ class IssueManager:
 
         params["query"] = search_query
 
-        url = f"{credentials.base_url}/api/issues"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -329,7 +329,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -362,7 +362,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/tags"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/tags"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -394,7 +394,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/tags/{tag}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/tags/{tag}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -422,7 +422,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
         params = {"fields": "tags(name)"}
 
@@ -449,7 +449,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/comments"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/comments"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -481,7 +481,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/comments"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/comments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
         params = {"fields": "id,text,author(login,fullName),created,updated"}
 
@@ -508,7 +508,10 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/comments/{comment_id}"
+        url = (
+            f"{credentials.base_url.rstrip('/')}/api/issues/"
+            f"{issue_id}/comments/{comment_id}"
+        )
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -538,7 +541,10 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/comments/{comment_id}"
+        url = (
+            f"{credentials.base_url.rstrip('/')}/api/issues/"
+            f"{issue_id}/comments/{comment_id}"
+        )
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -565,7 +571,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/attachments"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -599,7 +605,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/attachments"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
         params = {"fields": "id,name,size,mimeType,author(login,fullName),created"}
 
@@ -629,9 +635,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url}/api/issues/{issue_id}/attachments/{attachment_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -666,9 +670,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url}/api/issues/{issue_id}/attachments/{attachment_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -700,7 +702,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{source_issue_id}/links"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{source_issue_id}/links"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -736,7 +738,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
         params = {"fields": "links(linkType(name),direction,issues(id,summary))"}
 
@@ -762,7 +764,10 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issues/{source_issue_id}/links/{link_id}"
+        url = (
+            f"{credentials.base_url.rstrip('/')}/api/issues/"
+            f"{source_issue_id}/links/{link_id}"
+        )
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -788,7 +793,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/issueLinkTypes"
+        url = f"{credentials.base_url.rstrip('/')}/api/issueLinkTypes"
         headers = {"Authorization": f"Bearer {credentials.token}"}
         params = {"fields": "name,sourceToTarget,targetToSource"}
 
