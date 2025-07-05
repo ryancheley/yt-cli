@@ -162,8 +162,14 @@ class TestCredentialManager:
         mock_fernet.generate_key.assert_called_once()
         mock_keyring.set_password.assert_called_once()
 
-    def test_encrypt_decrypt_credential(self):
+    @patch("youtrack_cli.security.keyring")
+    def test_encrypt_decrypt_credential(self, mock_keyring):
         """Test credential encryption and decryption."""
+        # Use a fixed valid Fernet key to ensure consistent encryption/decryption
+        test_key = "TlXEPFdKOmOEFMJpORrYqLQeYelqSXvO8aJRdNeFgBA="
+        mock_keyring.get_password.return_value = test_key
+        mock_keyring.set_password.return_value = None
+
         manager = CredentialManager()
 
         original = "secret_token_123"
@@ -455,8 +461,14 @@ class TestSecurityPerformance:
             entries = logger.get_audit_log()
             assert len(entries) == 100
 
-    def test_encryption_performance(self):
+    @patch("youtrack_cli.security.keyring")
+    def test_encryption_performance(self, mock_keyring):
         """Test encryption/decryption performance."""
+        # Use a fixed valid Fernet key to ensure consistent encryption/decryption
+        test_key = "TlXEPFdKOmOEFMJpORrYqLQeYelqSXvO8aJRdNeFgBA="
+        mock_keyring.get_password.return_value = test_key
+        mock_keyring.set_password.return_value = None
+
         manager = CredentialManager()
 
         # Test encrypting/decrypting many values
