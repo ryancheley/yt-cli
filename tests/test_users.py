@@ -120,8 +120,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 403
 
-            http_error = httpx.HTTPError("Forbidden")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Forbidden", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.get = AsyncMock(
                 side_effect=http_error
@@ -185,8 +187,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 400
 
-            http_error = httpx.HTTPError("Bad request")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Bad request", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 side_effect=http_error
@@ -206,8 +210,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 409
 
-            http_error = httpx.HTTPError("Conflict")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Conflict", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 side_effect=http_error
@@ -231,8 +237,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 403
 
-            http_error = httpx.HTTPError("Forbidden")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Forbidden", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 side_effect=http_error
@@ -282,8 +290,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 404
 
-            http_error = httpx.HTTPError("Not found")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Not found", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.get = AsyncMock(
                 side_effect=http_error
@@ -340,8 +350,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 404
 
-            http_error = httpx.HTTPError("Not found")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Not found", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 side_effect=http_error
@@ -425,8 +437,10 @@ class TestUserManager:
             mock_response = Mock()
             mock_response.status_code = 404
 
-            http_error = httpx.HTTPError("Not found")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Not found", request=mock_request, response=mock_response
+            )
 
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 side_effect=http_error

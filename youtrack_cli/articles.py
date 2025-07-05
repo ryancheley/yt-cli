@@ -438,7 +438,7 @@ class ArticleManager:
             child_node = parent_node.add(node_text)
 
             # Add children if any
-            if article_id in child_articles:
+            if article_id and article_id in child_articles:
                 for child in child_articles[article_id]:
                     add_article_to_tree(child_node, child)
 
