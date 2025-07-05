@@ -2,6 +2,16 @@
 
 from typing import Optional
 
+__all__ = [
+    "YouTrackError",
+    "AuthenticationError",
+    "ConnectionError",
+    "ValidationError",
+    "NotFoundError",
+    "PermissionError",
+    "RateLimitError",
+]
+
 
 class YouTrackError(Exception):
     """Base exception for YouTrack CLI errors."""

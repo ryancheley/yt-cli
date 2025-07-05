@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 from typing import Any, Optional
 
 import httpx
@@ -15,7 +16,16 @@ from .exceptions import (
     RateLimitError,
     YouTrackError,
 )
-from .logging import get_logger
+from .logging import get_logger, log_api_call
+
+__all__ = [
+    "make_request",
+    "handle_error",
+    "display_error",
+    "display_success",
+    "display_info",
+    "display_warning",
+]
 
 logger = get_logger(__name__)
 console = Console()
@@ -53,9 +63,14 @@ async def make_request(
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 logger.debug(
-                    f"Making {method} request to {url} (attempt {attempt + 1})"
+                    "Making API request",
+                    method=method,
+                    url=url,
+                    attempt=attempt + 1,
+                    max_retries=max_retries + 1,
                 )
 
+                request_start = time.time()
                 response = await client.request(
                     method=method,
                     url=url,
@@ -63,10 +78,20 @@ async def make_request(
                     params=params,
                     json=json_data,
                 )
+                request_duration = time.time() - request_start
+
+                # Log the API call
+                log_api_call(
+                    method=method,
+                    url=url,
+                    status_code=response.status_code,
+                    duration=request_duration,
+                    attempt=attempt + 1,
+                )
 
                 # Handle specific HTTP status codes
                 if response.status_code == 200 or response.status_code == 201:
-                    logger.debug(f"Request successful: {response.status_code}")
+                    logger.debug("Request successful", status_code=response.status_code)
                     return response
                 elif response.status_code == 401:
                     raise AuthenticationError("Invalid credentials or token expired")
@@ -96,10 +121,20 @@ async def make_request(
         except httpx.TimeoutException:
             if attempt < max_retries:
                 wait_time = 2**attempt  # Exponential backoff
-                logger.warning(f"Request timed out, retrying in {wait_time}s...")
+                logger.warning(
+                    "Request timed out, retrying",
+                    url=url,
+                    attempt=attempt + 1,
+                    wait_time=wait_time,
+                )
                 await asyncio.sleep(wait_time)
                 continue
             else:
+                logger.error(
+                    "Request timed out after multiple attempts",
+                    url=url,
+                    max_retries=max_retries,
+                )
                 raise ConnectionError(
                     "Request timed out after multiple attempts"
                 ) from None
@@ -107,10 +142,20 @@ async def make_request(
         except httpx.ConnectError:
             if attempt < max_retries:
                 wait_time = 2**attempt
-                logger.warning(f"Connection failed, retrying in {wait_time}s...")
+                logger.warning(
+                    "Connection failed, retrying",
+                    url=url,
+                    attempt=attempt + 1,
+                    wait_time=wait_time,
+                )
                 await asyncio.sleep(wait_time)
                 continue
             else:
+                logger.error(
+                    "Unable to connect to YouTrack server",
+                    url=url,
+                    max_retries=max_retries,
+                )
                 raise ConnectionError("Unable to connect to YouTrack server") from None
 
         except (RateLimitError, AuthenticationError, PermissionError, NotFoundError):
@@ -120,10 +165,22 @@ async def make_request(
         except Exception as e:
             if attempt < max_retries:
                 wait_time = 2**attempt
-                logger.warning(f"Unexpected error, retrying in {wait_time}s: {e}")
+                logger.warning(
+                    "Unexpected error, retrying",
+                    url=url,
+                    attempt=attempt + 1,
+                    wait_time=wait_time,
+                    error=str(e),
+                )
                 await asyncio.sleep(wait_time)
                 continue
             else:
+                logger.error(
+                    "Unexpected error occurred",
+                    url=url,
+                    error=str(e),
+                    max_retries=max_retries,
+                )
                 raise YouTrackError(f"Unexpected error: {str(e)}") from e
 
     # Should never reach here, but just in case
@@ -141,6 +198,12 @@ def handle_error(error: Exception, operation: str = "operation") -> dict[str, An
         Dictionary with error information for CLI display
     """
     if isinstance(error, YouTrackError):
+        logger.error(
+            "YouTrack operation failed",
+            operation=operation,
+            error_type=type(error).__name__,
+            message=error.message,
+        )
         result = {
             "status": "error",
             "message": error.message,
@@ -149,7 +212,12 @@ def handle_error(error: Exception, operation: str = "operation") -> dict[str, An
             result["suggestion"] = error.suggestion
         return result
     else:
-        logger.error(f"Unexpected error during {operation}: {error}")
+        logger.error(
+            "Unexpected error during operation",
+            operation=operation,
+            error_type=type(error).__name__,
+            error=str(error),
+        )
         return {
             "status": "error",
             "message": f"An unexpected error occurred during {operation}",

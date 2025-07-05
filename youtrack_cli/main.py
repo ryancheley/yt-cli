@@ -13,6 +13,21 @@ from .config import ConfigManager
 from .logging import setup_logging
 from .reports import ReportManager
 
+__all__ = [
+    "main",
+    "setup",
+    "issues",
+    "articles",
+    "projects",
+    "users",
+    "boards",
+    "admin",
+    "time",
+    "reports",
+    "auth",
+    "config",
+]
+
 
 @click.group()
 @click.version_option()

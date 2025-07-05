@@ -2,6 +2,8 @@
 
 from typing import Any
 
+__all__ = ["__version__"]
+
 try:
     from importlib.metadata import version
 

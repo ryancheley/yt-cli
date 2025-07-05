@@ -8,6 +8,8 @@ from rich.console import Console
 
 from .logging import setup_logging
 
+__all__ = ["common_options", "output_options", "async_command", "handle_exceptions"]
+
 
 def common_options(f: Callable) -> Callable:
     """Common options decorator for CLI commands.
@@ -33,6 +35,18 @@ def common_options(f: Callable) -> Callable:
         help="Enable debug output",
     )
     @click.option(
+        "--log-level",
+        type=click.Choice(
+            ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False
+        ),
+        help="Set specific log level (overrides --verbose and --debug)",
+    )
+    @click.option(
+        "--no-log-file",
+        is_flag=True,
+        help="Disable file-based logging",
+    )
+    @click.option(
         "--no-color",
         is_flag=True,
         help="Disable colored output",
@@ -43,10 +57,14 @@ def common_options(f: Callable) -> Callable:
         format_type = kwargs.pop("format", "table")
         verbose = kwargs.pop("verbose", False)
         debug = kwargs.pop("debug", False)
+        log_level = kwargs.pop("log_level", None)
+        no_log_file = kwargs.pop("no_log_file", False)
         no_color = kwargs.pop("no_color", False)
 
         # Setup logging based on options
-        setup_logging(verbose=verbose, debug=debug)
+        setup_logging(
+            verbose=verbose, debug=debug, log_level=log_level, log_file=not no_log_file
+        )
 
         # Configure console color
         if no_color:

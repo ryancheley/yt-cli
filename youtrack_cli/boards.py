@@ -8,6 +8,8 @@ from rich.table import Table
 
 from .auth import AuthManager
 
+__all__ = ["BoardManager"]
+
 
 class BoardManager:
     """Manages YouTrack agile boards operations."""

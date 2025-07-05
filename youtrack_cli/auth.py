@@ -8,6 +8,8 @@ import httpx
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
+__all__ = ["AuthConfig", "AuthManager"]
+
 
 class AuthConfig(BaseModel):
     """Configuration for YouTrack authentication."""

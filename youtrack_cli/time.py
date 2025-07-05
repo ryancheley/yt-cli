@@ -9,6 +9,8 @@ from rich.table import Table
 
 from .auth import AuthManager
 
+__all__ = ["TimeManager"]
+
 
 class TimeManager:
     """Manages YouTrack time tracking operations."""
