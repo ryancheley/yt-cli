@@ -14,6 +14,7 @@ users, and more.
    youtrack-concepts
    quickstart
    configuration
+   logging
    learning-path
    workflows
    troubleshooting

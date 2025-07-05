@@ -499,11 +499,11 @@ Getting Help
 Debugging and Logging
 ~~~~~~~~~~~~~~~~~~~~~
 
-YouTrack CLI includes enhanced logging and debugging capabilities to help troubleshoot issues:
+YouTrack CLI includes a comprehensive logging system built with structured logging to help troubleshoot issues.
 
-**Debug Mode**
+**Quick Debugging**
 
-Enable detailed debug output to see what's happening under the hood:
+For immediate troubleshooting, use these flags:
 
 .. code-block:: bash
 
@@ -511,19 +511,30 @@ Enable detailed debug output to see what's happening under the hood:
    yt --debug issues list
    yt --debug auth login
 
-**Verbose Mode**
-
-Enable verbose output for more information without full debug details:
-
-.. code-block:: bash
-
    # Verbose mode shows progress information and warnings
    yt --verbose projects list
    yt --verbose issues create PROJECT-KEY "New issue"
 
+   # Set specific log levels
+   yt --log-level ERROR issues list
+   yt --log-level DEBUG auth login
+
+**Comprehensive Logging Documentation**
+
+For detailed information about the logging system, including:
+
+- Advanced log level control
+- File-based logging with rotation
+- Sensitive data masking
+- API call tracking
+- Performance monitoring
+- Log aggregation for external tools
+
+See the complete :doc:`logging` guide.
+
 **Enhanced Error Messages**
 
-YouTrack CLI now provides user-friendly error messages with actionable suggestions:
+YouTrack CLI provides user-friendly error messages with actionable suggestions:
 
 .. code-block:: bash
 
@@ -545,7 +556,7 @@ The CLI categorizes errors to provide better context:
 
 **Automatic Retry Logic**
 
-Network requests now include automatic retry with exponential backoff:
+Network requests include automatic retry with exponential backoff:
 
 .. code-block:: bash
 

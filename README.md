@@ -88,6 +88,9 @@ yt time log ISSUE-123 "2h" --description "Feature development"
 
 # Generate reports
 yt reports burndown PROJECT-123
+
+# Enable debug logging for troubleshooting
+yt --debug issues list
 ```
 
 ## Documentation
