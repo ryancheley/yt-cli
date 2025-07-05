@@ -78,8 +78,10 @@ class TestAdminManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 403
-            http_error = httpx.HTTPError("Forbidden")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Forbidden", request=mock_request, response=mock_response
+            )
             mock_client.return_value.__aenter__.return_value.get.side_effect = (
                 http_error
             )
@@ -111,8 +113,10 @@ class TestAdminManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 400
-            http_error = httpx.HTTPError("Bad Request")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Bad Request", request=mock_request, response=mock_response
+            )
             mock_client.return_value.__aenter__.return_value.post.side_effect = (
                 http_error
             )
@@ -269,8 +273,10 @@ class TestAdminManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 400
-            http_error = httpx.HTTPError("Bad Request")
-            http_error.response = mock_response
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError(
+                "Bad Request", request=mock_request, response=mock_response
+            )
             mock_client.return_value.__aenter__.return_value.post.side_effect = (
                 http_error
             )
