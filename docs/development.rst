@@ -225,7 +225,9 @@ Tests are organized into categories:
 Running Tests
 ~~~~~~~~~~~~~
 
-Run all tests:
+The project uses pytest with randomized test execution to improve test reliability and catch order-dependent bugs.
+
+Run all tests (automatically randomized order):
 
 .. code-block:: bash
 
@@ -243,6 +245,21 @@ Run with coverage:
 .. code-block:: bash
 
    uv run pytest --cov=youtrack_cli --cov-report=html
+
+**Randomized Testing Options:**
+
+.. code-block:: bash
+
+   # Run with specific random seed for reproducibility
+   uv run pytest --randomly-seed=12345
+
+   # Disable randomization if needed
+   uv run pytest --randomly-dont-shuffle
+
+   # Show current random seed
+   uv run pytest --randomly-seed=last
+
+The test suite uses ``pytest-randomly`` to randomize test execution order. Each test run displays the random seed used, which can be reused to reproduce specific test failures. This helps identify and eliminate order-dependent test bugs.
 
 Multi-version Testing
 ~~~~~~~~~~~~~~~~~~~~~

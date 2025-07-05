@@ -195,8 +195,10 @@ uv pip install -e .
 
 ### Testing
 
+This project uses `pytest` with randomized test execution to ensure test reliability:
+
 ```bash
-# Run tests
+# Run tests (automatically randomized order)
 uv run pytest
 
 # Run tests with coverage
@@ -204,7 +206,15 @@ uv run pytest --cov=yt_cli
 
 # Run tests on multiple Python versions
 uv run tox
+
+# Run tests with specific random seed for reproducibility
+uv run pytest --randomly-seed=12345
+
+# Disable randomization if needed
+uv run pytest --randomly-dont-shuffle
 ```
+
+**Randomized Testing**: Tests run in random order by default using `pytest-randomly` to catch order-dependent bugs and improve test reliability. Each test run displays the random seed used, which can be reused to reproduce specific test failures.
 
 ### Code Quality
 
