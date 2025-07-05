@@ -157,6 +157,132 @@ YouTrack CLI includes enhanced error handling and debugging capabilities:
 
 If you encounter any issues during installation, the CLI now provides helpful error messages with suggestions for resolution.
 
+Shell Completion
+----------------
+
+YouTrack CLI supports shell completion for bash, zsh, and fish shells. This enables tab completion for commands, options, and arguments, improving your workflow efficiency.
+
+Automatic Installation
+~~~~~~~~~~~~~~~~~~~~~~
+
+The easiest way to enable shell completion is using the automatic installation:
+
+.. code-block:: bash
+
+   # For bash users
+   yt completion bash --install
+
+   # For zsh users
+   yt completion zsh --install
+
+   # For fish users
+   yt completion fish --install
+
+After installation, restart your shell or source your shell configuration:
+
+.. code-block:: bash
+
+   # For bash
+   exec bash
+   # or
+   source ~/.bashrc
+
+   # For zsh
+   exec zsh
+
+   # For fish
+   exec fish
+
+Manual Installation
+~~~~~~~~~~~~~~~~~~~
+
+If you prefer manual installation or the automatic installation doesn't work for your setup, you can generate and install the completion scripts manually:
+
+**Bash Completion**
+
+.. code-block:: bash
+
+   # Generate and install bash completion
+   yt completion bash > ~/.local/share/bash-completion/completions/yt
+
+   # Alternative locations (depending on your system):
+   # System-wide: sudo yt completion bash > /usr/share/bash-completion/completions/yt
+   # User-local: yt completion bash > ~/.bash_completion.d/yt
+
+**Zsh Completion**
+
+.. code-block:: bash
+
+   # Generate and install zsh completion
+   yt completion zsh > ~/.local/share/zsh/site-functions/_yt
+
+   # Make sure the completion directory is in your fpath
+   # Add this to your ~/.zshrc:
+   # fpath=(~/.local/share/zsh/site-functions $fpath)
+
+   # Alternative locations:
+   # System-wide: sudo yt completion zsh > /usr/local/share/zsh/site-functions/_yt
+   # Custom directory: yt completion zsh > ~/.zsh/completions/_yt
+
+**Fish Completion**
+
+.. code-block:: bash
+
+   # Generate and install fish completion
+   yt completion fish > ~/.config/fish/completions/yt.fish
+
+   # Alternative system-wide location:
+   # sudo yt completion fish > /usr/share/fish/completions/yt.fish
+
+Verification
+~~~~~~~~~~~~
+
+To verify that shell completion is working:
+
+1. Start a new shell session
+2. Type ``yt `` and press Tab twice
+3. You should see available commands like ``issues``, ``articles``, ``projects``, etc.
+4. Try typing ``yt issues `` and press Tab to see subcommands
+
+**Example completion behavior:**
+
+.. code-block:: bash
+
+   $ yt <TAB><TAB>
+   admin      articles   auth       boards     completion config
+   issues     projects   reports    setup      time       users
+
+   $ yt issues <TAB><TAB>
+   assign     attach     comments   create     delete     links
+   list       move       search     tag        update
+
+Troubleshooting Completion
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Completion not working?**
+
+1. **Verify installation location**: Make sure the completion script is in a directory that your shell searches for completions
+2. **Check shell configuration**: Ensure completion is enabled in your shell (most modern shells have it enabled by default)
+3. **Restart shell**: Completion scripts are typically loaded when the shell starts
+4. **Check permissions**: Ensure the completion script file is readable
+
+**Bash-specific issues:**
+
+- Ensure bash-completion package is installed: ``sudo apt install bash-completion`` (Ubuntu/Debian) or ``brew install bash-completion`` (macOS)
+- Check that ``/etc/bash_completion`` or ``/usr/local/etc/bash_completion`` is sourced in your ``.bashrc``
+
+**Zsh-specific issues:**
+
+- Verify that the completion directory is in your ``fpath``
+- Run ``compinit`` to rebuild the completion cache
+- Check that ``autoload -U compinit && compinit`` is in your ``.zshrc``
+
+**Fish-specific issues:**
+
+- Fish automatically loads completions from standard locations
+- Use ``fish_config`` command to check completion settings
+- Restart fish or run ``exec fish`` to reload completions
+
 Troubleshooting Installation
 ----------------------------
 
