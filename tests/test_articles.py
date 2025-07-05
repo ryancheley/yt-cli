@@ -1,6 +1,6 @@
 """Tests for article management functionality."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -46,9 +46,11 @@ class TestArticleManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"id": "123", "summary": "Test Article"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.post.return_value = (
                 mock_resp  # noqa: E501
@@ -67,9 +69,9 @@ class TestArticleManager:
     async def test_create_article_failure(self, article_manager):
         """Test article creation failure."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 400
-            mock_resp.text.return_value = "Bad Request"
+            mock_resp.text = "Bad Request"
             mock_client.return_value.__aenter__.return_value.post.return_value = (
                 mock_resp  # noqa: E501
             )
@@ -99,9 +101,11 @@ class TestArticleManager:
         ]
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '[{"id": "123", "summary": "Article 1"}]'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.get.return_value = (
                 mock_resp  # noqa: E501
@@ -123,9 +127,11 @@ class TestArticleManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.get.return_value = (
                 mock_resp  # noqa: E501
@@ -146,9 +152,11 @@ class TestArticleManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.post.return_value = (
                 mock_resp  # noqa: E501
@@ -176,7 +184,7 @@ class TestArticleManager:
     async def test_delete_article_success(self, article_manager):
         """Test successful article deletion."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.delete.return_value = (
@@ -198,9 +206,11 @@ class TestArticleManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.post.return_value = (
                 mock_resp  # noqa: E501
@@ -224,9 +234,11 @@ class TestArticleManager:
         ]
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.get.return_value = (
                 mock_resp  # noqa: E501
@@ -250,9 +262,11 @@ class TestArticleManager:
         ]
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.get.return_value = (
                 mock_resp  # noqa: E501
@@ -273,9 +287,11 @@ class TestArticleManager:
         }
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.post.return_value = (
                 mock_resp  # noqa: E501
@@ -300,9 +316,11 @@ class TestArticleManager:
         ]
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+            mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.json = lambda: mock_response
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
             mock_client.return_value.__aenter__.return_value.get.return_value = (
                 mock_resp  # noqa: E501
