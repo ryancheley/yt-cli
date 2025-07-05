@@ -12,6 +12,9 @@ A powerful command line interface for JetBrains YouTrack issue tracking system.
 - **Comprehensive Configuration**: Customizable defaults and environment-specific settings
 - **Administrative Tools**: System management, user groups, and health monitoring
 - **Developer-Friendly**: Built with modern Python practices and extensive documentation
+- **Enhanced Error Handling**: User-friendly error messages with actionable suggestions
+- **Advanced Logging**: Rich logging with debug and verbose modes for troubleshooting
+- **Robust HTTP Operations**: Automatic retry logic with exponential backoff for reliability
 
 ## Quick Start
 

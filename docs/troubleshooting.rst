@@ -496,16 +496,63 @@ Time Tracking Issues
 Getting Help
 ------------
 
-Debugging Mode
-~~~~~~~~~~~~~~
+Debugging and Logging
+~~~~~~~~~~~~~~~~~~~~~
 
-Enable verbose output for troubleshooting:
+YouTrack CLI includes enhanced logging and debugging capabilities to help troubleshoot issues:
+
+**Debug Mode**
+
+Enable detailed debug output to see what's happening under the hood:
 
 .. code-block:: bash
 
-   # Add debug flag to any command
+   # Debug mode shows detailed HTTP requests, responses, and internal operations
    yt --debug issues list
+   yt --debug auth login
+
+**Verbose Mode**
+
+Enable verbose output for more information without full debug details:
+
+.. code-block:: bash
+
+   # Verbose mode shows progress information and warnings
    yt --verbose projects list
+   yt --verbose issues create PROJECT-KEY "New issue"
+
+**Enhanced Error Messages**
+
+YouTrack CLI now provides user-friendly error messages with actionable suggestions:
+
+.. code-block:: bash
+
+   # Example error with suggestion
+   $ yt issues list --project INVALID-PROJECT
+   Error: Project 'INVALID-PROJECT' not found
+   Suggestion: Check if the project exists and you have access to it
+
+**Error Categories**
+
+The CLI categorizes errors to provide better context:
+
+- **AuthenticationError**: Login or token issues
+- **ConnectionError**: Network or server connectivity problems
+- **NotFoundError**: Missing resources (projects, issues, etc.)
+- **PermissionError**: Access rights issues
+- **ValidationError**: Invalid input or parameters
+- **RateLimitError**: Too many requests (includes retry suggestions)
+
+**Automatic Retry Logic**
+
+Network requests now include automatic retry with exponential backoff:
+
+.. code-block:: bash
+
+   # The CLI automatically retries failed requests up to 3 times
+   # You'll see warnings like:
+   # "Request timed out, retrying in 2s..."
+   # "Connection failed, retrying in 4s..."
 
 Log Files
 ~~~~~~~~~

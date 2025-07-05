@@ -56,12 +56,16 @@ Project Structure
    │   ├── articles.py        # Articles management
    │   ├── auth.py            # Authentication manager
    │   ├── boards.py          # Boards management
+   │   ├── common.py          # Common CLI options and decorators
    │   ├── config.py          # Configuration management
+   │   ├── exceptions.py      # Custom exception classes
    │   ├── issues.py          # Issues management (core functionality)
+   │   ├── logging.py         # Logging infrastructure
    │   ├── projects.py        # Projects management
    │   ├── reports.py         # Reports generation
    │   ├── time.py            # Time tracking
-   │   └── users.py           # User management
+   │   ├── users.py           # User management
+   │   └── utils.py           # HTTP utilities and error handling
    ├── tests/                 # Comprehensive test suite
    │   ├── test_admin.py      # Admin functionality tests
    │   ├── test_articles.py   # Articles tests
@@ -316,6 +320,95 @@ Command Guidelines
 3. Include examples in docstrings
 4. Handle errors gracefully with user-friendly messages
 5. Support multiple output formats where appropriate
+
+Error Handling Infrastructure
+-----------------------------
+
+Custom Exceptions
+~~~~~~~~~~~~~~~~~
+
+The project uses a structured exception hierarchy for better error handling:
+
+.. code-block:: python
+
+   from youtrack_cli.exceptions import (
+       YouTrackError,         # Base exception
+       AuthenticationError,   # Login/token issues
+       ConnectionError,       # Network problems
+       NotFoundError,         # Missing resources
+       PermissionError,       # Access denied
+       ValidationError,       # Invalid input
+       RateLimitError,       # Too many requests
+   )
+
+   # Example usage
+   try:
+       result = api_call()
+   except AuthenticationError as e:
+       console.print(f"[red]Error:[/red] {e.message}")
+       if e.suggestion:
+           console.print(f"[yellow]Suggestion:[/yellow] {e.suggestion}")
+
+HTTP Utilities
+~~~~~~~~~~~~~~
+
+The ``utils.py`` module provides robust HTTP request handling:
+
+.. code-block:: python
+
+   from youtrack_cli.utils import make_request, handle_error, display_error
+
+   # Automatic retry with exponential backoff
+   response = await make_request(
+       method="GET",
+       url="https://youtrack.example.com/api/issues",
+       headers={"Authorization": f"Bearer {token}"},
+       max_retries=3,
+       timeout=30
+   )
+
+   # Error handling with user-friendly messages
+   try:
+       result = risky_operation()
+   except Exception as e:
+       error_info = handle_error(e, "issue creation")
+       display_error(error_info)
+
+Common CLI Components
+~~~~~~~~~~~~~~~~~~~~~
+
+The ``common.py`` module provides reusable CLI components:
+
+.. code-block:: python
+
+   from youtrack_cli.common import common_options, async_command, handle_exceptions
+
+   @click.command()
+   @common_options  # Adds --format, --verbose, --debug, --no-color
+   @async_command   # Handles async functions
+   @handle_exceptions  # Catches and displays errors
+   async def my_command(format, verbose, debug, console):
+       """Example command with common options."""
+       if verbose:
+           console.print("Starting operation...")
+
+Logging Infrastructure
+~~~~~~~~~~~~~~~~~~~~~~
+
+Enhanced logging with Rich formatting:
+
+.. code-block:: python
+
+   from youtrack_cli.logging import setup_logging, get_logger
+
+   # Setup logging (usually in main CLI entry point)
+   setup_logging(verbose=True, debug=False)
+
+   # Get logger in any module
+   logger = get_logger(__name__)
+   logger.info("Operation started")
+   logger.debug("Detailed debug information")
+   logger.warning("Something to watch out for")
 
 Adding API Endpoints
 --------------------

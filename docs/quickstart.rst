@@ -191,8 +191,8 @@ Daily Workflow
 
       yt issues update ISSUE-123 --state "Fixed"
 
-Getting Help
-------------
+Getting Help and Debugging
+--------------------------
 
 Get help for any command:
 
@@ -201,6 +201,56 @@ Get help for any command:
    yt --help
    yt issues --help
    yt issues create --help
+
+Troubleshooting Commands
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you encounter issues, YouTrack CLI provides enhanced debugging capabilities:
+
+**Verbose Mode** - Shows progress and additional information:
+
+.. code-block:: bash
+
+   yt --verbose issues list
+   yt --verbose projects create --name "New Project" --key "NP"
+
+**Debug Mode** - Shows detailed information for troubleshooting:
+
+.. code-block:: bash
+
+   yt --debug auth login
+   yt --debug issues create PROJECT-KEY "Test issue"
+
+**Error Examples with Suggestions**
+
+YouTrack CLI now provides helpful error messages with actionable suggestions:
+
+.. code-block:: bash
+
+   # Example: Authentication error
+   $ yt issues list
+   Error: Authentication failed
+   Suggestion: Run 'yt auth login' to authenticate with YouTrack
+
+   # Example: Project not found
+   $ yt issues create INVALID-PROJECT "Test issue"
+   Error: Project 'INVALID-PROJECT' not found
+   Suggestion: Check if the project exists and you have access to it
+
+**Output Formatting Options**
+
+Control how results are displayed:
+
+.. code-block:: bash
+
+   # Table format (default)
+   yt issues list --format table
+
+   # JSON format for automation
+   yt issues list --format json
+
+   # Disable colors for plain text
+   yt issues list --no-color
 
 Next Steps
 ----------

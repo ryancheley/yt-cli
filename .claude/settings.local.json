@@ -33,7 +33,8 @@
       "Bash(python:*)",
       "Bash(tree:*)",
       "Bash(rm:*)",
-      "Bash(yt:*)"
+      "Bash(yt:*)",
+      "Bash(git branch:*)"
     ],
     "deny": []
   }
