@@ -62,8 +62,8 @@ cd yt-cli
 uv sync --dev
 uv pip install -e .
 
-# Or using pip
-pip install -e .[dev]
+# Or using pip (requires pip >= 24.0 for PEP 735 support)
+pip install -e . --group dev
 ```
 
 ### Authentication
