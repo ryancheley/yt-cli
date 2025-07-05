@@ -15,6 +15,7 @@ from .logging import setup_logging
 from .progress import set_progress_enabled
 from .reports import ReportManager
 from .security import AuditLogger, SecurityConfig
+from .utils import AliasedGroup
 
 __all__ = [
     "main",
@@ -32,7 +33,7 @@ __all__ = [
 ]
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option()
 @click.option(
     "--config",
@@ -80,19 +81,24 @@ def main(
 
         \b
         # Set up authentication
-        yt auth login
+        yt auth login  (or: yt login)
 
         \b
         # List your projects
-        yt projects list
+        yt projects list  (or: yt p list)
 
         \b
         # Create an issue
-        yt issues create PROJECT-123 "Fix the bug"
+        yt issues create PROJECT-123 "Fix the bug"  (or: yt i create ...)
 
         \b
         # Log work time
         yt time log ISSUE-456 "2h 30m" --description "Fixed the issue"
+        # (or: yt t log ...)
+
+    Command Aliases:
+        i = issues, a = articles, p = projects, u = users, t = time, b = boards
+        c/cfg = config, login = auth
 
     For more help on specific commands, use:
 
@@ -145,6 +151,19 @@ main.add_command(projects)
 main.add_command(users)
 main.add_command(time)
 main.add_command(boards)
+
+# Add aliases for main command groups
+main.add_alias("i", "issues")
+main.add_alias("a", "articles")
+main.add_alias("p", "projects")
+main.add_alias("u", "users")
+main.add_alias("t", "time")
+main.add_alias("b", "boards")
+
+# Add aliases for top-level commands
+main.add_alias("c", "config")
+main.add_alias("cfg", "config")
+main.add_alias("login", "auth")
 
 
 @main.command()

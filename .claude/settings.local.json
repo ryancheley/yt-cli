@@ -37,7 +37,9 @@
       "Bash(git branch:*)",
       "Bash(yt:*)",
       "WebFetch(domain:pypi.org)",
-      "mcp__github__create_issue"
+      "mcp__github__create_issue",
+      "mcp__claude-code__Read",
+      "mcp__claude-code__Grep"
     ],
     "deny": []
   }

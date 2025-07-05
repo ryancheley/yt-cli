@@ -14,6 +14,7 @@ users, and more.
    youtrack-concepts
    quickstart
    configuration
+   command-aliases
    security
    logging
    learning-path
@@ -35,6 +36,7 @@ Features
 * **Knowledge Base**: Manage YouTrack articles and documentation
 * **Security Features**: Command audit logging, credential encryption, and token management
 * **Rich CLI Interface**: Beautiful terminal output with rich text formatting
+* **Command Aliases**: Short aliases for frequently used commands to improve efficiency
 * **Flexible Configuration**: Multiple authentication methods and configuration options
 
 Quick Start
