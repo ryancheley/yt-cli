@@ -36,7 +36,8 @@
       "Bash(yt:*)",
       "Bash(git branch:*)",
       "Bash(yt:*)",
-      "WebFetch(domain:pypi.org)"
+      "WebFetch(domain:pypi.org)",
+      "mcp__github__create_issue"
     ],
     "deny": []
   }

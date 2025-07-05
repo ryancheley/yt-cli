@@ -1709,7 +1709,7 @@ wheels = [
 
 [[package]]
 name = "youtrack-cli"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -1719,6 +1719,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "rich" },
     { name = "textual" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
 [package.optional-dependencies]
@@ -1768,6 +1769,7 @@ requires-dist = [
     { name = "sphinx-autobuild", marker = "extra == 'docs'", specifier = ">=2021.3.14" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=2.0.0" },
     { name = "textual", specifier = ">=0.40.0" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=1.2.0" },
     { name = "tox", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "zizmor", marker = "extra == 'dev'", specifier = ">=0.1.0" },
 ]
