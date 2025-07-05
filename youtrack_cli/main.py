@@ -9,13 +9,13 @@ from rich.prompt import Prompt
 
 from .admin import AdminManager
 from .auth import AuthManager
+from .cli_utils import AliasedGroup
 from .commands import articles, boards, issues, projects, time, users
 from .config import ConfigManager
 from .logging import setup_logging
 from .progress import set_progress_enabled
 from .reports import ReportManager
 from .security import AuditLogger, SecurityConfig
-from .utils import AliasedGroup
 
 __all__ = [
     "main",

@@ -7,7 +7,7 @@ import click
 from rich.console import Console
 
 from ..auth import AuthManager
-from ..utils import AliasedGroup
+from ..cli_utils import AliasedGroup
 
 
 @click.group(cls=AliasedGroup)
