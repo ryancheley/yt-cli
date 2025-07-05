@@ -197,7 +197,7 @@ pr-checks:
 version-bump version:
     #!/usr/bin/env bash
     echo "Bumping version to {{ version }}..."
-    sed -i '' 's/version = ".*"/version = "{{ version }}"/' pyproject.toml
+    sed -i '' '/^\[project\]/,/^\[/ s/^version = ".*"/version = "{{ version }}"/' pyproject.toml
     echo "✅ Version bumped to {{ version }} in pyproject.toml"
     echo "⚠️  Don't forget to commit this change before creating a release tag"
 
