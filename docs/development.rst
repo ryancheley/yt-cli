@@ -91,6 +91,45 @@ Project Structure
    ├── justfile               # Task runner configuration
    └── README.md              # Project overview
 
+Dependency Management
+---------------------
+
+The project uses PEP 735 dependency groups for managing development dependencies. This provides a standardized way to organize and install different sets of dependencies.
+
+Dependency Groups
+~~~~~~~~~~~~~~~~~
+
+The project defines the following dependency groups in ``pyproject.toml``:
+
+* **dev**: Development tools including testing, linting, and type checking
+* **docs**: Documentation generation tools
+
+Installing Dependencies
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Using uv (recommended):
+
+.. code-block:: bash
+
+   # Install all dependencies including dev group
+   uv sync --dev
+
+   # Install only production dependencies
+   uv sync
+
+Using pip (requires pip >= 24.0):
+
+.. code-block:: bash
+
+   # Install with dev dependencies
+   pip install -e . --group dev
+
+   # Install with docs dependencies
+   pip install -e . --group docs
+
+   # Install multiple groups
+   pip install -e . --group dev --group docs
+
 Development Workflow
 --------------------
 
