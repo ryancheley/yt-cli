@@ -207,7 +207,7 @@ class _DummyTracker:
 
 
 # Global progress manager instance
-_progress_manager: ProgressManager | None = None
+_progress_manager: Optional[ProgressManager] = None
 
 
 def get_progress_manager() -> ProgressManager:
