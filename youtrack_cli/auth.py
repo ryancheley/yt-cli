@@ -95,7 +95,7 @@ class AuthManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{base_url.rstrip('/')}/api/admin/users/me",
+                    f"{base_url.rstrip('/')}/api/users/me",
                     headers=headers,
                     timeout=10.0,
                 )
