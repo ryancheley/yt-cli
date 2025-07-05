@@ -16,6 +16,26 @@ class BoardManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    def _parse_json_response(self, response: httpx.Response) -> Any:
+        """Safely parse JSON response, handling empty or non-JSON responses."""
+        try:
+            content_type = response.headers.get("content-type", "")
+            if not response.text:
+                raise ValueError("Empty response body")
+
+            if "application/json" not in content_type:
+                raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
+
+            return response.json()
+        except Exception as e:
+            # Try to provide more context about the error
+            status_code = response.status_code
+            preview = response.text[:200] if response.text else "empty"
+            raise ValueError(
+                f"Failed to parse JSON response (status {status_code}): {str(e)}. "
+                f"Response preview: {preview}"
+            ) from e
+
     async def list_boards(self, project_id: Optional[str] = None) -> dict[str, Any]:
         """List all agile boards."""
         credentials = self.auth_manager.load_credentials()
@@ -36,7 +56,7 @@ class BoardManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers, params=params)
                 response.raise_for_status()
-                boards = response.json()
+                boards = self._parse_json_response(response)
 
                 # Display boards in a table
                 table = Table(title="Agile Boards")
@@ -85,7 +105,7 @@ class BoardManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
-                board = response.json()
+                board = self._parse_json_response(response)
 
                 # Display board details
                 self.console.print(
@@ -148,7 +168,7 @@ class BoardManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, headers=headers, json=update_data)
                 response.raise_for_status()
-                board = response.json()
+                board = self._parse_json_response(response)
 
                 self.console.print(
                     f"✅ Board '{board.get('name', board_id)}' updated successfully",

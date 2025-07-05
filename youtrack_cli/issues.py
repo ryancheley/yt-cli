@@ -16,6 +16,26 @@ class IssueManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    def _parse_json_response(self, response: httpx.Response) -> Any:
+        """Safely parse JSON response, handling empty or non-JSON responses."""
+        try:
+            content_type = response.headers.get("content-type", "")
+            if not response.text:
+                raise ValueError("Empty response body")
+
+            if "application/json" not in content_type:
+                raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
+
+            return response.json()
+        except Exception as e:
+            # Try to provide more context about the error
+            status_code = response.status_code
+            preview = response.text[:200] if response.text else "empty"
+            raise ValueError(
+                f"Failed to parse JSON response (status {status_code}): {str(e)}. "
+                f"Response preview: {preview}"
+            ) from e
+
     async def create_issue(
         self,
         project_id: str,
@@ -54,7 +74,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=issue_data, headers=headers)
                 if response.status_code in [200, 201]:
-                    data = response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "message": f"Issue '{summary}' created successfully",
@@ -116,7 +136,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "data": data,
@@ -151,7 +171,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text
@@ -204,7 +224,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=update_data, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "message": f"Issue '{issue_id}' updated successfully",
@@ -280,7 +300,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {
                         "status": "success",
                         "data": data,
@@ -430,7 +450,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     tags = data.get("tags", [])
                     return {"status": "success", "data": tags}
                 else:
@@ -489,7 +509,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text
@@ -613,7 +633,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text
@@ -635,7 +655,10 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
+        url = (
+            f"{credentials.base_url.rstrip('/')}/api/issues/"
+            f"{issue_id}/attachments/{attachment_id}"
+        )
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -670,7 +693,10 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
+        url = (
+            f"{credentials.base_url.rstrip('/')}/api/issues/"
+            f"{issue_id}/attachments/{attachment_id}"
+        )
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -746,7 +772,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     links = data.get("links", [])
                     return {"status": "success", "data": links}
                 else:
@@ -801,7 +827,7 @@ class IssueManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code == 200:
-                    data = await response.json()
+                    data = self._parse_json_response(response)
                     return {"status": "success", "data": data}
                 else:
                     error_text = response.text
