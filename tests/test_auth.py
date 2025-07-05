@@ -49,6 +49,24 @@ class TestAuthManager:
         self.config_path = os.path.join(self.temp_dir, ".env")
         self.auth_manager = AuthManager(self.config_path)
 
+        # Store original environment variables to restore later
+        self.original_env = {
+            key: os.environ.get(key)
+            for key in ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME"]
+        }
+
+    def teardown_method(self):
+        """Clean up test fixtures and restore environment."""
+        # Remove any YouTrack environment variables that were set during tests
+        for key in ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME"]:
+            if key in os.environ:
+                del os.environ[key]
+
+        # Restore original environment variables
+        for key, value in self.original_env.items():
+            if value is not None:
+                os.environ[key] = value
+
     def test_default_config_path(self):
         """Test default config path generation."""
         manager = AuthManager()
