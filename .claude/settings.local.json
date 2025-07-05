@@ -34,7 +34,9 @@
       "Bash(tree:*)",
       "Bash(rm:*)",
       "Bash(yt:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(yt:*)",
+      "WebFetch(domain:pypi.org)"
     ],
     "deny": []
   }
