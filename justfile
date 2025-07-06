@@ -53,7 +53,7 @@ format-check:
 typecheck:
     #!/usr/bin/env bash
     echo "Running ty type checker..."
-    uv run ty youtrack_cli
+    uv run ty check --project youtrack_cli
     echo "✅ Type checking complete"
 
 [group('quality')]
