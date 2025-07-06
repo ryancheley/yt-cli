@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
+from .client import get_client_manager
 
 __all__ = ["BoardManager"]
 
@@ -54,28 +55,27 @@ class BoardManager:
             params["project"] = project_id
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers, params=params)
-                response.raise_for_status()
-                boards = self._parse_json_response(response)
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            boards = self._parse_json_response(response)
 
-                # Display boards in a table
-                table = Table(title="Agile Boards")
-                table.add_column("ID", style="cyan")
-                table.add_column("Name", style="magenta")
-                table.add_column("Project", style="green")
-                table.add_column("Owner", style="yellow")
+            # Display boards in a table
+            table = Table(title="Agile Boards")
+            table.add_column("ID", style="cyan")
+            table.add_column("Name", style="magenta")
+            table.add_column("Project", style="green")
+            table.add_column("Owner", style="yellow")
 
-                for board in boards:
-                    table.add_row(
-                        board.get("id", ""),
-                        board.get("name", ""),
-                        (board.get("projects", [{}])[0].get("name", "N/A") if board.get("projects") else "N/A"),
-                        board.get("owner", {}).get("name", "N/A"),
-                    )
+            for board in boards:
+                table.add_row(
+                    board.get("id", ""),
+                    board.get("name", ""),
+                    (board.get("projects", [{}])[0].get("name", "N/A") if board.get("projects") else "N/A"),
+                    board.get("owner", {}).get("name", "N/A"),
+                )
 
-                self.console.print(table)
-                return {"status": "success", "boards": boards}
+            self.console.print(table)
+            return {"status": "success", "boards": boards}
 
         except httpx.HTTPStatusError as e:
             error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
@@ -99,29 +99,28 @@ class BoardManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()
-                board = self._parse_json_response(response)
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers)
+            board = self._parse_json_response(response)
 
-                # Display board details
-                self.console.print(f"[bold cyan]Board: {board.get('name', 'N/A')}[/bold cyan]")
-                self.console.print(f"ID: {board.get('id', 'N/A')}")
-                self.console.print(f"Owner: {board.get('owner', {}).get('name', 'N/A')}")
+            # Display board details
+            self.console.print(f"[bold cyan]Board: {board.get('name', 'N/A')}[/bold cyan]")
+            self.console.print(f"ID: {board.get('id', 'N/A')}")
+            self.console.print(f"Owner: {board.get('owner', {}).get('name', 'N/A')}")
 
-                if board.get("projects"):
-                    projects = ", ".join([p.get("name", "") for p in board["projects"]])
-                    self.console.print(f"Projects: {projects}")
+            if board.get("projects"):
+                projects = ", ".join([p.get("name", "") for p in board["projects"]])
+                self.console.print(f"Projects: {projects}")
 
-                if board.get("columns"):
-                    self.console.print("\n[bold]Columns:[/bold]")
-                    for i, column in enumerate(board["columns"], 1):
-                        self.console.print(f"  {i}. {column.get('name', 'N/A')}")
+            if board.get("columns"):
+                self.console.print("\n[bold]Columns:[/bold]")
+                for i, column in enumerate(board["columns"], 1):
+                    self.console.print(f"  {i}. {column.get('name', 'N/A')}")
 
-                if board.get("sprints"):
-                    self.console.print(f"\nSprints: {len(board['sprints'])}")
+            if board.get("sprints"):
+                self.console.print(f"\nSprints: {len(board['sprints'])}")
 
-                return {"status": "success", "board": board}
+            return {"status": "success", "board": board}
 
         except httpx.HTTPStatusError as e:
             error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
@@ -156,16 +155,15 @@ class BoardManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, headers=headers, json=update_data)
-                response.raise_for_status()
-                board = self._parse_json_response(response)
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=update_data)
+            board = self._parse_json_response(response)
 
-                self.console.print(
-                    f"✅ Board '{board.get('name', board_id)}' updated successfully",
-                    style="green",
-                )
-                return {"status": "success", "board": board}
+            self.console.print(
+                f"✅ Board '{board.get('name', board_id)}' updated successfully",
+                style="green",
+            )
+            return {"status": "success", "board": board}
 
         except httpx.HTTPStatusError as e:
             error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
