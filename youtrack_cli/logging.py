@@ -91,9 +91,7 @@ def _setup_file_logging(log_level: int) -> logging.handlers.RotatingFileHandler:
     log_file = _get_log_file_path()
 
     # Create rotating file handler (10MB max, keep 5 backup files)
-    file_handler = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=10 * 1024 * 1024, backupCount=5
-    )
+    file_handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
     file_handler.setLevel(log_level)
 
     # Use standard formatter for file logs
@@ -111,9 +109,7 @@ def _setup_file_logging(log_level: int) -> logging.handlers.RotatingFileHandler:
 
 def _setup_console_logging(log_level: int) -> RichHandler:
     """Set up console-based logging with rich formatting."""
-    console_handler = RichHandler(
-        rich_tracebacks=True, show_path=False, show_time=True, show_level=True
-    )
+    console_handler = RichHandler(rich_tracebacks=True, show_path=False, show_time=True, show_level=True)
     console_handler.setLevel(log_level)
 
     # Add sensitive data filter
@@ -204,9 +200,7 @@ def setup_logging(
 
     # Log startup message
     if debug:
-        logger.debug(
-            "Logging system initialized", extra={"level": logging.getLevelName(level)}
-        )
+        logger.debug("Logging system initialized", extra={"level": logging.getLevelName(level)})
 
 
 def get_logger(name: Optional[str] = None) -> structlog.stdlib.BoundLogger:

@@ -63,9 +63,7 @@ class TestIssueManager:
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.create_issue(
                 project_id="PROJ",
@@ -98,9 +96,7 @@ class TestIssueManager:
             mock_resp = Mock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad Request"
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.create_issue("PROJ", "Test Issue")
 
@@ -118,9 +114,7 @@ class TestIssueManager:
             mock_resp.json.return_value = issues
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_issues(project_id="PROJ")
 
@@ -137,9 +131,7 @@ class TestIssueManager:
             mock_resp.json.return_value = [sample_issue]
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_issues(
                 project_id="PROJ",
@@ -162,9 +154,7 @@ class TestIssueManager:
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.get_issue("PROJ-123")
 
@@ -180,9 +170,7 @@ class TestIssueManager:
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.update_issue(
                 issue_id="PROJ-123",
@@ -207,9 +195,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.delete_issue("PROJ-123")
 
@@ -225,9 +211,7 @@ class TestIssueManager:
             mock_resp.json.return_value = [sample_issue]
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.search_issues(
                 query="priority:High",
@@ -247,9 +231,7 @@ class TestIssueManager:
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.assign_issue("PROJ-123", "new-user")
 
@@ -264,9 +246,7 @@ class TestIssueManager:
             mock_resp.json.return_value = {}
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.move_issue("PROJ-123", state="In Progress")
 
@@ -278,9 +258,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.move_issue("PROJ-123", project_id="OTHER")
 
@@ -301,9 +279,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.add_tag("PROJ-123", "urgent")
 
@@ -316,9 +292,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.remove_tag("PROJ-123", "urgent")
 
@@ -336,9 +310,7 @@ class TestIssueManager:
             mock_resp.json.return_value = tags_data
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_tags("PROJ-123")
 
@@ -351,9 +323,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.add_comment("PROJ-123", "Test comment")
 
@@ -378,9 +348,7 @@ class TestIssueManager:
             mock_resp.json.return_value = comments
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_comments("PROJ-123")
 
@@ -393,13 +361,9 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
-            result = await issue_manager.update_comment(
-                "PROJ-123", "comment-1", "Updated comment"
-            )
+            result = await issue_manager.update_comment("PROJ-123", "comment-1", "Updated comment")
 
             assert result["status"] == "success"
             assert "comment-1" in result["message"]
@@ -410,9 +374,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.delete_comment("PROJ-123", "comment-1")
 
@@ -428,9 +390,7 @@ class TestIssueManager:
         ):
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
             mock_open.return_value.__enter__.return_value = MagicMock()
 
             result = await issue_manager.upload_attachment("PROJ-123", "test.txt")
@@ -457,9 +417,7 @@ class TestIssueManager:
             mock_resp.json.return_value = attachments
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_attachments("PROJ-123")
 
@@ -476,15 +434,11 @@ class TestIssueManager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.content = b"file content"
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
             mock_file = MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
 
-            result = await issue_manager.download_attachment(
-                "PROJ-123", "attach-1", "output.txt"
-            )
+            result = await issue_manager.download_attachment("PROJ-123", "attach-1", "output.txt")
 
             assert result["status"] == "success"
             assert "output.txt" in result["message"]
@@ -496,9 +450,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.delete_attachment("PROJ-123", "attach-1")
 
@@ -511,13 +463,9 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
 
-            result = await issue_manager.create_link(
-                "PROJ-123", "PROJ-124", "depends on"
-            )
+            result = await issue_manager.create_link("PROJ-123", "PROJ-124", "depends on")
 
             assert result["status"] == "success"
             assert "PROJ-123" in result["message"]
@@ -542,9 +490,7 @@ class TestIssueManager:
             mock_resp.json.return_value = links_data
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_links("PROJ-123")
 
@@ -557,9 +503,7 @@ class TestIssueManager:
         with patch("httpx.AsyncClient") as mock_client:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.delete_link("PROJ-123", "link-1")
 
@@ -583,9 +527,7 @@ class TestIssueManager:
             mock_resp.json.return_value = link_types
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
 
             result = await issue_manager.list_link_types()
 
@@ -845,9 +787,7 @@ class TestIssuesCLI:
                 "message": "Comment added successfully",
             }
 
-            result = runner.invoke(
-                main, ["issues", "comments", "add", "PROJ-123", "Test comment"]
-            )
+            result = runner.invoke(main, ["issues", "comments", "add", "PROJ-123", "Test comment"])
 
             assert result.exit_code == 0
             assert "adding comment" in result.output.lower()
@@ -872,9 +812,7 @@ class TestIssuesCLI:
                 tmp_file_path = tmp_file.name
 
             try:
-                result = runner.invoke(
-                    main, ["issues", "attach", "upload", "PROJ-123", tmp_file_path]
-                )
+                result = runner.invoke(main, ["issues", "attach", "upload", "PROJ-123", tmp_file_path])
 
                 assert result.exit_code == 0
                 assert "uploading file" in result.output.lower()

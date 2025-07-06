@@ -61,9 +61,7 @@ class Cache:
                 return None
 
             if entry.is_expired:
-                logger.debug(
-                    "Cache expired", key=key, age=time.time() - entry.timestamp
-                )
+                logger.debug("Cache expired", key=key, age=time.time() - entry.timestamp)
                 del self._cache[key]
                 return None
 
@@ -117,17 +115,13 @@ class Cache:
             Number of entries removed
         """
         async with self._lock:
-            expired_keys = [
-                key for key, entry in self._cache.items() if entry.is_expired
-            ]
+            expired_keys = [key for key, entry in self._cache.items() if entry.is_expired]
 
             for key in expired_keys:
                 del self._cache[key]
 
             if expired_keys:
-                logger.debug(
-                    "Cleaned up expired cache entries", count=len(expired_keys)
-                )
+                logger.debug("Cleaned up expired cache entries", count=len(expired_keys))
 
             return len(expired_keys)
 
@@ -146,14 +140,10 @@ class Cache:
                 "expired_entries": expired_count,
                 "active_entries": len(self._cache) - expired_count,
                 "oldest_entry_age": (
-                    now - min(entry.timestamp for entry in self._cache.values())
-                    if self._cache
-                    else 0
+                    now - min(entry.timestamp for entry in self._cache.values()) if self._cache else 0
                 ),
                 "newest_entry_age": (
-                    now - max(entry.timestamp for entry in self._cache.values())
-                    if self._cache
-                    else 0
+                    now - max(entry.timestamp for entry in self._cache.values()) if self._cache else 0
                 ),
             }
 

@@ -52,9 +52,7 @@ class TestArticleManager:
             mock_resp.text = '{"id": "123", "summary": "Test Article"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -72,9 +70,7 @@ class TestArticleManager:
             mock_resp = Mock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad Request"
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -107,9 +103,7 @@ class TestArticleManager:
             mock_resp.text = '[{"id": "123", "summary": "Article 1"}]'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.list_articles()
 
@@ -133,9 +127,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.get_article("123")
 
@@ -158,9 +150,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.update_article(
                 article_id="123",
@@ -187,9 +177,7 @@ class TestArticleManager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.delete.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.delete.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.delete_article("123")
 
@@ -212,9 +200,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.publish_article("123")
 
@@ -240,9 +226,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.search_articles("search query")
 
@@ -268,9 +252,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.get_article_comments("123")
 
@@ -293,9 +275,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.add_comment("123", "Test comment")
 
@@ -322,9 +302,7 @@ class TestArticleManager:
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp  # noqa: E501
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
 
             result = await article_manager.get_article_attachments("123")
 
@@ -350,9 +328,7 @@ class TestArticleManager:
             article_manager.console = mock_console.return_value
             article_manager.display_articles_table([])
 
-            mock_console.return_value.print.assert_called_with(
-                "No articles found.", style="yellow"
-            )
+            mock_console.return_value.print.assert_called_with("No articles found.", style="yellow")
 
     def test_display_articles_table_with_data(self, article_manager):
         """Test displaying articles table with data."""
@@ -383,9 +359,7 @@ class TestArticleManager:
             article_manager.console = mock_console.return_value
             article_manager.display_articles_tree([])
 
-            mock_console.return_value.print.assert_called_with(
-                "No articles found.", style="yellow"
-            )
+            mock_console.return_value.print.assert_called_with("No articles found.", style="yellow")
 
     def test_display_articles_tree_with_data(self, article_manager):
         """Test displaying articles tree with data."""
@@ -455,9 +429,7 @@ class TestArticlesCLI:
                 "data": {"id": "123"},
             }
 
-            result = runner.invoke(
-                main, ["articles", "create", "Test Title", "--content", "Test content"]
-            )
+            result = runner.invoke(main, ["articles", "create", "Test Title", "--content", "Test content"])
 
             assert result.exit_code == 0
             assert "Creating article" in result.output
@@ -545,9 +517,7 @@ class TestArticlesCLI:
                 "data": {"id": "comment-1"},
             }
 
-            result = runner.invoke(
-                main, ["articles", "comments", "add", "123", "Test comment"]
-            )
+            result = runner.invoke(main, ["articles", "comments", "add", "123", "Test comment"])
 
             assert result.exit_code == 0
             assert "Adding comment" in result.output

@@ -57,9 +57,7 @@ class TestReportManager:
             mock_response.json.return_value = mock_issues
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await report_manager.generate_burndown_report(
                 project_id="TEST",
@@ -88,14 +86,10 @@ class TestReportManager:
         assert "Not authenticated" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_generate_burndown_report_http_error(
-        self, report_manager, auth_manager
-    ):
+    async def test_generate_burndown_report_http_error(self, report_manager, auth_manager):
         """Test burndown report generation with HTTP error."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get.side_effect = (
-                httpx.HTTPError("Connection failed")
-            )
+            mock_client.return_value.__aenter__.return_value.get.side_effect = httpx.HTTPError("Connection failed")
 
             result = await report_manager.generate_burndown_report("TEST")
 
@@ -129,9 +123,7 @@ class TestReportManager:
             for mock_response in mock_responses:
                 mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.side_effect = (
-                mock_responses
-            )
+            mock_client.return_value.__aenter__.return_value.get.side_effect = mock_responses
 
             result = await report_manager.generate_velocity_report("TEST", sprints=2)
 
@@ -215,9 +207,7 @@ class TestReportManager:
             # Verify that it shows "No sprint data available"
             mock_print.assert_called()
             call_args = [call[0][0] for call in mock_print.call_args_list]
-            no_data_found = any(
-                "No sprint data available" in str(arg) for arg in call_args
-            )
+            no_data_found = any("No sprint data available" in str(arg) for arg in call_args)
             assert no_data_found
 
 
@@ -272,9 +262,7 @@ class TestReportsCommands:
         }
 
         with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(
-                main, ["reports", "velocity", "TEST", "--sprints", "3"]
-            )
+            result = self.runner.invoke(main, ["reports", "velocity", "TEST", "--sprints", "3"])
 
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()

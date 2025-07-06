@@ -119,9 +119,7 @@ class AuditLogger:
         for arg in arguments:
             masked_arg = arg
             for pattern in sensitive_patterns:
-                masked_arg = re.sub(
-                    pattern, "--***MASKED***", masked_arg, flags=re.IGNORECASE
-                )
+                masked_arg = re.sub(pattern, "--***MASKED***", masked_arg, flags=re.IGNORECASE)
             masked_args.append(masked_arg)
 
         return masked_args
@@ -181,9 +179,7 @@ class AuditLogger:
             try:
                 # Convert timestamp string back to datetime
                 if isinstance(entry_data.get("timestamp"), str):
-                    entry_data["timestamp"] = datetime.fromisoformat(
-                        entry_data["timestamp"].replace("Z", "+00:00")
-                    )
+                    entry_data["timestamp"] = datetime.fromisoformat(entry_data["timestamp"].replace("Z", "+00:00"))
                 # Validate required fields exist before creating AuditEntry
                 required_fields = ["timestamp", "command", "arguments"]
                 if all(key in entry_data for key in required_fields):
@@ -217,28 +213,20 @@ class CredentialManager:
         """Get or create encryption key."""
         try:
             # Try to get existing key from keyring
-            key_str = keyring.get_password(
-                self.KEYRING_SERVICE, self.ENCRYPTION_KEY_NAME
-            )
+            key_str = keyring.get_password(self.KEYRING_SERVICE, self.ENCRYPTION_KEY_NAME)
             if key_str:
                 return key_str.encode()
         except Exception as e:
-            self.logger.debug(
-                "Could not retrieve encryption key from keyring", error=str(e)
-            )
+            self.logger.debug("Could not retrieve encryption key from keyring", error=str(e))
 
         # Generate new key
         key = Fernet.generate_key()
 
         try:
             # Store in keyring
-            keyring.set_password(
-                self.KEYRING_SERVICE, self.ENCRYPTION_KEY_NAME, key.decode()
-            )
+            keyring.set_password(self.KEYRING_SERVICE, self.ENCRYPTION_KEY_NAME, key.decode())
         except Exception as e:
-            self.logger.warning(
-                "Could not store encryption key in keyring", error=str(e)
-            )
+            self.logger.warning("Could not store encryption key in keyring", error=str(e))
 
         return key
 
@@ -351,9 +339,7 @@ class TokenManager:
         self.config = config or SecurityConfig()
         self.logger = get_logger("youtrack_cli.security.tokens")
 
-    def check_token_expiration(
-        self, token_expiry: Optional[datetime]
-    ) -> dict[str, Any]:
+    def check_token_expiration(self, token_expiry: Optional[datetime]) -> dict[str, Any]:
         """Check if a token is expired or expiring soon.
 
         Args:
@@ -375,9 +361,7 @@ class TokenManager:
 
         elif days_until_expiry <= self.config.token_warning_days:
             message = f"Token expires in {days_until_expiry} days"
-            self.logger.warning(
-                "Token expiring soon", days_until_expiry=days_until_expiry
-            )
+            self.logger.warning("Token expiring soon", days_until_expiry=days_until_expiry)
             return {"status": "expiring", "message": message, "days": days_until_expiry}
 
         else:
@@ -395,9 +379,7 @@ class TokenManager:
         # This is a placeholder implementation
         # In practice, you'd need to decode JWT tokens or use API calls
         # to determine actual expiration dates
-        self.logger.debug(
-            "Token expiry estimation not implemented for this token format"
-        )
+        self.logger.debug("Token expiry estimation not implemented for this token format")
         return None
 
 

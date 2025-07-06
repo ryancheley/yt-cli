@@ -40,9 +40,7 @@ def log(
     console.print(f"⏱️  Logging {duration} to issue {issue_id}...", style="blue")
 
     try:
-        result = asyncio.run(
-            time_manager.log_time(issue_id, duration, date, description, work_type)
-        )
+        result = asyncio.run(time_manager.log_time(issue_id, duration, date, description, work_type))
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")
@@ -160,9 +158,7 @@ def summary(
                 console.print_json(data=result["data"])
             else:
                 time_manager.display_time_summary(result["data"])
-                console.print(
-                    f"\n📊 Based on {result['total_entries']} entries", style="green"
-                )
+                console.print(f"\n📊 Based on {result['total_entries']} entries", style="green")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException(result["message"])

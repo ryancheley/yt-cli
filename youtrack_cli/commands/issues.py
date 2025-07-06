@@ -109,9 +109,7 @@ def create(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(
-        f"🐛 Creating issue '{summary}' in project '{project_id}'...", style="blue"
-    )
+    console.print(f"🐛 Creating issue '{summary}' in project '{project_id}'...", style="blue")
 
     try:
         result = asyncio.run(
@@ -495,9 +493,7 @@ def move(
     console.print(f"🚚 Moving issue '{issue_id}'...", style="blue")
 
     try:
-        result = asyncio.run(
-            issue_manager.move_issue(issue_id, state=state, project_id=project_id)
-        )
+        result = asyncio.run(issue_manager.move_issue(issue_id, state=state, project_id=project_id))
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")
@@ -556,9 +552,7 @@ def remove_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(
-        f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...", style="blue"
-    )
+    console.print(f"🏷️  Removing tag '{tag_name}' from issue '{issue_id}'...", style="blue")
 
     try:
         result = asyncio.run(issue_manager.remove_tag(issue_id, tag_name))
@@ -689,9 +683,7 @@ def list_issue_comments(
 @click.argument("comment_id")
 @click.argument("text")
 @click.pass_context
-def update_comment(
-    ctx: click.Context, issue_id: str, comment_id: str, text: str
-) -> None:
+def update_comment(ctx: click.Context, issue_id: str, comment_id: str, text: str) -> None:
     """Update an existing comment."""
     from ..issues import IssueManager
 
@@ -724,9 +716,7 @@ def update_comment(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_comment(
-    ctx: click.Context, issue_id: str, comment_id: str, confirm: bool
-) -> None:
+def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, confirm: bool) -> None:
     """Delete a comment."""
     from ..issues import IssueManager
 
@@ -735,9 +725,7 @@ def delete_comment(
     issue_manager = IssueManager(auth_manager)
 
     if not confirm:
-        if not click.confirm(
-            f"Are you sure you want to delete comment '{comment_id}'?"
-        ):
+        if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
 
@@ -775,9 +763,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(
-        f"📎 Uploading file '{file_path}' to issue '{issue_id}'...", style="blue"
-    )
+    console.print(f"📎 Uploading file '{file_path}' to issue '{issue_id}'...", style="blue")
 
     try:
         result = asyncio.run(issue_manager.upload_attachment(issue_id, file_path))
@@ -803,9 +789,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(
-    ctx: click.Context, issue_id: str, attachment_id: str, output: Optional[str]
-) -> None:
+def download(ctx: click.Context, issue_id: str, attachment_id: str, output: Optional[str]) -> None:
     """Download an attachment from an issue."""
     from ..issues import IssueManager
 
@@ -816,14 +800,10 @@ def download(
     if not output:
         output = f"attachment_{attachment_id}"
 
-    console.print(
-        f"📥 Downloading attachment '{attachment_id}' to '{output}'...", style="blue"
-    )
+    console.print(f"📥 Downloading attachment '{attachment_id}' to '{output}'...", style="blue")
 
     try:
-        result = asyncio.run(
-            issue_manager.download_attachment(issue_id, attachment_id, output)
-        )
+        result = asyncio.run(issue_manager.download_attachment(issue_id, attachment_id, output))
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")
@@ -889,9 +869,7 @@ def list_attachments(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(
-    ctx: click.Context, issue_id: str, attachment_id: str, confirm: bool
-) -> None:
+def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, confirm: bool) -> None:
     """Delete an attachment from an issue."""
     from ..issues import IssueManager
 
@@ -900,9 +878,7 @@ def delete_attachment(
     issue_manager = IssueManager(auth_manager)
 
     if not confirm:
-        if not click.confirm(
-            f"Are you sure you want to delete attachment '{attachment_id}'?"
-        ):
+        if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
 
@@ -933,9 +909,7 @@ def links() -> None:
 @click.argument("target_issue_id")
 @click.argument("link_type")
 @click.pass_context
-def create_link(
-    ctx: click.Context, source_issue_id: str, target_issue_id: str, link_type: str
-) -> None:
+def create_link(ctx: click.Context, source_issue_id: str, target_issue_id: str, link_type: str) -> None:
     """Create a link between two issues."""
     from ..issues import IssueManager
 
@@ -944,15 +918,12 @@ def create_link(
     issue_manager = IssueManager(auth_manager)
 
     console.print(
-        f"🔗 Creating '{link_type}' link between '{source_issue_id}' "
-        f"and '{target_issue_id}'...",
+        f"🔗 Creating '{link_type}' link between '{source_issue_id}' and '{target_issue_id}'...",
         style="blue",
     )
 
     try:
-        result = asyncio.run(
-            issue_manager.create_link(source_issue_id, target_issue_id, link_type)
-        )
+        result = asyncio.run(issue_manager.create_link(source_issue_id, target_issue_id, link_type))
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")
@@ -1018,9 +989,7 @@ def list_links(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_link(
-    ctx: click.Context, source_issue_id: str, link_id: str, confirm: bool
-) -> None:
+def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, confirm: bool) -> None:
     """Remove a link between issues."""
     from ..issues import IssueManager
 

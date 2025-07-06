@@ -27,9 +27,7 @@ class TestAuthConfig:
 
     def test_config_without_username(self):
         """Test creating config without username."""
-        config = AuthConfig(
-            base_url="https://example.youtrack.cloud", token="test-token-123"
-        )
+        config = AuthConfig(base_url="https://example.youtrack.cloud", token="test-token-123")
         assert config.base_url == "https://example.youtrack.cloud"
         assert config.token == "test-token-123"
         assert config.username is None
@@ -51,8 +49,7 @@ class TestAuthManager:
 
         # Store original environment variables to restore later
         self.original_env = {
-            key: os.environ.get(key)
-            for key in ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME"]
+            key: os.environ.get(key) for key in ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME"]
         }
 
     def teardown_method(self):
@@ -93,9 +90,7 @@ class TestAuthManager:
     def test_save_credentials_without_username(self):
         """Test saving credentials without username."""
         # Force file storage instead of keyring for this test
-        self.auth_manager.save_credentials(
-            "https://example.youtrack.cloud", "test-token-123", use_keyring=False
-        )
+        self.auth_manager.save_credentials("https://example.youtrack.cloud", "test-token-123", use_keyring=False)
 
         with open(self.config_path) as f:
             content = f.read()
@@ -183,13 +178,9 @@ class TestAuthManager:
         mock_response.raise_for_status.return_value = None
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
-            result = await self.auth_manager.verify_credentials(
-                "https://example.youtrack.cloud", "test-token-123"
-            )
+            result = await self.auth_manager.verify_credentials("https://example.youtrack.cloud", "test-token-123")
 
         assert result["status"] == "success"
         assert result["username"] == "testuser"
@@ -200,13 +191,9 @@ class TestAuthManager:
     async def test_verify_credentials_failure(self):
         """Test failed credential verification."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                side_effect=Exception("HTTP Error")
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=Exception("HTTP Error"))
 
-            result = await self.auth_manager.verify_credentials(
-                "https://example.youtrack.cloud", "invalid-token"
-            )
+            result = await self.auth_manager.verify_credentials("https://example.youtrack.cloud", "invalid-token")
 
         assert result["status"] == "error"
         assert "HTTP Error" in result["message"]

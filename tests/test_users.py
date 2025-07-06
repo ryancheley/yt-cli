@@ -59,9 +59,7 @@ class TestUserManager:
             mock_response.json.return_value = mock_users
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
             result = await user_manager.list_users()
 
@@ -90,9 +88,7 @@ class TestUserManager:
             mock_response.json.return_value = mock_users
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
             result = await user_manager.list_users(query="admin")
 
@@ -112,22 +108,16 @@ class TestUserManager:
         assert "Not authenticated" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_list_users_insufficient_permissions(
-        self, user_manager, auth_manager
-    ):
+    async def test_list_users_insufficient_permissions(self, user_manager, auth_manager):
         """Test user listing with insufficient permissions."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 403
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Forbidden", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=http_error)
 
             result = await user_manager.list_users()
 
@@ -163,9 +153,7 @@ class TestUserManager:
             mock_response.json.return_value = mock_created_user
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
             result = await user_manager.create_user(
                 login="newuser",
@@ -188,17 +176,11 @@ class TestUserManager:
             mock_response.status_code = 400
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Bad request", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Bad request", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
-            result = await user_manager.create_user(
-                login="", full_name="", email="invalid-email"
-            )
+            result = await user_manager.create_user(login="", full_name="", email="invalid-email")
 
             assert result["status"] == "error"
             assert "Invalid user data" in result["message"]
@@ -211,13 +193,9 @@ class TestUserManager:
             mock_response.status_code = 409
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Conflict", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Conflict", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
             result = await user_manager.create_user(
                 login="existinguser",
@@ -229,26 +207,18 @@ class TestUserManager:
             assert "already exists" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_create_user_insufficient_permissions(
-        self, user_manager, auth_manager
-    ):
+    async def test_create_user_insufficient_permissions(self, user_manager, auth_manager):
         """Test user creation with insufficient permissions."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 403
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Forbidden", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
-            result = await user_manager.create_user(
-                login="newuser", full_name="New User", email="newuser@test.com"
-            )
+            result = await user_manager.create_user(login="newuser", full_name="New User", email="newuser@test.com")
 
             assert result["status"] == "error"
             assert "Insufficient permissions" in result["message"]
@@ -273,9 +243,7 @@ class TestUserManager:
             mock_response.json.return_value = mock_user
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
             result = await user_manager.get_user("testuser")
 
@@ -291,13 +259,9 @@ class TestUserManager:
             mock_response.status_code = 404
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Not found", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Not found", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=http_error)
 
             result = await user_manager.get_user("nonexistent")
 
@@ -320,9 +284,7 @@ class TestUserManager:
             mock_response.json.return_value = mock_updated_user
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
             result = await user_manager.update_user(
                 user_id="testuser",
@@ -351,33 +313,23 @@ class TestUserManager:
             mock_response.status_code = 404
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Not found", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Not found", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
-            result = await user_manager.update_user(
-                user_id="nonexistent", full_name="New Name"
-            )
+            result = await user_manager.update_user(user_id="nonexistent", full_name="New Name")
 
             assert result["status"] == "error"
             assert "not found" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_manage_user_permissions_add_to_group(
-        self, user_manager, auth_manager
-    ):
+    async def test_manage_user_permissions_add_to_group(self, user_manager, auth_manager):
         """Test adding user to group."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
             result = await user_manager.manage_user_permissions(
                 user_id="testuser", action="add_to_group", group_id="developers"
@@ -387,17 +339,13 @@ class TestUserManager:
             assert "permissions updated successfully" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_manage_user_permissions_remove_from_group(
-        self, user_manager, auth_manager
-    ):
+    async def test_manage_user_permissions_remove_from_group(self, user_manager, auth_manager):
         """Test removing user from group."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_response)
 
             result = await user_manager.manage_user_permissions(
                 user_id="testuser", action="remove_from_group", group_id="developers"
@@ -407,21 +355,15 @@ class TestUserManager:
             assert "permissions updated successfully" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_manage_user_permissions_missing_group_id(
-        self, user_manager, auth_manager
-    ):
+    async def test_manage_user_permissions_missing_group_id(self, user_manager, auth_manager):
         """Test user permissions management with missing group ID."""
-        result = await user_manager.manage_user_permissions(
-            user_id="testuser", action="add_to_group"
-        )
+        result = await user_manager.manage_user_permissions(user_id="testuser", action="add_to_group")
 
         assert result["status"] == "error"
         assert "Group ID is required" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_manage_user_permissions_unsupported_action(
-        self, user_manager, auth_manager
-    ):
+    async def test_manage_user_permissions_unsupported_action(self, user_manager, auth_manager):
         """Test user permissions management with unsupported action."""
         result = await user_manager.manage_user_permissions(
             user_id="testuser", action="invalid_action", group_id="developers"
@@ -438,13 +380,9 @@ class TestUserManager:
             mock_response.status_code = 404
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Not found", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Not found", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
             result = await user_manager.manage_user_permissions(
                 user_id="nonexistent", action="add_to_group", group_id="developers"
@@ -572,9 +510,7 @@ class TestUsersCLI:
         with patch("asyncio.run", return_value=mock_result):
             with patch("youtrack_cli.auth.AuthManager"):
                 runner = CliRunner()
-                result = runner.invoke(
-                    main, ["users", "update", "testuser", "--show-details"]
-                )
+                result = runner.invoke(main, ["users", "update", "testuser", "--show-details"])
 
                 assert result.exit_code in [0, 1]
 

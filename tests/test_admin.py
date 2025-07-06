@@ -51,9 +51,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_settings
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await admin_manager.get_global_settings()
 
@@ -71,20 +69,14 @@ class TestAdminManager:
         assert "Not authenticated" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_get_global_settings_insufficient_permissions(
-        self, admin_manager, auth_manager
-    ):
+    async def test_get_global_settings_insufficient_permissions(self, admin_manager, auth_manager):
         """Test global settings retrieval with insufficient permissions."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 403
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Forbidden", request=mock_request, response=mock_response
-            )
-            mock_client.return_value.__aenter__.return_value.get.side_effect = (
-                http_error
-            )
+            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
+            mock_client.return_value.__aenter__.return_value.get.side_effect = http_error
 
             result = await admin_manager.get_global_settings()
 
@@ -98,9 +90,7 @@ class TestAdminManager:
             mock_response = Mock()
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
 
             result = await admin_manager.set_global_setting("server.name", "New Name")
 
@@ -114,12 +104,8 @@ class TestAdminManager:
             mock_response = Mock()
             mock_response.status_code = 400
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Bad Request", request=mock_request, response=mock_response
-            )
-            mock_client.return_value.__aenter__.return_value.post.side_effect = (
-                http_error
-            )
+            http_error = httpx.HTTPStatusError("Bad Request", request=mock_request, response=mock_response)
+            mock_client.return_value.__aenter__.return_value.post.side_effect = http_error
 
             result = await admin_manager.set_global_setting("invalid.key", "value")
 
@@ -142,9 +128,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_license
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await admin_manager.get_license_info()
 
@@ -161,9 +145,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_usage
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await admin_manager.get_license_usage()
 
@@ -186,9 +168,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_health
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await admin_manager.get_system_health()
 
@@ -202,9 +182,7 @@ class TestAdminManager:
             mock_response = Mock()
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
 
             result = await admin_manager.clear_caches()
 
@@ -234,9 +212,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_groups
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await admin_manager.list_user_groups()
 
@@ -257,9 +233,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_created_group
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
 
             result = await admin_manager.create_user_group("New Group", "A new group")
 
@@ -274,12 +248,8 @@ class TestAdminManager:
             mock_response = Mock()
             mock_response.status_code = 400
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Bad Request", request=mock_request, response=mock_response
-            )
-            mock_client.return_value.__aenter__.return_value.post.side_effect = (
-                http_error
-            )
+            http_error = httpx.HTTPStatusError("Bad Request", request=mock_request, response=mock_response)
+            mock_client.return_value.__aenter__.return_value.post.side_effect = http_error
 
             result = await admin_manager.create_user_group("Existing Group")
 
@@ -311,9 +281,7 @@ class TestAdminManager:
             mock_response.json.return_value = mock_fields
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             result = await admin_manager.list_custom_fields()
 
@@ -387,9 +355,7 @@ class TestAdminManager:
             # Verify that it shows "No user groups found"
             mock_print.assert_called()
             call_args = [call[0][0] for call in mock_print.call_args_list]
-            no_groups_found = any(
-                "No user groups found" in str(arg) for arg in call_args
-            )
+            no_groups_found = any("No user groups found" in str(arg) for arg in call_args)
             assert no_groups_found
 
     def test_display_user_groups_with_data(self, admin_manager):
@@ -417,9 +383,7 @@ class TestAdminManager:
             # Verify that it shows "No custom fields found"
             mock_print.assert_called()
             call_args = [call[0][0] for call in mock_print.call_args_list]
-            no_fields_found = any(
-                "No custom fields found" in str(arg) for arg in call_args
-            )
+            no_fields_found = any("No custom fields found" in str(arg) for arg in call_args)
             assert no_fields_found
 
     def test_display_custom_fields_with_data(self, admin_manager):
@@ -478,9 +442,7 @@ class TestAdminCommands:
         }
 
         with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(
-                main, ["admin", "global-settings", "set", "server.name", "New Name"]
-            )
+            result = self.runner.invoke(main, ["admin", "global-settings", "set", "server.name", "New Name"])
 
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
@@ -525,9 +487,7 @@ class TestAdminCommands:
         }
 
         with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(
-                main, ["admin", "maintenance", "clear-cache", "--confirm"]
-            )
+            result = self.runner.invoke(main, ["admin", "maintenance", "clear-cache", "--confirm"])
 
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
@@ -572,9 +532,7 @@ class TestAdminCommands:
         }
 
         with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(
-                main, ["admin", "user-groups", "create", "NewGroup"]
-            )
+            result = self.runner.invoke(main, ["admin", "user-groups", "create", "NewGroup"])
 
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()

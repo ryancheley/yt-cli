@@ -253,9 +253,7 @@ class TestTokenManager:
 
         assert result["status"] == "expiring"
         assert "expires in" in result["message"]
-        assert (
-            result["days"] >= 4 and result["days"] <= 5
-        )  # Account for timing variations
+        assert result["days"] >= 4 and result["days"] <= 5  # Account for timing variations
 
     def test_check_token_expiration_expired(self):
         """Test token expiration check for expired token."""
@@ -359,9 +357,7 @@ class TestSensitiveDataMasking:
     def test_mask_multiple_patterns(self):
         """Test masking multiple sensitive patterns in one string."""
         original = 'Config: token="secret123" password="mypass" username="john"'
-        expected = (
-            'Config: token="***MASKED***" password="***MASKED***" username="john"'
-        )
+        expected = 'Config: token="***MASKED***" password="***MASKED***" username="john"'
 
         result = mask_sensitive_output(original)
         assert result == expected
@@ -493,9 +489,7 @@ class TestSecurityPerformance:
         # Create a large text with sensitive data
         large_text = ""
         for i in range(100):
-            large_text += (
-                f"Line {i}: token=secret{i} password=pass{i} normal_data=value{i}\n"
-            )
+            large_text += f"Line {i}: token=secret{i} password=pass{i} normal_data=value{i}\n"
 
         import time
 

@@ -49,10 +49,7 @@ class UserManager:
 
         # Default fields to return
         if not fields:
-            fields = (
-                "id,login,fullName,email,banned,online,guest,"
-                "ringId,avatarUrl,teams(name,description)"
-            )
+            fields = "id,login,fullName,email,banned,online,guest,ringId,avatarUrl,teams(name,description)"
 
         # Build query parameters
         params = {"fields": fields}
@@ -162,10 +159,7 @@ class UserManager:
                     if e.response.status_code == 400:
                         return {
                             "status": "error",
-                            "message": (
-                                "Invalid user data. "
-                                "Check login, email format, and other fields."
-                            ),
+                            "message": ("Invalid user data. Check login, email format, and other fields."),
                         }
                     elif e.response.status_code == 403:
                         return {
@@ -181,9 +175,7 @@ class UserManager:
             except Exception as e:
                 return {"status": "error", "message": f"Unexpected error: {e}"}
 
-    async def get_user(
-        self, user_id: str, fields: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def get_user(self, user_id: str, fields: Optional[str] = None) -> dict[str, Any]:
         """Get a specific user.
 
         Args:
@@ -408,16 +400,12 @@ class UserManager:
                     if e.response.status_code == 404:
                         return {
                             "status": "error",
-                            "message": (
-                                f"User '{user_id}' or group '{group_id}' not found."
-                            ),
+                            "message": (f"User '{user_id}' or group '{group_id}' not found."),
                         }
                     elif e.response.status_code == 403:
                         return {
                             "status": "error",
-                            "message": (
-                                "Insufficient permissions to manage user permissions."
-                            ),
+                            "message": ("Insufficient permissions to manage user permissions."),
                         }
                 return {"status": "error", "message": f"HTTP error: {e}"}
             except Exception as e:
@@ -492,9 +480,7 @@ class UserManager:
             status = "Offline"
             status_style = "yellow"
 
-        self.console.print(
-            f"[cyan]Status:[/cyan] [{status_style}]{status}[/{status_style}]"
-        )
+        self.console.print(f"[cyan]Status:[/cyan] [{status_style}]{status}[/{status_style}]")
 
         # User type
         user_type = "Guest" if user.get("guest", False) else "User"

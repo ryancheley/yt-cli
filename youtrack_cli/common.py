@@ -36,9 +36,7 @@ def common_options(f: Callable) -> Callable:
     )
     @click.option(
         "--log-level",
-        type=click.Choice(
-            ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False
-        ),
+        type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False),
         help="Set specific log level (overrides --verbose and --debug)",
     )
     @click.option(
@@ -62,9 +60,7 @@ def common_options(f: Callable) -> Callable:
         no_color = kwargs.pop("no_color", False)
 
         # Setup logging based on options
-        setup_logging(
-            verbose=verbose, debug=debug, log_level=log_level, log_file=not no_log_file
-        )
+        setup_logging(verbose=verbose, debug=debug, log_level=log_level, log_file=not no_log_file)
 
         # Configure console color
         if no_color:

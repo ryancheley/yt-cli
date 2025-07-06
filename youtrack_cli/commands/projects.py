@@ -56,11 +56,7 @@ def projects_list(
     console.print("📋 Fetching projects...", style="blue")
 
     try:
-        result = asyncio.run(
-            project_manager.list_projects(
-                fields=fields, top=top, show_archived=show_archived
-            )
-        )
+        result = asyncio.run(project_manager.list_projects(fields=fields, top=top, show_archived=show_archived))
 
         if result["status"] == "success":
             projects = result["data"]
@@ -134,9 +130,7 @@ def projects_create(
             console.print(f"✅ {result['message']}", style="green")
             project = result["data"]
             console.print(f"Project ID: {project.get('id', 'N/A')}", style="blue")
-            console.print(
-                f"Short Name: {project.get('shortName', 'N/A')}", style="blue"
-            )
+            console.print(f"Short Name: {project.get('shortName', 'N/A')}", style="blue")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to create project")
@@ -203,8 +197,7 @@ def configure(
         if not any([name, description, leader]):
             console.print("❌ No configuration changes specified.", style="red")
             console.print(
-                "Use --name, --description, or --leader options, "
-                "or --show-details to view current settings.",
+                "Use --name, --description, or --leader options, or --show-details to view current settings.",
                 style="blue",
             )
             return
@@ -269,9 +262,7 @@ def archive(
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")
-            console.print(
-                "Project has been archived and is no longer active.", style="yellow"
-            )
+            console.print("Project has been archived and is no longer active.", style="yellow")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to archive project")

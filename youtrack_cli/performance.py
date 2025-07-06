@@ -55,9 +55,7 @@ class PerformanceMonitor:
     def __init__(self):
         self._metrics: list[PerformanceMetrics] = []
 
-    def record(
-        self, operation: str, duration: float, success: bool = True, **metadata
-    ) -> None:
+    def record(self, operation: str, duration: float, success: bool = True, **metadata) -> None:
         """Record a performance metric.
 
         Args:
@@ -140,20 +138,14 @@ class PerformanceMonitor:
             "total_operations": len(metrics),
             "successful_operations": len(metrics),
             "failed_operations": len(
-                [
-                    m
-                    for m in self._metrics
-                    if not m.success and (not operation or m.operation == operation)
-                ]
+                [m for m in self._metrics if not m.success and (not operation or m.operation == operation)]
             ),
             "total_duration": total_duration,
             "avg_duration": mean(durations),
             "median_duration": median(durations),
             "min_duration": min(durations),
             "max_duration": max(durations),
-            "operations_per_second": (
-                len(metrics) / total_duration if total_duration > 0 else 0
-            ),
+            "operations_per_second": (len(metrics) / total_duration if total_duration > 0 else 0),
         }
 
 

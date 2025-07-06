@@ -34,8 +34,7 @@ class BoardManager:
             status_code = response.status_code
             preview = response.text[:200] if response.text else "empty"
             raise ValueError(
-                f"Failed to parse JSON response (status {status_code}): {str(e)}. "
-                f"Response preview: {preview}"
+                f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
     async def list_boards(self, project_id: Optional[str] = None) -> dict[str, Any]:
@@ -71,11 +70,7 @@ class BoardManager:
                     table.add_row(
                         board.get("id", ""),
                         board.get("name", ""),
-                        (
-                            board.get("projects", [{}])[0].get("name", "N/A")
-                            if board.get("projects")
-                            else "N/A"
-                        ),
+                        (board.get("projects", [{}])[0].get("name", "N/A") if board.get("projects") else "N/A"),
                         board.get("owner", {}).get("name", "N/A"),
                     )
 
@@ -110,13 +105,9 @@ class BoardManager:
                 board = self._parse_json_response(response)
 
                 # Display board details
-                self.console.print(
-                    f"[bold cyan]Board: {board.get('name', 'N/A')}[/bold cyan]"
-                )
+                self.console.print(f"[bold cyan]Board: {board.get('name', 'N/A')}[/bold cyan]")
                 self.console.print(f"ID: {board.get('id', 'N/A')}")
-                self.console.print(
-                    f"Owner: {board.get('owner', {}).get('name', 'N/A')}"
-                )
+                self.console.print(f"Owner: {board.get('owner', {}).get('name', 'N/A')}")
 
                 if board.get("projects"):
                     projects = ", ".join([p.get("name", "") for p in board["projects"]])
@@ -141,9 +132,7 @@ class BoardManager:
             self.console.print(f"❌ Error viewing board: {error_msg}", style="red")
             return {"status": "error", "message": error_msg}
 
-    async def update_board(
-        self, board_id: str, name: Optional[str] = None, **kwargs: Any
-    ) -> dict[str, Any]:
+    async def update_board(self, board_id: str, name: Optional[str] = None, **kwargs: Any) -> dict[str, Any]:
         """Update an agile board configuration."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:

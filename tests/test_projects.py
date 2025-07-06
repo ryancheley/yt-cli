@@ -55,9 +55,7 @@ class TestProjectManager:
             mock_response.json.return_value = mock_projects
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
             result = await project_manager.list_projects()
 
@@ -91,9 +89,7 @@ class TestProjectManager:
             mock_response.json.return_value = mock_projects
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
             result = await project_manager.list_projects(show_archived=True)
 
@@ -140,9 +136,7 @@ class TestProjectManager:
             mock_response.json.return_value = mock_created_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
             result = await project_manager.create_project(
                 name="New Project",
@@ -164,42 +158,28 @@ class TestProjectManager:
             mock_response.status_code = 400
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Bad request", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Bad request", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
-            result = await project_manager.create_project(
-                name="", short_name="", leader_id="invalid-user"
-            )
+            result = await project_manager.create_project(name="", short_name="", leader_id="invalid-user")
 
             assert result["status"] == "error"
             assert "Invalid project data" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_create_project_insufficient_permissions(
-        self, project_manager, auth_manager
-    ):
+    async def test_create_project_insufficient_permissions(self, project_manager, auth_manager):
         """Test project creation with insufficient permissions."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 403
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Forbidden", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
 
-            result = await project_manager.create_project(
-                name="New Project", short_name="NP", leader_id="user1"
-            )
+            result = await project_manager.create_project(name="New Project", short_name="NP", leader_id="user1")
 
             assert result["status"] == "error"
             assert "Insufficient permissions" in result["message"]
@@ -228,9 +208,7 @@ class TestProjectManager:
             mock_response.json.return_value = mock_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
 
             result = await project_manager.get_project("TP")
 
@@ -246,13 +224,9 @@ class TestProjectManager:
             mock_response.status_code = 404
 
             mock_request = Mock()
-            http_error = httpx.HTTPStatusError(
-                "Not found", request=mock_request, response=mock_response
-            )
+            http_error = httpx.HTTPStatusError("Not found", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                side_effect=http_error
-            )
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=http_error)
 
             result = await project_manager.get_project("NONEXISTENT")
 
@@ -275,9 +249,7 @@ class TestProjectManager:
             mock_response.json.return_value = mock_updated_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
             result = await project_manager.update_project(
                 project_id="UP", name="Updated Project", leader_id="new-leader"
@@ -310,9 +282,7 @@ class TestProjectManager:
             mock_response.json.return_value = mock_archived_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
             result = await project_manager.archive_project("AP")
 
@@ -435,9 +405,7 @@ class TestProjectsCLI:
         with patch("asyncio.run", return_value=mock_result):
             with patch("youtrack_cli.auth.AuthManager"):
                 runner = CliRunner()
-                result = runner.invoke(
-                    main, ["projects", "configure", "TP", "--show-details"]
-                )
+                result = runner.invoke(main, ["projects", "configure", "TP", "--show-details"])
 
                 assert result.exit_code in [0, 1]
 
