@@ -1,5 +1,6 @@
 """Tests for article management functionality."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -433,6 +434,88 @@ class TestArticlesCLI:
 
             assert result.exit_code == 0
             assert "Creating article" in result.output
+
+    def test_articles_create_command_with_file(self):
+        """Test articles create command with file input."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.articles.ArticleManager"),
+            runner.isolated_filesystem(),
+        ):
+            # Create a test markdown file
+            test_file = Path("test_article.md")
+            test_file.write_text("# Test Article\n\nThis is test content from a markdown file.")
+
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Article created successfully",
+                "data": {"id": "123"},
+            }
+
+            result = runner.invoke(main, ["articles", "create", "Test Title", "--file", str(test_file)])
+
+            assert result.exit_code == 0
+            assert "Reading content from" in result.output
+            assert "Creating article" in result.output
+
+    def test_articles_create_command_file_not_found(self):
+        """Test articles create command with non-existent file."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["articles", "create", "Test Title", "--file", "nonexistent.md"])
+
+        assert result.exit_code != 0
+        assert "does not exist" in result.output
+
+    def test_articles_create_command_both_content_and_file(self):
+        """Test articles create command with both content and file (should fail)."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with runner.isolated_filesystem():
+            test_file = Path("test_article.md")
+            test_file.write_text("Test content")
+
+            result = runner.invoke(
+                main, ["articles", "create", "Test Title", "--content", "Test content", "--file", str(test_file)]
+            )
+
+            assert result.exit_code != 0
+            assert "Cannot specify both --content and --file options" in result.output
+
+    def test_articles_create_command_no_content_or_file(self):
+        """Test articles create command with neither content nor file (should fail)."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["articles", "create", "Test Title"])
+
+        assert result.exit_code != 0
+        assert "Either --content or --file must be specified" in result.output
+
+    def test_articles_create_command_empty_file(self):
+        """Test articles create command with empty file."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with runner.isolated_filesystem():
+            test_file = Path("empty.md")
+            test_file.write_text("")
+
+            result = runner.invoke(main, ["articles", "create", "Test Title", "--file", str(test_file)])
+
+            assert result.exit_code != 0
+            assert "is empty" in result.output
 
     def test_articles_list_command(self):
         """Test articles list command."""

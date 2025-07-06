@@ -96,6 +96,9 @@ yt projects list
 # Create an article
 yt articles create "Getting Started" --content "Welcome to our documentation"
 
+# Create an article from a markdown file
+yt articles create "API Documentation" --file api-docs.md
+
 # Log work time
 yt time log ISSUE-123 "2h" --description "Feature development"
 
@@ -158,6 +161,13 @@ yt issues tag add ISSUE-456 urgent
 ```bash
 # Create and manage knowledge base
 yt articles create "API Guide" --content "Comprehensive API documentation"
+
+# Create articles from markdown files
+yt articles create "Installation Guide" --file docs/install.md
+
+# Organize existing documentation
+yt articles create "Developer Guide" --file dev-guide.md --project-id PROJECT-123
+
 yt articles tree --project-id PROJECT-123
 yt articles search "authentication"
 ```

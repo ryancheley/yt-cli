@@ -1,6 +1,7 @@
 """Articles command group for YouTrack CLI."""
 
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -20,8 +21,13 @@ def articles() -> None:
 @click.option(
     "--content",
     "-c",
-    prompt=True,
     help="Article content",
+)
+@click.option(
+    "--file",
+    "-f",
+    type=click.Path(exists=True, path_type=Path),
+    help="Path to markdown file containing article content",
 )
 @click.option(
     "--project-id",
@@ -47,7 +53,8 @@ def articles() -> None:
 def create(
     ctx: click.Context,
     title: str,
-    content: str,
+    content: Optional[str],
+    file: Optional[Path],
     project_id: Optional[str],
     parent_id: Optional[str],
     summary: Optional[str],
@@ -57,10 +64,38 @@ def create(
     from ..articles import ArticleManager
 
     console = Console()
+
+    # Validate that either content or file is provided, but not both
+    if content and file:
+        console.print("❌ Cannot specify both --content and --file options", style="red")
+        raise click.ClickException("Use either --content or --file, not both")
+
+    if not content and not file:
+        console.print("❌ Either --content or --file must be specified", style="red")
+        raise click.ClickException("Article content is required")
+
+    # Read content from file if provided
+    if file:
+        try:
+            console.print(f"📖 Reading content from '{file}'...", style="blue")
+            content = file.read_text(encoding="utf-8")
+            if not content.strip():
+                console.print(f"❌ File '{file}' is empty", style="red")
+                raise click.ClickException("File content cannot be empty")
+        except UnicodeDecodeError:
+            console.print(f"❌ File '{file}' is not a valid text file", style="red")
+            raise click.ClickException("File must be a valid text file") from None
+        except Exception as e:
+            console.print(f"❌ Error reading file '{file}': {e}", style="red")
+            raise click.ClickException("Failed to read file") from e
+
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
     console.print(f"📝 Creating article '{title}'...", style="blue")
+
+    # At this point, content is guaranteed to be a string due to validation above
+    assert content is not None
 
     try:
         result = asyncio.run(

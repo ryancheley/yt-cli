@@ -54,7 +54,10 @@ Create a new article in YouTrack.
      - Description
    * - ``--content, -c``
      - text
-     - Article content (will prompt if not provided)
+     - Article content (required if --file not provided)
+   * - ``--file, -f``
+     - path
+     - Path to markdown file containing article content (required if --content not provided)
    * - ``--project-id, -p``
      - string
      - Project ID to associate with the article
@@ -72,17 +75,23 @@ Create a new article in YouTrack.
 
 .. code-block:: bash
 
-   # Create a simple article
+   # Create a simple article with inline content
    yt articles create "Getting Started Guide" --content "This is a comprehensive guide..."
 
-   # Create an article in a specific project
+   # Create an article from a markdown file
+   yt articles create "Getting Started Guide" --file getting-started.md
+
+   # Create an article in a specific project from a file
+   yt articles create "API Documentation" --file api-docs.md --project-id PROJECT-123
+
+   # Create a nested article (child of another article) from a file
+   yt articles create "Advanced Features" --file advanced.md --parent-id ARTICLE-456
+
+   # Create a draft article (private visibility) from a file
+   yt articles create "Draft Article" --file draft.md --visibility private
+
+   # Create an article with inline content (traditional approach)
    yt articles create "API Documentation" --content "API usage guide" --project-id PROJECT-123
-
-   # Create a nested article (child of another article)
-   yt articles create "Advanced Features" --content "Advanced guide" --parent-id ARTICLE-456
-
-   # Create a draft article (private visibility)
-   yt articles create "Draft Article" --content "Work in progress" --visibility private
 
 edit
 ~~~~
@@ -671,6 +680,24 @@ Content Management
    # View article details
    yt articles edit ARTICLE-123 --show-details
 
+Working with Markdown Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Create articles from existing markdown files
+   yt articles create "Installation Guide" --file docs/installation.md
+
+   # Create multiple articles from markdown files
+   yt articles create "User Manual" --file user-manual.md --project-id PROJECT-123
+   yt articles create "Developer Guide" --file dev-guide.md --project-id PROJECT-123
+
+   # Organize markdown documentation into YouTrack articles
+   for file in docs/*.md; do
+       title=$(basename "$file" .md)
+       yt articles create "$title" --file "$file" --project-id PROJECT-123
+   done
+
 Best Practices
 --------------
 
@@ -689,6 +716,8 @@ Best Practices
 7. **Search Optimization**: Use clear, searchable content to make articles discoverable.
 
 8. **Consistent Formatting**: Follow consistent formatting and style guidelines across articles.
+
+9. **Use Markdown Files**: For complex content, consider writing in markdown files first and using the ``--file`` option for better version control and editing experience.
 
 Error Handling
 --------------
@@ -709,6 +738,18 @@ Common error scenarios and solutions:
 
 **Content Too Large**
   YouTrack may have limits on article content size. Consider breaking large articles into smaller sections.
+
+**File Not Found**
+  Ensure the file path provided with ``--file`` exists and is accessible.
+
+**Invalid File Content**
+  The specified file must be a valid text file. Binary files or files with invalid encoding will be rejected.
+
+**Empty File**
+  Files provided with ``--file`` must contain content. Empty files will be rejected.
+
+**Both Content and File Specified**
+  You cannot use both ``--content`` and ``--file`` options simultaneously. Choose one method for providing article content.
 
 See Also
 --------
