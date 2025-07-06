@@ -176,6 +176,38 @@ class TestAdminManager:
             assert result["data"] == mock_health
 
     @pytest.mark.asyncio
+    async def test_get_system_health_404_error(self, admin_manager, auth_manager):
+        """Test system health check with 404 error on all endpoints."""
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = Mock()
+            mock_response.status_code = 404
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError("Not Found", request=mock_request, response=mock_response)
+            mock_client.return_value.__aenter__.return_value.get.side_effect = http_error
+
+            result = await admin_manager.get_system_health()
+
+            assert result["status"] == "error"
+            assert "System health endpoint not found (404)" in result["message"]
+            assert "YouTrack version doesn't support this endpoint" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_system_health_403_error(self, admin_manager, auth_manager):
+        """Test system health check with 403 permission error."""
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = Mock()
+            mock_response.status_code = 403
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
+            mock_client.return_value.__aenter__.return_value.get.side_effect = http_error
+
+            result = await admin_manager.get_system_health()
+
+            assert result["status"] == "error"
+            assert "Insufficient permissions for health check" in result["message"]
+            assert "Low-level Admin Read" in result["message"]
+
+    @pytest.mark.asyncio
     async def test_clear_caches_success(self, admin_manager, auth_manager):
         """Test successful cache clearing."""
         with patch("httpx.AsyncClient") as mock_client:

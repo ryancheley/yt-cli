@@ -231,28 +231,62 @@ class AdminManager:
             "Accept": "application/json",
         }
 
+        # List of endpoints to try, in order of preference
+        endpoints = [
+            "/api/admin/globalSettings/systemSettings",
+            "/api/admin/globalSettings/systemSettings?fields=baseUrl,isApplicationReadOnly,maxUploadFileSize,maxExportItems",
+        ]
+
         async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/systemSettings",
-                    headers=headers,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+            for endpoint in endpoints:
+                try:
+                    response = await client.get(
+                        f"{credentials.base_url.rstrip('/')}{endpoint}",
+                        headers=headers,
+                        timeout=10.0,
+                    )
+                    response.raise_for_status()
 
-                health_info = response.json()
-                return {"status": "success", "data": health_info}
+                    health_info = response.json()
+                    return {"status": "success", "data": health_info}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 404:
+                        continue  # Try next endpoint
+                    elif e.response.status_code == 403:
                         return {
                             "status": "error",
-                            "message": "Insufficient permissions for health check.",
+                            "message": "Insufficient permissions for health check. "
+                            "Requires 'Low-level Admin Read' permission.",
                         }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+                    elif e.response.status_code == 401:
+                        return {
+                            "status": "error",
+                            "message": "Authentication failed. Your token may have expired. Run 'yt auth login' again.",
+                        }
+                    else:
+                        response_text = e.response.text if hasattr(e.response, "text") else str(e)
+                        return {
+                            "status": "error",
+                            "message": f"HTTP {e.response.status_code}: {response_text}",
+                        }
+                except httpx.RequestError as e:
+                    return {
+                        "status": "error",
+                        "message": f"Network error: {e}. Check your YouTrack URL and network connection.",
+                    }
+                except Exception as e:
+                    return {"status": "error", "message": f"Unexpected error: {e}"}
+
+            # If all endpoints failed with 404
+            return {
+                "status": "error",
+                "message": "System health endpoint not found (404). This may indicate:\n"
+                "1. Your YouTrack version doesn't support this endpoint\n"
+                "2. The endpoint URL may have changed\n"
+                "3. Your YouTrack instance has a different API configuration\n"
+                "Please verify your YouTrack version and API access.",
+            }
 
     async def clear_caches(self) -> dict[str, Any]:
         """Clear system caches.
