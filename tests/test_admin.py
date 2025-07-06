@@ -1,6 +1,6 @@
 """Tests for the admin module."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
@@ -46,12 +46,13 @@ class TestAdminManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_settings
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_global_settings()
 
@@ -71,12 +72,14 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_get_global_settings_insufficient_permissions(self, admin_manager, auth_manager):
         """Test global settings retrieval with insufficient permissions."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.status_code = 403
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
-            mock_client.return_value.__aenter__.return_value.get.side_effect = http_error
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_global_settings()
 
@@ -86,11 +89,12 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_set_global_setting_success(self, admin_manager, auth_manager):
         """Test successful global setting update."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.set_global_setting("server.name", "New Name")
 
@@ -100,12 +104,14 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_set_global_setting_invalid_data(self, admin_manager, auth_manager):
         """Test global setting update with invalid data."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.status_code = 400
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Bad Request", request=mock_request, response=mock_response)
-            mock_client.return_value.__aenter__.return_value.post.side_effect = http_error
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.set_global_setting("invalid.key", "value")
 
@@ -123,12 +129,13 @@ class TestAdminManager:
             "isActive": True,
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_license
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_license_info()
 
@@ -140,12 +147,13 @@ class TestAdminManager:
         """Test successful license usage retrieval."""
         mock_usage = {"totalUsers": 75, "activeUsers": 50, "remainingUsers": 25}
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_usage
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_license_usage()
 
@@ -163,12 +171,13 @@ class TestAdminManager:
             ],
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_health
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_system_health()
 
@@ -178,12 +187,14 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_get_system_health_404_error(self, admin_manager, auth_manager):
         """Test system health check with 404 error on all endpoints."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.status_code = 404
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Not Found", request=mock_request, response=mock_response)
-            mock_client.return_value.__aenter__.return_value.get.side_effect = http_error
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_system_health()
 
@@ -194,12 +205,14 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_get_system_health_403_error(self, admin_manager, auth_manager):
         """Test system health check with 403 permission error."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.status_code = 403
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
-            mock_client.return_value.__aenter__.return_value.get.side_effect = http_error
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_system_health()
 
@@ -210,11 +223,12 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_clear_caches_success(self, admin_manager, auth_manager):
         """Test successful cache clearing."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.clear_caches()
 
@@ -239,12 +253,13 @@ class TestAdminManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = {"usergroups": mock_groups}
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.list_user_groups()
 
@@ -260,12 +275,13 @@ class TestAdminManager:
             "description": "A new group",
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_created_group
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.create_user_group("New Group", "A new group")
 
@@ -276,12 +292,14 @@ class TestAdminManager:
     @pytest.mark.asyncio
     async def test_create_user_group_already_exists(self, admin_manager, auth_manager):
         """Test user group creation when group already exists."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.status_code = 400
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Bad Request", request=mock_request, response=mock_response)
-            mock_client.return_value.__aenter__.return_value.post.side_effect = http_error
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.create_user_group("Existing Group")
 
@@ -308,12 +326,13 @@ class TestAdminManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_fields
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.list_custom_fields()
 
