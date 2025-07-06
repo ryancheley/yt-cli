@@ -57,13 +57,15 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_create_issue_success(self, issue_manager, sample_issue):
         """Test successful issue creation."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.create_issue(
                 project_id="PROJ",
@@ -92,11 +94,13 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_create_issue_api_error(self, issue_manager):
         """Test issue creation with API error."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad Request"
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.create_issue("PROJ", "Test Issue")
 
@@ -108,13 +112,15 @@ class TestIssueManager:
         """Test successful issue listing."""
         issues = [sample_issue]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = issues
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_issues(project_id="PROJ")
 
@@ -125,13 +131,15 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_list_issues_with_filters(self, issue_manager, sample_issue):
         """Test issue listing with filters."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = [sample_issue]
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_issues(
                 project_id="PROJ",
@@ -142,19 +150,21 @@ class TestIssueManager:
             )
 
             assert result["status"] == "success"
-            # Verify the get call was made with proper parameters
-            mock_client.return_value.__aenter__.return_value.get.assert_called_once()
+            # Verify the make_request call was made with proper parameters
+            mock_client_manager.make_request.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_issue_success(self, issue_manager, sample_issue):
         """Test successful issue retrieval."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.get_issue("PROJ-123")
 
@@ -164,13 +174,15 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_update_issue_success(self, issue_manager, sample_issue):
         """Test successful issue update."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.update_issue(
                 issue_id="PROJ-123",
@@ -192,10 +204,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_delete_issue_success(self, issue_manager):
         """Test successful issue deletion."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.delete_issue("PROJ-123")
 
@@ -205,13 +219,15 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_search_issues_success(self, issue_manager, sample_issue):
         """Test successful issue search."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = [sample_issue]
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.search_issues(
                 query="priority:High",
@@ -225,13 +241,15 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_assign_issue_success(self, issue_manager, sample_issue):
         """Test successful issue assignment."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = sample_issue
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.assign_issue("PROJ-123", "new-user")
 
@@ -240,13 +258,15 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_move_issue_state_success(self, issue_manager):
         """Test successful issue state move."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = {}
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.move_issue("PROJ-123", state="In Progress")
 
@@ -255,10 +275,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_move_issue_project_success(self, issue_manager):
         """Test successful issue project move."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.move_issue("PROJ-123", project_id="OTHER")
 
@@ -276,10 +298,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_add_tag_success(self, issue_manager):
         """Test successful tag addition."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.add_tag("PROJ-123", "urgent")
 
@@ -289,10 +313,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_remove_tag_success(self, issue_manager):
         """Test successful tag removal."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.remove_tag("PROJ-123", "urgent")
 
@@ -304,13 +330,15 @@ class TestIssueManager:
         """Test successful tag listing."""
         tags_data = {"tags": [{"name": "urgent"}, {"name": "bug"}]}
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = tags_data
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_tags("PROJ-123")
 
@@ -320,10 +348,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_add_comment_success(self, issue_manager):
         """Test successful comment addition."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.add_comment("PROJ-123", "Test comment")
 
@@ -342,13 +372,15 @@ class TestIssueManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = comments
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_comments("PROJ-123")
 
@@ -358,10 +390,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_update_comment_success(self, issue_manager):
         """Test successful comment update."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.update_comment("PROJ-123", "comment-1", "Updated comment")
 
@@ -371,10 +405,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_delete_comment_success(self, issue_manager):
         """Test successful comment deletion."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.delete_comment("PROJ-123", "comment-1")
 
@@ -385,12 +421,17 @@ class TestIssueManager:
     async def test_upload_attachment_success(self, issue_manager):
         """Test successful attachment upload."""
         with (
-            patch("httpx.AsyncClient") as mock_client,
+            patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
             patch("builtins.open", create=True) as mock_open,
         ):
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client = Mock()
+            mock_client.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client_manager.get_client.return_value.__aexit__ = AsyncMock(return_value=None)
+            mock_get_client_manager.return_value = mock_client_manager
             mock_open.return_value.__enter__.return_value = MagicMock()
 
             result = await issue_manager.upload_attachment("PROJ-123", "test.txt")
@@ -411,13 +452,15 @@ class TestIssueManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = attachments
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_attachments("PROJ-123")
 
@@ -428,13 +471,15 @@ class TestIssueManager:
     async def test_download_attachment_success(self, issue_manager):
         """Test successful attachment download."""
         with (
-            patch("httpx.AsyncClient") as mock_client,
+            patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
             patch("builtins.open", create=True) as mock_open,
         ):
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.content = b"file content"
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
             mock_file = MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
 
@@ -447,10 +492,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_delete_attachment_success(self, issue_manager):
         """Test successful attachment deletion."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.delete_attachment("PROJ-123", "attach-1")
 
@@ -460,10 +507,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_create_link_success(self, issue_manager):
         """Test successful link creation."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.create_link("PROJ-123", "PROJ-124", "depends on")
 
@@ -484,13 +533,15 @@ class TestIssueManager:
             ]
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = links_data
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_links("PROJ-123")
 
@@ -500,10 +551,12 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_delete_link_success(self, issue_manager):
         """Test successful link deletion."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.delete_link("PROJ-123", "link-1")
 
@@ -521,13 +574,15 @@ class TestIssueManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = link_types
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.list_link_types()
 

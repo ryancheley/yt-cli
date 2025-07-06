@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
+from .client import get_client_manager
 from .progress import get_progress_manager
 
 __all__ = ["IssueManager"]
@@ -73,21 +74,21 @@ class IssueManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=issue_data, headers=headers)
-                if response.status_code in [200, 201]:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "message": f"Issue '{summary}' created successfully",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to create issue: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=issue_data)
+            if response.status_code in [200, 201]:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "message": f"Issue '{summary}' created successfully",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to create issue: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error creating issue: {str(e)}"}
 
@@ -138,21 +139,21 @@ class IssueManager:
             headers = {"Authorization": f"Bearer {credentials.token}"}
 
             try:
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(url, params=params, headers=headers)
-                    if response.status_code == 200:
-                        data = self._parse_json_response(response)
-                        return {
-                            "status": "success",
-                            "data": data,
-                            "count": len(data),
-                        }
-                    else:
-                        error_text = response.text
-                        return {
-                            "status": "error",
-                            "message": f"Failed to list issues: {error_text}",
-                        }
+                client_manager = get_client_manager()
+                response = await client_manager.make_request("GET", url, headers=headers, params=params)
+                if response.status_code == 200:
+                    data = self._parse_json_response(response)
+                    return {
+                        "status": "success",
+                        "data": data,
+                        "count": len(data),
+                    }
+                else:
+                    error_text = response.text
+                    return {
+                        "status": "error",
+                        "message": f"Failed to list issues: {error_text}",
+                    }
             except Exception as e:
                 return {"status": "error", "message": f"Error listing issues: {str(e)}"}
 
@@ -173,17 +174,17 @@ class IssueManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to get issue: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to get issue: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error getting issue: {str(e)}"}
 
@@ -226,21 +227,21 @@ class IssueManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=update_data, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "message": f"Issue '{issue_id}' updated successfully",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to update issue: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=update_data)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "message": f"Issue '{issue_id}' updated successfully",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to update issue: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error updating issue: {str(e)}"}
 
@@ -254,19 +255,19 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": f"Issue '{issue_id}' deleted successfully",
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to delete issue: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Issue '{issue_id}' deleted successfully",
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete issue: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting issue: {str(e)}"}
 
@@ -301,21 +302,21 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "data": data,
-                        "count": len(data),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to search issues: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to search issues: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error searching issues: {str(e)}"}
 
@@ -359,19 +360,19 @@ class IssueManager:
         update_data = {"project": {"id": project_id}}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=update_data, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": (f"Issue '{issue_id}' moved to project '{project_id}' successfully"),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to move issue: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=update_data)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": (f"Issue '{issue_id}' moved to project '{project_id}' successfully"),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to move issue: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error moving issue: {str(e)}"}
 
@@ -389,19 +390,19 @@ class IssueManager:
         tag_data = {"name": tag}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=tag_data, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": (f"Tag '{tag}' added to issue '{issue_id}' successfully"),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to add tag: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=tag_data)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": (f"Tag '{tag}' added to issue '{issue_id}' successfully"),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to add tag: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error adding tag: {str(e)}"}
 
@@ -415,19 +416,19 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": (f"Tag '{tag}' removed from issue '{issue_id}' successfully"),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to remove tag: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": (f"Tag '{tag}' removed from issue '{issue_id}' successfully"),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to remove tag: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error removing tag: {str(e)}"}
 
@@ -442,18 +443,18 @@ class IssueManager:
         params = {"fields": "tags(name)"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    tags = data.get("tags", [])
-                    return {"status": "success", "data": tags}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list tags: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                tags = data.get("tags", [])
+                return {"status": "success", "data": tags}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list tags: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error listing tags: {str(e)}"}
 
@@ -472,19 +473,19 @@ class IssueManager:
         comment_data = {"text": text}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=comment_data, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": (f"Comment added to issue '{issue_id}' successfully"),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to add comment: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=comment_data)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": (f"Comment added to issue '{issue_id}' successfully"),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to add comment: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error adding comment: {str(e)}"}
 
@@ -499,17 +500,17 @@ class IssueManager:
         params = {"fields": "id,text,author(login,fullName),created,updated"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list comments: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list comments: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error listing comments: {str(e)}"}
 
@@ -527,19 +528,19 @@ class IssueManager:
         comment_data = {"text": text}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=comment_data, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": f"Comment '{comment_id}' updated successfully",
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to update comment: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=comment_data)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Comment '{comment_id}' updated successfully",
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to update comment: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error updating comment: {str(e)}"}
 
@@ -553,19 +554,19 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": f"Comment '{comment_id}' deleted successfully",
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to delete comment: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Comment '{comment_id}' deleted successfully",
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete comment: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting comment: {str(e)}"}
 
@@ -582,7 +583,8 @@ class IssueManager:
         try:
             with open(file_path, "rb") as file:
                 files = {"file": file}
-                async with httpx.AsyncClient() as client:
+                client_manager = get_client_manager()
+                async with client_manager.get_client() as client:
                     response = await client.post(url, files=files, headers=headers)
                     if response.status_code == 200:
                         return {
@@ -612,17 +614,17 @@ class IssueManager:
         params = {"fields": "id,name,size,mimeType,author(login,fullName),created"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list attachments: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list attachments: {error_text}",
+                }
         except Exception as e:
             return {
                 "status": "error",
@@ -639,21 +641,21 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code == 200:
-                    with open(output_path, "wb") as file:
-                        file.write(response.content)
-                    return {
-                        "status": "success",
-                        "message": (f"Attachment downloaded to '{output_path}' successfully"),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to download attachment: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers)
+            if response.status_code == 200:
+                with open(output_path, "wb") as file:
+                    file.write(response.content)
+                return {
+                    "status": "success",
+                    "message": (f"Attachment downloaded to '{output_path}' successfully"),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to download attachment: {error_text}",
+                }
         except Exception as e:
             return {
                 "status": "error",
@@ -670,19 +672,19 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": f"Attachment '{attachment_id}' deleted successfully",
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to delete attachment: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Attachment '{attachment_id}' deleted successfully",
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete attachment: {error_text}",
+                }
         except Exception as e:
             return {
                 "status": "error",
@@ -707,19 +709,19 @@ class IssueManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=link_data, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": (f"Link created between '{source_issue_id}' and '{target_issue_id}' successfully"),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to create link: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=link_data)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": (f"Link created between '{source_issue_id}' and '{target_issue_id}' successfully"),
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to create link: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error creating link: {str(e)}"}
 
@@ -734,18 +736,18 @@ class IssueManager:
         params = {"fields": "links(linkType(name),direction,issues(id,summary))"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    links = data.get("links", [])
-                    return {"status": "success", "data": links}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list links: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                links = data.get("links", [])
+                return {"status": "success", "data": links}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list links: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error listing links: {str(e)}"}
 
@@ -759,19 +761,19 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": f"Link '{link_id}' deleted successfully",
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to delete link: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Link '{link_id}' deleted successfully",
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete link: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting link: {str(e)}"}
 
@@ -786,17 +788,17 @@ class IssueManager:
         params = {"fields": "name,sourceToTarget,targetToSource"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list link types: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list link types: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error listing link types: {str(e)}"}
 
