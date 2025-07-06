@@ -1,6 +1,6 @@
 """Tests for time tracking functionality."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -45,11 +45,13 @@ class TestTimeManager:
             "description": "Test work",
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+        with patch("youtrack_cli.time.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await time_manager.log_time("ISSUE-123", "2h", description="Test work")
 
@@ -78,11 +80,13 @@ class TestTimeManager:
     @pytest.mark.asyncio
     async def test_log_time_api_error(self, time_manager):
         """Test logging time with API error."""
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+        with patch("youtrack_cli.time.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad request"
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await time_manager.log_time("ISSUE-123", "2h")
 
@@ -103,11 +107,13 @@ class TestTimeManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+        with patch("youtrack_cli.time.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await time_manager.get_time_entries(issue_id="ISSUE-123")
 
@@ -139,11 +145,13 @@ class TestTimeManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_resp = AsyncMock()
+        with patch("youtrack_cli.time.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_time_entries
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await time_manager.get_time_summary(group_by="user")
 

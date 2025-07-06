@@ -3,11 +3,11 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-import httpx
 from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
+from .client import get_client_manager
 
 __all__ = ["TimeManager"]
 
@@ -57,21 +57,23 @@ class TimeManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=work_item_data, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    return {
-                        "status": "success",
-                        "message": f"Logged {duration} to issue {issue_id}",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to log time: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                method="POST", url=url, json_data=work_item_data, headers=headers
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "status": "success",
+                    "message": f"Logged {duration} to issue {issue_id}",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to log time: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error logging time: {str(e)}"}
 
@@ -108,21 +110,21 @@ class TimeManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    return {
-                        "status": "success",
-                        "data": data,
-                        "count": len(data) if isinstance(data, list) else 1,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to get time entries: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(method="GET", url=url, params=params, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data) if isinstance(data, list) else 1,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to get time entries: {error_text}",
+                }
         except Exception as e:
             return {
                 "status": "error",
