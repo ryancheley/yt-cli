@@ -15,7 +15,7 @@ build:
       - pip install uv
     post_install:
       # Install dependencies using uv
-      - uv sync --dev
+      - uv sync --group docs
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
