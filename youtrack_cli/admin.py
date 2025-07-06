@@ -327,14 +327,15 @@ class AdminManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/groups",
+                    f"{credentials.base_url.rstrip('/')}/api/rest/usergroups",
                     headers=headers,
                     params=params,
                     timeout=10.0,
                 )
                 response.raise_for_status()
 
-                groups = response.json()
+                groups_response = response.json()
+                groups = groups_response.get("usergroups", [])
                 return {"status": "success", "data": groups}
 
             except httpx.HTTPError as e:
@@ -378,7 +379,7 @@ class AdminManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/groups",
+                    f"{credentials.base_url.rstrip('/')}/api/rest/usergroups",
                     headers=headers,
                     json=group_data,
                     params={"fields": "id,name,description"},
