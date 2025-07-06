@@ -40,7 +40,8 @@
       "mcp__github__create_issue",
       "mcp__claude-code__Read",
       "mcp__claude-code__Grep",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(git remote get-url:*)"
     ],
     "deny": []
   }
