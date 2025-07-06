@@ -607,21 +607,35 @@ def auth(ctx: click.Context) -> None:
 )
 @click.option("--token", "-t", prompt=True, hide_input=True, help="YouTrack API token")
 @click.option("--username", "-n", help="Username (optional)")
+@click.option(
+    "--no-verify-ssl",
+    is_flag=True,
+    help="Disable SSL certificate verification (use with caution)",
+)
 @click.pass_context
-def login(ctx: click.Context, base_url: str, token: str, username: Optional[str]) -> None:
+def login(
+    ctx: click.Context,
+    base_url: str,
+    token: str,
+    username: Optional[str],
+    no_verify_ssl: bool,
+) -> None:
     """Authenticate with YouTrack."""
     console = Console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 
     console.print("🔐 Authenticating with YouTrack...", style="blue")
 
+    if no_verify_ssl:
+        console.print("⚠️  SSL certificate verification disabled. Use with caution!", style="yellow")
+
     try:
         # Verify credentials
-        result = asyncio.run(auth_manager.verify_credentials(base_url, token))
+        result = asyncio.run(auth_manager.verify_credentials(base_url, token, verify_ssl=not no_verify_ssl))
 
         if result["status"] == "success":
             # Save credentials
-            auth_manager.save_credentials(base_url, token, username)
+            auth_manager.save_credentials(base_url, token, username, verify_ssl=not no_verify_ssl)
 
             console.print("✅ Authentication successful!", style="green")
             console.print(f"Logged in as: {result['username']}", style="green")

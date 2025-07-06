@@ -57,6 +57,9 @@ Authenticate with YouTrack and save credentials for subsequent CLI usage.
    * - ``--username, -n``
      - string
      - Username for reference (optional)
+   * - ``--no-verify-ssl``
+     - flag
+     - Disable SSL certificate verification (use with caution for self-signed certificates)
 
 **Examples:**
 
@@ -73,6 +76,9 @@ Authenticate with YouTrack and save credentials for subsequent CLI usage.
 
    # Completely non-interactive (not recommended for security)
    yt auth login --base-url https://company.youtrack.cloud --token YOUR_API_TOKEN
+
+   # Login with self-signed SSL certificate
+   yt auth login --base-url https://internal.youtrack.local --no-verify-ssl
 
 **Security Notes:**
 
@@ -339,6 +345,21 @@ Connection Problems
    yt auth logout
    yt auth login --base-url https://correct.youtrack.cloud
 
+SSL Certificate Issues
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # For self-signed certificates or internal CAs
+   yt auth login --base-url https://internal.youtrack.local --no-verify-ssl
+
+   # Test connectivity with SSL verification disabled
+   curl -k -H "Authorization: Bearer YOUR_TOKEN" \
+        "https://internal.youtrack.local/api/admin/projects"
+
+   # Note: SSL verification setting is saved with credentials
+   # All subsequent API calls will use the same SSL verification setting
+
 Error Handling
 --------------
 
@@ -363,6 +384,11 @@ Common error scenarios and solutions:
 **Network Issues**
   * Verify connectivity to YouTrack instance
   * Check firewall and proxy settings
+
+**SSL Certificate Errors**
+  * For self-signed certificates: ``yt auth login --no-verify-ssl``
+  * For corporate CAs: Add CA certificate to system trust store
+  * Warning: Only disable SSL verification on trusted networks
 
 **Corrupted Credentials**
   * Clear stored credentials: ``yt auth logout``
@@ -393,6 +419,7 @@ The configuration file contains encrypted authentication data:
    YOUTRACK_BASE_URL=https://company.youtrack.cloud
    YOUTRACK_TOKEN=perm:encrypted_token_data
    YOUTRACK_USERNAME=john.doe
+   YOUTRACK_VERIFY_SSL=true
 
 Custom Configuration
 ~~~~~~~~~~~~~~~~~~~

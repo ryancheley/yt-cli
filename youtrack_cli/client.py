@@ -36,6 +36,7 @@ class HTTPClientManager:
         max_connections: int = 100,
         keepalive_expiry: float = 30.0,
         default_timeout: float = 30.0,
+        verify_ssl: bool = True,
     ):
         """Initialize the HTTP client manager.
 
@@ -44,6 +45,7 @@ class HTTPClientManager:
             max_connections: Maximum number of total connections
             keepalive_expiry: How long to keep idle connections alive (seconds)
             default_timeout: Default timeout for requests (seconds)
+            verify_ssl: Whether to verify SSL certificates
         """
         self._limits = httpx.Limits(
             max_keepalive_connections=max_keepalive_connections,
@@ -51,6 +53,7 @@ class HTTPClientManager:
             keepalive_expiry=keepalive_expiry,
         )
         self._timeout = httpx.Timeout(default_timeout)
+        self._verify_ssl = verify_ssl
         self._client: Optional[httpx.AsyncClient] = None
         self._lock = asyncio.Lock()
 
@@ -63,11 +66,13 @@ class HTTPClientManager:
                         limits=self._limits,
                         timeout=self._timeout,
                         follow_redirects=True,
+                        verify=self._verify_ssl,
                     )
                     logger.debug(
                         "HTTP client initialized",
                         max_keepalive=self._limits.max_keepalive_connections,
                         max_connections=self._limits.max_connections,
+                        verify_ssl=self._verify_ssl,
                     )
         return self._client
 
@@ -374,7 +379,11 @@ def get_client_manager() -> HTTPClientManager:
     """Get the global HTTP client manager instance."""
     global _client_manager
     if _client_manager is None:
-        _client_manager = HTTPClientManager()
+        # Check for SSL verification setting from environment
+        import os
+
+        verify_ssl = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower() != "false"
+        _client_manager = HTTPClientManager(verify_ssl=verify_ssl)
     # Type checker note: _client_manager is guaranteed to be non-None here
     return _client_manager  # type: ignore[return-value]
 

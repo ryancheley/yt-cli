@@ -72,6 +72,9 @@ pip install -e . --group dev
 # Login to your YouTrack instance
 yt auth login
 
+# Login with SSL certificate verification disabled (for self-signed certificates)
+yt auth login --no-verify-ssl
+
 # Verify authentication
 yt auth token --show
 ```
