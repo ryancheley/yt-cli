@@ -52,8 +52,8 @@ format-check:
 [group('quality')]
 typecheck:
     #!/usr/bin/env bash
-    echo "Running mypy type checker..."
-    uv run mypy youtrack_cli
+    echo "Running ty type checker..."
+    uv run ty youtrack_cli
     echo "✅ Type checking complete"
 
 [group('quality')]
