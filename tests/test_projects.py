@@ -50,12 +50,14 @@ class TestProjectManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_projects
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.list_projects()
 
@@ -84,12 +86,14 @@ class TestProjectManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_projects
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.list_projects(show_archived=True)
 
@@ -111,10 +115,10 @@ class TestProjectManager:
     @pytest.mark.asyncio
     async def test_list_projects_http_error(self, project_manager, auth_manager):
         """Test project listing with HTTP error."""
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
-                side_effect=httpx.HTTPError("Network error")
-            )
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=httpx.HTTPError("Network error"))
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.list_projects()
 
@@ -131,12 +135,14 @@ class TestProjectManager:
             "leader": {"login": "user1", "fullName": "User One"},
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_created_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.create_project(
                 name="New Project",
@@ -153,14 +159,16 @@ class TestProjectManager:
     @pytest.mark.asyncio
     async def test_create_project_invalid_data(self, project_manager, auth_manager):
         """Test project creation with invalid data."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.status_code = 400
 
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Bad request", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.create_project(name="", short_name="", leader_id="invalid-user")
 
@@ -170,14 +178,16 @@ class TestProjectManager:
     @pytest.mark.asyncio
     async def test_create_project_insufficient_permissions(self, project_manager, auth_manager):
         """Test project creation with insufficient permissions."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.status_code = 403
 
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=http_error)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.create_project(name="New Project", short_name="NP", leader_id="user1")
 
@@ -203,12 +213,14 @@ class TestProjectManager:
             },
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.get_project("TP")
 
@@ -219,14 +231,16 @@ class TestProjectManager:
     @pytest.mark.asyncio
     async def test_get_project_not_found(self, project_manager, auth_manager):
         """Test project retrieval when project not found."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.status_code = 404
 
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Not found", request=mock_request, response=mock_response)
 
-            mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=http_error)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.get_project("NONEXISTENT")
 
@@ -244,12 +258,14 @@ class TestProjectManager:
             "archived": False,
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_updated_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.update_project(
                 project_id="UP", name="Updated Project", leader_id="new-leader"
@@ -277,12 +293,14 @@ class TestProjectManager:
             "archived": True,
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_archived_project
             mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
 
             result = await project_manager.archive_project("AP")
 

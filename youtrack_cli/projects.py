@@ -8,6 +8,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .auth import AuthManager
+from .client import get_client_manager
 
 __all__ = ["ProjectManager"]
 
@@ -61,28 +62,28 @@ class ProjectManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/projects",
-                    headers=headers,
-                    params=params,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects",
+                headers=headers,
+                params=params,
+                timeout=10.0,
+            )
 
-                projects = response.json()
+            projects = response.json()
 
-                # Filter archived projects if requested
-                if not show_archived:
-                    projects = [p for p in projects if not p.get("archived", False)]
+            # Filter archived projects if requested
+            if not show_archived:
+                projects = [p for p in projects if not p.get("archived", False)]
 
-                return {"status": "success", "data": projects, "count": len(projects)}
+            return {"status": "success", "data": projects, "count": len(projects)}
 
-            except httpx.HTTPError as e:
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def create_project(
         self,
@@ -129,39 +130,39 @@ class ProjectManager:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/projects",
-                    headers=headers,
-                    json=project_data,
-                    params={"fields": "id,name,shortName,leader(login,fullName)"},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects",
+                headers=headers,
+                json_data=project_data,
+                params={"fields": "id,name,shortName,leader(login,fullName)"},
+                timeout=10.0,
+            )
 
-                created_project = response.json()
-                return {
-                    "status": "success",
-                    "data": created_project,
-                    "message": f"Project '{name}' created successfully",
-                }
+            created_project = response.json()
+            return {
+                "status": "success",
+                "data": created_project,
+                "message": f"Project '{name}' created successfully",
+            }
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 400:
-                        return {
-                            "status": "error",
-                            "message": ("Invalid project data. Check name and short name."),
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to create projects.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 400:
+                    return {
+                        "status": "error",
+                        "message": ("Invalid project data. Check name and short name."),
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to create projects.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def get_project(self, project_id: str, fields: Optional[str] = None) -> dict[str, Any]:
         """Get a specific project.
@@ -191,34 +192,34 @@ class ProjectManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}",
-                    headers=headers,
-                    params={"fields": fields},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}",
+                headers=headers,
+                params={"fields": fields},
+                timeout=10.0,
+            )
 
-                project = response.json()
-                return {"status": "success", "data": project}
+            project = response.json()
+            return {"status": "success", "data": project}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 404:
-                        return {
-                            "status": "error",
-                            "message": f"Project '{project_id}' not found.",
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to view project.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": f"Project '{project_id}' not found.",
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view project.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def update_project(
         self,
@@ -267,39 +268,39 @@ class ProjectManager:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}",
-                    headers=headers,
-                    json=update_data,
-                    params={"fields": "id,name,shortName,leader(login,fullName),archived"},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}",
+                headers=headers,
+                json_data=update_data,
+                params={"fields": "id,name,shortName,leader(login,fullName),archived"},
+                timeout=10.0,
+            )
 
-                updated_project = response.json()
-                return {
-                    "status": "success",
-                    "data": updated_project,
-                    "message": f"Project '{project_id}' updated successfully",
-                }
+            updated_project = response.json()
+            return {
+                "status": "success",
+                "data": updated_project,
+                "message": f"Project '{project_id}' updated successfully",
+            }
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 404:
-                        return {
-                            "status": "error",
-                            "message": f"Project '{project_id}' not found.",
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to update project.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": f"Project '{project_id}' not found.",
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to update project.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def archive_project(self, project_id: str) -> dict[str, Any]:
         """Archive a project.
