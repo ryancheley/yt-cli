@@ -1,6 +1,6 @@
 [project]
 name = "youtrack-cli"
-version = "0.3.8"
+version = "0.3.9"
 description = "YouTrack CLI - Command line interface for JetBrains YouTrack issue tracking system"
 readme = "README.md"
 requires-python = ">=3.9, <3.14"

@@ -8,6 +8,8 @@ try:
     from importlib.metadata import version
 
     __version__ = version("youtrack-cli")
+    if __version__ is None:
+        raise RuntimeError("Version is None")
 except Exception:
     # Fallback to reading from pyproject.toml
     try:
