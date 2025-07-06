@@ -5,7 +5,6 @@ from typing import Any, Optional
 import httpx
 from rich.console import Console
 from rich.table import Table
-from rich.text import Text
 
 from .auth import AuthManager
 
@@ -242,8 +241,8 @@ class AdminManager:
 
         # List of endpoints to try, in order of preference
         endpoints = [
+            "/api/admin/globalSettings/systemSettings?fields=baseUrl,isApplicationReadOnly,maxUploadFileSize,maxExportItems,allowStatisticsCollection",
             "/api/admin/globalSettings/systemSettings",
-            "/api/admin/globalSettings/systemSettings?fields=baseUrl,isApplicationReadOnly,maxUploadFileSize,maxExportItems",
         ]
 
         async with httpx.AsyncClient() as client:
@@ -540,19 +539,32 @@ class AdminManager:
             license_info: License information dictionary
         """
         self.console.print("\n[bold blue]License Information[/bold blue]")
-        self.console.print(f"[cyan]License Type:[/cyan] {license_info.get('type', 'N/A')}")
-        self.console.print(f"[cyan]Licensed To:[/cyan] {license_info.get('licensedTo', 'N/A')}")
 
-        if license_info.get("expirationDate"):
-            self.console.print(f"[cyan]Expires:[/cyan] {license_info['expirationDate']}")
+        # Display username (maps to "Licensed To")
+        username = license_info.get("username", "N/A")
+        self.console.print(f"[cyan]Licensed To:[/cyan] {username}")
 
-        if license_info.get("maxUsers"):
-            self.console.print(f"[cyan]Max Users:[/cyan] {license_info['maxUsers']}")
+        # Display license key (truncated for security)
+        license_key = license_info.get("license", "N/A")
+        if license_key != "N/A" and len(license_key) > 20:
+            # Show only first 20 characters for security
+            license_display = f"{license_key[:20]}..."
+        else:
+            license_display = license_key
+        self.console.print(f"[cyan]License Key:[/cyan] {license_display}")
 
-        # Display active status
-        is_active = license_info.get("isActive", False)
-        status_color = "green" if is_active else "red"
-        status_text = "Active" if is_active else "Inactive"
+        # Display error status if present
+        error = license_info.get("error")
+        if error:
+            self.console.print(f"[cyan]Error:[/cyan] [red]{error}[/red]")
+            status_color = "red"
+            status_text = "Error"
+        else:
+            # If no error and license key exists, assume active
+            is_active = license_key != "N/A" and license_key is not None
+            status_color = "green" if is_active else "red"
+            status_text = "Active" if is_active else "No License"
+
         self.console.print(f"[cyan]Status:[/cyan] [{status_color}]{status_text}[/{status_color}]")
 
     def display_system_health(self, health_info: dict[str, Any]) -> None:
@@ -561,31 +573,41 @@ class AdminManager:
         Args:
             health_info: Health information dictionary
         """
-        self.console.print("\n[bold blue]System Health[/bold blue]")
+        self.console.print("\n[bold blue]System Settings[/bold blue]")
 
-        # Overall status
-        overall_status = health_info.get("status", "unknown")
-        status_color = "green" if overall_status == "healthy" else "red"
-        self.console.print(f"[cyan]Overall Status:[/cyan] [{status_color}]{overall_status.title()}[/{status_color}]")
+        # Display system settings information
+        base_url = health_info.get("baseUrl", "N/A")
+        self.console.print(f"[cyan]Base URL:[/cyan] {base_url}")
 
-        # Individual checks
-        checks = health_info.get("checks", [])
-        if checks:
-            table = Table(title="Health Checks")
-            table.add_column("Check", style="cyan")
-            table.add_column("Status", style="magenta")
-            table.add_column("Message", style="dim")
+        # Display read-only status
+        is_read_only = health_info.get("isApplicationReadOnly", False)
+        read_only_color = "red" if is_read_only else "green"
+        read_only_text = "Read-Only" if is_read_only else "Read-Write"
+        self.console.print(f"[cyan]Application Mode:[/cyan] [{read_only_color}]{read_only_text}[/{read_only_color}]")
 
-            for check in checks:
-                status = check.get("status", "unknown")
-                color = "green" if status == "healthy" else "red"
-                table.add_row(
-                    check.get("name", "Unknown"),
-                    Text(status.title(), style=color),
-                    check.get("message", ""),
-                )
+        # Display file upload settings
+        max_upload_size = health_info.get("maxUploadFileSize", "N/A")
+        if max_upload_size != "N/A":
+            # Convert bytes to MB for readability
+            max_upload_mb = max_upload_size / (1024 * 1024)
+            self.console.print(f"[cyan]Max Upload Size:[/cyan] {max_upload_mb:.1f} MB")
+        else:
+            self.console.print(f"[cyan]Max Upload Size:[/cyan] {max_upload_size}")
 
-            self.console.print(table)
+        # Display export settings
+        max_export_items = health_info.get("maxExportItems", "N/A")
+        self.console.print(f"[cyan]Max Export Items:[/cyan] {max_export_items}")
+
+        # Display statistics collection status
+        stats_collection = health_info.get("allowStatisticsCollection", False)
+        stats_color = "green" if stats_collection else "yellow"
+        stats_text = "Enabled" if stats_collection else "Disabled"
+        self.console.print(f"[cyan]Statistics Collection:[/cyan] [{stats_color}]{stats_text}[/{stats_color}]")
+
+        # Overall system status based on read-only mode
+        overall_status = "Healthy" if not is_read_only else "Read-Only Mode"
+        status_color = "green" if not is_read_only else "yellow"
+        self.console.print(f"[cyan]Overall Status:[/cyan] [{status_color}]{overall_status}[/{status_color}]")
 
     def display_user_groups(self, groups: list[dict[str, Any]]) -> None:
         """Display user groups in a formatted table.
