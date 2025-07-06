@@ -2,12 +2,12 @@
 
 from typing import Any, Optional
 
-import httpx
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from .auth import AuthManager
+from .client import get_client_manager
 
 __all__ = ["UserManager"]
 
@@ -63,29 +63,27 @@ class UserManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/users",
-                    headers=headers,
-                    params=params,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/users",
+                headers=headers,
+                params=params,
+                timeout=10.0,
+            )
 
-                users = response.json()
-                return {"status": "success", "data": users, "count": len(users)}
+            users = response.json()
+            return {"status": "success", "data": users, "count": len(users)}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to list users.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except Exception as e:
+            error_msg = str(e)
+            if "403" in error_msg or "Forbidden" in error_msg:
+                return {
+                    "status": "error",
+                    "message": "Insufficient permissions to list users.",
+                }
+            return {"status": "error", "message": f"Error: {error_msg}"}
 
     async def create_user(
         self,
@@ -134,46 +132,44 @@ class UserManager:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                # Note: User creation may require Hub API in some YouTrack versions
-                # For now, trying YouTrack API first, then fall back to Hub API
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/users",
-                    headers=headers,
-                    json=user_data,
-                    params={"fields": "id,login,fullName,email,banned"},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            # Note: User creation may require Hub API in some YouTrack versions
+            # For now, trying YouTrack API first, then fall back to Hub API
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/users",
+                headers=headers,
+                json_data=user_data,
+                params={"fields": "id,login,fullName,email,banned"},
+                timeout=10.0,
+            )
 
-                created_user = response.json()
+            created_user = response.json()
+            return {
+                "status": "success",
+                "data": created_user,
+                "message": f"User '{login}' created successfully",
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            if "400" in error_msg or "Bad Request" in error_msg:
                 return {
-                    "status": "success",
-                    "data": created_user,
-                    "message": f"User '{login}' created successfully",
+                    "status": "error",
+                    "message": "Invalid user data. Check login, email format, and other fields.",
                 }
-
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 400:
-                        return {
-                            "status": "error",
-                            "message": ("Invalid user data. Check login, email format, and other fields."),
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to create users.",
-                        }
-                    elif e.response.status_code == 409:
-                        return {
-                            "status": "error",
-                            "message": f"User with login '{login}' already exists.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+            elif "403" in error_msg or "Forbidden" in error_msg:
+                return {
+                    "status": "error",
+                    "message": "Insufficient permissions to create users.",
+                }
+            elif "409" in error_msg or "Conflict" in error_msg:
+                return {
+                    "status": "error",
+                    "message": f"User with login '{login}' already exists.",
+                }
+            return {"status": "error", "message": f"Error: {error_msg}"}
 
     async def get_user(self, user_id: str, fields: Optional[str] = None) -> dict[str, Any]:
         """Get a specific user.
@@ -203,34 +199,32 @@ class UserManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
-                    headers=headers,
-                    params={"fields": fields},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
+                headers=headers,
+                params={"fields": fields},
+                timeout=10.0,
+            )
 
-                user = response.json()
-                return {"status": "success", "data": user}
+            user = response.json()
+            return {"status": "success", "data": user}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 404:
-                        return {
-                            "status": "error",
-                            "message": f"User '{user_id}' not found.",
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to view user.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except Exception as e:
+            error_msg = str(e)
+            if "404" in error_msg or "Not Found" in error_msg:
+                return {
+                    "status": "error",
+                    "message": f"User '{user_id}' not found.",
+                }
+            elif "403" in error_msg or "Forbidden" in error_msg:
+                return {
+                    "status": "error",
+                    "message": "Insufficient permissions to view user.",
+                }
+            return {"status": "error", "message": f"Error: {error_msg}"}
 
     async def update_user(
         self,
@@ -283,41 +277,39 @@ class UserManager:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                # Note: User updates may require Hub API in some YouTrack versions
-                # For now, trying YouTrack API first, then fall back to Hub API
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
-                    headers=headers,
-                    json=update_data,
-                    params={"fields": "id,login,fullName,email,banned"},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        try:
+            # Note: User updates may require Hub API in some YouTrack versions
+            # For now, trying YouTrack API first, then fall back to Hub API
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
+                headers=headers,
+                json_data=update_data,
+                params={"fields": "id,login,fullName,email,banned"},
+                timeout=10.0,
+            )
 
-                updated_user = response.json()
+            updated_user = response.json()
+            return {
+                "status": "success",
+                "data": updated_user,
+                "message": f"User '{user_id}' updated successfully",
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            if "404" in error_msg or "Not Found" in error_msg:
                 return {
-                    "status": "success",
-                    "data": updated_user,
-                    "message": f"User '{user_id}' updated successfully",
+                    "status": "error",
+                    "message": f"User '{user_id}' not found.",
                 }
-
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 404:
-                        return {
-                            "status": "error",
-                            "message": f"User '{user_id}' not found.",
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to update user.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+            elif "403" in error_msg or "Forbidden" in error_msg:
+                return {
+                    "status": "error",
+                    "message": "Insufficient permissions to update user.",
+                }
+            return {"status": "error", "message": f"Error: {error_msg}"}
 
     async def manage_user_permissions(
         self,
@@ -365,51 +357,49 @@ class UserManager:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                if action == "add_to_group":
-                    # Add user to group
-                    response = await client.post(
-                        f"{credentials.base_url.rstrip('/')}/api/admin/groups/{group_id}/users",
-                        headers=headers,
-                        json={"id": user_id},
-                        timeout=10.0,
-                    )
-                elif action == "remove_from_group":
-                    # Remove user from group
-                    response = await client.delete(
-                        f"{credentials.base_url.rstrip('/')}/api/admin/groups/{group_id}/users/{user_id}",
-                        headers=headers,
-                        timeout=10.0,
-                    )
-                else:
-                    return {
-                        "status": "error",
-                        "message": f"Unsupported action: {action}",
-                    }
-
-                response.raise_for_status()
-
+        try:
+            client_manager = get_client_manager()
+            if action == "add_to_group":
+                # Add user to group
+                await client_manager.make_request(
+                    "POST",
+                    f"{credentials.base_url.rstrip('/')}/api/admin/groups/{group_id}/users",
+                    headers=headers,
+                    json_data={"id": user_id},
+                    timeout=10.0,
+                )
+            elif action == "remove_from_group":
+                # Remove user from group
+                await client_manager.make_request(
+                    "DELETE",
+                    f"{credentials.base_url.rstrip('/')}/api/admin/groups/{group_id}/users/{user_id}",
+                    headers=headers,
+                    timeout=10.0,
+                )
+            else:
                 return {
-                    "status": "success",
-                    "message": f"User '{user_id}' permissions updated successfully",
+                    "status": "error",
+                    "message": f"Unsupported action: {action}",
                 }
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 404:
-                        return {
-                            "status": "error",
-                            "message": (f"User '{user_id}' or group '{group_id}' not found."),
-                        }
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": ("Insufficient permissions to manage user permissions."),
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+            return {
+                "status": "success",
+                "message": f"User '{user_id}' permissions updated successfully",
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            if "404" in error_msg or "Not Found" in error_msg:
+                return {
+                    "status": "error",
+                    "message": f"User '{user_id}' or group '{group_id}' not found.",
+                }
+            elif "403" in error_msg or "Forbidden" in error_msg:
+                return {
+                    "status": "error",
+                    "message": "Insufficient permissions to manage user permissions.",
+                }
+            return {"status": "error", "message": f"Error: {error_msg}"}
 
     def display_users_table(self, users: list[dict[str, Any]]) -> None:
         """Display users in a formatted table.
