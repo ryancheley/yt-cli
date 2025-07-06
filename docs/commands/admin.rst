@@ -552,6 +552,15 @@ Common Issues and Solutions
 **Health Check Issues**
   Review system logs and resource availability.
 
+**Health Check 404 Errors**
+  If the health check command returns a 404 error, this may indicate:
+
+  * Your YouTrack version doesn't support the system settings endpoint
+  * The API endpoint has changed in your YouTrack version
+  * Your YouTrack instance has a different API configuration
+
+  The command will automatically try fallback endpoints and provide specific guidance based on the error type.
+
 System Diagnostics
 ~~~~~~~~~~~~~~~~~
 
