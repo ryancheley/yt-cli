@@ -58,6 +58,7 @@ class AuthManager:
         username: Optional[str] = None,
         token_expiry: Optional[datetime] = None,
         use_keyring: bool = True,
+        verify_ssl: bool = True,
     ) -> None:
         """Save authentication credentials to config file or keyring.
 
@@ -67,6 +68,7 @@ class AuthManager:
             username: Username (optional)
             token_expiry: Token expiration date (optional)
             use_keyring: Whether to use keyring for secure storage
+            verify_ssl: Whether SSL verification is enabled
         """
         if use_keyring and self.security_config.enable_credential_encryption:
             # Store in keyring with encryption
@@ -76,6 +78,8 @@ class AuthManager:
                 self.credential_manager.store_credential("youtrack_username", username)
             if token_expiry:
                 self.credential_manager.store_credential("youtrack_token_expiry", token_expiry.isoformat())
+            # Store SSL verification setting
+            self.credential_manager.store_credential("youtrack_verify_ssl", str(verify_ssl))
 
             self.console.print("[green]✓[/green] Credentials stored securely in keyring")
         else:
@@ -90,6 +94,8 @@ class AuthManager:
                     f.write(f"YOUTRACK_USERNAME={username}\n")
                 if token_expiry:
                     f.write(f"YOUTRACK_TOKEN_EXPIRY={token_expiry.isoformat()}\n")
+                # Save SSL verification setting
+                f.write(f"YOUTRACK_VERIFY_SSL={str(verify_ssl).lower()}\n")
 
             self.console.print(
                 "[yellow]⚠[/yellow] Credentials stored in plain text file. Consider using keyring for better security."
@@ -181,12 +187,13 @@ class AuthManager:
         elif expiration_info["status"] == "expiring":
             self.console.print(f"[yellow]⚠ {expiration_info['message']}[/yellow]")
 
-    async def verify_credentials(self, base_url: str, token: str) -> dict[str, str]:
+    async def verify_credentials(self, base_url: str, token: str, verify_ssl: bool = True) -> dict[str, str]:
         """Verify credentials with YouTrack API.
 
         Args:
             base_url: YouTrack instance URL
             token: API token
+            verify_ssl: Whether to verify SSL certificates
 
         Returns:
             Dictionary with verification result
@@ -196,12 +203,16 @@ class AuthManager:
         """
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
 
-        async with httpx.AsyncClient() as client:
+        # Configure SSL verification
+        client_kwargs = {"timeout": 10.0}
+        if not verify_ssl:
+            client_kwargs["verify"] = False
+
+        async with httpx.AsyncClient(**client_kwargs) as client:
             try:
                 response = await client.get(
                     f"{base_url.rstrip('/')}/api/users/me",
                     headers=headers,
-                    timeout=10.0,
                 )
                 response.raise_for_status()
 
