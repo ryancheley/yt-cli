@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
+from .client import get_client_manager
 
 __all__ = ["AdminManager"]
 
@@ -49,28 +50,28 @@ class AdminManager:
         if setting_key:
             endpoint += f"/{setting_key}"
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}{endpoint}",
-                    headers=headers,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}{endpoint}",
+                headers=headers,
+                timeout=10.0,
+            )
 
-                settings = response.json()
-                return {"status": "success", "data": settings}
+            settings = response.json()
+            return {"status": "success", "data": settings}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions for global settings.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions for global settings.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def set_global_setting(self, setting_key: str, value: str) -> dict[str, Any]:
         """Set a global YouTrack setting.
@@ -97,36 +98,36 @@ class AdminManager:
 
         setting_data = {"value": value}
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/{setting_key}",
-                    headers=headers,
-                    json=setting_data,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/{setting_key}",
+                headers=headers,
+                json_data=setting_data,
+                timeout=10.0,
+            )
 
-                return {
-                    "status": "success",
-                    "message": f"Setting '{setting_key}' updated successfully",
-                }
+            return {
+                "status": "success",
+                "message": f"Setting '{setting_key}' updated successfully",
+            }
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to modify settings.",
-                        }
-                    elif e.response.status_code == 400:
-                        return {
-                            "status": "error",
-                            "message": "Invalid setting key or value.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to modify settings.",
+                    }
+                elif e.response.status_code == 400:
+                    return {
+                        "status": "error",
+                        "message": "Invalid setting key or value.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # License Management
     async def get_license_info(self) -> dict[str, Any]:
@@ -147,37 +148,37 @@ class AdminManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license",
-                    headers=headers,
-                    params={"fields": "id,username,license,error"},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license",
+                headers=headers,
+                params={"fields": "id,username,license,error"},
+                timeout=10.0,
+            )
 
-                license_info = response.json()
-                return {"status": "success", "data": license_info}
+            license_info = response.json()
+            return {"status": "success", "data": license_info}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to view license.",
-                        }
-                    elif e.response.status_code == 404:
-                        return {
-                            "status": "error",
-                            "message": (
-                                "License endpoint not found. This may indicate an "
-                                "incompatible YouTrack version or configuration."
-                            ),
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view license.",
+                    }
+                elif e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": (
+                            "License endpoint not found. This may indicate an "
+                            "incompatible YouTrack version or configuration."
+                        ),
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def get_license_usage(self) -> dict[str, Any]:
         """Get license usage statistics.
@@ -197,28 +198,29 @@ class AdminManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license?fields=id,username,license,error",
-                    headers=headers,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license",
+                headers=headers,
+                params={"fields": "id,username,license,error"},
+                timeout=10.0,
+            )
 
-                usage_info = response.json()
-                return {"status": "success", "data": usage_info}
+            usage_info = response.json()
+            return {"status": "success", "data": usage_info}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to view usage.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view usage.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # System Health and Maintenance
     async def get_system_health(self) -> dict[str, Any]:
@@ -245,56 +247,56 @@ class AdminManager:
             "/api/admin/globalSettings/systemSettings",
         ]
 
-        async with httpx.AsyncClient() as client:
-            for endpoint in endpoints:
-                try:
-                    response = await client.get(
-                        f"{credentials.base_url.rstrip('/')}{endpoint}",
-                        headers=headers,
-                        timeout=10.0,
-                    )
-                    response.raise_for_status()
+        client_manager = get_client_manager()
+        for endpoint in endpoints:
+            try:
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{credentials.base_url.rstrip('/')}{endpoint}",
+                    headers=headers,
+                    timeout=10.0,
+                )
 
-                    health_info = response.json()
-                    return {"status": "success", "data": health_info}
+                health_info = response.json()
+                return {"status": "success", "data": health_info}
 
-                except httpx.HTTPStatusError as e:
-                    if e.response.status_code == 404:
-                        continue  # Try next endpoint
-                    elif e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions for health check. "
-                            "Requires 'Low-level Admin Read' permission.",
-                        }
-                    elif e.response.status_code == 401:
-                        return {
-                            "status": "error",
-                            "message": "Authentication failed. Your token may have expired. Run 'yt auth login' again.",
-                        }
-                    else:
-                        response_text = e.response.text if hasattr(e.response, "text") else str(e)
-                        return {
-                            "status": "error",
-                            "message": f"HTTP {e.response.status_code}: {response_text}",
-                        }
-                except httpx.RequestError as e:
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    continue  # Try next endpoint
+                elif e.response.status_code == 403:
                     return {
                         "status": "error",
-                        "message": f"Network error: {e}. Check your YouTrack URL and network connection.",
+                        "message": "Insufficient permissions for health check. "
+                        "Requires 'Low-level Admin Read' permission.",
                     }
-                except Exception as e:
-                    return {"status": "error", "message": f"Unexpected error: {e}"}
+                elif e.response.status_code == 401:
+                    return {
+                        "status": "error",
+                        "message": "Authentication failed. Your token may have expired. Run 'yt auth login' again.",
+                    }
+                else:
+                    response_text = e.response.text if hasattr(e.response, "text") else str(e)
+                    return {
+                        "status": "error",
+                        "message": f"HTTP {e.response.status_code}: {response_text}",
+                    }
+            except httpx.RequestError as e:
+                return {
+                    "status": "error",
+                    "message": f"Network error: {e}. Check your YouTrack URL and network connection.",
+                }
+            except Exception as e:
+                return {"status": "error", "message": f"Unexpected error: {e}"}
 
-            # If all endpoints failed with 404
-            return {
-                "status": "error",
-                "message": "System health endpoint not found (404). This may indicate:\n"
-                "1. Your YouTrack version doesn't support this endpoint\n"
-                "2. The endpoint URL may have changed\n"
-                "3. Your YouTrack instance has a different API configuration\n"
-                "Please verify your YouTrack version and API access.",
-            }
+        # If all endpoints failed with 404
+        return {
+            "status": "error",
+            "message": "System health endpoint not found (404). This may indicate:\n"
+            "1. Your YouTrack version doesn't support this endpoint\n"
+            "2. The endpoint URL may have changed\n"
+            "3. Your YouTrack instance has a different API configuration\n"
+            "Please verify your YouTrack version and API access.",
+        }
 
     async def clear_caches(self) -> dict[str, Any]:
         """Clear system caches.
@@ -314,30 +316,30 @@ class AdminManager:
             "Accept": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/maintenance/clearCache",
-                    headers=headers,
-                    timeout=30.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/maintenance/clearCache",
+                headers=headers,
+                timeout=30.0,
+            )
 
-                return {
-                    "status": "success",
-                    "message": "System caches cleared successfully",
-                }
+            return {
+                "status": "success",
+                "message": "System caches cleared successfully",
+            }
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions for maintenance.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions for maintenance.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # User Groups Management
     async def list_user_groups(self, fields: Optional[str] = None) -> dict[str, Any]:
@@ -366,30 +368,30 @@ class AdminManager:
 
         params = {"fields": fields}
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/hub/api/rest/usergroups",
-                    headers=headers,
-                    params=params,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/hub/api/rest/usergroups",
+                headers=headers,
+                params=params,
+                timeout=10.0,
+            )
 
-                groups_response = response.json()
-                groups = groups_response.get("usergroups", [])
-                return {"status": "success", "data": groups}
+            groups_response = response.json()
+            groups = groups_response.get("usergroups", [])
+            return {"status": "success", "data": groups}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to view groups.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view groups.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     async def create_user_group(self, name: str, description: Optional[str] = None) -> dict[str, Any]:
         """Create a new user group.
@@ -418,39 +420,39 @@ class AdminManager:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    f"{credentials.base_url.rstrip('/')}/api/rest/usergroups",
-                    headers=headers,
-                    json=group_data,
-                    params={"fields": "id,name,description"},
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/rest/usergroups",
+                headers=headers,
+                json_data=group_data,
+                params={"fields": "id,name,description"},
+                timeout=10.0,
+            )
 
-                created_group = response.json()
-                return {
-                    "status": "success",
-                    "data": created_group,
-                    "message": f"Group '{name}' created successfully",
-                }
+            created_group = response.json()
+            return {
+                "status": "success",
+                "data": created_group,
+                "message": f"Group '{name}' created successfully",
+            }
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to create groups.",
-                        }
-                    elif e.response.status_code == 400:
-                        return {
-                            "status": "error",
-                            "message": "Invalid group data or group already exists.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to create groups.",
+                    }
+                elif e.response.status_code == 400:
+                    return {
+                        "status": "error",
+                        "message": "Invalid group data or group already exists.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # Custom Fields Management
     async def list_custom_fields(self, fields: Optional[str] = None) -> dict[str, Any]:
@@ -479,29 +481,29 @@ class AdminManager:
 
         params = {"fields": fields}
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/customFieldSettings/customFields",
-                    headers=headers,
-                    params=params,
-                    timeout=10.0,
-                )
-                response.raise_for_status()
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/customFieldSettings/customFields",
+                headers=headers,
+                params=params,
+                timeout=10.0,
+            )
 
-                fields_data = response.json()
-                return {"status": "success", "data": fields_data}
+            fields_data = response.json()
+            return {"status": "success", "data": fields_data}
 
-            except httpx.HTTPError as e:
-                if hasattr(e, "response") and e.response is not None:
-                    if e.response.status_code == 403:
-                        return {
-                            "status": "error",
-                            "message": "Insufficient permissions to view fields.",
-                        }
-                return {"status": "error", "message": f"HTTP error: {e}"}
-            except Exception as e:
-                return {"status": "error", "message": f"Unexpected error: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view fields.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # Display Methods
     def display_global_settings(self, settings: dict[str, Any]) -> None:
