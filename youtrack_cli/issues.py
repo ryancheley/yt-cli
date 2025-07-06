@@ -35,8 +35,7 @@ class IssueManager:
             status_code = response.status_code
             preview = response.text[:200] if response.text else "empty"
             raise ValueError(
-                f"Failed to parse JSON response (status {status_code}): {str(e)}. "
-                f"Response preview: {preview}"
+                f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
     async def create_issue(
@@ -284,8 +283,7 @@ class IssueManager:
 
         params = {
             "fields": (
-                "id,summary,description,state,priority,type,"
-                "assignee(login,fullName),project(id,name),created,updated"
+                "id,summary,description,state,priority,type,assignee(login,fullName),project(id,name),created,updated"
             )
         }
 
@@ -347,9 +345,7 @@ class IssueManager:
 
         return await self.update_issue(issue_id, **update_data)
 
-    async def _move_issue_to_project(
-        self, issue_id: str, project_id: str
-    ) -> dict[str, Any]:
+    async def _move_issue_to_project(self, issue_id: str, project_id: str) -> dict[str, Any]:
         """Move an issue to a different project."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -368,10 +364,7 @@ class IssueManager:
                 if response.status_code == 200:
                     return {
                         "status": "success",
-                        "message": (
-                            f"Issue '{issue_id}' moved to project "
-                            f"'{project_id}' successfully"
-                        ),
+                        "message": (f"Issue '{issue_id}' moved to project '{project_id}' successfully"),
                     }
                 else:
                     error_text = response.text
@@ -401,9 +394,7 @@ class IssueManager:
                 if response.status_code == 200:
                     return {
                         "status": "success",
-                        "message": (
-                            f"Tag '{tag}' added to issue '{issue_id}' successfully"
-                        ),
+                        "message": (f"Tag '{tag}' added to issue '{issue_id}' successfully"),
                     }
                 else:
                     error_text = response.text
@@ -429,9 +420,7 @@ class IssueManager:
                 if response.status_code == 200:
                     return {
                         "status": "success",
-                        "message": (
-                            f"Tag '{tag}' removed from issue '{issue_id}' successfully"
-                        ),
+                        "message": (f"Tag '{tag}' removed from issue '{issue_id}' successfully"),
                     }
                 else:
                     error_text = response.text
@@ -488,9 +477,7 @@ class IssueManager:
                 if response.status_code == 200:
                     return {
                         "status": "success",
-                        "message": (
-                            f"Comment added to issue '{issue_id}' successfully"
-                        ),
+                        "message": (f"Comment added to issue '{issue_id}' successfully"),
                     }
                 else:
                     error_text = response.text
@@ -526,18 +513,13 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error listing comments: {str(e)}"}
 
-    async def update_comment(
-        self, issue_id: str, comment_id: str, text: str
-    ) -> dict[str, Any]:
+    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> dict[str, Any]:
         """Update an existing comment."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url.rstrip('/')}/api/issues/"
-            f"{issue_id}/comments/{comment_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/comments/{comment_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -567,10 +549,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url.rstrip('/')}/api/issues/"
-            f"{issue_id}/comments/{comment_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/comments/{comment_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -608,10 +587,7 @@ class IssueManager:
                     if response.status_code == 200:
                         return {
                             "status": "success",
-                            "message": (
-                                f"File '{file_path}' uploaded to issue "
-                                f"'{issue_id}' successfully"
-                            ),
+                            "message": (f"File '{file_path}' uploaded to issue '{issue_id}' successfully"),
                         }
                     else:
                         error_text = response.text
@@ -653,18 +629,13 @@ class IssueManager:
                 "message": f"Error listing attachments: {str(e)}",
             }
 
-    async def download_attachment(
-        self, issue_id: str, attachment_id: str, output_path: str
-    ) -> dict[str, Any]:
+    async def download_attachment(self, issue_id: str, attachment_id: str, output_path: str) -> dict[str, Any]:
         """Download an attachment from an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url.rstrip('/')}/api/issues/"
-            f"{issue_id}/attachments/{attachment_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -675,9 +646,7 @@ class IssueManager:
                         file.write(response.content)
                     return {
                         "status": "success",
-                        "message": (
-                            f"Attachment downloaded to '{output_path}' successfully"
-                        ),
+                        "message": (f"Attachment downloaded to '{output_path}' successfully"),
                     }
                 else:
                     error_text = response.text
@@ -691,18 +660,13 @@ class IssueManager:
                 "message": f"Error downloading attachment: {str(e)}",
             }
 
-    async def delete_attachment(
-        self, issue_id: str, attachment_id: str
-    ) -> dict[str, Any]:
+    async def delete_attachment(self, issue_id: str, attachment_id: str) -> dict[str, Any]:
         """Delete an attachment from an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url.rstrip('/')}/api/issues/"
-            f"{issue_id}/attachments/{attachment_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -726,9 +690,7 @@ class IssueManager:
             }
 
     # Links functionality
-    async def create_link(
-        self, source_issue_id: str, target_issue_id: str, link_type: str
-    ) -> dict[str, Any]:
+    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> dict[str, Any]:
         """Create a link between two issues."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -750,10 +712,7 @@ class IssueManager:
                 if response.status_code == 200:
                     return {
                         "status": "success",
-                        "message": (
-                            f"Link created between '{source_issue_id}' "
-                            f"and '{target_issue_id}' successfully"
-                        ),
+                        "message": (f"Link created between '{source_issue_id}' and '{target_issue_id}' successfully"),
                     }
                 else:
                     error_text = response.text
@@ -796,10 +755,7 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = (
-            f"{credentials.base_url.rstrip('/')}/api/issues/"
-            f"{source_issue_id}/links/{link_id}"
-        )
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{source_issue_id}/links/{link_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -862,9 +818,7 @@ class IssueManager:
 
         for issue in issues:
             assignee = issue.get("assignee", {})
-            assignee_name = (
-                assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
-            )
+            assignee_name = assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
 
             project = issue.get("project", {})
             project_name = project.get("name", "N/A") if project else "N/A"
@@ -918,9 +872,7 @@ class IssueManager:
         self.console.print(f"[bold]Type:[/bold] {type_name}")
 
         assignee = issue.get("assignee", {})
-        assignee_name = (
-            assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
-        )
+        assignee_name = assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
         self.console.print(f"[bold]Assignee:[/bold] {assignee_name}")
 
         project = issue.get("project", {})

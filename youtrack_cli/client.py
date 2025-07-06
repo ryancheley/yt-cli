@@ -150,14 +150,10 @@ class HTTPClientManager:
 
                     # Handle specific HTTP status codes
                     if response.status_code in (200, 201):
-                        logger.debug(
-                            "Request successful", status_code=response.status_code
-                        )
+                        logger.debug("Request successful", status_code=response.status_code)
                         return response
                     elif response.status_code == 401:
-                        raise AuthenticationError(
-                            "Invalid credentials or token expired"
-                        )
+                        raise AuthenticationError("Invalid credentials or token expired")
                     elif response.status_code == 403:
                         raise PermissionError("access this resource")
                     elif response.status_code == 404:
@@ -170,18 +166,11 @@ class HTTPClientManager:
                         # Try to get error details from response
                         try:
                             error_data = response.json()
-                            error_message = error_data.get("error", {}).get(
-                                "description", response.text
-                            )
+                            error_message = error_data.get("error", {}).get("description", response.text)
                         except Exception:
-                            error_message = (
-                                response.text or f"HTTP {response.status_code}"
-                            )
+                            error_message = response.text or f"HTTP {response.status_code}"
 
-                        raise YouTrackError(
-                            f"Request failed with status {response.status_code}: "
-                            f"{error_message}"
-                        )
+                        raise YouTrackError(f"Request failed with status {response.status_code}: {error_message}")
 
             except httpx.TimeoutException:
                 if attempt < max_retries:
@@ -200,9 +189,7 @@ class HTTPClientManager:
                         url=url,
                         max_retries=max_retries,
                     )
-                    raise ConnectionError(
-                        "Request timed out after multiple attempts"
-                    ) from None
+                    raise ConnectionError("Request timed out after multiple attempts") from None
 
             except httpx.ConnectError:
                 if attempt < max_retries:
@@ -221,9 +208,7 @@ class HTTPClientManager:
                         url=url,
                         max_retries=max_retries,
                     )
-                    raise ConnectionError(
-                        "Unable to connect to YouTrack server"
-                    ) from None
+                    raise ConnectionError("Unable to connect to YouTrack server") from None
 
             except (
                 RateLimitError,
@@ -376,9 +361,7 @@ class HTTPClientManager:
                 await cache.set(cache_key, response_data, cache_ttl)
                 logger.debug("Cached response", cache_key=cache_key, ttl=cache_ttl)
             except Exception as e:
-                logger.warning(
-                    "Failed to cache response", error=str(e), cache_key=cache_key
-                )
+                logger.warning("Failed to cache response", error=str(e), cache_key=cache_key)
 
         return response
 

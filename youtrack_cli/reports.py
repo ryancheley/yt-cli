@@ -51,9 +51,7 @@ class ReportManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        with progress_manager.progress_bar(
-            "Generating burndown report...", total=3
-        ) as tracker:
+        with progress_manager.progress_bar("Generating burndown report...", total=3) as tracker:
             # Step 1: Build query for issues
             tracker.update(description="Building query...")
             query_parts = [f"project: {project_id}"]
@@ -74,9 +72,7 @@ class ReportManager:
 
             params = {
                 "query": query,
-                "fields": (
-                    "id,summary,resolved,created,updated,state(name),spent(value)"
-                ),
+                "fields": ("id,summary,resolved,created,updated,state(name),spent(value)"),
                 "$top": "1000",
             }
 
@@ -102,25 +98,17 @@ class ReportManager:
                     remaining_issues = total_issues - resolved_issues
 
                     # Calculate total effort if story points available
-                    total_effort = sum(
-                        issue.get("spent", {}).get("value", 0) for issue in issues
-                    )
+                    total_effort = sum(issue.get("spent", {}).get("value", 0) for issue in issues)
 
                     burndown_data = {
                         "project": project_id,
                         "sprint": sprint_id,
-                        "period": (
-                            f"{start_date} to {end_date}"
-                            if start_date and end_date
-                            else "All time"
-                        ),
+                        "period": (f"{start_date} to {end_date}" if start_date and end_date else "All time"),
                         "total_issues": total_issues,
                         "resolved_issues": resolved_issues,
                         "remaining_issues": remaining_issues,
                         "completion_rate": (
-                            round((resolved_issues / total_issues * 100), 2)
-                            if total_issues > 0
-                            else 0
+                            round((resolved_issues / total_issues * 100), 2) if total_issues > 0 else 0
                         ),
                         "total_effort_hours": (
                             total_effort / 60 if total_effort > 0 else 0
@@ -136,9 +124,7 @@ class ReportManager:
                 except Exception as e:
                     return {"status": "error", "message": f"Unexpected error: {e}"}
 
-    async def generate_velocity_report(
-        self, project_id: str, sprints: int = 5
-    ) -> dict[str, Any]:
+    async def generate_velocity_report(self, project_id: str, sprints: int = 5) -> dict[str, Any]:
         """Generate a velocity report for recent sprints.
 
         Args:
@@ -165,26 +151,20 @@ class ReportManager:
         # Get project versions (sprints)
         async with httpx.AsyncClient() as client:
             try:
-                with progress_manager.progress_bar(
-                    "Generating velocity report...", total=None
-                ) as tracker:
+                with progress_manager.progress_bar("Generating velocity report...", total=None) as tracker:
                     # First get the project to find versions
                     tracker.update(description="Fetching project versions...")
                     project_response = await client.get(
                         f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}",
                         headers=headers,
-                        params={
-                            "fields": "id,name,versions(id,name,released,releaseDate)"
-                        },
+                        params={"fields": "id,name,versions(id,name,released,releaseDate)"},
                         timeout=10.0,
                     )
                     project_response.raise_for_status()
                     project_data = project_response.json()
 
                     versions = project_data.get("versions", [])
-                    recent_versions = sorted(
-                        versions, key=lambda v: v.get("releaseDate", ""), reverse=True
-                    )[:sprints]
+                    recent_versions = sorted(versions, key=lambda v: v.get("releaseDate", ""), reverse=True)[:sprints]
 
                     velocity_data: dict[str, Any] = {
                         "project": project_id,
@@ -200,9 +180,7 @@ class ReportManager:
                     )
 
                     for i, version in enumerate(recent_versions):
-                        tracker.update(
-                            description=f"Processing sprint: {version['name']}"
-                        )
+                        tracker.update(description=f"Processing sprint: {version['name']}")
 
                         # Get issues for this sprint/version
                         query = f"project: {project_id} Fix versions: {version['name']}"
@@ -220,22 +198,15 @@ class ReportManager:
                         issues_response.raise_for_status()
                         sprint_issues = issues_response.json()
 
-                        resolved_count = len(
-                            [i for i in sprint_issues if i.get("resolved")]
-                        )
-                        total_effort = sum(
-                            issue.get("spent", {}).get("value", 0)
-                            for issue in sprint_issues
-                        )
+                        resolved_count = len([i for i in sprint_issues if i.get("resolved")])
+                        total_effort = sum(issue.get("spent", {}).get("value", 0) for issue in sprint_issues)
 
                         sprint_data = {
                             "name": version["name"],
                             "release_date": version.get("releaseDate"),
                             "total_issues": len(sprint_issues),
                             "resolved_issues": resolved_count,
-                            "total_effort_hours": (
-                                total_effort / 60 if total_effort > 0 else 0
-                            ),
+                            "total_effort_hours": (total_effort / 60 if total_effort > 0 else 0),
                         }
                         velocity_data["sprints"].append(sprint_data)
                         tracker.advance()
@@ -243,19 +214,15 @@ class ReportManager:
                     # Calculate average velocity
                     tracker.update(description="Calculating velocity averages...")
                     if velocity_data["sprints"]:
-                        avg_resolved = sum(
-                            s["resolved_issues"] for s in velocity_data["sprints"]
-                        ) / len(velocity_data["sprints"])
-                        avg_effort = sum(
-                            s["total_effort_hours"] for s in velocity_data["sprints"]
-                        ) / len(velocity_data["sprints"])
+                        avg_resolved = sum(s["resolved_issues"] for s in velocity_data["sprints"]) / len(
+                            velocity_data["sprints"]
+                        )
+                        avg_effort = sum(s["total_effort_hours"] for s in velocity_data["sprints"]) / len(
+                            velocity_data["sprints"]
+                        )
 
-                        velocity_data["average_issues_per_sprint"] = round(
-                            avg_resolved, 2
-                        )
-                        velocity_data["average_effort_per_sprint"] = round(
-                            avg_effort, 2
-                        )
+                        velocity_data["average_issues_per_sprint"] = round(avg_resolved, 2)
+                        velocity_data["average_effort_per_sprint"] = round(avg_effort, 2)
 
                     return {"status": "success", "data": velocity_data}
 
@@ -270,32 +237,19 @@ class ReportManager:
         Args:
             burndown_data: Burndown report data
         """
-        self.console.print(
-            f"\n[bold blue]Burndown Report - {burndown_data['project']}[/bold blue]"
-        )
+        self.console.print(f"\n[bold blue]Burndown Report - {burndown_data['project']}[/bold blue]")
 
         if burndown_data.get("sprint"):
             self.console.print(f"[cyan]Sprint:[/cyan] {burndown_data['sprint']}")
 
         self.console.print(f"[cyan]Period:[/cyan] {burndown_data['period']}")
-        self.console.print(
-            f"[cyan]Total Issues:[/cyan] {burndown_data['total_issues']}"
-        )
-        self.console.print(
-            f"[cyan]Resolved Issues:[/cyan] {burndown_data['resolved_issues']}"
-        )
-        self.console.print(
-            f"[cyan]Remaining Issues:[/cyan] {burndown_data['remaining_issues']}"
-        )
-        self.console.print(
-            f"[cyan]Completion Rate:[/cyan] {burndown_data['completion_rate']}%"
-        )
+        self.console.print(f"[cyan]Total Issues:[/cyan] {burndown_data['total_issues']}")
+        self.console.print(f"[cyan]Resolved Issues:[/cyan] {burndown_data['resolved_issues']}")
+        self.console.print(f"[cyan]Remaining Issues:[/cyan] {burndown_data['remaining_issues']}")
+        self.console.print(f"[cyan]Completion Rate:[/cyan] {burndown_data['completion_rate']}%")
 
         if burndown_data["total_effort_hours"] > 0:
-            self.console.print(
-                f"[cyan]Total Effort:[/cyan] "
-                f"{burndown_data['total_effort_hours']:.1f} hours"
-            )
+            self.console.print(f"[cyan]Total Effort:[/cyan] {burndown_data['total_effort_hours']:.1f} hours")
 
         # Create progress bar visualization
         completion_rate = burndown_data["completion_rate"]
@@ -311,9 +265,7 @@ class ReportManager:
         Args:
             velocity_data: Velocity report data
         """
-        self.console.print(
-            f"\n[bold blue]Velocity Report - {velocity_data['project']}[/bold blue]"
-        )
+        self.console.print(f"\n[bold blue]Velocity Report - {velocity_data['project']}[/bold blue]")
 
         if not velocity_data["sprints"]:
             self.console.print("No sprint data available.", style="yellow")
@@ -340,10 +292,8 @@ class ReportManager:
         # Display averages
         if velocity_data.get("average_issues_per_sprint"):
             self.console.print(
-                f"\n[cyan]Average Issues per Sprint:[/cyan] "
-                f"{velocity_data['average_issues_per_sprint']}"
+                f"\n[cyan]Average Issues per Sprint:[/cyan] {velocity_data['average_issues_per_sprint']}"
             )
             self.console.print(
-                f"[cyan]Average Effort per Sprint:[/cyan] "
-                f"{velocity_data['average_effort_per_sprint']:.1f} hours"
+                f"[cyan]Average Effort per Sprint:[/cyan] {velocity_data['average_effort_per_sprint']:.1f} hours"
             )

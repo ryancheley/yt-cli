@@ -502,8 +502,7 @@ def sort(
                     style="yellow",
                 )
                 console.print(
-                    "Use the YouTrack web interface to drag and drop "
-                    "articles to reorder them.",
+                    "Use the YouTrack web interface to drag and drop articles to reorder them.",
                     style="blue",
                 )
             else:
@@ -601,8 +600,7 @@ def list_comments(
                     table.add_row(
                         comment.get("id", "N/A"),
                         comment.get("author", {}).get("fullName", "N/A"),
-                        comment.get("text", "N/A")[:100]
-                        + ("..." if len(comment.get("text", "")) > 100 else ""),
+                        comment.get("text", "N/A")[:100] + ("..." if len(comment.get("text", "")) > 100 else ""),
                         comment.get("created", "N/A"),
                     )
 
@@ -645,9 +643,7 @@ def delete_comment(ctx: click.Context, comment_id: str, confirm: bool) -> None:
     console = Console()
 
     if not confirm:
-        if not click.confirm(
-            f"Are you sure you want to delete comment '{comment_id}'?"
-        ):
+        if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
 
@@ -669,9 +665,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
     console = Console()
     console.print("⚠️  File upload functionality not yet implemented", style="yellow")
-    console.print(
-        "This feature requires multipart form upload implementation", style="blue"
-    )
+    console.print("This feature requires multipart form upload implementation", style="blue")
 
 
 @attach.command(name="download")
@@ -684,9 +678,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(
-    ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]
-) -> None:
+def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]) -> None:
     """Download an attachment from an article."""
     console = Console()
     console.print("⚠️  File download functionality not yet implemented", style="yellow")
@@ -714,9 +706,7 @@ def list_attachments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print(
-        f"📎 Fetching attachments for article '{article_id}'...", style="blue"
-    )
+    console.print(f"📎 Fetching attachments for article '{article_id}'...", style="blue")
 
     try:
         result = asyncio.run(article_manager.get_article_attachments(article_id))
@@ -771,20 +761,14 @@ def list_attachments(
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(
-    ctx: click.Context, article_id: str, attachment_id: str, confirm: bool
-) -> None:
+def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, confirm: bool) -> None:
     """Delete an attachment from an article."""
     console = Console()
 
     if not confirm:
-        if not click.confirm(
-            f"Are you sure you want to delete attachment '{attachment_id}'?"
-        ):
+        if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
 
-    console.print(
-        "⚠️  Attachment delete functionality not yet implemented", style="yellow"
-    )
+    console.print("⚠️  Attachment delete functionality not yet implemented", style="yellow")
     console.print("This feature requires additional API endpoints", style="blue")

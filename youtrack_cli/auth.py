@@ -75,13 +75,9 @@ class AuthManager:
             if username:
                 self.credential_manager.store_credential("youtrack_username", username)
             if token_expiry:
-                self.credential_manager.store_credential(
-                    "youtrack_token_expiry", token_expiry.isoformat()
-                )
+                self.credential_manager.store_credential("youtrack_token_expiry", token_expiry.isoformat())
 
-            self.console.print(
-                "[green]✓[/green] Credentials stored securely in keyring"
-            )
+            self.console.print("[green]✓[/green] Credentials stored securely in keyring")
         else:
             # Fallback to file storage
             config_path = Path(self.config_path)
@@ -96,8 +92,7 @@ class AuthManager:
                     f.write(f"YOUTRACK_TOKEN_EXPIRY={token_expiry.isoformat()}\n")
 
             self.console.print(
-                "[yellow]⚠[/yellow] Credentials stored in plain text file. "
-                "Consider using keyring for better security."
+                "[yellow]⚠[/yellow] Credentials stored in plain text file. Consider using keyring for better security."
             )
 
     def load_credentials(self) -> Optional[AuthConfig]:
@@ -111,9 +106,7 @@ class AuthManager:
             base_url = self.credential_manager.retrieve_credential("youtrack_base_url")
             token = self.credential_manager.retrieve_credential("youtrack_token")
             username = self.credential_manager.retrieve_credential("youtrack_username")
-            token_expiry_str = self.credential_manager.retrieve_credential(
-                "youtrack_token_expiry"
-            )
+            token_expiry_str = self.credential_manager.retrieve_credential("youtrack_token_expiry")
 
             token_expiry = None
             if token_expiry_str:

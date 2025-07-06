@@ -96,9 +96,7 @@ class ProgressManager:
             )
 
             if show_percentage:
-                columns.append(
-                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%")
-                )
+                columns.append(TextColumn("[progress.percentage]{task.percentage:>3.0f}%"))
 
         if show_time:
             columns.append(TimeElapsedColumn())

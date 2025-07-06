@@ -301,9 +301,7 @@ complete --no-files --command yt --arguments "(_yt_completion)"
                     if comp_dir.exists() and os.access(comp_dir, os.W_OK):
                         target_dir = comp_dir
                         break
-                    elif comp_dir.parent.exists() and os.access(
-                        comp_dir.parent, os.W_OK
-                    ):
+                    elif comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
                         comp_dir.mkdir(parents=True, exist_ok=True)
                         target_dir = comp_dir
                         break
@@ -330,9 +328,7 @@ complete --no-files --command yt --arguments "(_yt_completion)"
                     if comp_dir.exists() and os.access(comp_dir, os.W_OK):
                         target_dir = comp_dir
                         break
-                    elif comp_dir.parent.exists() and os.access(
-                        comp_dir.parent, os.W_OK
-                    ):
+                    elif comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
                         comp_dir.mkdir(parents=True, exist_ok=True)
                         target_dir = comp_dir
                         break
@@ -358,9 +354,7 @@ complete --no-files --command yt --arguments "(_yt_completion)"
                     if comp_dir.exists() and os.access(comp_dir, os.W_OK):
                         target_dir = comp_dir
                         break
-                    elif comp_dir.parent.exists() and os.access(
-                        comp_dir.parent, os.W_OK
-                    ):
+                    elif comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
                         comp_dir.mkdir(parents=True, exist_ok=True)
                         target_dir = comp_dir
                         break
@@ -374,9 +368,7 @@ complete --no-files --command yt --arguments "(_yt_completion)"
 
             # Write the completion script
             target_file.write_text(completion_script)
-            console.print(
-                f"✅ [green]Completion script installed to: {target_file}[/green]"
-            )
+            console.print(f"✅ [green]Completion script installed to: {target_file}[/green]")
 
             # Provide instructions
             if shell == "bash":
@@ -388,28 +380,18 @@ complete --no-files --command yt --arguments "(_yt_completion)"
             elif shell == "zsh":
                 console.print("\n📋 [blue]To enable completion:[/blue]")
                 console.print("  1. Ensure the completion directory is in your fpath")
-                console.print(
-                    f"     Add this to your ~/.zshrc: fpath=({target_dir} $fpath)"
-                )
+                console.print(f"     Add this to your ~/.zshrc: fpath=({target_dir} $fpath)")
                 console.print("  2. Reload your shell:")
                 console.print("     exec zsh")
 
             elif shell == "fish":
-                console.print(
-                    "\n📋 [blue]Completion will be available in new fish "
-                    "sessions.[/blue]"
-                )
+                console.print("\n📋 [blue]Completion will be available in new fish sessions.[/blue]")
                 console.print("  To enable immediately, run: exec fish")
 
         except PermissionError:
-            console.print(
-                "❌ [red]Permission denied. Try running with sudo or use "
-                "manual installation:[/red]"
-            )
+            console.print("❌ [red]Permission denied. Try running with sudo or use manual installation:[/red]")
             console.print(f"  yt completion {shell} > /path/to/completion/file")
-            raise click.ClickException(
-                "Installation failed due to permissions"
-            ) from None
+            raise click.ClickException("Installation failed due to permissions") from None
         except Exception as e:
             console.print(f"❌ [red]Installation failed: {e}[/red]")
             raise click.ClickException("Installation failed") from e
@@ -444,15 +426,11 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
     console = Console()
 
     console.print("🎯 [bold blue]Welcome to YouTrack CLI Setup![/bold blue]")
-    console.print(
-        "\nThis wizard will help you configure YouTrack CLI for the first time.\n"
-    )
+    console.print("\nThis wizard will help you configure YouTrack CLI for the first time.\n")
 
     # Get YouTrack URL
     console.print("[bold]Step 1: YouTrack Instance[/bold]")
-    url = Prompt.ask(
-        "Enter your YouTrack URL", default="https://company.youtrack.cloud"
-    )
+    url = Prompt.ask("Enter your YouTrack URL", default="https://company.youtrack.cloud")
 
     # Ensure URL has protocol
     if not url.startswith(("http://", "https://")):
@@ -462,9 +440,7 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
 
     # Get authentication method
     console.print("[bold]Step 2: Authentication[/bold]")
-    auth_method = Prompt.ask(
-        "Choose authentication method", choices=["token", "username"], default="token"
-    )
+    auth_method = Prompt.ask("Choose authentication method", choices=["token", "username"], default="token")
 
     if auth_method == "token":
         console.print("\n💡 To get an API token:")
@@ -482,9 +458,7 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
     # Get optional preferences
     console.print("\n[bold]Step 3: Preferences (Optional)[/bold]")
     default_project = Prompt.ask("Default project ID (leave empty to skip)", default="")
-    output_format = Prompt.ask(
-        "Preferred output format", choices=["table", "json", "yaml"], default="table"
-    )
+    output_format = Prompt.ask("Preferred output format", choices=["table", "json", "yaml"], default="table")
 
     # Save configuration
     console.print("\n[bold]Step 4: Saving Configuration[/bold]")
@@ -523,15 +497,10 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
 
             try:
                 console.print("✅ [green]Connection successful![/green]")
-                console.print(
-                    "🎉 [bold green]Setup completed successfully![/bold green]"
-                )
+                console.print("🎉 [bold green]Setup completed successfully![/bold green]")
             except Exception as e:
                 console.print(f"⚠️  [yellow]Connection test failed: {e}[/yellow]")
-                console.print(
-                    "You can test your setup later with: "
-                    "[blue]yt auth login --test[/blue]"
-                )
+                console.print("You can test your setup later with: [blue]yt auth login --test[/blue]")
         else:
             console.print("\n🎉 [bold green]Setup completed![/bold green]")
 
@@ -542,9 +511,7 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
 
     except Exception as e:
         console.print(f"❌ [red]Error saving configuration: {e}[/red]")
-        console.print(
-            "Please try running [blue]yt setup[/blue] again or configure manually."
-        )
+        console.print("Please try running [blue]yt setup[/blue] again or configure manually.")
         raise click.ClickException(f"Setup failed: {e}") from e
 
 
@@ -641,9 +608,7 @@ def auth(ctx: click.Context) -> None:
 @click.option("--token", "-t", prompt=True, hide_input=True, help="YouTrack API token")
 @click.option("--username", "-n", help="Username (optional)")
 @click.pass_context
-def login(
-    ctx: click.Context, base_url: str, token: str, username: Optional[str]
-) -> None:
+def login(ctx: click.Context, base_url: str, token: str, username: Optional[str]) -> None:
     """Authenticate with YouTrack."""
     console = Console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -728,19 +693,13 @@ def token(ctx: click.Context, show: bool, update: bool) -> None:
         console.print("🔐 Verifying new token...", style="blue")
 
         try:
-            result = asyncio.run(
-                auth_manager.verify_credentials(credentials.base_url, new_token)
-            )
+            result = asyncio.run(auth_manager.verify_credentials(credentials.base_url, new_token))
 
             if result["status"] == "success":
-                auth_manager.save_credentials(
-                    credentials.base_url, new_token, credentials.username
-                )
+                auth_manager.save_credentials(credentials.base_url, new_token, credentials.username)
                 console.print("✅ Token updated successfully!", style="green")
             else:
-                console.print(
-                    f"❌ Token verification failed: {result['message']}", style="red"
-                )
+                console.print(f"❌ Token verification failed: {result['message']}", style="red")
                 raise click.ClickException("Token update failed")
 
         except Exception as e:

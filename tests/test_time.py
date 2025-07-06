@@ -49,13 +49,9 @@ class TestTimeManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp
 
-            result = await time_manager.log_time(
-                "ISSUE-123", "2h", description="Test work"
-            )
+            result = await time_manager.log_time("ISSUE-123", "2h", description="Test work")
 
             assert result["status"] == "success"
             assert "Logged 2h to issue ISSUE-123" in result["message"]
@@ -86,9 +82,7 @@ class TestTimeManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad request"
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp
 
             result = await time_manager.log_time("ISSUE-123", "2h")
 
@@ -113,9 +107,7 @@ class TestTimeManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_response
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
 
             result = await time_manager.get_time_entries(issue_id="ISSUE-123")
 
@@ -151,9 +143,7 @@ class TestTimeManager:
             mock_resp = AsyncMock()
             mock_resp.status_code = 200
             mock_resp.json = lambda: mock_time_entries
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
 
             result = await time_manager.get_time_summary(group_by="user")
 

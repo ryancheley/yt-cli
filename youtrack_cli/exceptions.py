@@ -26,18 +26,14 @@ class AuthenticationError(YouTrackError):
     """Authentication related errors."""
 
     def __init__(self, message: str = "Authentication failed"):
-        super().__init__(
-            message, suggestion="Run 'yt auth login' to authenticate with YouTrack"
-        )
+        super().__init__(message, suggestion="Run 'yt auth login' to authenticate with YouTrack")
 
 
 class ConnectionError(YouTrackError):
     """Connection related errors."""
 
     def __init__(self, message: str = "Failed to connect to YouTrack"):
-        super().__init__(
-            message, suggestion="Check your internet connection and YouTrack URL"
-        )
+        super().__init__(message, suggestion="Check your internet connection and YouTrack URL")
 
 
 class ValidationError(YouTrackError):
@@ -56,9 +52,7 @@ class NotFoundError(YouTrackError):
     def __init__(self, resource_type: str, identifier: str):
         super().__init__(
             f"{resource_type} '{identifier}' not found",
-            suggestion=(
-                f"Check if the {resource_type.lower()} exists and you have access to it"
-            ),
+            suggestion=(f"Check if the {resource_type.lower()} exists and you have access to it"),
         )
 
 
@@ -82,7 +76,5 @@ class RateLimitError(YouTrackError):
             message += f". Retry after {retry_after} seconds"
         super().__init__(
             message,
-            suggestion=(
-                "Wait a moment and try again, or reduce the frequency of requests"
-            ),
+            suggestion=("Wait a moment and try again, or reduce the frequency of requests"),
         )

@@ -57,9 +57,7 @@ def list_users(
     console.print("👥 Fetching users...", style="blue")
 
     try:
-        result = asyncio.run(
-            user_manager.list_users(fields=fields, top=top, query=query)
-        )
+        result = asyncio.run(user_manager.list_users(fields=fields, top=top, query=query))
 
         if result["status"] == "success":
             users = result["data"]
@@ -215,9 +213,7 @@ def users_update(
             console.print(f"❌ Error getting user details: {e}", style="red")
             raise click.ClickException("Failed to get user details") from e
     else:
-        if not any(
-            [full_name, email, password, banned is not None, force_change_password]
-        ):
+        if not any([full_name, email, password, banned is not None, force_change_password]):
             console.print("❌ No updates specified.", style="red")
             console.print(
                 "Use --full-name, --email, --password, --banned/--unbanned, "
@@ -237,9 +233,7 @@ def users_update(
                     email=email,
                     password=password,
                     banned=banned,
-                    force_change_password=(
-                        force_change_password if force_change_password else None
-                    ),
+                    force_change_password=(force_change_password if force_change_password else None),
                 )
             )
 

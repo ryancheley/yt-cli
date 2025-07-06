@@ -49,10 +49,7 @@ class ProjectManager:
 
         # Default fields to return
         if not fields:
-            fields = (
-                "id,name,shortName,description,leader(login,fullName),"
-                "archived,createdBy(login,fullName)"
-            )
+            fields = "id,name,shortName,description,leader(login,fullName),archived,createdBy(login,fullName)"
 
         # Build query parameters
         params = {"fields": fields}
@@ -155,9 +152,7 @@ class ProjectManager:
                     if e.response.status_code == 400:
                         return {
                             "status": "error",
-                            "message": (
-                                "Invalid project data. Check name and short name."
-                            ),
+                            "message": ("Invalid project data. Check name and short name."),
                         }
                     elif e.response.status_code == 403:
                         return {
@@ -168,9 +163,7 @@ class ProjectManager:
             except Exception as e:
                 return {"status": "error", "message": f"Unexpected error: {e}"}
 
-    async def get_project(
-        self, project_id: str, fields: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def get_project(self, project_id: str, fields: Optional[str] = None) -> dict[str, Any]:
         """Get a specific project.
 
         Args:
@@ -280,9 +273,7 @@ class ProjectManager:
                     f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}",
                     headers=headers,
                     json=update_data,
-                    params={
-                        "fields": "id,name,shortName,leader(login,fullName),archived"
-                    },
+                    params={"fields": "id,name,shortName,leader(login,fullName),archived"},
                     timeout=10.0,
                 )
                 response.raise_for_status()
@@ -375,9 +366,7 @@ class ProjectManager:
         """
         self.console.print("\n[bold blue]Project Details[/bold blue]")
         self.console.print(f"[cyan]Name:[/cyan] {project.get('name', 'N/A')}")
-        self.console.print(
-            f"[cyan]Short Name:[/cyan] {project.get('shortName', 'N/A')}"
-        )
+        self.console.print(f"[cyan]Short Name:[/cyan] {project.get('shortName', 'N/A')}")
         self.console.print(f"[cyan]ID:[/cyan] {project.get('id', 'N/A')}")
 
         # Leader information
@@ -389,9 +378,7 @@ class ProjectManager:
         # Status
         status = "Archived" if project.get("archived", False) else "Active"
         status_style = "red" if project.get("archived", False) else "green"
-        self.console.print(
-            f"[cyan]Status:[/cyan] [{status_style}]{status}[/{status_style}]"
-        )
+        self.console.print(f"[cyan]Status:[/cyan] [{status_style}]{status}[/{status_style}]")
 
         # Description
         description = project.get("description", "")

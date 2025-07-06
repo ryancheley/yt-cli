@@ -25,9 +25,7 @@ class AdminManager:
         self.console = Console()
 
     # Global Settings Management
-    async def get_global_settings(
-        self, setting_key: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def get_global_settings(self, setting_key: Optional[str] = None) -> dict[str, Any]:
         """Get global YouTrack settings.
 
         Args:
@@ -350,9 +348,7 @@ class AdminManager:
             except Exception as e:
                 return {"status": "error", "message": f"Unexpected error: {e}"}
 
-    async def create_user_group(
-        self, name: str, description: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def create_user_group(self, name: str, description: Optional[str] = None) -> dict[str, Any]:
         """Create a new user group.
 
         Args:
@@ -491,9 +487,7 @@ class AdminManager:
             self.console.print(f"[cyan]Setting:[/cyan] {settings.get('name', 'N/A')}")
             self.console.print(f"[cyan]Value:[/cyan] {settings.get('value', 'N/A')}")
             if settings.get("description"):
-                self.console.print(
-                    f"[cyan]Description:[/cyan] {settings['description']}"
-                )
+                self.console.print(f"[cyan]Description:[/cyan] {settings['description']}")
 
     def display_license_info(self, license_info: dict[str, Any]) -> None:
         """Display license information.
@@ -502,17 +496,11 @@ class AdminManager:
             license_info: License information dictionary
         """
         self.console.print("\n[bold blue]License Information[/bold blue]")
-        self.console.print(
-            f"[cyan]License Type:[/cyan] {license_info.get('type', 'N/A')}"
-        )
-        self.console.print(
-            f"[cyan]Licensed To:[/cyan] {license_info.get('licensedTo', 'N/A')}"
-        )
+        self.console.print(f"[cyan]License Type:[/cyan] {license_info.get('type', 'N/A')}")
+        self.console.print(f"[cyan]Licensed To:[/cyan] {license_info.get('licensedTo', 'N/A')}")
 
         if license_info.get("expirationDate"):
-            self.console.print(
-                f"[cyan]Expires:[/cyan] {license_info['expirationDate']}"
-            )
+            self.console.print(f"[cyan]Expires:[/cyan] {license_info['expirationDate']}")
 
         if license_info.get("maxUsers"):
             self.console.print(f"[cyan]Max Users:[/cyan] {license_info['maxUsers']}")
@@ -521,9 +509,7 @@ class AdminManager:
         is_active = license_info.get("isActive", False)
         status_color = "green" if is_active else "red"
         status_text = "Active" if is_active else "Inactive"
-        self.console.print(
-            f"[cyan]Status:[/cyan] [{status_color}]{status_text}[/{status_color}]"
-        )
+        self.console.print(f"[cyan]Status:[/cyan] [{status_color}]{status_text}[/{status_color}]")
 
     def display_system_health(self, health_info: dict[str, Any]) -> None:
         """Display system health information.
@@ -536,10 +522,7 @@ class AdminManager:
         # Overall status
         overall_status = health_info.get("status", "unknown")
         status_color = "green" if overall_status == "healthy" else "red"
-        self.console.print(
-            f"[cyan]Overall Status:[/cyan] "
-            f"[{status_color}]{overall_status.title()}[/{status_color}]"
-        )
+        self.console.print(f"[cyan]Overall Status:[/cyan] [{status_color}]{overall_status.title()}[/{status_color}]")
 
         # Individual checks
         checks = health_info.get("checks", [])

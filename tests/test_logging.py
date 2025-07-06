@@ -179,11 +179,7 @@ class TestLoggingSetup:
 
         root_logger = logging.getLogger()
         # Should only have console handler
-        rotating_handlers = [
-            h
-            for h in root_logger.handlers
-            if isinstance(h, logging.handlers.RotatingFileHandler)
-        ]
+        rotating_handlers = [h for h in root_logger.handlers if isinstance(h, logging.handlers.RotatingFileHandler)]
         assert len(rotating_handlers) == 0
 
     @patch("youtrack_cli.logging._get_log_file_path")
@@ -197,11 +193,7 @@ class TestLoggingSetup:
 
             root_logger = logging.getLogger()
             # Should have both console and file handlers
-            rotating_handlers = [
-                h
-                for h in root_logger.handlers
-                if isinstance(h, logging.handlers.RotatingFileHandler)
-            ]
+            rotating_handlers = [h for h in root_logger.handlers if isinstance(h, logging.handlers.RotatingFileHandler)]
             assert len(rotating_handlers) >= 1
 
 

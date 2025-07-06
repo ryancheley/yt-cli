@@ -223,9 +223,7 @@ class TimeManager:
         except Exception:
             return date_str
 
-    def _aggregate_time_data(
-        self, time_entries: list[dict[str, Any]], group_by: str
-    ) -> dict[str, Any]:
+    def _aggregate_time_data(self, time_entries: list[dict[str, Any]], group_by: str) -> dict[str, Any]:
         """Aggregate time data by specified grouping."""
         summary = {}
         total_minutes = 0
@@ -240,10 +238,7 @@ class TimeManager:
                 key = entry.get("author", {}).get("fullName", "Unknown")
             elif group_by == "issue":
                 issue = entry.get("issue", {})
-                key = (
-                    f"{issue.get('id', 'Unknown')} - "
-                    f"{issue.get('summary', 'No summary')}"
-                )
+                key = f"{issue.get('id', 'Unknown')} - {issue.get('summary', 'No summary')}"
             elif group_by == "type":
                 key = entry.get("type", {}).get("name", "No type")
             else:
@@ -287,9 +282,7 @@ class TimeManager:
             duration_str = f"{hours}h ({minutes}m)"
 
             issue = entry.get("issue", {})
-            issue_str = (
-                f"{issue.get('id', 'N/A')} - {issue.get('summary', 'No summary')[:30]}"
-            )
+            issue_str = f"{issue.get('id', 'N/A')} - {issue.get('summary', 'No summary')[:30]}"
 
             table.add_row(
                 entry.get("id", "N/A"),
@@ -306,10 +299,7 @@ class TimeManager:
     def display_time_summary(self, summary: dict[str, Any]) -> None:
         """Display time summary in a formatted way."""
         self.console.print("\n[bold blue]Time Summary[/bold blue]")
-        self.console.print(
-            f"Total Time: {summary['total_hours']}h "
-            f"({summary['total_minutes']} minutes)"
-        )
+        self.console.print(f"Total Time: {summary['total_hours']}h ({summary['total_minutes']} minutes)")
 
         if summary.get("groups"):
             table = Table(title="Time by Group")

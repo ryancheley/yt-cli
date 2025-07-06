@@ -55,9 +55,7 @@ class TestBoardManager:
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
 
             result = await board_manager.list_boards()
 
@@ -84,9 +82,7 @@ class TestBoardManager:
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
 
             result = await board_manager.list_boards(project_id="TEST")
 
@@ -124,9 +120,7 @@ class TestBoardManager:
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp
 
             result = await board_manager.view_board("123")
 
@@ -161,9 +155,7 @@ class TestBoardManager:
             mock_resp.headers = {"content-type": "application/json"}
             mock_resp.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_resp
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp
 
             result = await board_manager.update_board("123", name="Updated Board Name")
 
@@ -193,9 +185,7 @@ class TestBoardManager:
     async def test_list_boards_general_error(self, board_manager):
         """Test board listing with general error."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get.side_effect = (
-                Exception("Connection error")
-            )
+            mock_client.return_value.__aenter__.return_value.get.side_effect = Exception("Connection error")
 
             result = await board_manager.list_boards()
 
@@ -206,9 +196,7 @@ class TestBoardManager:
     async def test_view_board_general_error(self, board_manager):
         """Test board viewing with general error."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get.side_effect = (
-                Exception("Connection error")
-            )
+            mock_client.return_value.__aenter__.return_value.get.side_effect = Exception("Connection error")
 
             result = await board_manager.view_board("123")
 
@@ -219,9 +207,7 @@ class TestBoardManager:
     async def test_update_board_general_error(self, board_manager):
         """Test board updating with general error."""
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.post.side_effect = (
-                Exception("Connection error")
-            )
+            mock_client.return_value.__aenter__.return_value.post.side_effect = Exception("Connection error")
 
             result = await board_manager.update_board("123", name="New Name")
 
