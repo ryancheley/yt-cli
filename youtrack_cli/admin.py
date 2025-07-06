@@ -201,7 +201,7 @@ class AdminManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license/usage",
+                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license?fields=id,username,license,error",
                     headers=headers,
                     timeout=10.0,
                 )
@@ -370,7 +370,7 @@ class AdminManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/rest/usergroups",
+                    f"{credentials.base_url.rstrip('/')}/hub/api/rest/usergroups",
                     headers=headers,
                     params=params,
                     timeout=10.0,

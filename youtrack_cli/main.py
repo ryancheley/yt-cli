@@ -1044,11 +1044,15 @@ def usage(ctx: click.Context) -> None:
             console.print(f"[red]Error:[/red] {result['message']}")
             return
 
-        usage_data = result["data"]
-        console.print("[bold]License Usage Statistics:[/bold]")
-        console.print(f"Total Users: {usage_data.get('totalUsers', 'N/A')}")
-        console.print(f"Active Users: {usage_data.get('activeUsers', 'N/A')}")
-        console.print(f"Remaining Users: {usage_data.get('remainingUsers', 'N/A')}")
+        license_data = result["data"]
+        console.print("[bold]License Information:[/bold]")
+        console.print(f"License ID: {license_data.get('id', 'N/A')}")
+        console.print(f"Username: {license_data.get('username', 'N/A')}")
+        console.print(f"License Key: {license_data.get('license', 'N/A')}")
+        if license_data.get("error"):
+            console.print(f"[red]Error:[/red] {license_data['error']}")
+        else:
+            console.print("[green]Status: Valid[/green]")
 
     asyncio.run(run_license_usage())
 
