@@ -16,7 +16,7 @@ We use `uv` for managing dependencies.
 
 Each new feature must have a corresponding github issue. When working on a new issue a new feature branch must be created with the name of the branch matching the name of the issue with the issue number in it.
 
-For every change that is implemented, the README.md file MUST be updated to reflect that change.
+For every change that is implemented, the corresponding documentation in the docs/ flder MUST be updated to reflect that change. Updates to README.md should be made to include a very short summary but not comprehensive details.
 
 ## Test
 
@@ -29,6 +29,16 @@ Documentation is available in the docs/ folder. Any new functionality should hav
 ## Deploy
 
 Deployment will always be done to a feature branch. When a feature is significant enough, we'll bump the version of the tool and tag it with that version. We will have a github action that deploys this to Test PyPI and PyPI using a `release.yml` GitHub Action.
+
+## GitHub Issue resolution steps
+
+1. Make sure a new branch has been created
+2. Think through the change that needs to be implemented
+3. Write the plan to scratch/issue-id.md where id is the issue number from GitHub. For example issue 42 would be written to scratch/issue-42.md
+4. Implement the changes from the plan written in scratch/issue-id.md
+5. Create a PR. never bypass the pre-commit checks
+6. Once the PR has been squashed and merged, switch back to main. You'll need to check the PR status every 60 seconds
+7. Pull the changes from main to local development
 
 ## Current Configuration
 
