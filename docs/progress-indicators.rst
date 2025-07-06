@@ -1,8 +1,10 @@
-# Progress Indicators
+Progress Indicators
+==================
 
 The YouTrack CLI provides visual progress indicators for long-running operations to improve user experience and provide feedback during bulk operations.
 
-## Overview
+Overview
+--------
 
 Progress indicators are automatically shown for operations that may take significant time, including:
 
@@ -11,48 +13,51 @@ Progress indicators are automatically shown for operations that may take signifi
 - **Admin Operations**: System maintenance tasks, cache clearing, and health checks
 - **File Operations**: Upload/download of attachments
 
-## Types of Progress Indicators
+Types of Progress Indicators
+----------------------------
 
-### Progress Bars
+Progress Bars
+~~~~~~~~~~~~~
 
-For operations with known duration or item count:
+For operations with known duration or item count::
 
-```
-⠋ Generating burndown report... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 3/3 0:00:02 0:00:00
-```
+   ⠋ Generating burndown report... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 3/3 0:00:02 0:00:00
 
 Features:
+
 - Spinner animation
 - Descriptive text that updates during operation
 - Progress bar showing completion percentage
 - Item counters (completed/total)
 - Time elapsed and estimated time remaining
 
-### Spinners
+Spinners
+~~~~~~~~
 
-For indeterminate operations:
+For indeterminate operations::
 
-```
-⠋ Fetching issues...
-```
+   ⠋ Fetching issues...
 
 Used when the total duration or item count is unknown.
 
-## Configuration
+Configuration
+-------------
 
-### Disabling Progress Indicators
+Disabling Progress Indicators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can disable progress indicators globally using the `--no-progress` flag:
+You can disable progress indicators globally using the ``--no-progress`` flag:
 
-```bash
-# Disable progress indicators for a single command
-yt --no-progress reports burndown PROJECT-1
+.. code-block:: bash
 
-# Disable for all subcommands
-yt --no-progress issues list --project PROJECT-1
-```
+   # Disable progress indicators for a single command
+   yt --no-progress reports burndown PROJECT-1
 
-### Environment Compatibility
+   # Disable for all subcommands
+   yt --no-progress issues list --project PROJECT-1
+
+Environment Compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Progress indicators automatically detect the environment:
 
@@ -60,91 +65,105 @@ Progress indicators automatically detect the environment:
 - **Non-interactive environments**: Simplified or disabled output
 - **CI/CD pipelines**: Automatically disabled to prevent log clutter
 
-## Implementation Details
+Implementation Details
+----------------------
 
-### Progress Manager
+Progress Manager
+~~~~~~~~~~~~~~~~
 
-The progress system is built around a centralized `ProgressManager` class that:
+The progress system is built around a centralized ``ProgressManager`` class that:
 
 - Manages multiple concurrent progress indicators
 - Handles environment detection
 - Provides context managers for easy integration
 - Supports both determinate and indeterminate progress
 
-### Integration Pattern
+Integration Pattern
+~~~~~~~~~~~~~~~~~~~
 
 Operations integrate progress indicators using context managers:
 
-```python
-from .progress import get_progress_manager
+.. code-block:: python
 
-progress_manager = get_progress_manager()
+   from .progress import get_progress_manager
 
-# For determinate progress
-with progress_manager.progress_bar("Processing items...", total=len(items)) as tracker:
-    for item in items:
-        # Process item
-        tracker.advance()
+   progress_manager = get_progress_manager()
 
-# For indeterminate progress
-with progress_manager.spinner("Working..."):
-    # Long-running operation
-    perform_operation()
-```
+   # For determinate progress
+   with progress_manager.progress_bar("Processing items...", total=len(items)) as tracker:
+       for item in items:
+           # Process item
+           tracker.advance()
 
-## Affected Commands
+   # For indeterminate progress
+   with progress_manager.spinner("Working..."):
+       # Long-running operation
+       perform_operation()
 
-### Reports
+Affected Commands
+-----------------
+
+Reports
+~~~~~~~
 
 All report generation commands show progress indicators:
 
-- `yt reports burndown` - Shows 3-step progress for query building, data fetching, and metric calculation
-- `yt reports velocity` - Shows progress for each sprint being analyzed
+- ``yt reports burndown`` - Shows 3-step progress for query building, data fetching, and metric calculation
+- ``yt reports velocity`` - Shows progress for each sprint being analyzed
 
-### Issues
+Issues
+~~~~~~
 
 Issue commands with progress indicators:
 
-- `yt issues list` - Spinner during API calls for large result sets
-- `yt issues search` - Progress bar for complex searches
-- `yt issues attach upload` - Progress bar for file uploads
-- `yt issues attach download` - Progress bar for file downloads
+- ``yt issues list`` - Spinner during API calls for large result sets
+- ``yt issues search`` - Progress bar for complex searches
+- ``yt issues attach upload`` - Progress bar for file uploads
+- ``yt issues attach download`` - Progress bar for file downloads
 
-### Admin
+Admin
+~~~~~
 
 Administrative operations with progress:
 
-- `yt admin maintenance clear-cache` - Spinner for cache clearing operations
-- `yt admin health check` - Progress bar for multi-step diagnostics
-- `yt admin usage users report` - Progress bar for report generation
+- ``yt admin maintenance clear-cache`` - Spinner for cache clearing operations
+- ``yt admin health check`` - Progress bar for multi-step diagnostics
+- ``yt admin usage users report`` - Progress bar for report generation
 
-## Best Practices
+Best Practices
+---------------
 
-### For Users
+For Users
+~~~~~~~~~
 
 1. **Large Operations**: Progress indicators are most helpful for operations involving:
+
    - More than 100 items
    - File uploads/downloads
    - Complex reports or searches
 
-2. **CI/CD Integration**: Use `--no-progress` in automated scripts to keep logs clean
+2. **CI/CD Integration**: Use ``--no-progress`` in automated scripts to keep logs clean
 
 3. **Performance**: Progress indicators add minimal overhead and can be left enabled in most cases
 
-### For Developers
+For Developers
+~~~~~~~~~~~~~~
 
 1. **Integration**: Add progress indicators to any operation that:
+
    - Takes more than 2-3 seconds typically
    - Processes multiple items sequentially
    - Involves network I/O with potential delays
 
 2. **Granularity**: Choose appropriate progress granularity:
+
    - Too fine: Updates too frequently, performance impact
    - Too coarse: Poor user experience
 
 3. **Error Handling**: Progress indicators automatically clean up on exceptions
 
-## Performance Impact
+Performance Impact
+------------------
 
 Progress indicators are designed to have minimal performance impact:
 

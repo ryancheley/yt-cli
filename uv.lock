@@ -720,23 +720,6 @@ wheels = [
 ]
 
 [[package]]
-name = "myst-parser"
-version = "3.0.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "docutils" },
-    { name = "jinja2" },
-    { name = "markdown-it-py" },
-    { name = "mdit-py-plugins" },
-    { name = "pyyaml" },
-    { name = "sphinx" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/49/64/e2f13dac02f599980798c01156393b781aec983b52a6e4057ee58f07c43a/myst_parser-3.0.1.tar.gz", hash = "sha256:88f0cb406cb363b077d176b51c476f62d60604d68a8dcdf4832e080441301a87", size = 92392 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/de/21aa8394f16add8f7427f0a1326ccd2b3a2a8a3245c9252bc5ac034c6155/myst_parser-3.0.1-py3-none-any.whl", hash = "sha256:6457aaa33a5d474aca678b8ead9b3dc298e89c68e67012e73146ea6fd54babf1", size = 83163 },
-]
-
-[[package]]
 name = "nh3"
 version = "0.2.21"
 source = { registry = "https://pypi.org/simple" }
@@ -1781,7 +1764,6 @@ dev = [
     { name = "zizmor" },
 ]
 docs = [
-    { name = "myst-parser" },
     { name = "sphinx" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-rtd-theme" },
@@ -1816,7 +1798,6 @@ dev = [
     { name = "zizmor", specifier = ">=1.11.0" },
 ]
 docs = [
-    { name = "myst-parser", specifier = ">=2.0.0" },
     { name = "sphinx", specifier = ">=7.0.0" },
     { name = "sphinx-autobuild", specifier = ">=2021.3.14" },
     { name = "sphinx-rtd-theme", specifier = ">=2.0.0" },

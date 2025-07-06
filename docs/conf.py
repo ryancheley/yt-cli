@@ -22,7 +22,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -33,7 +32,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The suffix(es) of source filenames.
-source_suffix = [".rst", ".md"]
+source_suffix = ".rst"
 
 # The master toctree document.
 master_doc = "index"
@@ -96,16 +95,3 @@ autodoc_default_options = {
 
 # Auto-generate summaries
 autosummary_generate = True
-
-# MyST-Parser configuration
-myst_enable_extensions = [
-    "deflist",
-    "tasklist",
-    "html_admonition",
-    "html_image",
-    "colon_fence",
-    "smartquotes",
-    "replacements",
-    "linkify",
-    "substitution",
-]
