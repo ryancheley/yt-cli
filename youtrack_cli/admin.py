@@ -192,7 +192,7 @@ class AdminManager:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
-                    f"{credentials.base_url.rstrip('/')}/api/admin/license/usage",
+                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license/usage",
                     headers=headers,
                     timeout=10.0,
                 )
