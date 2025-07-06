@@ -391,6 +391,7 @@ def get_client_manager() -> HTTPClientManager:
 async def cleanup_client_manager() -> None:
     """Cleanup the global client manager."""
     global _client_manager
-    if _client_manager:
-        await _client_manager.close()
+    manager = _client_manager
+    if manager is not None:
+        await manager.close()
         _client_manager = None

@@ -112,6 +112,7 @@ class TestSensitiveDataFilter:
         result = log_filter.filter(record)
 
         assert result is True
+        assert record.args is not None  # Type guard for ty
         assert "***MASKED***" in record.args[0]
         assert "secret123" not in record.args[0]
 
@@ -131,6 +132,7 @@ class TestSensitiveDataFilter:
         result = log_filter.filter(record)
 
         assert result is True
+        assert record.args is not None  # Type guard for ty
         assert record.args[0] == 200
 
 
