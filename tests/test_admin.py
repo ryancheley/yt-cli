@@ -209,7 +209,7 @@ class TestAdminManager:
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = Mock()
-            mock_response.json.return_value = mock_groups
+            mock_response.json.return_value = {"usergroups": mock_groups}
             mock_response.raise_for_status.return_value = None
 
             mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
