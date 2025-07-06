@@ -153,6 +153,7 @@ class AdminManager:
                 response = await client.get(
                     f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/license",
                     headers=headers,
+                    params={"fields": "id,username,license,error"},
                     timeout=10.0,
                 )
                 response.raise_for_status()
@@ -166,6 +167,14 @@ class AdminManager:
                         return {
                             "status": "error",
                             "message": "Insufficient permissions to view license.",
+                        }
+                    elif e.response.status_code == 404:
+                        return {
+                            "status": "error",
+                            "message": (
+                                "License endpoint not found. This may indicate an "
+                                "incompatible YouTrack version or configuration."
+                            ),
                         }
                 return {"status": "error", "message": f"HTTP error: {e}"}
             except Exception as e:
