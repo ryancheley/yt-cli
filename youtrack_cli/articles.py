@@ -8,6 +8,7 @@ from rich.table import Table
 from rich.tree import Tree
 
 from .auth import AuthManager
+from .client import get_client_manager
 
 __all__ = ["ArticleManager"]
 
@@ -72,21 +73,21 @@ class ArticleManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=article_data, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "message": f"Article '{title}' created successfully",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to create article: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "message": f"Article '{title}' created successfully",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to create article: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error creating article: {str(e)}"}
 
@@ -119,21 +120,21 @@ class ArticleManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "data": data,
-                        "count": len(data) if isinstance(data, list) else 1,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list articles: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data) if isinstance(data, list) else 1,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list articles: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error listing articles: {str(e)}"}
 
@@ -151,17 +152,17 @@ class ArticleManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to get article: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to get article: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error getting article: {str(e)}"}
 
@@ -198,21 +199,21 @@ class ArticleManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=article_data, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "message": "Article updated successfully",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to update article: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "message": "Article updated successfully",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to update article: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error updating article: {str(e)}"}
 
@@ -226,19 +227,19 @@ class ArticleManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=headers)
-                if response.status_code == 200:
-                    return {
-                        "status": "success",
-                        "message": "Article deleted successfully",
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to delete article: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": "Article deleted successfully",
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete article: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting article: {str(e)}"}
 
@@ -257,21 +258,21 @@ class ArticleManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=article_data, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "message": "Article published successfully",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to publish article: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "message": "Article published successfully",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to publish article: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error publishing article: {str(e)}"}
 
@@ -296,21 +297,21 @@ class ArticleManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "data": data,
-                        "count": len(data) if isinstance(data, list) else 1,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to search articles: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data) if isinstance(data, list) else 1,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to search articles: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error searching articles: {str(e)}"}
 
@@ -324,17 +325,17 @@ class ArticleManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to get comments: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to get comments: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error getting comments: {str(e)}"}
 
@@ -353,21 +354,21 @@ class ArticleManager:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=comment_data, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "message": "Comment added successfully",
-                        "data": data,
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to add comment: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=comment_data)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "message": "Comment added successfully",
+                    "data": data,
+                }
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to add comment: {error_text}",
+                }
         except Exception as e:
             return {"status": "error", "message": f"Error adding comment: {str(e)}"}
 
@@ -381,17 +382,17 @@ class ArticleManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {"status": "success", "data": data}
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to get attachments: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {"status": "success", "data": data}
+            else:
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to get attachments: {error_text}",
+                }
         except Exception as e:
             return {
                 "status": "error",

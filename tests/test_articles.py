@@ -1,7 +1,7 @@
 """Tests for article management functionality."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -46,14 +46,15 @@ class TestArticleManager:
             "content": "Test content",
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"id": "123", "summary": "Test Article"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -67,11 +68,13 @@ class TestArticleManager:
     @pytest.mark.asyncio
     async def test_create_article_failure(self, article_manager):
         """Test article creation failure."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad Request"
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.create_article(
                 title="Test Article",
@@ -97,14 +100,15 @@ class TestArticleManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '[{"id": "123", "summary": "Article 1"}]'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.list_articles()
 
@@ -121,14 +125,15 @@ class TestArticleManager:
             "content": "Test content",
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.get_article("123")
 
@@ -144,14 +149,15 @@ class TestArticleManager:
             "content": "Updated content",
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.update_article(
                 article_id="123",
@@ -174,11 +180,12 @@ class TestArticleManager:
     @pytest.mark.asyncio
     async def test_delete_article_success(self, article_manager):
         """Test successful article deletion."""
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.delete.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.delete_article("123")
 
@@ -194,14 +201,15 @@ class TestArticleManager:
             "visibility": {"type": "public"},
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.publish_article("123")
 
@@ -220,14 +228,15 @@ class TestArticleManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.search_articles("search query")
 
@@ -246,14 +255,15 @@ class TestArticleManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.get_article_comments("123")
 
@@ -269,14 +279,15 @@ class TestArticleManager:
             "author": {"fullName": "Test User"},
         }
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.add_comment("123", "Test comment")
 
@@ -296,14 +307,15 @@ class TestArticleManager:
             }
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response
             mock_resp.text = '{"mock": "response"}'
             mock_resp.headers = {"content-type": "application/json"}
-            mock_resp.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_resp  # noqa: E501
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.get_article_attachments("123")
 
