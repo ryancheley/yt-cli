@@ -2,7 +2,6 @@
 
 from unittest.mock import Mock, patch
 
-import httpx
 import pytest
 from click.testing import CliRunner
 
@@ -52,12 +51,16 @@ class TestReportManager:
             },
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.reports.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_issues
-            mock_response.raise_for_status.return_value = None
 
-            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+            async def mock_make_request(*args, **kwargs):
+                return mock_response
+
+            mock_client_manager.make_request = mock_make_request
+            mock_get_client.return_value = mock_client_manager
 
             result = await report_manager.generate_burndown_report(
                 project_id="TEST",
@@ -88,13 +91,19 @@ class TestReportManager:
     @pytest.mark.asyncio
     async def test_generate_burndown_report_http_error(self, report_manager, auth_manager):
         """Test burndown report generation with HTTP error."""
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.get.side_effect = httpx.HTTPError("Connection failed")
+        with patch("youtrack_cli.reports.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+
+            async def mock_make_request(*args, **kwargs):
+                raise Exception("Connection failed")
+
+            mock_client_manager.make_request = mock_make_request
+            mock_get_client.return_value = mock_client_manager
 
             result = await report_manager.generate_burndown_report("TEST")
 
             assert result["status"] == "error"
-            assert "HTTP error" in result["message"]
+            assert "Unexpected error" in result["message"]
 
     @pytest.mark.asyncio
     async def test_generate_velocity_report_success(self, report_manager, auth_manager):
@@ -113,17 +122,21 @@ class TestReportManager:
             {"id": "2", "resolved": None, "spent": {"value": 60}},
         ]
 
-        with patch("httpx.AsyncClient") as mock_client:
+        with patch("youtrack_cli.reports.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
             mock_responses = [
                 Mock(json=lambda: mock_project_data),  # Project response
                 Mock(json=lambda: mock_sprint_issues),  # Sprint 1 issues
                 Mock(json=lambda: mock_sprint_issues),  # Sprint 2 issues
             ]
 
-            for mock_response in mock_responses:
-                mock_response.raise_for_status.return_value = None
+            response_iter = iter(mock_responses)
 
-            mock_client.return_value.__aenter__.return_value.get.side_effect = mock_responses
+            async def mock_make_request(*args, **kwargs):
+                return next(response_iter)
+
+            mock_client_manager.make_request = mock_make_request
+            mock_get_client.return_value = mock_client_manager
 
             result = await report_manager.generate_velocity_report("TEST", sprints=2)
 
