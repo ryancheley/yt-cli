@@ -634,17 +634,17 @@ def login(
         # Verify credentials
         result = asyncio.run(auth_manager.verify_credentials(base_url, token, verify_ssl=not no_verify_ssl))
 
-        if result["status"] == "success":
+        if result.status == "success":
             # Save credentials
             auth_manager.save_credentials(base_url, token, username, verify_ssl=not no_verify_ssl)
 
             console.print("✅ Authentication successful!", style="green")
-            console.print(f"Logged in as: {result['username']}", style="green")
-            console.print(f"Full name: {result['full_name']}", style="green")
-            if result["email"]:
-                console.print(f"Email: {result['email']}", style="green")
+            console.print(f"Logged in as: {result.username}", style="green")
+            console.print(f"Full name: {result.full_name}", style="green")
+            if result.email:
+                console.print(f"Email: {result.email}", style="green")
         else:
-            console.print(f"❌ Authentication failed: {result['message']}", style="red")
+            console.print(f"❌ Authentication failed: {result.message}", style="red")
             raise click.ClickException("Authentication failed")
 
     except Exception as e:
@@ -710,11 +710,11 @@ def token(ctx: click.Context, show: bool, update: bool) -> None:
         try:
             result = asyncio.run(auth_manager.verify_credentials(credentials.base_url, new_token))
 
-            if result["status"] == "success":
+            if result.status == "success":
                 auth_manager.save_credentials(credentials.base_url, new_token, credentials.username)
                 console.print("✅ Token updated successfully!", style="green")
             else:
-                console.print(f"❌ Token verification failed: {result['message']}", style="red")
+                console.print(f"❌ Token verification failed: {result.message}", style="red")
                 raise click.ClickException("Token update failed")
 
         except Exception as e:

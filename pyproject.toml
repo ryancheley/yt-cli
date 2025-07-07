@@ -75,7 +75,10 @@ select = [
     "UP",  # pyupgrade
     "Q",   # flake8-quotes
 ]
-ignore = []
+ignore = [
+    "UP045",  # Use `X | None` for type annotations (Python 3.9 compatibility)
+    "UP007",  # Use `X | Y` for type annotations (Python 3.9 compatibility)
+]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -1,10 +1,12 @@
 """HTTP client manager with connection pooling and performance optimizations."""
 
+from __future__ import annotations
+
 import asyncio
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Any, Optional, Union, cast
 
 import httpx
 
@@ -20,6 +22,7 @@ from .exceptions import (
     YouTrackServerError,
 )
 from .logging import get_logger, log_api_call
+from .models import CachedResponse
 
 __all__ = [
     "HTTPClientManager",
@@ -342,7 +345,7 @@ class HTTPClientManager:
         max_retries: int = 3,
         cache_ttl: Optional[float] = None,
         cache_key_prefix: str = "",
-    ) -> Any:  # Returns httpx.Response or MockResponse
+    ) -> Union[httpx.Response, CachedResponse]:
         """Make a cached HTTP request for GET operations.
 
         Args:
@@ -383,23 +386,7 @@ class HTTPClientManager:
         cached_response_data = await cache.get(cache_key)
         if cached_response_data is not None:
             logger.debug("Using cached response", cache_key=cache_key)
-
-            # Create a mock response object with cached data
-            # Note: This is a simplified approach - in production you might want
-            # to cache the full response object including headers, status, etc.
-            class MockResponse:
-                def __init__(self, data, status_code=200):
-                    self._data = data
-                    self.status_code = status_code
-
-                def json(self):
-                    return self._data
-
-                @property
-                def text(self):
-                    return str(self._data)
-
-            return MockResponse(cached_response_data)
+            return CachedResponse(data=cached_response_data, status_code=200)
 
         # Cache miss - make the actual request
         response = await self.make_request(
@@ -486,7 +473,8 @@ async def reset_client_manager() -> None:
     global _client_manager
     if _client_manager is not None:
         try:
-            await _client_manager.close()
+            # Type assertion: _client_manager is guaranteed not None here
+            await cast(HTTPClientManager, _client_manager).close()
             logger.debug("Client manager connections closed during reset")
         except Exception as e:
             logger.warning(
