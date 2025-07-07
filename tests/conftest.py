@@ -11,7 +11,7 @@ import pytest
 def isolate_environment():
     """Ensure test isolation by saving and restoring environment variables."""
     # YouTrack environment variables that could cause test contamination
-    youtrack_env_vars = ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME"]
+    youtrack_env_vars = ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME", "YOUTRACK_VERIFY_SSL"]
 
     # Store original values
     original_env: dict[str, Optional[str]] = {}
