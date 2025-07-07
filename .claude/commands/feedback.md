@@ -41,6 +41,10 @@ For each issue, provide:
 - Consider **enterprise/production** context
 - Reference **specific Python/Django best practices**
 
+## Write out your recomendations
+
+Write the recomendations to scratch/file-path-filename.md
+
 ## Code to Review:
 $ARGUMENTS
 
