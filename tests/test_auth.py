@@ -182,10 +182,10 @@ class TestAuthManager:
 
             result = await self.auth_manager.verify_credentials("https://example.youtrack.cloud", "test-token-123")
 
-        assert result["status"] == "success"
-        assert result["username"] == "testuser"
-        assert result["full_name"] == "Test User"
-        assert result["email"] == "test@example.com"
+        assert result.status == "success"
+        assert result.username == "testuser"
+        assert result.full_name == "Test User"
+        assert result.email == "test@example.com"
 
     @pytest.mark.asyncio
     async def test_verify_credentials_failure(self):
@@ -195,5 +195,5 @@ class TestAuthManager:
 
             result = await self.auth_manager.verify_credentials("https://example.youtrack.cloud", "invalid-token")
 
-        assert result["status"] == "error"
-        assert "HTTP Error" in result["message"]
+        assert result.status == "error"
+        assert "HTTP Error" in result.message

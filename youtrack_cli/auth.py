@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, ValidationError
 from rich.console import Console
 
 from .client import reset_client_manager_sync
+from .models import CredentialVerificationResult
 from .security import CredentialManager, SecurityConfig, TokenManager
 
 __all__ = ["AuthConfig", "AuthManager"]
@@ -195,7 +196,9 @@ class AuthManager:
         elif expiration_info["status"] == "expiring":
             self.console.print(f"[yellow]⚠ {expiration_info['message']}[/yellow]")
 
-    async def verify_credentials(self, base_url: str, token: str, verify_ssl: bool = True) -> dict[str, str]:
+    async def verify_credentials(
+        self, base_url: str, token: str, verify_ssl: bool = True
+    ) -> CredentialVerificationResult:
         """Verify credentials with YouTrack API.
 
         Args:
@@ -225,13 +228,13 @@ class AuthManager:
                 response.raise_for_status()
 
                 user_data = response.json()
-                return {
-                    "status": "success",
-                    "username": user_data.get("login", "Unknown"),
-                    "full_name": user_data.get("fullName", "Unknown"),
-                    "email": user_data.get("email", "Unknown"),
-                }
+                return CredentialVerificationResult(
+                    status="success",
+                    username=user_data.get("login", "Unknown"),
+                    full_name=user_data.get("fullName", "Unknown"),
+                    email=user_data.get("email", "Unknown"),
+                )
             except httpx.HTTPError as e:
-                return {"status": "error", "message": str(e)}
+                return CredentialVerificationResult(status="error", message=str(e))
             except Exception as e:
-                return {"status": "error", "message": str(e)}
+                return CredentialVerificationResult(status="error", message=str(e))
