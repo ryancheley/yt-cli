@@ -1,10 +1,9 @@
 """Authentication management for YouTrack CLI."""
 
-from __future__ import annotations
-
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -23,8 +22,8 @@ class AuthConfig(BaseModel):
 
     base_url: str = Field(..., description="YouTrack instance URL")
     token: str = Field(..., description="API token for authentication")
-    username: str | None = Field(None, description="Username (optional)")
-    token_expiry: datetime | None = Field(None, description="Token expiration date")
+    username: Optional[str] = Field(None, description="Username (optional)")
+    token_expiry: Optional[datetime] = Field(None, description="Token expiration date")
 
 
 class AuthManager:
@@ -32,8 +31,8 @@ class AuthManager:
 
     def __init__(
         self,
-        config_path: str | None = None,
-        security_config: SecurityConfig | None = None,
+        config_path: Optional[str] = None,
+        security_config: Optional[SecurityConfig] = None,
     ):
         """Initialize the auth manager.
 
@@ -58,8 +57,8 @@ class AuthManager:
         self,
         base_url: str,
         token: str,
-        username: str | None = None,
-        token_expiry: datetime | None = None,
+        username: Optional[str] = None,
+        token_expiry: Optional[datetime] = None,
         use_keyring: bool = True,
         verify_ssl: bool = True,
     ) -> None:

@@ -6,7 +6,7 @@ import asyncio
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, cast
+from typing import Any, Optional, Union, cast
 
 import httpx
 
@@ -61,8 +61,8 @@ class HTTPClientManager:
         )
         self._timeout = httpx.Timeout(default_timeout)
         self._verify_ssl = verify_ssl
-        self._client: httpx.AsyncClient | None = None
-        self._lock: asyncio.Lock | None = None
+        self._client: Optional[httpx.AsyncClient] = None
+        self._lock: Optional[asyncio.Lock] = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure the HTTP client is initialized."""
@@ -107,10 +107,10 @@ class HTTPClientManager:
         self,
         method: str,
         url: str,
-        headers: dict[str, str] | None = None,
-        params: dict[str, Any] | None = None,
-        json_data: dict[str, Any] | None = None,
-        timeout: float | None = None,
+        headers: Optional[dict[str, str]] = None,
+        params: Optional[dict[str, Any]] = None,
+        json_data: Optional[dict[str, Any]] = None,
+        timeout: Optional[float] = None,
         max_retries: int = 3,
     ) -> httpx.Response:
         """Make an HTTP request with retry logic and proper error handling.
@@ -338,14 +338,14 @@ class HTTPClientManager:
         self,
         method: str,
         url: str,
-        headers: dict[str, str] | None = None,
-        params: dict[str, Any] | None = None,
-        json_data: dict[str, Any] | None = None,
-        timeout: float | None = None,
+        headers: Optional[dict[str, str]] = None,
+        params: Optional[dict[str, Any]] = None,
+        json_data: Optional[dict[str, Any]] = None,
+        timeout: Optional[float] = None,
         max_retries: int = 3,
-        cache_ttl: float | None = None,
+        cache_ttl: Optional[float] = None,
         cache_key_prefix: str = "",
-    ) -> httpx.Response | CachedResponse:
+    ) -> Union[httpx.Response, CachedResponse]:
         """Make a cached HTTP request for GET operations.
 
         Args:
@@ -412,7 +412,7 @@ class HTTPClientManager:
 
 
 # Global client manager instance
-_client_manager: HTTPClientManager | None = None
+_client_manager: Optional[HTTPClientManager] = None
 
 
 def get_client_manager() -> HTTPClientManager:
