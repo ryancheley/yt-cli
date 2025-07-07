@@ -510,3 +510,51 @@ class TestSecurityPerformance:
         # Check that password values are masked but password= prefix remains
         assert "password=" in masked.lower()  # The prefix should remain
         assert "normal_data=value" in masked  # Non-sensitive data preserved
+
+
+class TestClientManagerSecurity:
+    """Test security aspects of the HTTP client manager."""
+
+    def test_get_client_manager_assertion(self):
+        """Test that get_client_manager has proper assertion for security."""
+        from youtrack_cli.client import get_client_manager, reset_client_manager
+
+        # Reset client manager to ensure clean state
+        reset_client_manager()
+
+        # Test normal operation - should not raise assertion error
+        manager = get_client_manager()
+        assert manager is not None
+
+        # Test repeated calls return same instance
+        manager2 = get_client_manager()
+        assert manager is manager2
+
+        # Reset for clean state
+        reset_client_manager()
+
+    def test_client_manager_ssl_verification(self):
+        """Test that SSL verification setting is properly handled."""
+        import os
+        from unittest.mock import patch
+
+        from youtrack_cli.client import get_client_manager, reset_client_manager
+
+        # Reset client manager
+        reset_client_manager()
+
+        # Test with SSL verification disabled
+        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
+            manager = get_client_manager()
+            assert manager is not None
+            assert manager._verify_ssl is False
+
+        # Reset and test with SSL verification enabled (default)
+        reset_client_manager()
+        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "true"}):
+            manager = get_client_manager()
+            assert manager is not None
+            assert manager._verify_ssl is True
+
+        # Reset for clean state
+        reset_client_manager()

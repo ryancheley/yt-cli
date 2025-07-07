@@ -386,8 +386,11 @@ def get_client_manager() -> HTTPClientManager:
         verify_ssl_str = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower()
         verify_ssl = verify_ssl_str not in ("false", "0", "no", "off")
         _client_manager = HTTPClientManager(verify_ssl=verify_ssl)
-    # Type checker note: _client_manager is guaranteed to be non-None here
-    return _client_manager  # type: ignore[return-value]
+
+    # At this point, _client_manager is guaranteed to be non-None
+    client_manager = _client_manager
+    assert client_manager is not None, "Client manager should never be None after initialization"
+    return client_manager
 
 
 async def cleanup_client_manager() -> None:
