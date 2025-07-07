@@ -18,11 +18,15 @@ class TestSSLVerificationWarnings:
         """Setup for each test method."""
         # Reset client manager before each test
         reset_client_manager()
+        # Clear any warnings that might be cached
+        warnings.resetwarnings()
 
     def teardown_method(self):
         """Cleanup after each test method."""
         # Reset client manager after each test
         reset_client_manager()
+        # Clear any warnings that might be cached
+        warnings.resetwarnings()
 
     def test_ssl_verification_enabled_by_default(self):
         """Test that SSL verification is enabled by default."""
@@ -289,8 +293,10 @@ class TestSSLVerificationWarnings:
         ]
 
         for env_value, expected_ssl, should_warn in test_cases:
-            # Reset client manager for each test
+            # Reset client manager for each test iteration
             reset_client_manager()
+            # Reset warnings system to ensure clean state
+            warnings.resetwarnings()
 
             with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": env_value}):
                 with warnings.catch_warnings(record=True) as warning_list:
@@ -303,10 +309,14 @@ class TestSSLVerificationWarnings:
 
                     # Check warning behavior
                     if should_warn:
-                        assert len(warning_list) == 1, f"Expected warning for env_value: {env_value}"
+                        assert len(warning_list) == 1, (
+                            f"Expected warning for env_value: {env_value}, got {len(warning_list)} warnings"
+                        )
                         assert "SSL verification is DISABLED" in str(warning_list[0].message)
                     else:
-                        assert len(warning_list) == 0, f"Unexpected warning for env_value: {env_value}"
+                        assert len(warning_list) == 0, (
+                            f"Unexpected warning for env_value: {env_value}, got {len(warning_list)} warnings"
+                        )
 
 
 class TestHTTPClientManager:
