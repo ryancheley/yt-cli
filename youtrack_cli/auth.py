@@ -106,7 +106,7 @@ class AuthManager:
         # Reset the client manager to pick up new SSL settings
         reset_client_manager_sync()
 
-    def load_credentials(self) -> AuthConfig | None:
+    def load_credentials(self) -> Optional[AuthConfig]:
         """Load authentication credentials from keyring or config file.
 
         Returns:
