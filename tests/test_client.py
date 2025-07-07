@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from youtrack_cli.client import HTTPClientManager, get_client_manager, reset_client_manager
+from youtrack_cli.client import HTTPClientManager, get_client_manager, reset_client_manager_sync
 from youtrack_cli.exceptions import ConnectionError, YouTrackError, YouTrackNetworkError, YouTrackServerError
 from youtrack_cli.security import AuditLogger
 
@@ -19,14 +19,14 @@ class TestSSLVerificationWarnings:
     def setup_method(self):
         """Setup for each test method."""
         # Reset client manager before each test
-        reset_client_manager()
+        reset_client_manager_sync()
         # Clear any warnings that might be cached
         warnings.resetwarnings()
 
     def teardown_method(self):
         """Cleanup after each test method."""
         # Reset client manager after each test
-        reset_client_manager()
+        reset_client_manager_sync()
         # Clear any warnings that might be cached
         warnings.resetwarnings()
 
@@ -296,7 +296,7 @@ class TestSSLVerificationWarnings:
 
         for env_value, expected_ssl, should_warn in test_cases:
             # Reset client manager for each test iteration
-            reset_client_manager()
+            reset_client_manager_sync()
             # Reset warnings system to ensure clean state
             warnings.resetwarnings()
 
@@ -389,7 +389,7 @@ class TestSecurityIntegration:
     def test_client_manager_reset_functionality(self):
         """Test reset_client_manager functionality."""
         # Ensure clean state
-        reset_client_manager()
+        reset_client_manager_sync()
         warnings.resetwarnings()
 
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
@@ -400,7 +400,7 @@ class TestSecurityIntegration:
                 ssl_warnings1 = [w for w in warning_list1 if "SSL verification is DISABLED" in str(w.message)]
 
             # Reset and test second manager creation
-            reset_client_manager()
+            reset_client_manager_sync()
             with warnings.catch_warnings(record=True) as warning_list2:
                 warnings.simplefilter("always")
                 manager2 = get_client_manager()
@@ -411,17 +411,91 @@ class TestSecurityIntegration:
             assert len(ssl_warnings1) >= 1, f"Expected at least 1 SSL warning in first call, got {len(ssl_warnings1)}"
             assert len(ssl_warnings2) >= 1, f"Expected at least 1 SSL warning in second call, got {len(ssl_warnings2)}"
 
+    @pytest.mark.asyncio
+    async def test_reset_client_manager_async_cleanup(self):
+        """Test that reset_client_manager properly closes connections."""
+        from youtrack_cli.client import reset_client_manager
+
+        # Ensure clean state
+        reset_client_manager_sync()
+
+        # Get a manager and ensure it has a client
+        manager = get_client_manager()
+        async with manager.get_client() as client:
+            assert client is not None
+            assert not client.is_closed
+
+        # Reset asynchronously and verify cleanup
+        await reset_client_manager()
+
+        # Verify the client was closed
+        assert manager._client is None or manager._client.is_closed
+
+    @pytest.mark.asyncio
+    async def test_reset_client_manager_cleanup_error_handling(self):
+        """Test that reset_client_manager handles cleanup errors gracefully."""
+        from youtrack_cli.client import reset_client_manager
+
+        # Ensure clean state
+        reset_client_manager_sync()
+
+        # Get a manager
+        manager = get_client_manager()
+
+        # Mock the close method to raise an exception
+        with patch.object(manager, "close", side_effect=Exception("Test cleanup error")):
+            # This should not raise an exception
+            await reset_client_manager()
+
+        # Verify the manager was still reset despite the error
+        from youtrack_cli.client import _client_manager
+
+        assert _client_manager is None
+
+    def test_reset_client_manager_sync_compatibility(self):
+        """Test backwards compatibility of reset_client_manager_sync."""
+        # Ensure clean state
+        reset_client_manager_sync()
+
+        # Get a manager
+        manager1 = get_client_manager()
+
+        # Reset using sync version
+        reset_client_manager_sync()
+
+        # Get a new manager
+        manager2 = get_client_manager()
+
+        # Verify they are different instances
+        assert manager1 is not manager2
+
+    def test_reset_client_manager_sync_without_event_loop(self):
+        """Test reset_client_manager_sync when no event loop is running."""
+        # Ensure clean state
+        reset_client_manager_sync()
+
+        # Get a manager to ensure something exists to reset
+        get_client_manager()
+
+        # This should work without an event loop
+        reset_client_manager_sync()
+
+        # Verify cleanup occurred
+        from youtrack_cli.client import _client_manager
+
+        assert _client_manager is None
+
 
 class TestExceptionHandling:
     """Test exception handling in HTTPClientManager."""
 
     def setup_method(self):
         """Setup for each test method."""
-        reset_client_manager()
+        reset_client_manager_sync()
 
     def teardown_method(self):
         """Cleanup after each test method."""
-        reset_client_manager()
+        reset_client_manager_sync()
 
     @pytest.mark.asyncio
     async def test_network_error_retry_and_failure(self):

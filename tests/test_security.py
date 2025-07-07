@@ -517,10 +517,10 @@ class TestClientManagerSecurity:
 
     def test_get_client_manager_assertion(self):
         """Test that get_client_manager has proper assertion for security."""
-        from youtrack_cli.client import get_client_manager, reset_client_manager
+        from youtrack_cli.client import get_client_manager, reset_client_manager_sync
 
         # Reset client manager to ensure clean state
-        reset_client_manager()
+        reset_client_manager_sync()
 
         # Test normal operation - should not raise assertion error
         manager = get_client_manager()
@@ -531,17 +531,17 @@ class TestClientManagerSecurity:
         assert manager is manager2
 
         # Reset for clean state
-        reset_client_manager()
+        reset_client_manager_sync()
 
     def test_client_manager_ssl_verification(self):
         """Test that SSL verification setting is properly handled."""
         import os
         from unittest.mock import patch
 
-        from youtrack_cli.client import get_client_manager, reset_client_manager
+        from youtrack_cli.client import get_client_manager, reset_client_manager_sync
 
         # Reset client manager
-        reset_client_manager()
+        reset_client_manager_sync()
 
         # Test with SSL verification disabled
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
@@ -550,11 +550,11 @@ class TestClientManagerSecurity:
             assert manager._verify_ssl is False
 
         # Reset and test with SSL verification enabled (default)
-        reset_client_manager()
+        reset_client_manager_sync()
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "true"}):
             manager = get_client_manager()
             assert manager is not None
             assert manager._verify_ssl is True
 
         # Reset for clean state
-        reset_client_manager()
+        reset_client_manager_sync()

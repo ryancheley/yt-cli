@@ -25,6 +25,7 @@ __all__ = [
     "HTTPClientManager",
     "get_client_manager",
     "reset_client_manager",
+    "reset_client_manager_sync",
 ]
 
 logger = get_logger(__name__)
@@ -58,11 +59,15 @@ class HTTPClientManager:
         self._timeout = httpx.Timeout(default_timeout)
         self._verify_ssl = verify_ssl
         self._client: Optional[httpx.AsyncClient] = None
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure the HTTP client is initialized."""
         if self._client is None or self._client.is_closed:
+            # Create lock if it doesn't exist (for Python 3.9 compatibility)
+            if self._lock is None:
+                self._lock = asyncio.Lock()
+
             async with self._lock:
                 if self._client is None or self._client.is_closed:
                     self._client = httpx.AsyncClient(
@@ -472,10 +477,64 @@ async def cleanup_client_manager() -> None:
         _client_manager = None
 
 
-def reset_client_manager() -> None:
-    """Reset the global client manager to pick up new configuration."""
+async def reset_client_manager() -> None:
+    """Reset the global client manager and close existing connections.
+
+    This function properly closes any existing HTTP connections before
+    resetting the global client manager to prevent resource leaks.
+    """
     global _client_manager
     if _client_manager is not None:
-        # Note: This doesn't close the existing client immediately
-        # It will be recreated on next get_client_manager() call
-        _client_manager = None
+        try:
+            await _client_manager.close()
+            logger.debug("Client manager connections closed during reset")
+        except Exception as e:
+            logger.warning(
+                "Failed to close client manager connections during reset",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+        finally:
+            _client_manager = None
+
+
+def reset_client_manager_sync() -> None:
+    """Synchronous version of reset_client_manager for backwards compatibility.
+
+    This function provides backwards compatibility for existing code that
+    expects a synchronous reset operation. It handles event loop scenarios
+    appropriately across all Python versions.
+    """
+    global _client_manager
+
+    # First, try to do proper async cleanup if possible
+    try:
+        # Try to run async cleanup - this will work if no event loop is running
+        asyncio.run(reset_client_manager())
+        return
+    except RuntimeError:
+        # RuntimeError means either:
+        # 1. There's already an event loop running (Python 3.9+)
+        # 2. Some other async-related issue
+        pass
+    except Exception as e:
+        logger.warning(
+            "Failed to run async reset, falling back to sync reset",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+
+    # If async cleanup failed, do a simple sync reset
+    if _client_manager is not None:
+        try:
+            # Log what we're doing
+            logger.debug("Reset client manager without async cleanup (fallback mode)")
+            _client_manager = None
+        except Exception as e:
+            logger.warning(
+                "Failed to reset client manager in fallback mode",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+            # Force reset even if logging fails
+            _client_manager = None
