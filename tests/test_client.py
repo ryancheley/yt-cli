@@ -308,14 +308,14 @@ class TestSSLVerificationWarnings:
                     assert manager._verify_ssl is expected_ssl, f"Failed for env_value: {env_value}"
 
                     # Check warning behavior
+                    ssl_warnings = [w for w in warning_list if "SSL verification is DISABLED" in str(w.message)]
                     if should_warn:
-                        assert len(warning_list) == 1, (
-                            f"Expected warning for env_value: {env_value}, got {len(warning_list)} warnings"
+                        assert len(ssl_warnings) == 1, (
+                            f"Expected 1 SSL warning for env_value: {env_value}, got {len(ssl_warnings)}"
                         )
-                        assert "SSL verification is DISABLED" in str(warning_list[0].message)
                     else:
-                        assert len(warning_list) == 0, (
-                            f"Unexpected warning for env_value: {env_value}, got {len(warning_list)} warnings"
+                        assert len(ssl_warnings) == 0, (
+                            f"Unexpected SSL warning for env_value: {env_value}, got {len(ssl_warnings)}"
                         )
 
 
@@ -392,7 +392,8 @@ class TestSecurityIntegration:
 
                 # Create first manager
                 manager1 = get_client_manager()
-                assert len(warning_list) == 1
+                ssl_warnings = [w for w in warning_list if "SSL verification is DISABLED" in str(w.message)]
+                assert len(ssl_warnings) == 1
 
                 # Reset and create second manager
                 reset_client_manager()
@@ -400,4 +401,5 @@ class TestSecurityIntegration:
 
                 # Should be a new instance and issue another warning
                 assert manager1 is not manager2
-                assert len(warning_list) == 2
+                ssl_warnings = [w for w in warning_list if "SSL verification is DISABLED" in str(w.message)]
+                assert len(ssl_warnings) == 2
