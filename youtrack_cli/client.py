@@ -16,6 +16,8 @@ from .exceptions import (
     PermissionError,
     RateLimitError,
     YouTrackError,
+    YouTrackNetworkError,
+    YouTrackServerError,
 )
 from .logging import get_logger, log_api_call
 
@@ -225,26 +227,71 @@ class HTTPClientManager:
                 # Don't retry these errors
                 raise
 
-            except Exception as e:
+            except (httpx.RequestError, OSError) as e:
+                # Handle retryable network errors
                 if attempt < max_retries:
                     wait_time = 2**attempt
                     logger.warning(
-                        "Unexpected error, retrying",
+                        "Network error, retrying",
                         url=url,
                         attempt=attempt + 1,
                         wait_time=wait_time,
                         error=str(e),
+                        error_type=type(e).__name__,
                     )
                     await asyncio.sleep(wait_time)
                     continue
                 else:
                     logger.error(
-                        "Unexpected error occurred",
+                        "Network error after max retries",
                         url=url,
                         error=str(e),
+                        error_type=type(e).__name__,
                         max_retries=max_retries,
                     )
-                    raise YouTrackError(f"Unexpected error: {str(e)}") from e
+                    raise YouTrackNetworkError(f"Network error after {max_retries} retries: {str(e)}") from e
+
+            except httpx.HTTPStatusError as e:
+                # Handle server errors (5xx status codes) with retry
+                if e.response.status_code >= 500:
+                    if attempt < max_retries:
+                        wait_time = 2**attempt
+                        logger.warning(
+                            "Server error, retrying",
+                            url=url,
+                            attempt=attempt + 1,
+                            wait_time=wait_time,
+                            status_code=e.response.status_code,
+                            error=str(e),
+                        )
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        logger.error(
+                            "Server error after max retries",
+                            url=url,
+                            status_code=e.response.status_code,
+                            error=str(e),
+                            max_retries=max_retries,
+                        )
+                        raise YouTrackServerError(
+                            f"Server error after {max_retries} retries: {str(e)}", status_code=e.response.status_code
+                        ) from e
+                else:
+                    # For client errors (4xx), don't retry
+                    raise
+
+            except Exception as e:
+                # Handle truly unexpected errors with enhanced logging
+                logger.exception(
+                    "Unexpected error occurred",
+                    url=url,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    attempt=attempt + 1,
+                    max_retries=max_retries,
+                )
+                raise YouTrackError(f"Unexpected error: {str(e)}") from e
 
         # Should never reach here, but just in case
         raise YouTrackError("Maximum retry attempts exceeded")

@@ -3,11 +3,13 @@
 import os
 import warnings
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from youtrack_cli.client import HTTPClientManager, get_client_manager, reset_client_manager
+from youtrack_cli.exceptions import ConnectionError, YouTrackError, YouTrackNetworkError, YouTrackServerError
 from youtrack_cli.security import AuditLogger
 
 
@@ -408,3 +410,223 @@ class TestSecurityIntegration:
             assert manager1 is not manager2, "Managers should be different instances after reset"
             assert len(ssl_warnings1) >= 1, f"Expected at least 1 SSL warning in first call, got {len(ssl_warnings1)}"
             assert len(ssl_warnings2) >= 1, f"Expected at least 1 SSL warning in second call, got {len(ssl_warnings2)}"
+
+
+class TestExceptionHandling:
+    """Test exception handling in HTTPClientManager."""
+
+    def setup_method(self):
+        """Setup for each test method."""
+        reset_client_manager()
+
+    def teardown_method(self):
+        """Cleanup after each test method."""
+        reset_client_manager()
+
+    @pytest.mark.asyncio
+    async def test_network_error_retry_and_failure(self):
+        """Test network error handling with retry and eventual failure."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock request to raise a network error
+            mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
+
+            with pytest.raises(YouTrackNetworkError) as exc_info:
+                await manager.make_request("GET", "https://test.com")
+
+            # Verify the error message includes retry information
+            assert "Network error after 3 retries" in str(exc_info.value)
+            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+            assert mock_client.request.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_timeout_error_retry_and_failure(self):
+        """Test timeout error handling with retry and eventual failure."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock request to raise a timeout error
+            mock_client.request = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
+
+            with pytest.raises(ConnectionError) as exc_info:
+                await manager.make_request("GET", "https://test.com")
+
+            # Verify the error message is about timeout
+            assert "timed out" in str(exc_info.value)
+            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+            assert mock_client.request.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_os_error_retry_and_failure(self):
+        """Test OS error handling with retry and eventual failure."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock request to raise an OS error
+            mock_client.request = AsyncMock(side_effect=OSError("Network unavailable"))
+
+            with pytest.raises(YouTrackNetworkError) as exc_info:
+                await manager.make_request("GET", "https://test.com")
+
+            # Verify the error message includes retry information
+            assert "Network error after 3 retries" in str(exc_info.value)
+            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+            assert mock_client.request.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_server_error_retry_and_failure(self):
+        """Test server error (5xx) handling with retry and eventual failure."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock response for server error
+            mock_response = MagicMock()
+            mock_response.status_code = 500
+            mock_response.text = "Internal Server Error"
+
+            # Mock request to raise a server error
+            mock_client.request = AsyncMock(
+                side_effect=httpx.HTTPStatusError("Server error", request=MagicMock(), response=mock_response)
+            )
+
+            with pytest.raises(YouTrackServerError) as exc_info:
+                await manager.make_request("GET", "https://test.com")
+
+            # Verify the error message includes retry information
+            assert "Server error after 3 retries" in str(exc_info.value)
+            # Verify status code is captured
+            assert exc_info.value.status_code == 500
+            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+            assert mock_client.request.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_client_error_no_retry(self):
+        """Test client error (4xx) handling - should not retry."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock response for client error
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_response.text = "Not Found"
+
+            # Mock request to raise a client error
+            mock_client.request = AsyncMock(
+                side_effect=httpx.HTTPStatusError("Not found", request=MagicMock(), response=mock_response)
+            )
+
+            with pytest.raises(httpx.HTTPStatusError):
+                await manager.make_request("GET", "https://test.com")
+
+            # Verify it did not retry (only 1 attempt)
+            assert mock_client.request.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_network_error_successful_retry(self):
+        """Test successful retry after network error."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock successful response
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+
+            # Mock request to fail first time, then succeed
+            mock_client.request = AsyncMock(side_effect=[httpx.RequestError("Network error"), mock_response])
+
+            result = await manager.make_request("GET", "https://test.com")
+
+            # Verify the successful response was returned
+            assert result == mock_response
+            # Verify it retried once (2 attempts total)
+            assert mock_client.request.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_unexpected_error_handling(self):
+        """Test handling of truly unexpected errors."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock request to raise an unexpected error
+            mock_client.request = AsyncMock(side_effect=ValueError("Unexpected error"))
+
+            with pytest.raises(YouTrackError) as exc_info:
+                await manager.make_request("GET", "https://test.com")
+
+            # Verify the error message includes the unexpected error
+            assert "Unexpected error" in str(exc_info.value)
+            # Verify it did not retry (only 1 attempt)
+            assert mock_client.request.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_logging_for_network_errors(self):
+        """Test proper logging for network errors."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock request to raise a network error
+            mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
+
+            with patch("youtrack_cli.client.logger") as mock_logger:
+                with pytest.raises(YouTrackNetworkError):
+                    await manager.make_request("GET", "https://test.com")
+
+                # Verify warning logs were created for retries
+                assert mock_logger.warning.call_count == 3  # 3 retry attempts after initial failure
+                # Verify error log was created after max retries
+                assert mock_logger.error.call_count == 1
+
+                # Check that error type is logged
+                warning_calls = mock_logger.warning.call_args_list
+                for call in warning_calls:
+                    assert "error_type" in call[1]
+                    assert call[1]["error_type"] == "RequestError"
+
+    @pytest.mark.asyncio
+    async def test_logging_for_unexpected_errors(self):
+        """Test proper logging for unexpected errors."""
+        manager = HTTPClientManager()
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock request to raise an unexpected error
+            mock_client.request = AsyncMock(side_effect=ValueError("Unexpected error"))
+
+            with patch("youtrack_cli.client.logger") as mock_logger:
+                with pytest.raises(YouTrackError):
+                    await manager.make_request("GET", "https://test.com")
+
+                # Verify exception logging was called
+                assert mock_logger.exception.call_count == 1
+
+                # Check that error type is logged
+                exception_call = mock_logger.exception.call_args
+                assert "error_type" in exception_call[1]
+                assert exception_call[1]["error_type"] == "ValueError"

@@ -10,6 +10,8 @@ __all__ = [
     "NotFoundError",
     "PermissionError",
     "RateLimitError",
+    "YouTrackNetworkError",
+    "YouTrackServerError",
 ]
 
 
@@ -78,3 +80,20 @@ class RateLimitError(YouTrackError):
             message,
             suggestion=("Wait a moment and try again, or reduce the frequency of requests"),
         )
+
+
+class YouTrackNetworkError(YouTrackError):
+    """Network related errors that may be retryable."""
+
+    def __init__(self, message: str = "Network error occurred"):
+        super().__init__(message, suggestion="Check your internet connection and try again")
+
+
+class YouTrackServerError(YouTrackError):
+    """Server-side errors that may be retryable."""
+
+    def __init__(self, message: str = "Server error occurred", status_code: Optional[int] = None):
+        if status_code:
+            message = f"Server error (HTTP {status_code}): {message}"
+        super().__init__(message, suggestion="The server may be temporarily unavailable. Try again later")
+        self.status_code = status_code
