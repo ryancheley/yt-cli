@@ -59,11 +59,15 @@ class HTTPClientManager:
         self._timeout = httpx.Timeout(default_timeout)
         self._verify_ssl = verify_ssl
         self._client: Optional[httpx.AsyncClient] = None
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure the HTTP client is initialized."""
         if self._client is None or self._client.is_closed:
+            # Create lock if it doesn't exist (for Python 3.9 compatibility)
+            if self._lock is None:
+                self._lock = asyncio.Lock()
+
             async with self._lock:
                 if self._client is None or self._client.is_closed:
                     self._client = httpx.AsyncClient(
@@ -499,44 +503,38 @@ def reset_client_manager_sync() -> None:
 
     This function provides backwards compatibility for existing code that
     expects a synchronous reset operation. It handles event loop scenarios
-    appropriately.
+    appropriately across all Python versions.
     """
     global _client_manager
 
+    # First, try to do proper async cleanup if possible
     try:
-        # Try to get the current event loop
-        asyncio.get_running_loop()
-        # If we're in an event loop, we can't use run_until_complete
-        # Just do a simple reset without async cleanup to avoid complications
-        if _client_manager is not None:
-            try:
-                # Try to close synchronously if possible
-                if (
-                    hasattr(_client_manager, "_client")
-                    and _client_manager._client
-                    and not _client_manager._client.is_closed
-                ):
-                    # Can't call async close from sync context with running loop
-                    # Just reset - the connection will be cleaned up when GC'd
-                    logger.debug("Reset client manager without async cleanup (event loop running)")
-                _client_manager = None
-            except Exception as e:
-                logger.warning(
-                    "Failed to reset client manager",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
-                # Fall back to immediate reset
-                _client_manager = None
+        # Try to run async cleanup - this will work if no event loop is running
+        asyncio.run(reset_client_manager())
+        return
     except RuntimeError:
-        # No event loop running, we can create a new one and do proper cleanup
+        # RuntimeError means either:
+        # 1. There's already an event loop running (Python 3.9+)
+        # 2. Some other async-related issue
+        pass
+    except Exception as e:
+        logger.warning(
+            "Failed to run async reset, falling back to sync reset",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+
+    # If async cleanup failed, do a simple sync reset
+    if _client_manager is not None:
         try:
-            asyncio.run(reset_client_manager())
+            # Log what we're doing
+            logger.debug("Reset client manager without async cleanup (fallback mode)")
+            _client_manager = None
         except Exception as e:
             logger.warning(
-                "Failed to run async reset, falling back to sync reset",
+                "Failed to reset client manager in fallback mode",
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            # Fall back to immediate reset without cleanup
+            # Force reset even if logging fails
             _client_manager = None
