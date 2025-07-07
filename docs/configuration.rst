@@ -158,7 +158,7 @@ YouTrack Connection
      - Password for authentication
    * - ``youtrack.verify_ssl``
      - boolean
-     - Verify SSL certificates (default: true)
+     - Verify SSL certificates (default: true). **WARNING**: Disabling SSL verification is insecure and should only be used in development environments.
    * - ``youtrack.timeout``
      - integer
      - Request timeout in seconds (default: 30)

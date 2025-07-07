@@ -382,10 +382,33 @@ def get_client_manager() -> HTTPClientManager:
     if _client_manager is None:
         # Check for SSL verification setting from environment
         import os
+        import warnings
+
+        from .security import AuditLogger
 
         verify_ssl_str = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower()
         verify_ssl = verify_ssl_str not in ("false", "0", "no", "off")
+
+        # Issue security warning if SSL verification is disabled
+        if not verify_ssl:
+            warnings.warn(
+                "⚠️  SSL verification is DISABLED. This is insecure and should only be used in development.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        # Audit log SSL configuration for security compliance
+        audit_logger = AuditLogger()
+        audit_logger.log_command(
+            command="ssl_verification_config",
+            arguments=[f"YOUTRACK_VERIFY_SSL={verify_ssl_str}", f"verify_ssl={verify_ssl}"],
+            success=True,
+        )
+
         _client_manager = HTTPClientManager(verify_ssl=verify_ssl)
+
+        # Log the client manager initialization
+        logger.info("HTTP client manager initialized", verify_ssl=verify_ssl, env_var=verify_ssl_str)
 
     # At this point, _client_manager is guaranteed to be non-None
     client_manager = _client_manager

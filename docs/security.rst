@@ -118,6 +118,63 @@ The output will show:
 
 When creating tokens in YouTrack, note the expiration date. The CLI will automatically detect JWT token expiration where possible.
 
+SSL Verification Warnings
+-------------------------
+
+The CLI monitors SSL certificate verification settings and issues security warnings when SSL verification is disabled.
+
+**Features:**
+
+- Automatic detection of SSL verification bypass via environment variables
+- Security warnings displayed when SSL verification is disabled
+- Audit logging of SSL configuration changes for compliance tracking
+- Clear messaging about security implications
+
+**Usage:**
+
+By default, SSL verification is enabled and the CLI will verify certificates for all HTTPS connections to YouTrack::
+
+    # SSL verification enabled (default, secure)
+    yt issues list
+
+To disable SSL verification (for development environments only), set the environment variable::
+
+    # SSL verification disabled (INSECURE - development only)
+    export YOUTRACK_VERIFY_SSL=false
+    yt issues list
+
+When SSL verification is disabled, you will see a security warning::
+
+    ⚠️  SSL verification is DISABLED. This is insecure and should only be used in development.
+
+**Security Implications:**
+
+Disabling SSL verification exposes your connection to man-in-the-middle attacks where:
+
+- Attackers can intercept and read your API tokens and data
+- Malicious actors can modify requests and responses
+- Your YouTrack credentials and data may be compromised
+
+**Audit Logging:**
+
+All SSL configuration changes are automatically logged in the audit trail::
+
+    yt security audit
+
+This includes entries for:
+
+- SSL verification status (enabled/disabled)
+- Environment variable values
+- Timestamps of configuration changes
+
+**Best Practices:**
+
+1. **Never disable SSL verification in production environments**
+2. Only use ``YOUTRACK_VERIFY_SSL=false`` for local development with self-signed certificates
+3. Monitor audit logs for unexpected SSL verification changes
+4. Use proper CA-signed certificates in all production environments
+5. Consider using organizational certificate authorities for internal systems
+
 Sensitive Data Masking
 ---------------------
 
