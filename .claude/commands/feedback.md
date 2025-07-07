@@ -43,7 +43,7 @@ For each issue, provide:
 
 ## Write out your recomendations
 
-Write the recomendations to scratch/file-path-filename.md
+Write the recomendations to scratch/file-path-filename.md. If a directory is passed through your recomendations should be written to a specific markdown file for each file in the directory.
 
 ## Code to Review:
 $ARGUMENTS
