@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from dotenv import load_dotenv, set_key, unset_key
+from dotenv import dotenv_values, load_dotenv, set_key, unset_key
 
 __all__ = ["ConfigManager"]
 
@@ -20,7 +20,12 @@ class ConfigManager:
         """
         self.config_path = config_path or self._get_default_config_path()
         self._ensure_config_file_exists()
-        load_dotenv(self.config_path)
+        try:
+            load_dotenv(self.config_path)
+        except Exception:
+            # Ignore errors loading dotenv during initialization
+            # This allows the config manager to still work with malformed files
+            pass
 
     def _get_default_config_path(self) -> str:
         """Get the default configuration file path."""
@@ -44,7 +49,11 @@ class ConfigManager:
         """
         set_key(self.config_path, key, value)
         # Reload environment variables after setting
-        load_dotenv(self.config_path, override=True)
+        try:
+            load_dotenv(self.config_path, override=True)
+        except Exception:
+            # Ignore errors loading dotenv after setting
+            pass
 
     def get_config(self, key: str) -> Optional[str]:
         """Get a configuration value.
@@ -58,25 +67,21 @@ class ConfigManager:
         return os.getenv(key)
 
     def list_config(self) -> dict[str, str]:
-        """List all configuration values.
+        """List all configuration values from the config file.
 
         Returns:
             Dictionary of all configuration key-value pairs
         """
-        config = {}
-        if os.path.exists(self.config_path):
-            with open(self.config_path) as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        key, value = line.split("=", 1)
-                        # Remove quotes if present
-                        if value.startswith('"') and value.endswith('"'):
-                            value = value[1:-1]
-                        elif value.startswith("'") and value.endswith("'"):
-                            value = value[1:-1]
-                        config[key] = value
-        return config
+        if not os.path.exists(self.config_path):
+            return {}
+
+        try:
+            config = dict(dotenv_values(self.config_path))
+            # Filter out None values that dotenv_values might return
+            return {k: v for k, v in config.items() if v is not None}
+        except Exception:
+            # Return empty dict if parsing fails
+            return {}
 
     def unset_config(self, key: str) -> bool:
         """Unset a configuration value.
@@ -102,3 +107,58 @@ class ConfigManager:
             Path to configuration file
         """
         return self.config_path
+
+    def get_config_with_default(self, key: str, default: str = "") -> str:
+        """Get a configuration value with a default fallback.
+
+        Args:
+            key: Configuration key
+            default: Default value if key doesn't exist
+
+        Returns:
+            Configuration value or default
+        """
+        value = self.get_config(key)
+        return value if value is not None else default
+
+    def get_config_with_env_override(self, key: str, default: str = "") -> str:
+        """Get config value with environment variable override.
+
+        Args:
+            key: Configuration key
+            default: Default value if neither env var nor config exists
+
+        Returns:
+            Configuration value from environment variable, config file, or default
+        """
+        # Check environment variable first
+        env_key = f"YOUTRACK_{key.upper()}"
+        env_value = os.getenv(env_key)
+        if env_value is not None:
+            return env_value
+
+        # Fall back to config file
+        return self.get_config_with_default(key, default)
+
+    def validate_config(self) -> list[str]:
+        """Validate configuration file and return any errors.
+
+        Returns:
+            List of validation error messages
+        """
+        errors = []
+
+        if not os.path.exists(self.config_path):
+            return errors
+
+        try:
+            config = self.list_config()
+            # Add validation rules here
+            required_keys = ["youtrack_url", "youtrack_token"]
+            for key in required_keys:
+                if key not in config or not config[key]:
+                    errors.append(f"Missing required configuration: {key}")
+        except Exception as e:
+            errors.append(f"Invalid configuration file format: {e}")
+
+        return errors

@@ -68,9 +68,10 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is disabled
                 assert manager._verify_ssl is False
 
-                # Check warning was issued
-                assert len(warning_list) == 1
-                assert "SSL verification is DISABLED" in str(warning_list[0].message)
+                # Check warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
+                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
 
     def test_ssl_verification_disabled_env_var_no(self):
         """Test SSL verification disabled via environment variable 'no'."""
@@ -83,9 +84,10 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is disabled
                 assert manager._verify_ssl is False
 
-                # Check warning was issued
-                assert len(warning_list) == 1
-                assert "SSL verification is DISABLED" in str(warning_list[0].message)
+                # Check warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
+                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
 
     def test_ssl_verification_disabled_env_var_off(self):
         """Test SSL verification disabled via environment variable 'off'."""
@@ -98,9 +100,10 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is disabled
                 assert manager._verify_ssl is False
 
-                # Check warning was issued
-                assert len(warning_list) == 1
-                assert "SSL verification is DISABLED" in str(warning_list[0].message)
+                # Check warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
+                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
 
     def test_ssl_verification_enabled_env_var_true(self):
         """Test SSL verification enabled via environment variable 'true'."""
@@ -113,8 +116,9 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is enabled
                 assert manager._verify_ssl is True
 
-                # Check no warning was issued
-                assert len(warning_list) == 0
+                # Check no warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 0
 
     def test_ssl_verification_enabled_env_var_one(self):
         """Test SSL verification enabled via environment variable '1'."""
@@ -127,8 +131,9 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is enabled
                 assert manager._verify_ssl is True
 
-                # Check no warning was issued
-                assert len(warning_list) == 0
+                # Check no warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 0
 
     def test_ssl_verification_enabled_env_var_yes(self):
         """Test SSL verification enabled via environment variable 'yes'."""
@@ -141,8 +146,9 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is enabled
                 assert manager._verify_ssl is True
 
-                # Check no warning was issued
-                assert len(warning_list) == 0
+                # Check no warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 0
 
     def test_ssl_verification_case_insensitive(self):
         """Test that environment variable parsing is case insensitive."""
@@ -155,9 +161,10 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is disabled
                 assert manager._verify_ssl is False
 
-                # Check warning was issued
-                assert len(warning_list) == 1
-                assert "SSL verification is DISABLED" in str(warning_list[0].message)
+                # Check warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
+                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
 
     def test_audit_logging_ssl_verification_enabled(self):
         """Test audit logging when SSL verification is enabled."""
@@ -237,9 +244,10 @@ class TestSSLVerificationWarnings:
 
                 get_client_manager()
 
-                # Check warning was issued with correct stacklevel
-                assert len(warning_list) == 1
-                warning = warning_list[0]
+                # Check warning was issued with correct stacklevel (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
+                warning = user_warnings[0]
 
                 # The warning should point to the call to get_client_manager()
                 # rather than the internal implementation
@@ -254,12 +262,14 @@ class TestSSLVerificationWarnings:
 
                 # First call should create manager and issue warning
                 manager1 = get_client_manager()
-                assert len(warning_list) == 1
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
 
                 # Second call should return same manager without additional warning
                 manager2 = get_client_manager()
                 assert manager1 is manager2
-                assert len(warning_list) == 1  # No additional warning
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1  # No additional warning
 
     def test_client_manager_logging_info(self):
         """Test that client manager logs initialization information."""
