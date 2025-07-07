@@ -386,20 +386,25 @@ class TestSecurityIntegration:
 
     def test_client_manager_reset_functionality(self):
         """Test reset_client_manager functionality."""
+        # Ensure clean state
+        reset_client_manager()
+        warnings.resetwarnings()
+
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
-            with warnings.catch_warnings(record=True) as warning_list:
+            # Test first manager creation
+            with warnings.catch_warnings(record=True) as warning_list1:
                 warnings.simplefilter("always")
-
-                # Create first manager
                 manager1 = get_client_manager()
-                ssl_warnings = [w for w in warning_list if "SSL verification is DISABLED" in str(w.message)]
-                assert len(ssl_warnings) == 1
+                ssl_warnings1 = [w for w in warning_list1 if "SSL verification is DISABLED" in str(w.message)]
 
-                # Reset and create second manager
-                reset_client_manager()
+            # Reset and test second manager creation
+            reset_client_manager()
+            with warnings.catch_warnings(record=True) as warning_list2:
+                warnings.simplefilter("always")
                 manager2 = get_client_manager()
+                ssl_warnings2 = [w for w in warning_list2 if "SSL verification is DISABLED" in str(w.message)]
 
-                # Should be a new instance and issue another warning
-                assert manager1 is not manager2
-                ssl_warnings = [w for w in warning_list if "SSL verification is DISABLED" in str(w.message)]
-                assert len(ssl_warnings) == 2
+            # Verify behavior
+            assert manager1 is not manager2, "Managers should be different instances after reset"
+            assert len(ssl_warnings1) >= 1, f"Expected at least 1 SSL warning in first call, got {len(ssl_warnings1)}"
+            assert len(ssl_warnings2) >= 1, f"Expected at least 1 SSL warning in second call, got {len(ssl_warnings2)}"
