@@ -5,8 +5,10 @@ This module provides typed models for all YouTrack API responses,
 replacing generic dictionary returns with proper type safety.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -35,8 +37,8 @@ class ApiResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     status: Literal["success", "error"] = "success"
-    message: Optional[str] = None
-    data: Optional[dict[str, Any]] = None
+    message: str | None = None
+    data: dict[str, Any] | None = None
 
 
 class YouTrackUser(BaseModel):
@@ -45,17 +47,17 @@ class YouTrackUser(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     login: str
-    full_name: Optional[str] = Field(None, alias="fullName")
-    email: Optional[str] = None
-    jabber_account_name: Optional[str] = Field(None, alias="jabberAccountName")
-    ring_id: Optional[str] = Field(None, alias="ringId")
+    full_name: str | None = Field(None, alias="fullName")
+    email: str | None = None
+    jabber_account_name: str | None = Field(None, alias="jabberAccountName")
+    ring_id: str | None = Field(None, alias="ringId")
     guest: bool = False
     online: bool = False
     banned: bool = False
-    tags: Optional[list[str]] = None
-    saved_queries: Optional[list[str]] = Field(None, alias="savedQueries")
-    avatar_url: Optional[str] = Field(None, alias="avatarUrl")
-    profiles: Optional[dict[str, Any]] = None
+    tags: list[str] | None = None
+    saved_queries: list[str] | None = Field(None, alias="savedQueries")
+    avatar_url: str | None = Field(None, alias="avatarUrl")
+    profiles: dict[str, Any] | None = None
 
 
 class YouTrackProject(BaseModel):
@@ -66,11 +68,11 @@ class YouTrackProject(BaseModel):
     id: str
     name: str
     short_name: str = Field(alias="shortName")
-    description: Optional[str] = None
-    leader: Optional[YouTrackUser] = None
-    created_by: Optional[YouTrackUser] = Field(None, alias="createdBy")
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
+    description: str | None = None
+    leader: YouTrackUser | None = None
+    created_by: YouTrackUser | None = Field(None, alias="createdBy")
+    created: datetime | None = None
+    updated: datetime | None = None
     resolved_issues_count: int = Field(0, alias="resolvedIssuesCount")
     issues_count: int = Field(0, alias="issuesCount")
     archived: bool = False
@@ -84,13 +86,13 @@ class YouTrackCustomField(BaseModel):
 
     id: str
     name: str
-    field_type: Optional[str] = Field(None, alias="fieldType")
+    field_type: str | None = Field(None, alias="fieldType")
     has_state_field: bool = Field(False, alias="hasStateField")
     is_public: bool = Field(True, alias="isPublic")
     ordinal: int = 0
-    aliases: Optional[list[str]] = None
+    aliases: list[str] | None = None
     auto_attached: bool = Field(False, alias="autoAttached")
-    value: Optional[Union[str, int, float, bool, list[Any]]] = None
+    value: str | int | float | bool | list[Any] | None = None
 
 
 class YouTrackIssueTag(BaseModel):
@@ -100,8 +102,8 @@ class YouTrackIssueTag(BaseModel):
 
     id: str
     name: str
-    query: Optional[str] = None
-    color: Optional[str] = None
+    query: str | None = None
+    color: str | None = None
     untagged: bool = False
     visible_for_author: bool = Field(True, alias="visibleForAuthor")
     visible_for_assignee: bool = Field(True, alias="visibleForAssignee")
@@ -114,14 +116,14 @@ class YouTrackComment(BaseModel):
 
     id: str
     text: str
-    text_preview: Optional[str] = Field(None, alias="textPreview")
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
-    author: Optional[YouTrackUser] = None
-    issue_id: Optional[str] = Field(None, alias="issueId")
-    parent_id: Optional[str] = Field(None, alias="parentId")
+    text_preview: str | None = Field(None, alias="textPreview")
+    created: datetime | None = None
+    updated: datetime | None = None
+    author: YouTrackUser | None = None
+    issue_id: str | None = Field(None, alias="issueId")
+    parent_id: str | None = Field(None, alias="parentId")
     deleted: bool = False
-    visibility: Optional[dict[str, Any]] = None
+    visibility: dict[str, Any] | None = None
 
 
 class YouTrackAttachment(BaseModel):
@@ -131,15 +133,15 @@ class YouTrackAttachment(BaseModel):
 
     id: str
     name: str
-    author: Optional[YouTrackUser] = None
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
-    size: Optional[int] = None
-    extension: Optional[str] = None
-    charset: Optional[str] = None
-    mime_type: Optional[str] = Field(None, alias="mimeType")
-    metadata_string: Optional[str] = Field(None, alias="metadataString")
-    url: Optional[str] = None
+    author: YouTrackUser | None = None
+    created: datetime | None = None
+    updated: datetime | None = None
+    size: int | None = None
+    extension: str | None = None
+    charset: str | None = None
+    mime_type: str | None = Field(None, alias="mimeType")
+    metadata_string: str | None = Field(None, alias="metadataString")
+    url: str | None = None
 
 
 class YouTrackIssue(BaseModel):
@@ -150,25 +152,25 @@ class YouTrackIssue(BaseModel):
     id: str
     entity_id: str = Field(alias="entityId")
     field_hash: int = Field(alias="fieldHash")
-    project: Optional[YouTrackProject] = None
+    project: YouTrackProject | None = None
     number: int
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
-    updater: Optional[YouTrackUser] = None
-    resolved: Optional[datetime] = None
-    reporter: Optional[YouTrackUser] = None
+    created: datetime | None = None
+    updated: datetime | None = None
+    updater: YouTrackUser | None = None
+    resolved: datetime | None = None
+    reporter: YouTrackUser | None = None
     summary: str
-    description: Optional[str] = None
+    description: str | None = None
     custom_fields: list[YouTrackCustomField] = Field(default_factory=list, alias="customFields")
     tags: list[YouTrackIssueTag] = Field(default_factory=list)
     comments: list[YouTrackComment] = Field(default_factory=list)
     attachments: list[YouTrackAttachment] = Field(default_factory=list)
     links: list[dict[str, Any]] = Field(default_factory=list)
-    visibility: Optional[dict[str, Any]] = None
+    visibility: dict[str, Any] | None = None
     votes: int = 0
     votes_count: int = Field(0, alias="votesCount")
-    wiki_text: Optional[str] = Field(None, alias="wikiText")
-    text_preview: Optional[str] = Field(None, alias="textPreview")
+    wiki_text: str | None = Field(None, alias="wikiText")
+    text_preview: str | None = Field(None, alias="textPreview")
     has_star: bool = Field(False, alias="hasStar")
 
 
@@ -181,7 +183,7 @@ class YouTrackBoard(BaseModel):
     name: str
     favorite: bool = False
     orphans_at_the_top: bool = Field(True, alias="orphansAtTheTop")
-    estimate_field: Optional[YouTrackCustomField] = Field(None, alias="estimateField")
+    estimate_field: YouTrackCustomField | None = Field(None, alias="estimateField")
     columns: list[dict[str, Any]] = Field(default_factory=list)
     swimlanes: list[dict[str, Any]] = Field(default_factory=list)
     trimmed_swimlanes: list[dict[str, Any]] = Field(default_factory=list, alias="trimmedSwimlanes")
@@ -193,14 +195,14 @@ class YouTrackTimeTracking(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     id: str
-    date: Optional[datetime] = None
-    duration: Optional[int] = None  # in minutes
-    description: Optional[str] = None
-    author: Optional[YouTrackUser] = None
-    issue: Optional[YouTrackIssue] = None
-    work_type: Optional[str] = Field(None, alias="workType")
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
+    date: datetime | None = None
+    duration: int | None = None  # in minutes
+    description: str | None = None
+    author: YouTrackUser | None = None
+    issue: YouTrackIssue | None = None
+    work_type: str | None = Field(None, alias="workType")
+    created: datetime | None = None
+    updated: datetime | None = None
 
 
 class YouTrackWorkItem(BaseModel):
@@ -209,14 +211,14 @@ class YouTrackWorkItem(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     id: str
-    author: Optional[YouTrackUser] = None
-    creator: Optional[YouTrackUser] = None
-    text: Optional[str] = None
-    type: Optional[str] = None
-    date: Optional[datetime] = None
-    duration: Optional[int] = None  # in minutes
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
+    author: YouTrackUser | None = None
+    creator: YouTrackUser | None = None
+    text: str | None = None
+    type: str | None = None
+    date: datetime | None = None
+    duration: int | None = None  # in minutes
+    created: datetime | None = None
+    updated: datetime | None = None
 
 
 class YouTrackReport(BaseModel):
@@ -226,14 +228,14 @@ class YouTrackReport(BaseModel):
 
     id: str
     name: str
-    query: Optional[str] = None
+    query: str | None = None
     own: bool = False
     shared: bool = False
     pinned: bool = False
-    data: Optional[dict[str, Any]] = None
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
-    author: Optional[YouTrackUser] = None
+    data: dict[str, Any] | None = None
+    created: datetime | None = None
+    updated: datetime | None = None
+    author: YouTrackUser | None = None
 
 
 class YouTrackArticle(BaseModel):
@@ -244,16 +246,16 @@ class YouTrackArticle(BaseModel):
     id: str
     id_readable: str = Field(alias="idReadable")
     summary: str
-    content: Optional[str] = None
-    created: Optional[datetime] = None
-    updated: Optional[datetime] = None
-    updater: Optional[YouTrackUser] = None
-    reporter: Optional[YouTrackUser] = None
-    project: Optional[YouTrackProject] = None
-    visibility: Optional[dict[str, Any]] = None
+    content: str | None = None
+    created: datetime | None = None
+    updated: datetime | None = None
+    updater: YouTrackUser | None = None
+    reporter: YouTrackUser | None = None
+    project: YouTrackProject | None = None
+    visibility: dict[str, Any] | None = None
     attachments: list[YouTrackAttachment] = Field(default_factory=list)
     tags: list[YouTrackIssueTag] = Field(default_factory=list)
-    parent_article: Optional[str] = Field(None, alias="parentArticle")
+    parent_article: str | None = Field(None, alias="parentArticle")
     child_articles: list[str] = Field(default_factory=list, alias="childArticles")
     ordinal: int = 0
 
@@ -268,9 +270,9 @@ class YouTrackSearchResult(BaseModel):
     top: int = 0
     has_after: bool = Field(False, alias="hasAfter")
     has_before: bool = Field(False, alias="hasBefore")
-    after_cursor: Optional[str] = Field(None, alias="afterCursor")
-    before_cursor: Optional[str] = Field(None, alias="beforeCursor")
-    results: list[Union[YouTrackIssue, YouTrackArticle, YouTrackUser, YouTrackProject]] = Field(default_factory=list)
+    after_cursor: str | None = Field(None, alias="afterCursor")
+    before_cursor: str | None = Field(None, alias="beforeCursor")
+    results: list[YouTrackIssue | YouTrackArticle | YouTrackUser | YouTrackProject] = Field(default_factory=list)
 
 
 class YouTrackErrorResponse(BaseModel):
@@ -279,10 +281,10 @@ class YouTrackErrorResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     error: str
-    error_description: Optional[str] = Field(None, alias="error_description")
-    error_developer_message: Optional[str] = Field(None, alias="error_developer_message")
-    error_code: Optional[str] = Field(None, alias="error_code")
-    localized_error: Optional[str] = Field(None, alias="localized_error")
+    error_description: str | None = Field(None, alias="error_description")
+    error_developer_message: str | None = Field(None, alias="error_developer_message")
+    error_code: str | None = Field(None, alias="error_code")
+    localized_error: str | None = Field(None, alias="localized_error")
 
 
 class CredentialVerificationResult(BaseModel):
@@ -291,7 +293,7 @@ class CredentialVerificationResult(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     status: Literal["success", "error"]
-    username: Optional[str] = None
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-    message: Optional[str] = None
+    username: str | None = None
+    full_name: str | None = None
+    email: str | None = None
+    message: str | None = None

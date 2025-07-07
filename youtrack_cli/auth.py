@@ -1,9 +1,10 @@
 """Authentication management for YouTrack CLI."""
 
+from __future__ import annotations
+
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -22,8 +23,8 @@ class AuthConfig(BaseModel):
 
     base_url: str = Field(..., description="YouTrack instance URL")
     token: str = Field(..., description="API token for authentication")
-    username: Optional[str] = Field(None, description="Username (optional)")
-    token_expiry: Optional[datetime] = Field(None, description="Token expiration date")
+    username: str | None = Field(None, description="Username (optional)")
+    token_expiry: datetime | None = Field(None, description="Token expiration date")
 
 
 class AuthManager:
@@ -31,8 +32,8 @@ class AuthManager:
 
     def __init__(
         self,
-        config_path: Optional[str] = None,
-        security_config: Optional[SecurityConfig] = None,
+        config_path: str | None = None,
+        security_config: SecurityConfig | None = None,
     ):
         """Initialize the auth manager.
 
@@ -57,8 +58,8 @@ class AuthManager:
         self,
         base_url: str,
         token: str,
-        username: Optional[str] = None,
-        token_expiry: Optional[datetime] = None,
+        username: str | None = None,
+        token_expiry: datetime | None = None,
         use_keyring: bool = True,
         verify_ssl: bool = True,
     ) -> None:
@@ -106,7 +107,7 @@ class AuthManager:
         # Reset the client manager to pick up new SSL settings
         reset_client_manager_sync()
 
-    def load_credentials(self) -> Optional[AuthConfig]:
+    def load_credentials(self) -> AuthConfig | None:
         """Load authentication credentials from keyring or config file.
 
         Returns:
