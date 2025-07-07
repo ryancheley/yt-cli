@@ -22,6 +22,7 @@ from .logging import get_logger, log_api_call
 __all__ = [
     "HTTPClientManager",
     "get_client_manager",
+    "reset_client_manager",
 ]
 
 logger = get_logger(__name__)
@@ -382,7 +383,8 @@ def get_client_manager() -> HTTPClientManager:
         # Check for SSL verification setting from environment
         import os
 
-        verify_ssl = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower() != "false"
+        verify_ssl_str = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower()
+        verify_ssl = verify_ssl_str not in ("false", "0", "no", "off")
         _client_manager = HTTPClientManager(verify_ssl=verify_ssl)
     # Type checker note: _client_manager is guaranteed to be non-None here
     return _client_manager  # type: ignore[return-value]
@@ -394,4 +396,13 @@ async def cleanup_client_manager() -> None:
     manager = _client_manager
     if manager is not None:
         await manager.close()
+        _client_manager = None
+
+
+def reset_client_manager() -> None:
+    """Reset the global client manager to pick up new configuration."""
+    global _client_manager
+    if _client_manager is not None:
+        # Note: This doesn't close the existing client immediately
+        # It will be recreated on next get_client_manager() call
         _client_manager = None

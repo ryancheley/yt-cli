@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 from rich.console import Console
 
+from .client import reset_client_manager
 from .security import CredentialManager, SecurityConfig, TokenManager
 
 __all__ = ["AuthConfig", "AuthManager"]
@@ -101,6 +102,9 @@ class AuthManager:
                 "[yellow]⚠[/yellow] Credentials stored in plain text file. Consider using keyring for better security."
             )
 
+        # Reset the client manager to pick up new SSL settings
+        reset_client_manager()
+
     def load_credentials(self) -> Optional[AuthConfig]:
         """Load authentication credentials from keyring or config file.
 
@@ -170,10 +174,14 @@ class AuthManager:
             self.credential_manager.delete_credential("youtrack_token")
             self.credential_manager.delete_credential("youtrack_username")
             self.credential_manager.delete_credential("youtrack_token_expiry")
+            self.credential_manager.delete_credential("youtrack_verify_ssl")
 
         # Clear from file
         if os.path.exists(self.config_path):
             os.remove(self.config_path)
+
+        # Reset the client manager to pick up new SSL settings
+        reset_client_manager()
 
     def _check_token_expiration(self, config: AuthConfig) -> None:
         """Check token expiration and warn user if needed."""
