@@ -1,5 +1,6 @@
 """Tests for configuration functionality."""
 
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -171,3 +172,142 @@ class TestConfigManager:
             ConfigManager(str(config_path))
             assert config_dir.exists()
             assert config_path.exists()
+
+    def test_list_config_with_complex_values(self):
+        """Test list_config with complex values containing equals signs."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+
+            # Create config file with complex values
+            with open(config_path, "w") as f:
+                f.write("KEY1=value=with=equals\n")
+                f.write('KEY2="quoted value with = signs"\n')
+                f.write("KEY3='single quoted value with = signs'\n")
+                f.write("URL=https://example.com/path?param=value&other=value\n")
+
+            manager = ConfigManager(str(config_path))
+            config_values = manager.list_config()
+
+            assert config_values["KEY1"] == "value=with=equals"
+            assert config_values["KEY2"] == "quoted value with = signs"
+            assert config_values["KEY3"] == "single quoted value with = signs"
+            assert config_values["URL"] == "https://example.com/path?param=value&other=value"
+
+    def test_list_config_with_malformed_file(self):
+        """Test list_config with malformed config file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+
+            # Create malformed config file
+            with open(config_path, "wb") as f:
+                f.write(b"\xff\xfe\x00\x00malformed")  # Invalid UTF-8
+
+            manager = ConfigManager(str(config_path))
+            config_values = manager.list_config()
+
+            # Should return empty dict for malformed files
+            assert config_values == {}
+
+    def test_get_config_with_default(self):
+        """Test get_config_with_default method."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+            manager = ConfigManager(str(config_path))
+
+            # Test with nonexistent key
+            value = manager.get_config_with_default("NONEXISTENT", "default_value")
+            assert value == "default_value"
+
+            # Test with existing key
+            manager.set_config("EXISTING_KEY", "existing_value")
+            value = manager.get_config_with_default("EXISTING_KEY", "default_value")
+            assert value == "existing_value"
+
+    def test_get_config_with_env_override(self):
+        """Test get_config_with_env_override method."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+            manager = ConfigManager(str(config_path))
+
+            # Set config value
+            manager.set_config("test_key", "config_value")
+
+            # Test without environment variable
+            value = manager.get_config_with_env_override("test_key", "default")
+            assert value == "config_value"
+
+            # Test with environment variable override
+            with patch.dict(os.environ, {"YOUTRACK_TEST_KEY": "env_value"}):
+                value = manager.get_config_with_env_override("test_key", "default")
+                assert value == "env_value"
+
+            # Test with nonexistent key and default
+            value = manager.get_config_with_env_override("nonexistent", "default")
+            assert value == "default"
+
+    def test_validate_config_empty_file(self):
+        """Test validate_config with empty config file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+            manager = ConfigManager(str(config_path))
+
+            errors = manager.validate_config()
+            assert len(errors) == 2  # Missing youtrack_url and youtrack_token
+            assert "Missing required configuration: youtrack_url" in errors
+            assert "Missing required configuration: youtrack_token" in errors
+
+    def test_validate_config_valid_file(self):
+        """Test validate_config with valid config file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+            manager = ConfigManager(str(config_path))
+
+            # Set required configuration
+            manager.set_config("youtrack_url", "https://example.youtrack.cloud")
+            manager.set_config("youtrack_token", "perm:token")
+
+            errors = manager.validate_config()
+            assert len(errors) == 0
+
+    def test_validate_config_partial_file(self):
+        """Test validate_config with partially valid config file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+            manager = ConfigManager(str(config_path))
+
+            # Set only one required configuration
+            manager.set_config("youtrack_url", "https://example.youtrack.cloud")
+
+            errors = manager.validate_config()
+            assert len(errors) == 1
+            assert "Missing required configuration: youtrack_token" in errors
+
+    def test_validate_config_nonexistent_file(self):
+        """Test validate_config with nonexistent config file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "nonexistent.env"
+            manager = ConfigManager(str(config_path))
+
+            # Remove the file that was created by initialization
+            Path(config_path).unlink()
+
+            errors = manager.validate_config()
+            assert len(errors) == 0  # No errors for nonexistent file
+
+    def test_backwards_compatibility(self):
+        """Test that the new implementation is backwards compatible."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+
+            # Create config file with old format (should still work)
+            with open(config_path, "w") as f:
+                f.write("KEY1=value1\n")
+                f.write("KEY2=value2\n")
+                f.write("# Comment line\n")
+                f.write("\n")  # Empty line
+                f.write("KEY3=value3\n")
+
+            manager = ConfigManager(str(config_path))
+            config_values = manager.list_config()
+
+            assert config_values == {"KEY1": "value1", "KEY2": "value2", "KEY3": "value3"}
