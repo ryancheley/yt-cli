@@ -25,6 +25,25 @@ class ProjectManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    def _parse_json_response(self, response: httpx.Response) -> Any:
+        """Safely parse JSON response, handling empty or non-JSON responses."""
+        try:
+            content_type = response.headers.get("content-type", "")
+            if not response.text:
+                raise ValueError("Empty response body")
+
+            if "application/json" not in content_type:
+                raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
+
+            return response.json()
+        except Exception as e:
+            # Try to provide more context about the error
+            status_code = response.status_code
+            preview = response.text[:200] if response.text else "empty"
+            raise ValueError(
+                f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
+            ) from e
+
     async def list_projects(
         self,
         fields: Optional[str] = None,
@@ -72,7 +91,18 @@ class ProjectManager:
                 timeout=10.0,
             )
 
-            projects = response.json()
+            projects = self._parse_json_response(response)
+
+            # Ensure we have a valid list of projects
+            if projects is None:
+                return {"status": "error", "message": "No project data received from YouTrack API"}
+
+            if not isinstance(projects, list):
+                data_type = type(projects).__name__
+                return {
+                    "status": "error",
+                    "message": f"Unexpected data format from YouTrack API: expected list, got {data_type}",
+                }
 
             # Filter archived projects if requested
             if not show_archived:
@@ -80,6 +110,8 @@ class ProjectManager:
 
             return {"status": "success", "data": projects, "count": len(projects)}
 
+        except ValueError as e:
+            return {"status": "error", "message": f"Failed to parse response: {e}"}
         except httpx.HTTPError as e:
             return {"status": "error", "message": f"HTTP error: {e}"}
         except Exception as e:

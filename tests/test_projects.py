@@ -53,6 +53,9 @@ class TestProjectManager:
         with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_projects
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = "mock response body"
+            mock_response.status_code = 200
             mock_response.raise_for_status.return_value = None
 
             mock_client_manager = Mock()
@@ -89,6 +92,9 @@ class TestProjectManager:
         with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_projects
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = "mock response body"
+            mock_response.status_code = 200
             mock_response.raise_for_status.return_value = None
 
             mock_client_manager = Mock()
