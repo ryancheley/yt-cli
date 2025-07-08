@@ -9,6 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.config import ConfigManager
 
 
 class TestAuthConfig:
@@ -80,24 +81,26 @@ class TestAuthManager:
             use_keyring=False,
         )
 
-        with open(self.config_path) as f:
-            content = f.read()
+        # Use ConfigManager to read values instead of raw file content
+        config_manager = ConfigManager(self.config_path)
+        config_values = config_manager.list_config()
 
-        assert "YOUTRACK_BASE_URL=https://example.youtrack.cloud" in content
-        assert "YOUTRACK_TOKEN=test-token-123" in content
-        assert "YOUTRACK_USERNAME=testuser" in content
+        assert config_values.get("YOUTRACK_BASE_URL") == "https://example.youtrack.cloud"
+        assert config_values.get("YOUTRACK_TOKEN") == "test-token-123"
+        assert config_values.get("YOUTRACK_USERNAME") == "testuser"
 
     def test_save_credentials_without_username(self):
         """Test saving credentials without username."""
         # Force file storage instead of keyring for this test
         self.auth_manager.save_credentials("https://example.youtrack.cloud", "test-token-123", use_keyring=False)
 
-        with open(self.config_path) as f:
-            content = f.read()
+        # Use ConfigManager to read values instead of raw file content
+        config_manager = ConfigManager(self.config_path)
+        config_values = config_manager.list_config()
 
-        assert "YOUTRACK_BASE_URL=https://example.youtrack.cloud" in content
-        assert "YOUTRACK_TOKEN=test-token-123" in content
-        assert "YOUTRACK_USERNAME" not in content
+        assert config_values.get("YOUTRACK_BASE_URL") == "https://example.youtrack.cloud"
+        assert config_values.get("YOUTRACK_TOKEN") == "test-token-123"
+        assert "YOUTRACK_USERNAME" not in config_values
 
     @patch.dict(
         os.environ,
@@ -149,22 +152,37 @@ class TestAuthManager:
 
     def test_clear_credentials(self):
         """Test clearing credentials."""
-        # Create config file
-        with open(self.config_path, "w") as f:
-            f.write("YOUTRACK_TOKEN=test-token")
+        # Create config file with auth-related data
+        config_manager = ConfigManager(self.config_path)
+        config_manager.set_config("YOUTRACK_TOKEN", "test-token")
+        config_manager.set_config("YOUTRACK_BASE_URL", "https://example.youtrack.cloud")
+        config_manager.set_config("OTHER_CONFIG", "should_remain")
 
         assert os.path.exists(self.config_path)
 
         self.auth_manager.clear_credentials()
 
-        assert not os.path.exists(self.config_path)
+        # File should still exist but auth keys should be removed
+        assert os.path.exists(self.config_path)
+        config_values = config_manager.list_config()
+        assert "YOUTRACK_TOKEN" not in config_values
+        assert "YOUTRACK_BASE_URL" not in config_values
+        assert config_values.get("OTHER_CONFIG") == "should_remain"
 
     def test_clear_credentials_no_file(self):
         """Test clearing credentials when no file exists."""
-        assert not os.path.exists(self.config_path)
+        # ConfigManager will create the file, so let's remove it first
+        if os.path.exists(self.config_path):
+            os.remove(self.config_path)
 
-        # Should not raise an error
+        # Should not raise an error even if file doesn't exist
         self.auth_manager.clear_credentials()
+
+        # File will be created by ConfigManager but should be empty
+        config_manager = ConfigManager(self.config_path)
+        config_values = config_manager.list_config()
+        assert "YOUTRACK_TOKEN" not in config_values
+        assert "YOUTRACK_BASE_URL" not in config_values
 
     @pytest.mark.asyncio
     async def test_verify_credentials_success(self):
@@ -197,3 +215,75 @@ class TestAuthManager:
 
         assert result.status == "error"
         assert "HTTP Error" in result.message
+
+    @patch("youtrack_cli.auth.CredentialManager")
+    def test_save_credentials_with_keyring_persists_config(self, mock_cred_manager):
+        """Test that save_credentials with keyring still persists non-sensitive config to .env."""
+        # Mock the credential manager to simulate keyring storage
+        mock_cred_manager_instance = MagicMock()
+        mock_cred_manager.return_value = mock_cred_manager_instance
+
+        # Create auth manager with keyring enabled
+        auth_manager = AuthManager(self.config_path)
+        auth_manager.credential_manager = mock_cred_manager_instance
+        auth_manager.security_config.enable_credential_encryption = True
+
+        # Save credentials with keyring enabled
+        auth_manager.save_credentials(
+            base_url="https://example.youtrack.cloud",
+            token="test-token-123",
+            username="testuser",
+            verify_ssl=False,
+            use_keyring=True,
+        )
+
+        # Check that non-sensitive config was persisted to .env
+        config_manager = ConfigManager(self.config_path)
+        config_values = config_manager.list_config()
+
+        assert config_values.get("YOUTRACK_BASE_URL") == "https://example.youtrack.cloud"
+        assert config_values.get("YOUTRACK_USERNAME") == "testuser"
+        assert config_values.get("YOUTRACK_VERIFY_SSL") == "false"
+        assert config_values.get("YOUTRACK_API_KEY") == "[Stored in keyring]"
+
+    def test_save_credentials_ssl_verification_persisted(self):
+        """Test that SSL verification preference is persisted correctly."""
+        # Test with SSL verification disabled
+        self.auth_manager.save_credentials(
+            base_url="https://example.youtrack.cloud", token="test-token-123", verify_ssl=False, use_keyring=False
+        )
+
+        config_manager = ConfigManager(self.config_path)
+        assert config_manager.get_config("YOUTRACK_VERIFY_SSL") == "false"
+
+        # Test with SSL verification enabled (create new auth manager to ensure fresh read)
+        self.auth_manager.save_credentials(
+            base_url="https://example.youtrack.cloud", token="test-token-123", verify_ssl=True, use_keyring=False
+        )
+
+        # Re-read config to ensure it's updated
+        config_manager2 = ConfigManager(self.config_path)
+        assert config_manager2.get_config("YOUTRACK_VERIFY_SSL") == "true"
+
+    def test_clear_credentials_removes_config_keys(self):
+        """Test that clear_credentials removes individual config keys instead of entire file."""
+        # Set up some config values including non-auth related ones
+        config_manager = ConfigManager(self.config_path)
+        config_manager.set_config("YOUTRACK_BASE_URL", "https://example.youtrack.cloud")
+        config_manager.set_config("YOUTRACK_TOKEN", "test-token")
+        config_manager.set_config("YOUTRACK_USERNAME", "testuser")
+        config_manager.set_config("YOUTRACK_VERIFY_SSL", "false")
+        config_manager.set_config("YOUTRACK_API_KEY", "[Stored in keyring]")
+        config_manager.set_config("OTHER_CONFIG", "should_remain")
+
+        # Clear credentials
+        self.auth_manager.clear_credentials()
+
+        # Check that auth-related keys are removed but other keys remain
+        config_values = config_manager.list_config()
+        assert "YOUTRACK_BASE_URL" not in config_values
+        assert "YOUTRACK_TOKEN" not in config_values
+        assert "YOUTRACK_USERNAME" not in config_values
+        assert "YOUTRACK_VERIFY_SSL" not in config_values
+        assert "YOUTRACK_API_KEY" not in config_values
+        assert config_values.get("OTHER_CONFIG") == "should_remain"
