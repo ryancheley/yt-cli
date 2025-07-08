@@ -515,89 +515,105 @@ class TestExceptionHandling:
         """Test network error handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
+        # Mock asyncio.sleep to eliminate wait times
+        with patch("asyncio.sleep") as mock_sleep:
+            with patch.object(manager, "get_client") as mock_get_client:
+                mock_client = AsyncMock()
+                mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock request to raise a network error
-            mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
+                # Mock request to raise a network error
+                mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
 
-            with pytest.raises(YouTrackNetworkError) as exc_info:
-                await manager.make_request("GET", "https://test.com")
+                with pytest.raises(YouTrackNetworkError) as exc_info:
+                    await manager.make_request("GET", "https://test.com")
 
-            # Verify the error message includes retry information
-            assert "Network error after 3 retries" in str(exc_info.value)
-            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
-            assert mock_client.request.call_count == 4
+                # Verify the error message includes retry information
+                assert "Network error after 3 retries" in str(exc_info.value)
+                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+                assert mock_client.request.call_count == 4
+                # Verify sleep was called for retries (3 times)
+                assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
     async def test_timeout_error_retry_and_failure(self):
         """Test timeout error handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
+        # Mock asyncio.sleep to eliminate wait times
+        with patch("asyncio.sleep") as mock_sleep:
+            with patch.object(manager, "get_client") as mock_get_client:
+                mock_client = AsyncMock()
+                mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock request to raise a timeout error
-            mock_client.request = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
+                # Mock request to raise a timeout error
+                mock_client.request = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
 
-            with pytest.raises(ConnectionError) as exc_info:
-                await manager.make_request("GET", "https://test.com")
+                with pytest.raises(ConnectionError) as exc_info:
+                    await manager.make_request("GET", "https://test.com")
 
-            # Verify the error message is about timeout
-            assert "timed out" in str(exc_info.value)
-            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
-            assert mock_client.request.call_count == 4
+                # Verify the error message is about timeout
+                assert "timed out" in str(exc_info.value)
+                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+                assert mock_client.request.call_count == 4
+                # Verify sleep was called for retries (3 times)
+                assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
     async def test_os_error_retry_and_failure(self):
         """Test OS error handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
+        # Mock asyncio.sleep to eliminate wait times
+        with patch("asyncio.sleep") as mock_sleep:
+            with patch.object(manager, "get_client") as mock_get_client:
+                mock_client = AsyncMock()
+                mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock request to raise an OS error
-            mock_client.request = AsyncMock(side_effect=OSError("Network unavailable"))
+                # Mock request to raise an OS error
+                mock_client.request = AsyncMock(side_effect=OSError("Network unavailable"))
 
-            with pytest.raises(YouTrackNetworkError) as exc_info:
-                await manager.make_request("GET", "https://test.com")
+                with pytest.raises(YouTrackNetworkError) as exc_info:
+                    await manager.make_request("GET", "https://test.com")
 
-            # Verify the error message includes retry information
-            assert "Network error after 3 retries" in str(exc_info.value)
-            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
-            assert mock_client.request.call_count == 4
+                # Verify the error message includes retry information
+                assert "Network error after 3 retries" in str(exc_info.value)
+                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+                assert mock_client.request.call_count == 4
+                # Verify sleep was called for retries (3 times)
+                assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
     async def test_server_error_retry_and_failure(self):
         """Test server error (5xx) handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
+        # Mock asyncio.sleep to eliminate wait times
+        with patch("asyncio.sleep") as mock_sleep:
+            with patch.object(manager, "get_client") as mock_get_client:
+                mock_client = AsyncMock()
+                mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock response for server error
-            mock_response = MagicMock()
-            mock_response.status_code = 500
-            mock_response.text = "Internal Server Error"
+                # Mock response for server error
+                mock_response = MagicMock()
+                mock_response.status_code = 500
+                mock_response.text = "Internal Server Error"
 
-            # Mock request to raise a server error
-            mock_client.request = AsyncMock(
-                side_effect=httpx.HTTPStatusError("Server error", request=MagicMock(), response=mock_response)
-            )
+                # Mock request to raise a server error
+                mock_client.request = AsyncMock(
+                    side_effect=httpx.HTTPStatusError("Server error", request=MagicMock(), response=mock_response)
+                )
 
-            with pytest.raises(YouTrackServerError) as exc_info:
-                await manager.make_request("GET", "https://test.com")
+                with pytest.raises(YouTrackServerError) as exc_info:
+                    await manager.make_request("GET", "https://test.com")
 
-            # Verify the error message includes retry information
-            assert "Server error after 3 retries" in str(exc_info.value)
-            # Verify status code is captured
-            assert exc_info.value.status_code == 500
-            # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
-            assert mock_client.request.call_count == 4
+                # Verify the error message includes retry information
+                assert "Server error after 3 retries" in str(exc_info.value)
+                # Verify status code is captured
+                assert exc_info.value.status_code == 500
+                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
+                assert mock_client.request.call_count == 4
+                # Verify sleep was called for retries (3 times)
+                assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
     async def test_client_error_no_retry(self):
@@ -629,23 +645,27 @@ class TestExceptionHandling:
         """Test successful retry after network error."""
         manager = HTTPClientManager()
 
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
+        # Mock asyncio.sleep to eliminate wait times
+        with patch("asyncio.sleep") as mock_sleep:
+            with patch.object(manager, "get_client") as mock_get_client:
+                mock_client = AsyncMock()
+                mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock successful response
-            mock_response = MagicMock()
-            mock_response.status_code = 200
+                # Mock successful response
+                mock_response = MagicMock()
+                mock_response.status_code = 200
 
-            # Mock request to fail first time, then succeed
-            mock_client.request = AsyncMock(side_effect=[httpx.RequestError("Network error"), mock_response])
+                # Mock request to fail first time, then succeed
+                mock_client.request = AsyncMock(side_effect=[httpx.RequestError("Network error"), mock_response])
 
-            result = await manager.make_request("GET", "https://test.com")
+                result = await manager.make_request("GET", "https://test.com")
 
-            # Verify the successful response was returned
-            assert result == mock_response
-            # Verify it retried once (2 attempts total)
-            assert mock_client.request.call_count == 2
+                # Verify the successful response was returned
+                assert result == mock_response
+                # Verify it retried once (2 attempts total)
+                assert mock_client.request.call_count == 2
+                # Verify sleep was called once for retry
+                assert mock_sleep.call_count == 1
 
     @pytest.mark.asyncio
     async def test_unexpected_error_handling(self):
@@ -672,27 +692,31 @@ class TestExceptionHandling:
         """Test proper logging for network errors."""
         manager = HTTPClientManager()
 
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
+        # Mock asyncio.sleep to eliminate wait times
+        with patch("asyncio.sleep") as mock_sleep:
+            with patch.object(manager, "get_client") as mock_get_client:
+                mock_client = AsyncMock()
+                mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock request to raise a network error
-            mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
+                # Mock request to raise a network error
+                mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
 
-            with patch("youtrack_cli.client.logger") as mock_logger:
-                with pytest.raises(YouTrackNetworkError):
-                    await manager.make_request("GET", "https://test.com")
+                with patch("youtrack_cli.client.logger") as mock_logger:
+                    with pytest.raises(YouTrackNetworkError):
+                        await manager.make_request("GET", "https://test.com")
 
-                # Verify warning logs were created for retries
-                assert mock_logger.warning.call_count == 3  # 3 retry attempts after initial failure
-                # Verify error log was created after max retries
-                assert mock_logger.error.call_count == 1
+                    # Verify warning logs were created for retries
+                    assert mock_logger.warning.call_count == 3  # 3 retry attempts after initial failure
+                    # Verify error log was created after max retries
+                    assert mock_logger.error.call_count == 1
+                    # Verify sleep was called for retries (3 times)
+                    assert mock_sleep.call_count == 3
 
-                # Check that error type is logged
-                warning_calls = mock_logger.warning.call_args_list
-                for call in warning_calls:
-                    assert "error_type" in call[1]
-                    assert call[1]["error_type"] == "RequestError"
+                    # Check that error type is logged
+                    warning_calls = mock_logger.warning.call_args_list
+                    for call in warning_calls:
+                        assert "error_type" in call[1]
+                        assert call[1]["error_type"] == "RequestError"
 
     @pytest.mark.asyncio
     async def test_logging_for_unexpected_errors(self):
