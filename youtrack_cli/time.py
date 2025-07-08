@@ -19,6 +19,24 @@ class TimeManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    def _parse_json_response(self, response) -> Any:
+        """Safely parse JSON response, handling empty or non-JSON responses."""
+        try:
+            if not response.text.strip():
+                raise ValueError("Empty response body")
+
+            return response.json()
+        except ValueError as e:
+            if "Expecting value" in str(e):
+                # This is the specific error from the issue
+                raise ValueError(
+                    "Received empty response. This may indicate no time entries exist "
+                    "or time tracking is not enabled for your account."
+                ) from e
+            raise ValueError(f"Failed to parse JSON response: {str(e)}") from e
+        except Exception as e:
+            raise ValueError(f"Unexpected error parsing response: {str(e)}") from e
+
     async def log_time(
         self,
         issue_id: str,
@@ -113,7 +131,7 @@ class TimeManager:
             client_manager = get_client_manager()
             response = await client_manager.make_request(method="GET", url=url, params=params, headers=headers)
             if response.status_code == 200:
-                data = response.json()
+                data = self._parse_json_response(response)
                 return {
                     "status": "success",
                     "data": data,
@@ -125,6 +143,12 @@ class TimeManager:
                     "status": "error",
                     "message": f"Failed to get time entries: {error_text}",
                 }
+        except ValueError as e:
+            # Handle JSON parsing errors specifically
+            return {
+                "status": "error",
+                "message": f"Response parsing error: {str(e)}",
+            }
         except Exception as e:
             return {
                 "status": "error",
