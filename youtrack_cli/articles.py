@@ -20,6 +20,23 @@ class ArticleManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    async def _validate_authentication(self) -> bool:
+        """Validate authentication before making API calls."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return False
+
+        # Quick test to see if we can access the API
+        try:
+            client_manager = get_client_manager()
+            test_url = f"{credentials.base_url}/api/users/me"
+            headers = {"Authorization": f"Bearer {credentials.token}"}
+
+            response = await client_manager.make_request("GET", test_url, headers=headers)
+            return response.status_code == 200
+        except Exception:
+            return False
+
     def _parse_json_response(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or non-JSON responses."""
         try:
@@ -28,6 +45,12 @@ class ArticleManager:
                 raise ValueError("Empty response body")
 
             if "application/json" not in content_type:
+                # Check if response looks like HTML (login page)
+                if "text/html" in content_type and "<!doctype html>" in response.text.lower():
+                    raise ValueError(
+                        "Received HTML login page instead of JSON. This usually indicates authentication failure. "
+                        "Please verify your credentials with 'yt auth verify'."
+                    )
                 raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
 
             return response.json()
@@ -104,6 +127,13 @@ class ArticleManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
+        # Validate authentication before making the API call
+        if not await self._validate_authentication():
+            return {
+                "status": "error",
+                "message": "Authentication failed. Please verify your credentials with 'yt auth verify'.",
+            }
+
         params = {}
         if fields:
             params["fields"] = fields
@@ -135,6 +165,11 @@ class ArticleManager:
                     "status": "error",
                     "message": f"Failed to list articles: {error_text}",
                 }
+        except ValueError as e:
+            # Handle JSON parsing errors specifically
+            if "HTML login page" in str(e):
+                return {"status": "error", "message": f"Authentication error: {str(e)}"}
+            return {"status": "error", "message": f"Response parsing error: {str(e)}"}
         except Exception as e:
             return {"status": "error", "message": f"Error listing articles: {str(e)}"}
 
