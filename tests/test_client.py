@@ -181,6 +181,7 @@ class TestSSLVerificationWarnings:
                     mock_audit_logger.log_command.assert_called_once_with(
                         command="ssl_verification_config",
                         arguments=["YOUTRACK_VERIFY_SSL=true", "verify_ssl=True"],
+                        user=None,
                         success=True,
                     )
 
@@ -205,6 +206,7 @@ class TestSSLVerificationWarnings:
                         mock_audit_logger.log_command.assert_called_once_with(
                             command="ssl_verification_config",
                             arguments=["YOUTRACK_VERIFY_SSL=false", "verify_ssl=False"],
+                            user=None,
                             success=True,
                         )
 
@@ -230,6 +232,7 @@ class TestSSLVerificationWarnings:
                     mock_audit_logger.log_command.assert_called_once_with(
                         command="ssl_verification_config",
                         arguments=["YOUTRACK_VERIFY_SSL=true", "verify_ssl=True"],
+                        user=None,
                         success=True,
                     )
 

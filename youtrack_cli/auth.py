@@ -208,6 +208,40 @@ class AuthManager:
         elif expiration_info["status"] == "expiring":
             self.console.print(f"[yellow]⚠ {expiration_info['message']}[/yellow]")
 
+    def get_current_user_sync(self) -> Optional[str]:
+        """Get the current authenticated user's username from stored credentials.
+
+        Returns:
+            Username if credentials are available, None otherwise
+        """
+        credentials = self.load_credentials()
+        if not credentials:
+            return None
+        return credentials.username
+
+    async def get_current_user(self) -> Optional[str]:
+        """Get the current authenticated user's username.
+
+        Returns:
+            Username if credentials are available, None otherwise
+        """
+        credentials = self.load_credentials()
+        if not credentials:
+            return None
+
+        try:
+            verification_result = await self.verify_credentials(
+                credentials.base_url, credentials.token, verify_ssl=True
+            )
+            if verification_result.status == "success":
+                return verification_result.username
+        except Exception:
+            # If verification fails, fallback to stored username
+            pass
+
+        # Fallback to stored username from credentials
+        return credentials.username
+
     async def verify_credentials(
         self, base_url: str, token: str, verify_ssl: bool = True
     ) -> CredentialVerificationResult:
