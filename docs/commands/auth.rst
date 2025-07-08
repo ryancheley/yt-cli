@@ -83,7 +83,8 @@ Authenticate with YouTrack and save credentials for subsequent CLI usage.
 **Security Notes:**
 
 * API tokens are prompted securely and hidden during input
-* Credentials are stored locally in encrypted format
+* Sensitive credentials (tokens) are stored in system keyring with encryption
+* Non-sensitive configuration (base URL, username, SSL preference) is stored in .env file
 * Never include tokens in command history or scripts
 * Use environment variables or secure prompts for automation
 
@@ -213,17 +214,18 @@ Security Features
 Credential Storage
 ~~~~~~~~~~~~~~~~~
 
-* **Local Storage**: Credentials stored in ``~/.config/youtrack-cli/.env``
-* **Encryption**: Sensitive data is encrypted at rest
-* **Access Control**: Files have restricted permissions
-* **No Plaintext**: Tokens never stored in plaintext
+* **Dual Storage**: Sensitive tokens stored in system keyring, configuration in ``~/.config/youtrack-cli/.env``
+* **Encryption**: Tokens encrypted in keyring using Fernet symmetric encryption
+* **Access Control**: Files have restricted permissions, keyring uses OS security
+* **No Plaintext**: Tokens never stored in plaintext, .env file shows "[Stored in keyring]" placeholder
 
 Token Masking
 ~~~~~~~~~~~~
 
-* **Display Security**: Tokens masked when displayed (``abc123...xyz789``)
+* **Display Security**: Tokens and API keys masked when displayed (``abc123...xyz789``)
 * **Log Safety**: Tokens not exposed in command output or logs
 * **History Protection**: Tokens not stored in shell history
+* **Config List Safety**: API keys shown as masked or "[Stored in keyring]" in config list
 
 Session Management
 ~~~~~~~~~~~~~~~~~
@@ -411,13 +413,13 @@ Credential Storage Location
 Configuration Format
 ~~~~~~~~~~~~~~~~~~~
 
-The configuration file contains encrypted authentication data:
+The configuration file contains non-sensitive authentication data:
 
 .. code-block:: bash
 
-   # Example structure (actual values are encrypted)
+   # Example structure (token stored separately in keyring)
    YOUTRACK_BASE_URL=https://company.youtrack.cloud
-   YOUTRACK_TOKEN=perm:encrypted_token_data
+   YOUTRACK_API_KEY=[Stored in keyring]
    YOUTRACK_USERNAME=john.doe
    YOUTRACK_VERIFY_SSL=true
 

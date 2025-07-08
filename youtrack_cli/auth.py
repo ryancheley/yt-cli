@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, ValidationError
 from rich.console import Console
 
 from .client import reset_client_manager_sync
+from .config import ConfigManager
 from .models import CredentialVerificationResult
 from .security import CredentialManager, SecurityConfig, TokenManager
 
@@ -83,21 +84,27 @@ class AuthManager:
             # Store SSL verification setting
             self.credential_manager.store_credential("youtrack_verify_ssl", str(verify_ssl))
 
+            # Also store non-sensitive config to .env file for config list visibility
+            config_manager = ConfigManager(self.config_path)
+            config_manager.set_config("YOUTRACK_BASE_URL", base_url)
+            if username:
+                config_manager.set_config("YOUTRACK_USERNAME", username)
+            config_manager.set_config("YOUTRACK_VERIFY_SSL", str(verify_ssl).lower())
+            # Store a reference that token is in keyring
+            config_manager.set_config("YOUTRACK_API_KEY", "[Stored in keyring]")
+
             self.console.print("[green]✓[/green] Credentials stored securely in keyring")
         else:
-            # Fallback to file storage
-            config_path = Path(self.config_path)
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(config_path, "w") as f:
-                f.write(f"YOUTRACK_BASE_URL={base_url}\n")
-                f.write(f"YOUTRACK_TOKEN={token}\n")
-                if username:
-                    f.write(f"YOUTRACK_USERNAME={username}\n")
-                if token_expiry:
-                    f.write(f"YOUTRACK_TOKEN_EXPIRY={token_expiry.isoformat()}\n")
-                # Save SSL verification setting
-                f.write(f"YOUTRACK_VERIFY_SSL={str(verify_ssl).lower()}\n")
+            # Fallback to file storage using ConfigManager for consistency
+            config_manager = ConfigManager(self.config_path)
+            config_manager.set_config("YOUTRACK_BASE_URL", base_url)
+            config_manager.set_config("YOUTRACK_TOKEN", token)
+            if username:
+                config_manager.set_config("YOUTRACK_USERNAME", username)
+            if token_expiry:
+                config_manager.set_config("YOUTRACK_TOKEN_EXPIRY", token_expiry.isoformat())
+            # Save SSL verification setting
+            config_manager.set_config("YOUTRACK_VERIFY_SSL", str(verify_ssl).lower())
 
             self.console.print(
                 "[yellow]⚠[/yellow] Credentials stored in plain text file. Consider using keyring for better security."
@@ -177,9 +184,14 @@ class AuthManager:
             self.credential_manager.delete_credential("youtrack_token_expiry")
             self.credential_manager.delete_credential("youtrack_verify_ssl")
 
-        # Clear from file
-        if os.path.exists(self.config_path):
-            os.remove(self.config_path)
+        # Clear from file - use ConfigManager to only clear auth-related keys
+        config_manager = ConfigManager(self.config_path)
+        config_manager.unset_config("YOUTRACK_BASE_URL")
+        config_manager.unset_config("YOUTRACK_TOKEN")
+        config_manager.unset_config("YOUTRACK_USERNAME")
+        config_manager.unset_config("YOUTRACK_TOKEN_EXPIRY")
+        config_manager.unset_config("YOUTRACK_VERIFY_SSL")
+        config_manager.unset_config("YOUTRACK_API_KEY")
 
         # Reset the client manager to pick up new SSL settings
         reset_client_manager_sync()

@@ -167,6 +167,45 @@ class TestConfigCommands:
             assert "API_TOKEN = very-sec...6789" in result.output
             assert "very-secret-token-123456789" not in result.output
 
+    def test_config_list_masks_api_key(self):
+        """Test that API_KEY values are masked in list output."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.env"
+            runner = CliRunner()
+
+            # Set an API_KEY configuration value
+            runner.invoke(
+                main,
+                [
+                    "--config",
+                    str(config_path),
+                    "config",
+                    "set",
+                    "YOUTRACK_API_KEY",
+                    "super-secret-api-key-12345",
+                ],
+            )
+
+            # Test that special keyring placeholder is not masked
+            runner.invoke(
+                main,
+                [
+                    "--config",
+                    str(config_path),
+                    "config",
+                    "set",
+                    "ANOTHER_API_KEY",
+                    "[Stored in keyring]",
+                ],
+            )
+
+            # List configuration values
+            result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
+            assert result.exit_code == 0
+            assert "YOUTRACK_API_KEY = super-se...2345" in result.output
+            assert "super-secret-api-key-12345" not in result.output
+            assert "ANOTHER_API_KEY = [Stored in keyring]" in result.output
+
 
 class TestCompletionCommands:
     """Test shell completion functionality."""

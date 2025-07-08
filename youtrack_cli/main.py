@@ -784,9 +784,12 @@ def list_config(ctx: click.Context) -> None:
             console.print("📋 Configuration values:", style="blue bold")
             for key, value in sorted(config_values.items()):
                 # Mask sensitive values
-                sensitive_keys = ["token", "password", "secret"]
+                sensitive_keys = ["token", "password", "secret", "api_key"]
                 if any(sensitive in key.lower() for sensitive in sensitive_keys):
-                    if len(value) > 12:
+                    # Special handling for placeholder values
+                    if value == "[Stored in keyring]":
+                        masked_value = value
+                    elif len(value) > 12:
                         masked_value = value[:8] + "..." + value[-4:]
                     else:
                         masked_value = "***"
