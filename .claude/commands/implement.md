@@ -1,21 +1,26 @@
-# Implement GitHub Issue
+# Implement GitHub Issue(s)
 
-You are helping implement a GitHub issue using the gh CLI and modern development practices. Follow this comprehensive workflow:
+You are helping implement one or more GitHub issues using the gh CLI and modern development practices. Follow this comprehensive workflow:
 
 ## 1. Issue Analysis & Setup
 
 First, fetch and analyze the issue details:
 
 ```bash
-# Fetch issue details (replace with actual issue number from $ARGUMENTS)
-gh issue view $ARGUMENTS --json title,body,labels,assignees,milestone
+# Fetch issue details for each issue number provided
+for issue in $ARGUMENTS; do
+    echo "=== Issue #$issue ==="
+    gh issue view $issue --json title,body,labels,assignees,milestone
+    echo
+done
 ```
 
 **Tasks:**
-- Read and understand the issue requirements thoroughly
+- Read and understand the requirements for each issue thoroughly
 - Identify any dependencies or related issues
-- Check if the issue has proper labels and milestone
+- Check if each issue has proper labels and milestone
 - Verify if you're assigned or should assign yourself
+- If multiple issues are provided, determine if they should be implemented together or separately
 
 ## 2. Branch Strategy
 
@@ -25,9 +30,15 @@ Create a well-named feature branch:
 # Create and switch to feature branch
 git checkout main
 git pull origin main
-gh issue develop $ARGUMENTS --checkout
-# Alternative manual approach:
-# git checkout -b feature/issue-$ARGUMENTS-descriptive-name
+
+# For single issue:
+if [ $(echo $ARGUMENTS | wc -w) -eq 1 ]; then
+    gh issue develop $ARGUMENTS --checkout
+else
+    # For multiple issues, create descriptive branch name
+    ISSUES=$(echo $ARGUMENTS | tr ' ' '-')
+    git checkout -b feature/issues-$ISSUES-implementation
+fi
 ```
 
 ## 3. Implementation Planning
@@ -90,14 +101,27 @@ Create meaningful, atomic commits:
 # Stage changes thoughtfully
 git add .
 
-# Commit with descriptive message linking to issue
-git commit -m "feat: implement feature X
+# Commit with descriptive message linking to issue(s)
+# For single issue:
+if [ $(echo $ARGUMENTS | wc -w) -eq 1 ]; then
+    git commit -m "feat: implement feature X
 
 - Add new functionality for Y
 - Update tests for Z component
 - Update documentation
 
 Fixes #$ARGUMENTS"
+else
+    # For multiple issues, reference all of them
+    FIXES_LINE=$(echo $ARGUMENTS | sed 's/\([0-9]\+\)/#\1/g' | sed 's/ /, /g')
+    git commit -m "feat: implement features for multiple issues
+
+- Add new functionality for Y
+- Update tests for Z component
+- Update documentation
+
+Fixes $FIXES_LINE"
+fi
 ```
 
 ## 7. Pull Request Creation
@@ -109,9 +133,10 @@ Create a comprehensive PR:
 git push -u origin HEAD
 
 # Create PR with issue auto-linking
-gh pr create \
-  --title "Implement: [Brief description] (Fixes #$ARGUMENTS)" \
-  --body "## Summary
+if [ $(echo $ARGUMENTS | wc -w) -eq 1 ]; then
+    gh pr create \
+      --title "Implement: [Brief description] (Fixes #$ARGUMENTS)" \
+      --body "## Summary
 
 Brief description of changes made.
 
@@ -132,8 +157,42 @@ Brief description of changes made.
 - [ ] Changelog updated (if applicable)
 
 Fixes #$ARGUMENTS" \
-  --assignee "@me" \
-  --label "enhancement"
+      --assignee "@me" \
+      --label "enhancement"
+else
+    # For multiple issues
+    FIXES_LINE=$(echo $ARGUMENTS | sed 's/\([0-9]\+\)/#\1/g' | sed 's/ /, /g')
+    TITLE_ISSUES=$(echo $ARGUMENTS | sed 's/ /, #/g')
+    gh pr create \
+      --title "Implement: [Brief description] (Fixes #$TITLE_ISSUES)" \
+      --body "## Summary
+
+Brief description of changes made.
+
+## Related Issues
+This PR addresses the following issues:
+$(for issue in $ARGUMENTS; do echo "- #$issue"; done)
+
+## Changes Made
+- List key changes
+- Include any breaking changes
+- Note migration requirements
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests passing
+- [ ] Manual testing completed
+- [ ] Security review completed (if applicable)
+
+## Documentation
+- [ ] Code comments added where needed
+- [ ] Documentation updated
+- [ ] Changelog updated (if applicable)
+
+Fixes $FIXES_LINE" \
+      --assignee "@me" \
+      --label "enhancement"
+fi
 ```
 
 ## 8. Post-PR Actions
@@ -155,11 +214,16 @@ After creating the PR:
 After merge:
 
 ```bash
-# Verify issue was auto-closed
-gh issue view $ARGUMENTS
+# Verify each issue was auto-closed
+for issue in $ARGUMENTS; do
+    echo "Checking issue #$issue..."
+    gh issue view $issue
 
-# If not auto-closed, close manually with comment
-gh issue close $ARGUMENTS --comment "Implemented in PR #[PR_NUMBER]"
+    # If not auto-closed, close manually with comment
+    if gh issue view $issue --json state -q .state | grep -q "OPEN"; then
+        gh issue close $issue --comment "Implemented in PR #[PR_NUMBER]"
+    fi
+done
 ```
 
 ## Quality Checklist
@@ -188,6 +252,8 @@ Document rollback strategy:
 
 ---
 
-**Usage:** `/project:implement $ISSUE_NUMBER`
+**Usage:**
+- Single issue: `/project:implement $ISSUE_NUMBER`
+- Multiple issues: `/project:implement $ISSUE_NUMBER1 $ISSUE_NUMBER2 ...`
 
-This command guides you through implementing GitHub issue #$ARGUMENTS with enterprise-grade practices suitable for healthcare engineering environments.
+This command guides you through implementing one or more GitHub issues with enterprise-grade practices suitable for healthcare engineering environments. When multiple issues are provided, the command will help you implement them together in a single branch and PR, referencing all issues appropriately.
