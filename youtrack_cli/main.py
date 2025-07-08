@@ -142,7 +142,14 @@ def main(
                 command_args.extend(["-c", str(value)])
 
     if ctx.info_name:
-        audit_logger.log_command(ctx.info_name, command_args)
+        # Get current user for audit logging
+        try:
+            auth_manager = AuthManager(config)
+            current_user = auth_manager.get_current_user_sync()
+        except Exception:
+            current_user = None
+
+        audit_logger.log_command(ctx.info_name, command_args, user=current_user)
 
 
 # Register command groups

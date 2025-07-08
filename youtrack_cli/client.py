@@ -441,6 +441,7 @@ def get_client_manager() -> HTTPClientManager:
         audit_logger.log_command(
             command="ssl_verification_config",
             arguments=[f"YOUTRACK_VERIFY_SSL={verify_ssl_str}", f"verify_ssl={verify_ssl}"],
+            user=None,  # User not available during client initialization
             success=True,
         )
 

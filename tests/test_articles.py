@@ -433,9 +433,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "message": "Article created successfully",
@@ -455,10 +459,14 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
             runner.isolated_filesystem(),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             # Create a test markdown file
             test_file = Path("test_article.md")
             test_file.write_text("# Test Article\n\nThis is test content from a markdown file.")
@@ -537,9 +545,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -559,9 +571,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -581,9 +597,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -603,9 +623,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "message": "Comment added successfully",
@@ -625,9 +649,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
@@ -646,9 +674,13 @@ class TestArticlesCLI:
 
         with (
             patch("youtrack_cli.main.asyncio.run") as mock_run,
-            patch("youtrack_cli.main.AuthManager"),
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
             patch("youtrack_cli.articles.ArticleManager"),
         ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
             mock_run.return_value = {
                 "status": "success",
                 "data": [],
