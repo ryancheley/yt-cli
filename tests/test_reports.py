@@ -236,6 +236,10 @@ class TestReportsCommands:
     @patch("youtrack_cli.main.ConfigManager")
     def test_burndown_command_success(self, mock_config, mock_auth, mock_report):
         """Test burndown command execution."""
+        # Mock the AuthManager instance to return a username for audit logging
+        mock_auth_instance = mock_auth.return_value
+        mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
         # Mock the async function
         mock_report_instance = mock_report.return_value
         mock_report_instance.generate_burndown_report.return_value = {
@@ -261,6 +265,10 @@ class TestReportsCommands:
     @patch("youtrack_cli.main.ConfigManager")
     def test_velocity_command_success(self, mock_config, mock_auth, mock_report):
         """Test velocity command execution."""
+        # Mock the AuthManager instance to return a username for audit logging
+        mock_auth_instance = mock_auth.return_value
+        mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
         # Mock the async function
         mock_report_instance = mock_report.return_value
         mock_report_instance.generate_velocity_report.return_value = {
