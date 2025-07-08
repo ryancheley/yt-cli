@@ -114,8 +114,8 @@ class IssueManager:
                 params["fields"] = fields
             else:
                 params["fields"] = (
-                    "id,summary,description,state,priority,type,"
-                    "assignee(login,fullName),project(id,name),created,updated"
+                    "id,numberInProject,summary,description,state(name),priority(name),type(name),"
+                    "assignee(login,fullName),project(id,name,shortName),created,updated"
                 )
 
             if top:
@@ -819,10 +819,23 @@ class IssueManager:
         table.add_column("Project", style="white")
 
         for issue in issues:
-            assignee = issue.get("assignee", {})
-            assignee_name = assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
-
+            # Format issue ID to show user-friendly project format
+            issue_id = issue.get("id", "N/A")
             project = issue.get("project", {})
+            project_short_name = project.get("shortName") if project else None
+            issue_number = issue.get("numberInProject") if issue.get("numberInProject") else None
+
+            # Create user-friendly ID format (e.g., "DATA-5" instead of "2-57152")
+            if project_short_name and issue_number:
+                formatted_id = f"{project_short_name}-{issue_number}"
+            else:
+                formatted_id = issue_id
+
+            assignee = issue.get("assignee", {})
+            assignee_name = (
+                assignee.get("fullName") or assignee.get("login", "Unassigned") if assignee else "Unassigned"
+            )
+
             project_name = project.get("name", "N/A") if project else "N/A"
 
             state = issue.get("state", {})
@@ -838,7 +851,7 @@ class IssueManager:
             truncated_summary = summary[:50] + ("..." if len(summary) > 50 else "")
 
             table.add_row(
-                issue.get("id", "N/A"),
+                formatted_id,
                 truncated_summary,
                 state_name,
                 priority_name,
