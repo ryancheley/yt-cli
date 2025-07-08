@@ -3,6 +3,7 @@
 import os
 import warnings
 from tempfile import TemporaryDirectory
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -609,7 +610,7 @@ class TestExceptionHandling:
                 # Verify the error message includes retry information
                 assert "Server error after 3 retries" in str(exc_info.value)
                 # Verify status code is captured
-                assert exc_info.value.status_code == 500
+                assert cast(YouTrackServerError, exc_info.value).status_code == 500
                 # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
                 assert mock_client.request.call_count == 4
                 # Verify sleep was called for retries (3 times)
