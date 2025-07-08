@@ -19,6 +19,16 @@ class BoardManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
+    async def _validate_authentication(self) -> bool:
+        """Validate authentication before making API calls."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return False
+
+        # Basic check - if we have credentials, assume they might be valid
+        # Full validation will happen during the actual API call
+        return bool(credentials.base_url and credentials.token)
+
     def _parse_json_response(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or non-JSON responses."""
         try:
@@ -27,6 +37,12 @@ class BoardManager:
                 raise ValueError("Empty response body")
 
             if "application/json" not in content_type:
+                # Check if response looks like HTML (login page)
+                if "text/html" in content_type and "<!doctype html>" in response.text.lower():
+                    raise ValueError(
+                        "Received HTML login page instead of JSON. This usually indicates authentication failure. "
+                        "Please verify your credentials with 'yt auth verify'."
+                    )
                 raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
 
             return response.json()
@@ -43,6 +59,13 @@ class BoardManager:
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
+
+        # Validate authentication before making the API call
+        if not await self._validate_authentication():
+            return {
+                "status": "error",
+                "message": "Authentication failed. Please verify your credentials with 'yt auth verify'.",
+            }
 
         url = f"{credentials.base_url}/api/agiles"
         headers = {
@@ -79,6 +102,15 @@ class BoardManager:
 
         except httpx.HTTPStatusError as e:
             error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
+            self.console.print(f"❌ Error listing boards: {error_msg}", style="red")
+            return {"status": "error", "message": error_msg}
+        except ValueError as e:
+            # Handle JSON parsing errors specifically
+            if "HTML login page" in str(e):
+                error_msg = f"Authentication error: {str(e)}"
+                self.console.print(f"❌ {error_msg}", style="red")
+                return {"status": "error", "message": error_msg}
+            error_msg = f"Response parsing error: {str(e)}"
             self.console.print(f"❌ Error listing boards: {error_msg}", style="red")
             return {"status": "error", "message": error_msg}
         except Exception as e:
