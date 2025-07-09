@@ -99,14 +99,27 @@ class ProjectManager:
 
             if not isinstance(projects, list):
                 data_type = type(projects).__name__
+                # Include more details about what we received for debugging
+                preview = str(projects)[:200] if projects is not None else "None"
                 return {
                     "status": "error",
-                    "message": f"Unexpected data format from YouTrack API: expected list, got {data_type}",
+                    "message": (
+                        f"Unexpected data format from YouTrack API: expected list, got {data_type}. "
+                        f"Response preview: {preview}"
+                    ),
                 }
 
             # Filter archived projects if requested
             if not show_archived:
-                projects = [p for p in projects if not p.get("archived", False)]
+                filtered_projects = []
+                for p in projects:
+                    if p is not None and not p.get("archived", False):
+                        filtered_projects.append(p)
+                projects = filtered_projects
+
+            # Final null check before count
+            if projects is None:
+                projects = []
 
             return {"status": "success", "data": projects, "count": len(projects)}
 
