@@ -8,9 +8,12 @@ from rich.table import Table
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .logging import get_logger
 from .progress import get_progress_manager
 
 __all__ = ["IssueManager"]
+
+logger = get_logger(__name__)
 
 
 class IssueManager:
@@ -112,7 +115,61 @@ class IssueManager:
                     "message": f"Failed to create issue: {error_text}",
                 }
         except Exception as e:
-            return {"status": "error", "message": f"Error creating issue: {str(e)}"}
+            error_message = str(e)
+            # Check if this is a priority field requirement issue
+            if "Priority is required" in error_message and priority:
+                try:
+                    client_manager = get_client_manager()
+                    issue_data_no_priority = issue_data.copy()
+                    if "priority" in issue_data_no_priority:
+                        del issue_data_no_priority["priority"]
+                    if "type" in issue_data_no_priority:
+                        del issue_data_no_priority["type"]
+
+                    # Try with custom fields format including $type for both Priority and Type
+                    custom_fields = [
+                        {
+                            "$type": "SingleEnumIssueCustomField",
+                            "name": "Priority",
+                            "value": {"$type": "EnumBundleElement", "name": priority},
+                        }
+                    ]
+
+                    # Also add Type field if it was specified
+                    if issue_type:
+                        custom_fields.append(
+                            {
+                                "$type": "SingleEnumIssueCustomField",
+                                "name": "Type",
+                                "value": {"$type": "EnumBundleElement", "name": issue_type},
+                            }
+                        )
+                    else:
+                        # Default to "Task" if no type specified
+                        custom_fields.append(
+                            {
+                                "$type": "SingleEnumIssueCustomField",
+                                "name": "Type",
+                                "value": {"$type": "EnumBundleElement", "name": "Task"},
+                            }
+                        )
+
+                    issue_data_no_priority["customFields"] = custom_fields
+
+                    retry_response = await client_manager.make_request(
+                        "POST", url, headers=headers, json_data=issue_data_no_priority
+                    )
+                    if retry_response.status_code in [200, 201]:
+                        data = self._parse_json_response(retry_response)
+                        return {
+                            "status": "success",
+                            "message": f"Issue '{summary}' created successfully (using custom field format)",
+                            "data": data,
+                        }
+                except Exception:
+                    pass  # Fallback failed, return original error
+
+            return {"status": "error", "message": f"Error creating issue: {error_message}"}
 
     async def list_issues(
         self,
