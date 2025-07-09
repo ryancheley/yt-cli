@@ -39,6 +39,28 @@ class IssueManager:
                 f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
+    def _get_custom_field_value(self, issue: dict[str, Any], field_name: str) -> Optional[str]:
+        """Extract value from custom fields by field name."""
+        custom_fields = issue.get("customFields", [])
+        if not isinstance(custom_fields, list):
+            return None
+
+        for field in custom_fields:
+            if isinstance(field, dict) and field.get("name") == field_name:
+                value = field.get("value")
+                if isinstance(value, dict):
+                    # Handle single-value bundle fields (like enum fields)
+                    return value.get("name") or value.get("id")
+                elif isinstance(value, list):
+                    # Handle multi-value fields
+                    if value and isinstance(value[0], dict):
+                        return ", ".join(v.get("name", str(v)) for v in value if v)
+                    else:
+                        return ", ".join(str(v) for v in value if v)
+                elif value is not None:
+                    return str(value)
+        return None
+
     async def create_issue(
         self,
         project_id: str,
@@ -113,9 +135,12 @@ class IssueManager:
             if fields:
                 params["fields"] = fields
             else:
+                # Try to get comprehensive field data using multiple approaches
                 params["fields"] = (
-                    "id,numberInProject,summary,description,state(name),priority(name),type(name),"
-                    "assignee(login,fullName),project(id,name,shortName),created,updated"
+                    "id,numberInProject,summary,description,"
+                    "state(name,id),priority(name,id),type(name,id),"
+                    "assignee(login,fullName,id),project(id,name,shortName),created,updated,"
+                    "customFields(name,value(name,id,login,fullName))"
                 )
 
             if top:
@@ -831,21 +856,50 @@ class IssueManager:
             else:
                 formatted_id = issue_id
 
+            # Handle assignee - could be in top-level field or custom fields
             assignee = issue.get("assignee", {})
-            assignee_name = (
-                assignee.get("fullName") or assignee.get("login", "Unassigned") if assignee else "Unassigned"
-            )
+            if assignee and (assignee.get("fullName") or assignee.get("login")):
+                assignee_name = assignee.get("fullName") or assignee.get("login", "Unassigned")
+            else:
+                # Check custom fields for Assignee
+                custom_assignee = self._get_custom_field_value(issue, "Assignee")
+                assignee_name = custom_assignee or "Unassigned"
 
             project_name = project.get("name", "N/A") if project else "N/A"
 
-            state = issue.get("state", {})
-            state_name = state.get("name", "N/A") if state else "N/A"
+            # Handle state field - could be string, object with name, or in custom fields
+            state = issue.get("state")
+            if isinstance(state, dict):
+                state_name = state.get("name", "N/A")
+            elif isinstance(state, str):
+                state_name = state
+            else:
+                # Check custom fields for State or Stage (different YouTrack configs use different names)
+                state_name = (
+                    self._get_custom_field_value(issue, "State")
+                    or self._get_custom_field_value(issue, "Stage")
+                    or "N/A"
+                )
 
-            priority = issue.get("priority", {})
-            priority_name = priority.get("name", "N/A") if priority else "N/A"
+            # Handle priority field - could be string, object with name, or in custom fields
+            priority = issue.get("priority")
+            if isinstance(priority, dict):
+                priority_name = priority.get("name", "N/A")
+            elif isinstance(priority, str):
+                priority_name = priority
+            else:
+                # Check custom fields for Priority
+                priority_name = self._get_custom_field_value(issue, "Priority") or "N/A"
 
-            issue_type = issue.get("type", {})
-            type_name = issue_type.get("name", "N/A") if issue_type else "N/A"
+            # Handle type field - could be string, object with name, or in custom fields
+            issue_type = issue.get("type")
+            if isinstance(issue_type, dict):
+                type_name = issue_type.get("name", "N/A")
+            elif isinstance(issue_type, str):
+                type_name = issue_type
+            else:
+                # Check custom fields for Type
+                type_name = self._get_custom_field_value(issue, "Type") or "N/A"
 
             summary = issue.get("summary", "N/A")
             truncated_summary = summary[:50] + ("..." if len(summary) > 50 else "")
