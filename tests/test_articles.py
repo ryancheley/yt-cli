@@ -70,10 +70,7 @@ class TestArticleManager:
         """Test article creation failure."""
         with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
             mock_client_manager = Mock()
-            mock_resp = Mock()
-            mock_resp.status_code = 400
-            mock_resp.text = "Bad Request"
-            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_client_manager.make_request = AsyncMock(side_effect=Exception("HTTP 400: Bad Request"))
             mock_get_client.return_value = mock_client_manager
 
             result = await article_manager.create_article(
@@ -82,7 +79,7 @@ class TestArticleManager:
             )
 
             assert result["status"] == "error"
-            assert "Failed to create article" in result["message"]
+            assert "HTTP 400: Bad Request" in result["message"]
 
     @pytest.mark.asyncio
     async def test_list_articles_success(self, article_manager):
@@ -251,7 +248,7 @@ class TestArticleManager:
             {
                 "id": "comment-1",
                 "text": "Test comment",
-                "author": {"fullName": "Test User"},
+                "reporter": {"fullName": "Test User"},
             }
         ]
 
@@ -330,10 +327,70 @@ class TestArticleManager:
         result = await article_manager.create_article("Title", "Content")
         assert result["status"] == "error"
         assert "Not authenticated" in result["message"]
+        assert "yt auth login" in result["message"]
 
         result = await article_manager.list_articles()
         assert result["status"] == "error"
         assert "Not authenticated" in result["message"]
+        assert "yt auth login" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_list_articles_empty_json_response(self, article_manager):
+        """Test listing articles with empty JSON response."""
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.text = ""  # Empty response
+            mock_resp.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.list_articles()
+
+            assert result["status"] == "error"
+            assert "Response parsing error" in result["message"]
+            assert "Empty response body" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_list_articles_invalid_json_response(self, article_manager):
+        """Test listing articles with invalid JSON response."""
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.text = "invalid json"
+            mock_resp.headers = {"content-type": "application/json"}
+            # Mock the json() method to raise a JSONDecodeError
+            import json
+
+            mock_resp.json.side_effect = json.JSONDecodeError("Expecting value", "invalid json", 0)
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.list_articles()
+
+            assert result["status"] == "error"
+            assert "Response parsing error" in result["message"]
+            assert "Expecting value" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_list_articles_html_login_page(self, article_manager):
+        """Test listing articles receiving HTML login page."""
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.text = "<!doctype html><html><body>Login page</body></html>"
+            mock_resp.headers = {"content-type": "text/html"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.list_articles()
+
+            assert result["status"] == "error"
+            assert "Authentication error" in result["message"]
+            assert "HTML login page" in result["message"]
 
     def test_display_articles_table_empty(self, article_manager):
         """Test displaying empty articles table."""
@@ -350,7 +407,7 @@ class TestArticleManager:
                 "id": "123",
                 "summary": "Test Article",
                 "content": "Test content",
-                "author": {"fullName": "Test User"},
+                "reporter": {"fullName": "Test User"},
                 "created": "2023-01-01",
                 "visibility": {"type": "public"},
             }

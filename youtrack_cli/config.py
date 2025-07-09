@@ -64,7 +64,14 @@ class ConfigManager:
         Returns:
             Configuration value if exists, None otherwise
         """
-        return os.getenv(key)
+        # First check environment variable
+        value = os.getenv(key)
+        if value is not None:
+            return value
+
+        # Then check the config file directly
+        config = self.list_config()
+        return config.get(key)
 
     def list_config(self) -> dict[str, str]:
         """List all configuration values from the config file.
@@ -137,8 +144,13 @@ class ConfigManager:
         if env_value is not None:
             return env_value
 
-        # Fall back to config file
-        return self.get_config_with_default(key, default)
+        # Fall back to config file value
+        config_value = self.get_config(key)
+        if config_value is not None:
+            return config_value
+
+        # Finally fall back to default
+        return default
 
     def validate_config(self) -> list[str]:
         """Validate configuration file and return any errors.

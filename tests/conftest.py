@@ -36,5 +36,8 @@ def isolate_environment():
 @pytest.fixture(scope="function", autouse=True)
 def mock_dotenv_loading():
     """Mock dotenv loading to prevent real config files from loading."""
-    with patch("youtrack_cli.auth.load_dotenv") as mock_load_dotenv:
-        yield mock_load_dotenv
+    with (
+        patch("youtrack_cli.auth.load_dotenv") as mock_auth_load_dotenv,
+        patch("youtrack_cli.config.load_dotenv") as mock_config_load_dotenv,
+    ):
+        yield mock_auth_load_dotenv, mock_config_load_dotenv
