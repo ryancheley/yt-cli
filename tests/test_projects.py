@@ -145,6 +145,9 @@ class TestProjectManager:
             mock_response = Mock()
             mock_response.json.return_value = mock_created_project
             mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "new-project", "name": "New Project"}'
+            mock_response.status_code = 200
 
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock(return_value=mock_response)
@@ -223,6 +226,9 @@ class TestProjectManager:
             mock_response = Mock()
             mock_response.json.return_value = mock_project
             mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "test-project", "name": "Test Project"}'
+            mock_response.status_code = 200
 
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock(return_value=mock_response)
@@ -268,6 +274,9 @@ class TestProjectManager:
             mock_response = Mock()
             mock_response.json.return_value = mock_updated_project
             mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "123", "name": "Updated Project"}'
+            mock_response.status_code = 200
 
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock(return_value=mock_response)
@@ -303,6 +312,9 @@ class TestProjectManager:
             mock_response = Mock()
             mock_response.json.return_value = mock_archived_project
             mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "123", "name": "Archived Project"}'
+            mock_response.status_code = 200
 
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock(return_value=mock_response)
