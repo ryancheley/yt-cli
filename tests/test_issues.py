@@ -51,6 +51,49 @@ def sample_issue():
     }
 
 
+@pytest.fixture
+def sample_issue_with_custom_fields():
+    """Sample issue data with custom fields for testing."""
+    return {
+        "id": "HIP-25",
+        "numberInProject": 2,
+        "summary": "Find Painter",
+        "description": "Test description",
+        "project": {"id": "0-2", "name": "Home Improvement Projects", "shortName": "HIP"},
+        "created": 1736614471891,
+        "updated": 1752033822789,
+        "customFields": [
+            {
+                "value": {"name": "Medium", "id": "143-17", "$type": "EnumBundleElement"},
+                "name": "Priority",
+                "$type": "SingleEnumIssueCustomField",
+            },
+            {
+                "value": {
+                    "name": "Ryan Cheley",
+                    "fullName": "Ryan Cheley",
+                    "login": "ryan",
+                    "id": "2-3",
+                    "$type": "User",
+                },
+                "name": "Assignee",
+                "$type": "SingleUserIssueCustomField",
+            },
+            {
+                "value": {"name": "To Do", "id": "145-18", "$type": "StateBundleElement"},
+                "name": "Stage",
+                "$type": "StateIssueCustomField",
+            },
+            {
+                "value": {"name": "Task", "id": "143-9", "$type": "EnumBundleElement"},
+                "name": "Type",
+                "$type": "SingleEnumIssueCustomField",
+            },
+            {"value": None, "name": "Kanban State", "$type": "SingleEnumIssueCustomField"},
+        ],
+    }
+
+
 class TestIssueManager:
     """Test cases for IssueManager class."""
 
@@ -676,6 +719,75 @@ class TestIssueManager:
         captured = capsys.readouterr()
         assert "depends on" in captured.out
         assert "is required for" in captured.out
+
+    def test_get_custom_field_value_enum_field(self, issue_manager, sample_issue_with_custom_fields):
+        """Test extracting enum values from custom fields."""
+        # Test Priority field
+        priority_value = issue_manager._get_custom_field_value(sample_issue_with_custom_fields, "Priority")
+        assert priority_value == "Medium"
+
+        # Test Type field
+        type_value = issue_manager._get_custom_field_value(sample_issue_with_custom_fields, "Type")
+        assert type_value == "Task"
+
+        # Test Stage field
+        stage_value = issue_manager._get_custom_field_value(sample_issue_with_custom_fields, "Stage")
+        assert stage_value == "To Do"
+
+    def test_get_custom_field_value_user_field(self, issue_manager, sample_issue_with_custom_fields):
+        """Test extracting user values from custom fields."""
+        assignee_value = issue_manager._get_custom_field_value(sample_issue_with_custom_fields, "Assignee")
+        assert assignee_value == "Ryan Cheley"
+
+    def test_get_custom_field_value_null_field(self, issue_manager, sample_issue_with_custom_fields):
+        """Test handling null values in custom fields."""
+        kanban_value = issue_manager._get_custom_field_value(sample_issue_with_custom_fields, "Kanban State")
+        assert kanban_value is None
+
+    def test_get_custom_field_value_nonexistent_field(self, issue_manager, sample_issue_with_custom_fields):
+        """Test handling nonexistent custom fields."""
+        missing_value = issue_manager._get_custom_field_value(sample_issue_with_custom_fields, "NonexistentField")
+        assert missing_value is None
+
+    def test_get_custom_field_value_no_custom_fields(self, issue_manager, sample_issue):
+        """Test handling issues without custom fields."""
+        value = issue_manager._get_custom_field_value(sample_issue, "Priority")
+        assert value is None
+
+    def test_get_custom_field_value_invalid_custom_fields(self, issue_manager):
+        """Test handling invalid custom fields structure."""
+        issue_with_invalid_fields = {
+            "id": "TEST-1",
+            "customFields": "not a list",  # Invalid structure
+        }
+        value = issue_manager._get_custom_field_value(issue_with_invalid_fields, "Priority")
+        assert value is None
+
+    def test_get_custom_field_value_multi_value_field(self, issue_manager):
+        """Test handling multi-value custom fields."""
+        issue_with_multi_values = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Tags",
+                    "value": [{"name": "urgent", "id": "tag-1"}, {"name": "backend", "id": "tag-2"}],
+                    "$type": "MultiEnumIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_multi_values, "Tags")
+        assert value == "urgent, backend"
+
+    def test_get_custom_field_value_string_value(self, issue_manager):
+        """Test handling string values in custom fields."""
+        issue_with_string_field = {
+            "id": "TEST-1",
+            "customFields": [
+                {"name": "Description", "value": "Some text description", "$type": "TextIssueCustomField"}
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_string_field, "Description")
+        assert value == "Some text description"
 
 
 class TestIssuesCLI:
