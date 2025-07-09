@@ -70,7 +70,6 @@ class ArticleManager:
         article_data = {
             "summary": title,
             "content": content,
-            "visibility": {"type": visibility},
         }
 
         if project_id:
@@ -80,7 +79,7 @@ class ArticleManager:
         if summary:
             article_data["summary"] = summary
 
-        url = f"{credentials.base_url}/api/articles"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -219,7 +218,7 @@ class ArticleManager:
         if not article_data:
             return {"status": "error", "message": "No update data provided"}
 
-        url = f"{credentials.base_url}/api/articles/{article_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -246,7 +245,7 @@ class ArticleManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        url = f"{credentials.base_url}/api/articles/{article_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -270,7 +269,7 @@ class ArticleManager:
 
         article_data = {"visibility": {"type": "public"}}
 
-        url = f"{credentials.base_url}/api/articles/{article_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -349,7 +348,7 @@ class ArticleManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        url = f"{credentials.base_url}/api/articles/{article_id}/comments"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/comments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
@@ -371,7 +370,7 @@ class ArticleManager:
 
         comment_data = {"text": text}
 
-        url = f"{credentials.base_url}/api/articles/{article_id}/comments"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/comments"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -398,7 +397,7 @@ class ArticleManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        url = f"{credentials.base_url}/api/articles/{article_id}/attachments"
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/attachments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
