@@ -42,7 +42,8 @@
       "mcp__claude-code__Grep",
       "WebFetch(domain:github.com)",
       "Bash(git remote get-url:*)",
-      "Bash(export YOUTRACK_TOKEN=\"test-token-for-testing\")"
+      "Bash(export YOUTRACK_TOKEN=\"test-token-for-testing\")",
+      "mcp__github__update_issue"
     ],
     "deny": []
   }

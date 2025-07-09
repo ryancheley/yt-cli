@@ -99,14 +99,27 @@ class ProjectManager:
 
             if not isinstance(projects, list):
                 data_type = type(projects).__name__
+                # Include more details about what we received for debugging
+                preview = str(projects)[:200] if projects is not None else "None"
                 return {
                     "status": "error",
-                    "message": f"Unexpected data format from YouTrack API: expected list, got {data_type}",
+                    "message": (
+                        f"Unexpected data format from YouTrack API: expected list, got {data_type}. "
+                        f"Response preview: {preview}"
+                    ),
                 }
 
             # Filter archived projects if requested
             if not show_archived:
-                projects = [p for p in projects if not p.get("archived", False)]
+                filtered_projects = []
+                for p in projects:
+                    if p is not None and not p.get("archived", False):
+                        filtered_projects.append(p)
+                projects = filtered_projects
+
+            # Final null check before count
+            if projects is None:
+                projects = []
 
             return {"status": "success", "data": projects, "count": len(projects)}
 
@@ -173,7 +186,9 @@ class ProjectManager:
                 timeout=10.0,
             )
 
-            created_project = response.json()
+            created_project = self._parse_json_response(response)
+            if created_project is None:
+                return {"status": "error", "message": "Failed to parse project creation response"}
             return {
                 "status": "success",
                 "data": created_project,
@@ -234,7 +249,9 @@ class ProjectManager:
                 timeout=10.0,
             )
 
-            project = response.json()
+            project = self._parse_json_response(response)
+            if project is None:
+                return {"status": "error", "message": "Failed to parse project response"}
             return {"status": "success", "data": project}
 
         except httpx.HTTPError as e:
@@ -311,7 +328,9 @@ class ProjectManager:
                 timeout=10.0,
             )
 
-            updated_project = response.json()
+            updated_project = self._parse_json_response(response)
+            if updated_project is None:
+                return {"status": "error", "message": "Failed to parse project update response"}
             return {
                 "status": "success",
                 "data": updated_project,
@@ -363,12 +382,16 @@ class ProjectManager:
         table.add_column("Description", style="dim")
 
         for project in projects:
+            # Skip None projects
+            if project is None:
+                continue
+
             short_name = project.get("shortName", "N/A")
             name = project.get("name", "N/A")
 
             # Format leader info
             leader = project.get("leader", {})
-            if leader:
+            if leader and isinstance(leader, dict):
                 leader_name = leader.get("fullName") or leader.get("login", "N/A")
             else:
                 leader_name = "N/A"
@@ -377,7 +400,7 @@ class ProjectManager:
             status = "Archived" if project.get("archived", False) else "Active"
             status_style = "red" if project.get("archived", False) else "green"
 
-            description = project.get("description", "")
+            description = project.get("description", "") or ""
             if len(description) > 50:
                 description = description[:47] + "..."
 
@@ -397,6 +420,10 @@ class ProjectManager:
         Args:
             project: Project dictionary
         """
+        if project is None:
+            self.console.print("[red]Error: No project data to display[/red]")
+            return
+
         self.console.print("\n[bold blue]Project Details[/bold blue]")
         self.console.print(f"[cyan]Name:[/cyan] {project.get('name', 'N/A')}")
         self.console.print(f"[cyan]Short Name:[/cyan] {project.get('shortName', 'N/A')}")
@@ -404,7 +431,7 @@ class ProjectManager:
 
         # Leader information
         leader = project.get("leader", {})
-        if leader:
+        if leader and isinstance(leader, dict):
             leader_name = leader.get("fullName") or leader.get("login", "N/A")
             self.console.print(f"[cyan]Leader:[/cyan] {leader_name}")
 
@@ -414,20 +441,23 @@ class ProjectManager:
         self.console.print(f"[cyan]Status:[/cyan] [{status_style}]{status}[/{status_style}]")
 
         # Description
-        description = project.get("description", "")
+        description = project.get("description", "") or ""
         if description:
             self.console.print(f"[cyan]Description:[/cyan] {description}")
 
         # Created by
         created_by = project.get("createdBy", {})
-        if created_by:
+        if created_by and isinstance(created_by, dict):
             creator_name = created_by.get("fullName") or created_by.get("login", "N/A")
             self.console.print(f"[cyan]Created By:[/cyan] {creator_name}")
 
         # Team members
         team = project.get("team", {})
-        if team and team.get("users"):
-            self.console.print("\n[cyan]Team Members:[/cyan]")
-            for user in team["users"]:
-                user_name = user.get("fullName") or user.get("login", "N/A")
-                self.console.print(f"  • {user_name}")
+        if team and isinstance(team, dict) and team.get("users"):
+            users = team.get("users", [])
+            if isinstance(users, list):
+                self.console.print("\n[cyan]Team Members:[/cyan]")
+                for user in users:
+                    if user and isinstance(user, dict):
+                        user_name = user.get("fullName") or user.get("login", "N/A")
+                        self.console.print(f"  • {user_name}")
