@@ -24,7 +24,7 @@ All tests must pass. We use `pytest` for testing, `ruff` for linting, `ty` for t
 
 ## Documentation
 
-Documentation is available in the docs/ folder. Any new functionality should have documentation written for it there. The README.md file shoudl not be used for comprehensive documentation.
+Documentation is available in the docs/ folder. Any new functionality should have documentation written for it there. The README.md file shoudl not be used for comprehensive documentation. Documentation for the YouTrack API can be found [here](https://www.jetbrains.com/help/youtrack/devportal/youtrack-rest-api.html) and should be referenced when needed.
 
 ## Deploy
 

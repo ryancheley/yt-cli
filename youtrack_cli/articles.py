@@ -1,5 +1,6 @@
 """Article management for YouTrack CLI."""
 
+from datetime import datetime
 from typing import Any, Optional
 
 import httpx
@@ -20,36 +21,23 @@ class ArticleManager:
         self.auth_manager = auth_manager
         self.console = Console()
 
-    async def _validate_authentication(self) -> bool:
-        """Validate authentication before making API calls."""
-        credentials = self.auth_manager.load_credentials()
-        if not credentials:
-            return False
-
-        # Quick test to see if we can access the API
+    def _safe_json_parse(self, response: httpx.Response) -> Any:
+        """Safely parse JSON response, handling empty or invalid JSON responses."""
         try:
-            client_manager = get_client_manager()
-            test_url = f"{credentials.base_url}/api/users/me"
-            headers = {"Authorization": f"Bearer {credentials.token}"}
-
-            response = await client_manager.make_request("GET", test_url, headers=headers)
-            return response.status_code == 200
-        except Exception:
-            return False
-
-    def _parse_json_response(self, response: httpx.Response) -> Any:
-        """Safely parse JSON response, handling empty or non-JSON responses."""
-        try:
-            content_type = response.headers.get("content-type", "")
-            if not response.text:
+            # Check if response has content
+            if not response.text.strip():
                 raise ValueError("Empty response body")
 
+            # Check content type
+            content_type = response.headers.get("content-type", "")
             if "application/json" not in content_type:
                 # Check if response looks like HTML (login page)
                 if "text/html" in content_type and "<!doctype html>" in response.text.lower():
                     raise ValueError(
-                        "Received HTML login page instead of JSON. This usually indicates authentication failure. "
-                        "Please verify your credentials with 'yt auth verify'."
+                        "Received HTML login page instead of JSON. This usually indicates that the API endpoint "
+                        "is not available or requires different authentication. The articles/knowledge base feature "
+                        "might not be enabled in your YouTrack instance. Please check if the knowledge base feature "
+                        "is enabled in your YouTrack administration settings."
                     )
                 raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
 
@@ -74,7 +62,10 @@ class ArticleManager:
         """Create a new article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         article_data = {
             "summary": title,
@@ -98,21 +89,14 @@ class ArticleManager:
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {
-                    "status": "success",
-                    "message": f"Article '{title}' created successfully",
-                    "data": data,
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to create article: {error_text}",
-                }
+            data = self._safe_json_parse(response)
+            return {
+                "status": "success",
+                "message": f"Article '{title}' created successfully",
+                "data": data,
+            }
         except Exception as e:
-            return {"status": "error", "message": f"Error creating article: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def list_articles(
         self,
@@ -125,18 +109,19 @@ class ArticleManager:
         """List articles with optional filtering."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
-
-        # Validate authentication before making the API call
-        if not await self._validate_authentication():
             return {
                 "status": "error",
-                "message": "Authentication failed. Please verify your credentials with 'yt auth verify'.",
+                "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        params = {}
-        if fields:
-            params["fields"] = fields
+        # Default fields to return if not specified
+        if not fields:
+            fields = (
+                "id,idReadable,summary,content,created,updated,"
+                "reporter(fullName),visibility(type),project(name,shortName)"
+            )
+
+        params = {"fields": fields}
         if top:
             params["$top"] = str(top)
         if project_id:
@@ -146,60 +131,64 @@ class ArticleManager:
         if query:
             params["query"] = query
 
-        url = f"{credentials.base_url}/api/articles"
-        headers = {"Authorization": f"Bearer {credentials.token}"}
+        url = f"{credentials.base_url.rstrip('/')}/api/articles"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {
-                    "status": "success",
-                    "data": data,
-                    "count": len(data) if isinstance(data, list) else 1,
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to list articles: {error_text}",
-                }
+            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
+            data = self._safe_json_parse(response)
+            # Handle case where API returns None or null
+            if data is None:
+                data = []
+            return {
+                "status": "success",
+                "data": data,
+                "count": len(data) if data is not None and isinstance(data, list) else 0,
+            }
         except ValueError as e:
             # Handle JSON parsing errors specifically
             if "HTML login page" in str(e):
                 return {"status": "error", "message": f"Authentication error: {str(e)}"}
             return {"status": "error", "message": f"Response parsing error: {str(e)}"}
         except Exception as e:
-            return {"status": "error", "message": f"Error listing articles: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def get_article(self, article_id: str, fields: Optional[str] = None) -> dict[str, Any]:  # noqa: E501
         """Get a specific article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
-        params = {}
-        if fields:
-            params["fields"] = fields
+        # Default fields to return if not specified
+        if not fields:
+            fields = (
+                "id,idReadable,summary,content,created,updated,"
+                "reporter(fullName),visibility(type),project(name,shortName),"
+                "parentArticle(id,summary)"
+            )
 
-        url = f"{credentials.base_url}/api/articles/{article_id}"
-        headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": fields}
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to get article: {error_text}",
-                }
+            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
+            data = self._safe_json_parse(response)
+            return {"status": "success", "data": data}
         except Exception as e:
-            return {"status": "error", "message": f"Error getting article: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def update_article(
         self,
@@ -212,7 +201,10 @@ class ArticleManager:
         """Update an existing article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         article_data: dict[str, Any] = {}
         if title:
@@ -236,53 +228,45 @@ class ArticleManager:
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {
-                    "status": "success",
-                    "message": "Article updated successfully",
-                    "data": data,
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to update article: {error_text}",
-                }
+            data = self._safe_json_parse(response)
+            return {
+                "status": "success",
+                "message": "Article updated successfully",
+                "data": data,
+            }
         except Exception as e:
-            return {"status": "error", "message": f"Error updating article: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def delete_article(self, article_id: str) -> dict[str, Any]:
         """Delete an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         url = f"{credentials.base_url}/api/articles/{article_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("DELETE", url, headers=headers)
-            if response.status_code == 200:
-                return {
-                    "status": "success",
-                    "message": "Article deleted successfully",
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to delete article: {error_text}",
-                }
+            await client_manager.make_request("DELETE", url, headers=headers)
+            return {
+                "status": "success",
+                "message": "Article deleted successfully",
+            }
         except Exception as e:
-            return {"status": "error", "message": f"Error deleting article: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def publish_article(self, article_id: str) -> dict[str, Any]:
         """Publish a draft article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         article_data = {"visibility": {"type": "public"}}
 
@@ -295,21 +279,14 @@ class ArticleManager:
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {
-                    "status": "success",
-                    "message": "Article published successfully",
-                    "data": data,
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to publish article: {error_text}",
-                }
+            data = self._safe_json_parse(response)
+            return {
+                "status": "success",
+                "message": "Article published successfully",
+                "data": data,
+            }
         except Exception as e:
-            return {"status": "error", "message": f"Error publishing article: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def search_articles(
         self,
@@ -320,41 +297,57 @@ class ArticleManager:
         """Search articles."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
-        params = {"query": query}
+        params = {
+            "query": query,
+            "fields": (
+                "id,idReadable,summary,content,created,updated,"
+                "reporter(fullName),visibility(type),project(name,shortName)"
+            ),
+        }
         if project_id:
             params["project"] = project_id
         if top:
             params["$top"] = str(top)
 
-        url = f"{credentials.base_url}/api/articles"
-        headers = {"Authorization": f"Bearer {credentials.token}"}
+        url = f"{credentials.base_url.rstrip('/')}/api/articles"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {
-                    "status": "success",
-                    "data": data,
-                    "count": len(data) if isinstance(data, list) else 1,
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to search articles: {error_text}",
-                }
+            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
+            data = self._safe_json_parse(response)
+            # Handle case where API returns None or null
+            if data is None:
+                data = []
+            return {
+                "status": "success",
+                "data": data,
+                "count": len(data) if data is not None and isinstance(data, list) else 0,
+            }
+        except ValueError as e:
+            # Handle JSON parsing errors specifically
+            if "HTML login page" in str(e):
+                return {"status": "error", "message": f"Authentication error: {str(e)}"}
+            return {"status": "error", "message": f"Response parsing error: {str(e)}"}
         except Exception as e:
-            return {"status": "error", "message": f"Error searching articles: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def get_article_comments(self, article_id: str) -> dict[str, Any]:
         """Get comments for an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         url = f"{credentials.base_url}/api/articles/{article_id}/comments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
@@ -362,23 +355,19 @@ class ArticleManager:
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("GET", url, headers=headers)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to get comments: {error_text}",
-                }
+            data = self._safe_json_parse(response)
+            return {"status": "success", "data": data}
         except Exception as e:
-            return {"status": "error", "message": f"Error getting comments: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def add_comment(self, article_id: str, text: str) -> dict[str, Any]:
         """Add a comment to an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         comment_data = {"text": text}
 
@@ -391,27 +380,23 @@ class ArticleManager:
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=comment_data)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {
-                    "status": "success",
-                    "message": "Comment added successfully",
-                    "data": data,
-                }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to add comment: {error_text}",
-                }
+            data = self._safe_json_parse(response)
+            return {
+                "status": "success",
+                "message": "Comment added successfully",
+                "data": data,
+            }
         except Exception as e:
-            return {"status": "error", "message": f"Error adding comment: {str(e)}"}
+            return {"status": "error", "message": str(e)}
 
     async def get_article_attachments(self, article_id: str) -> dict[str, Any]:
         """Get attachments for an article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
-            return {"status": "error", "message": "Not authenticated"}
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
 
         url = f"{credentials.base_url}/api/articles/{article_id}/attachments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
@@ -419,20 +404,10 @@ class ArticleManager:
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("GET", url, headers=headers)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
-                return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to get attachments: {error_text}",
-                }
+            data = self._safe_json_parse(response)
+            return {"status": "success", "data": data}
         except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Error getting attachments: {str(e)}",
-            }  # noqa: E501
+            return {"status": "error", "message": str(e)}
 
     def display_articles_table(self, articles: list[dict[str, Any]]) -> None:
         """Display articles in a table format."""
@@ -449,16 +424,50 @@ class ArticleManager:
         table.add_column("Visibility", style="red")
 
         for article in articles:
-            content = article.get("content", "N/A")
-            summary_text = content[:50] + "..." if len(content) > 50 else content
+            # Get the content field and create a truncated version for summary display
+            content = article.get("content", "")
+            if content:
+                summary_text = content[:50] + "..." if len(content) > 50 else content
+            else:
+                # If no content, show "No Summary Available"
+                summary_text = "No Summary Available"
+
+            # Get author info (using reporter field for articles)
+            author_info = article.get("reporter", {})
+            author_name = author_info.get("fullName", "Unknown Author") if author_info else "Unknown Author"
+
+            # Map visibility type to user-friendly name
+            visibility_info = article.get("visibility", {})
+            visibility_type = visibility_info.get("$type", "")
+            if visibility_type == "UnlimitedVisibility":
+                visibility_display = "Visible"
+            elif visibility_type == "LimitedVisibility":
+                visibility_display = "Hidden"
+            else:
+                visibility_display = "Unknown"
+
+            # Format the created timestamp
+            created_timestamp = article.get("created")
+            if created_timestamp:
+                try:
+                    # Handle both numeric timestamps (from API) and string timestamps (from tests)
+                    if isinstance(created_timestamp, (int, float)):
+                        created_date = datetime.fromtimestamp(created_timestamp / 1000).strftime("%Y-%m-%d %H:%M")
+                    else:
+                        # For string timestamps, just use as-is (test data)
+                        created_date = str(created_timestamp)
+                except (ValueError, TypeError):
+                    created_date = str(created_timestamp)
+            else:
+                created_date = "N/A"
 
             table.add_row(
-                article.get("id", "N/A"),
-                article.get("summary", "N/A"),
-                summary_text,
-                article.get("author", {}).get("fullName", "N/A"),
-                article.get("created", "N/A"),
-                article.get("visibility", {}).get("type", "N/A"),
+                str(article.get("idReadable", article.get("id", "N/A"))),  # Use friendly ID first
+                str(article.get("summary", "N/A")),
+                str(summary_text),
+                str(author_name),
+                str(created_date),
+                str(visibility_display),
             )
 
         self.console.print(table)
@@ -485,11 +494,20 @@ class ArticleManager:
                 root_articles.append(article)
 
         def add_article_to_tree(parent_node: Any, article: dict[str, Any]) -> None:
-            article_id = article.get("id")
-            title = article.get("summary", "Untitled")
-            visibility = article.get("visibility", {}).get("type", "unknown")
+            article_id = str(article.get("idReadable", article.get("id", "unknown")))  # Use friendly ID first
+            title = str(article.get("summary", "Untitled"))
 
-            node_text = f"[green]{title}[/green] [dim]({article_id})[/dim] [yellow]({visibility})[/yellow]"  # noqa: E501
+            # Map visibility type to user-friendly name
+            visibility_info = article.get("visibility", {})
+            visibility_type = visibility_info.get("$type", "")
+            if visibility_type == "UnlimitedVisibility":
+                visibility_display = "Visible"
+            elif visibility_type == "LimitedVisibility":
+                visibility_display = "Hidden"
+            else:
+                visibility_display = "Unknown"
+
+            node_text = f"[green]{title}[/green] [dim]({article_id})[/dim] [yellow]({visibility_display})[/yellow]"  # noqa: E501
             child_node = parent_node.add(node_text)
 
             # Add children if any
@@ -506,12 +524,51 @@ class ArticleManager:
     def display_article_details(self, article: dict[str, Any]) -> None:
         """Display detailed information about an article."""
         self.console.print("\n[bold blue]Article Details[/bold blue]")
-        self.console.print(f"ID: {article.get('id', 'N/A')}")
+        self.console.print(f"ID: {article.get('idReadable', article.get('id', 'N/A'))}")
         self.console.print(f"Title: {article.get('summary', 'N/A')}")
-        self.console.print(f"Author: {article.get('author', {}).get('fullName', 'N/A')}")  # noqa: E501
-        self.console.print(f"Created: {article.get('created', 'N/A')}")
-        self.console.print(f"Updated: {article.get('updated', 'N/A')}")
-        self.console.print(f"Visibility: {article.get('visibility', {}).get('type', 'N/A')}")  # noqa: E501
+        self.console.print(f"Author: {article.get('reporter', {}).get('fullName', 'N/A')}")  # noqa: E501
+
+        # Format timestamps
+        created_timestamp = article.get("created")
+        if created_timestamp:
+            try:
+                # Handle both numeric timestamps (from API) and string timestamps (from tests)
+                if isinstance(created_timestamp, (int, float)):
+                    created_date = datetime.fromtimestamp(created_timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    # For string timestamps, just use as-is (test data)
+                    created_date = str(created_timestamp)
+            except (ValueError, TypeError):
+                created_date = str(created_timestamp)
+        else:
+            created_date = "N/A"
+
+        updated_timestamp = article.get("updated")
+        if updated_timestamp:
+            try:
+                # Handle both numeric timestamps (from API) and string timestamps (from tests)
+                if isinstance(updated_timestamp, (int, float)):
+                    updated_date = datetime.fromtimestamp(updated_timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    # For string timestamps, just use as-is (test data)
+                    updated_date = str(updated_timestamp)
+            except (ValueError, TypeError):
+                updated_date = str(updated_timestamp)
+        else:
+            updated_date = "N/A"
+
+        self.console.print(f"Created: {created_date}")
+        self.console.print(f"Updated: {updated_date}")
+        # Map visibility type to user-friendly name
+        visibility_info = article.get("visibility", {})
+        visibility_type = visibility_info.get("$type", "")
+        if visibility_type == "UnlimitedVisibility":
+            visibility_display = "Visible"
+        elif visibility_type == "LimitedVisibility":
+            visibility_display = "Hidden"
+        else:
+            visibility_display = "Unknown"
+        self.console.print(f"Visibility: {visibility_display}")
 
         if article.get("project"):
             self.console.print(f"Project: {article.get('project', {}).get('name', 'N/A')}")  # noqa: E501

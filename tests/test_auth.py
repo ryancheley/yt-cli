@@ -136,8 +136,11 @@ class TestAuthManager:
         assert config.username is None
 
     @patch.dict(os.environ, {}, clear=True)
-    def test_load_credentials_missing(self):
+    @patch("youtrack_cli.security.keyring")
+    def test_load_credentials_missing(self, mock_keyring):
         """Test loading credentials when none exist."""
+        # Mock keyring to return None (no stored credentials)
+        mock_keyring.get_password.return_value = None
         config = self.auth_manager.load_credentials()
         assert config is None
 
