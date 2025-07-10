@@ -709,12 +709,23 @@ class TestIssueManager:
             patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
             patch("builtins.open", create=True) as mock_open,
         ):
-            mock_resp = Mock()
-            mock_resp.status_code = 200
-            mock_resp.content = b"file content"
+            # Mock the first request (metadata)
+            mock_metadata_resp = Mock()
+            mock_metadata_resp.status_code = 200
+            mock_metadata_resp.text = '{"id": "attach-1", "url": "/api/files/attach-1?sign=abc123"}'
+            mock_metadata_resp.headers = {"content-type": "application/json"}
+            mock_metadata_resp.json.return_value = {"id": "attach-1", "url": "/api/files/attach-1?sign=abc123"}
+
+            # Mock the second request (file content)
+            mock_download_resp = Mock()
+            mock_download_resp.status_code = 200
+            mock_download_resp.content = b"file content"
+
             mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            # Make the make_request method return different responses for different calls
+            mock_client_manager.make_request = AsyncMock(side_effect=[mock_metadata_resp, mock_download_resp])
             mock_get_client_manager.return_value = mock_client_manager
+
             mock_file = MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
 

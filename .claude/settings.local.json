@@ -44,7 +44,8 @@
       "Bash(git remote get-url:*)",
       "Bash(export YOUTRACK_TOKEN=\"test-token-for-testing\")",
       "mcp__github__update_issue",
-      "WebFetch(domain:youtrack-support.jetbrains.com)"
+      "WebFetch(domain:youtrack-support.jetbrains.com)",
+      "Bash(source:*)"
     ],
     "deny": []
   }
