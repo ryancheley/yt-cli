@@ -906,21 +906,46 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
+        # Step 1: Get attachment metadata including download URL
+        metadata_url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/attachments/{attachment_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "id,name,url"}
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers)
-            if response.status_code == 200:
+
+            # Get attachment metadata with URL
+            metadata_response = await client_manager.make_request("GET", metadata_url, headers=headers, params=params)
+            if metadata_response.status_code != 200:
+                error_text = metadata_response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to get attachment metadata: {error_text}",
+                }
+
+            metadata = self._parse_json_response(metadata_response)
+            download_url = metadata.get("url")
+
+            if not download_url:
+                return {
+                    "status": "error",
+                    "message": "No download URL found in attachment metadata",
+                }
+
+            # Step 2: Download the file content using the URL with signature
+            # The URL already includes the sign parameter, so no Authorization header needed
+            full_download_url = f"{credentials.base_url.rstrip('/')}{download_url}"
+            download_response = await client_manager.make_request("GET", full_download_url)
+
+            if download_response.status_code == 200:
                 with open(output_path, "wb") as file:
-                    file.write(response.content)
+                    file.write(download_response.content)
                 return {
                     "status": "success",
                     "message": (f"Attachment downloaded to '{output_path}' successfully"),
                 }
             else:
-                error_text = response.text
+                error_text = download_response.text
                 return {
                     "status": "error",
                     "message": f"Failed to download attachment: {error_text}",
