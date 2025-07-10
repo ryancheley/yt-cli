@@ -517,7 +517,7 @@ def tag() -> None:
 @click.argument("tag_name")
 @click.pass_context
 def add_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
-    """Add a tag to an issue."""
+    """Add a tag to an issue. Creates the tag if it doesn't exist."""
     from ..issues import IssueManager
 
     console = Console()

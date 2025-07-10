@@ -568,35 +568,112 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error moving issue: {str(e)}"}
 
+    async def find_tag_by_name(self, tag_name: str) -> dict[str, Any]:
+        """Find a tag by name. Returns tag data with ID if found."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {"status": "error", "message": "Not authenticated"}
+
+        url = f"{credentials.base_url.rstrip('/')}/api/tags"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json",
+        }
+        params = {"fields": "id,name", "query": tag_name}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                tags = response.json()
+                # Look for exact name match
+                for tag in tags:
+                    if tag.get("name") == tag_name:
+                        return {"status": "success", "tag": tag, "message": f"Found existing tag '{tag_name}'"}
+                return {"status": "not_found", "message": f"Tag '{tag_name}' not found"}
+            else:
+                return {"status": "error", "message": f"Failed to search tags: {response.text}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Error searching for tag: {str(e)}"}
+
+    async def create_tag(self, tag_name: str) -> dict[str, Any]:
+        """Create a new tag. Returns tag data with ID if successful."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {"status": "error", "message": "Not authenticated"}
+
+        url = f"{credentials.base_url.rstrip('/')}/api/tags"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json",
+        }
+        tag_data = {"name": tag_name}
+        params = {"fields": "id,name"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST", url, headers=headers, json_data=tag_data, params=params
+            )
+            if response.status_code == 200:
+                tag = response.json()
+                return {"status": "success", "tag": tag, "message": f"Created new tag '{tag_name}'"}
+            else:
+                return {"status": "error", "message": f"Failed to create tag: {response.text}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Error creating tag: {str(e)}"}
+
+    async def get_or_create_tag(self, tag_name: str) -> dict[str, Any]:
+        """Get existing tag or create new one. Returns tag data with ID."""
+        # First try to find existing tag
+        find_result = await self.find_tag_by_name(tag_name)
+        if find_result["status"] == "success":
+            return find_result
+        elif find_result["status"] == "not_found":
+            # Tag doesn't exist, try to create it
+            return await self.create_tag(tag_name)
+        else:
+            # Error occurred during search
+            return find_result
+
     async def add_tag(self, issue_id: str, tag: str) -> dict[str, Any]:
         """Add a tag to an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
+        # First get or create the tag to ensure we have the tag ID
+        tag_result = await self.get_or_create_tag(tag)
+        if tag_result["status"] != "success":
+            return tag_result
+
+        tag_id = tag_result["tag"]["id"]
+        was_created = "Created" in tag_result["message"]
+
         url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/tags"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
         }
-        tag_data = {"name": tag}
+        tag_data = {"id": tag_id}
 
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=tag_data)
             if response.status_code == 200:
+                creation_note = " (created new tag)" if was_created else ""
                 return {
                     "status": "success",
-                    "message": (f"Tag '{tag}' added to issue '{issue_id}' successfully"),
+                    "message": (f"Tag '{tag}' added to issue '{issue_id}' successfully{creation_note}"),
                 }
             else:
                 error_text = response.text
                 return {
                     "status": "error",
-                    "message": f"Failed to add tag: {error_text}",
+                    "message": f"Failed to add tag to issue: {error_text}",
                 }
         except Exception as e:
-            return {"status": "error", "message": f"Error adding tag: {str(e)}"}
+            return {"status": "error", "message": f"Error adding tag to issue: {str(e)}"}
 
     async def remove_tag(self, issue_id: str, tag: str) -> dict[str, Any]:
         """Remove a tag from an issue."""
