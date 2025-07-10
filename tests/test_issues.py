@@ -396,18 +396,26 @@ class TestIssueManager:
 
     @pytest.mark.asyncio
     async def test_add_tag_success(self, issue_manager):
-        """Test successful tag addition."""
+        """Test successful tag addition with existing tag."""
         with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
-            mock_resp = Mock()
-            mock_resp.status_code = 200
+            # First call for search (found)
+            search_resp = Mock()
+            search_resp.status_code = 200
+            search_resp.json.return_value = [{"id": "6-4", "name": "urgent"}]
+
+            # Second call to add tag to issue
+            add_resp = Mock()
+            add_resp.status_code = 200
+
             mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_client_manager.make_request = AsyncMock(side_effect=[search_resp, add_resp])
             mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.add_tag("PROJ-123", "urgent")
 
             assert result["status"] == "success"
             assert "urgent" in result["message"]
+            assert "PROJ-123" in result["message"]
 
     @pytest.mark.asyncio
     async def test_remove_tag_success(self, issue_manager):
@@ -443,6 +451,134 @@ class TestIssueManager:
 
             assert result["status"] == "success"
             assert len(result["data"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_find_tag_by_name_success(self, issue_manager):
+        """Test successful tag lookup by name."""
+        tag_data = [{"id": "6-4", "name": "urgent"}]
+
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = tag_data
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.find_tag_by_name("urgent")
+
+            assert result["status"] == "success"
+            assert result["tag"]["id"] == "6-4"
+            assert result["tag"]["name"] == "urgent"
+
+    @pytest.mark.asyncio
+    async def test_find_tag_by_name_not_found(self, issue_manager):
+        """Test tag lookup when tag doesn't exist."""
+        tag_data = []
+
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = tag_data
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.find_tag_by_name("nonexistent")
+
+            assert result["status"] == "not_found"
+            assert "not found" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_create_tag_success(self, issue_manager):
+        """Test successful tag creation."""
+        tag_data = {"id": "6-5", "name": "testing"}
+
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = tag_data
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.create_tag("testing")
+
+            assert result["status"] == "success"
+            assert result["tag"]["id"] == "6-5"
+            assert result["tag"]["name"] == "testing"
+            assert "Created" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_or_create_tag_existing(self, issue_manager):
+        """Test get_or_create with existing tag."""
+        tag_data = [{"id": "6-4", "name": "urgent"}]
+
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = tag_data
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.get_or_create_tag("urgent")
+
+            assert result["status"] == "success"
+            assert result["tag"]["id"] == "6-4"
+            assert "Found existing" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_or_create_tag_new(self, issue_manager):
+        """Test get_or_create with new tag."""
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            # First call for search (not found)
+            search_resp = Mock()
+            search_resp.status_code = 200
+            search_resp.json.return_value = []
+
+            # Second call for creation
+            create_resp = Mock()
+            create_resp.status_code = 200
+            create_resp.json.return_value = {"id": "6-6", "name": "newtag"}
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=[search_resp, create_resp])
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.get_or_create_tag("newtag")
+
+            assert result["status"] == "success"
+            assert result["tag"]["id"] == "6-6"
+            assert "Created new" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_add_tag_with_creation(self, issue_manager):
+        """Test add_tag that creates a new tag."""
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            # First call for search (not found)
+            search_resp = Mock()
+            search_resp.status_code = 200
+            search_resp.json.return_value = []
+
+            # Second call for creation
+            create_resp = Mock()
+            create_resp.status_code = 200
+            create_resp.json.return_value = {"id": "6-7", "name": "testing"}
+
+            # Third call to add tag to issue
+            add_resp = Mock()
+            add_resp.status_code = 200
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=[search_resp, create_resp, add_resp])
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.add_tag("PROJ-123", "testing")
+
+            assert result["status"] == "success"
+            assert "created new tag" in result["message"]
+            assert "PROJ-123" in result["message"]
 
     @pytest.mark.asyncio
     async def test_add_comment_success(self, issue_manager):
