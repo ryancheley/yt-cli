@@ -131,7 +131,7 @@ For comprehensive guides, examples, and API reference, visit our documentation:
 | Command Group | Description |
 |--------------|-------------|
 | `yt issues` | Complete issue lifecycle management with search, comments, and relationships |
-| `yt articles` | Manage knowledge base articles with hierarchical organization |
+| `yt articles` | Manage knowledge base articles with hierarchical organization and tagging |
 | `yt projects` | Create and manage YouTrack projects |
 | `yt users` | User management and permissions |
 | `yt time` | Time tracking with flexible duration formats |
@@ -170,6 +170,9 @@ yt articles create "Installation Guide" --file docs/install.md
 
 # Organize existing documentation
 yt articles create "Developer Guide" --file dev-guide.md --project-id PROJECT-123
+
+# Tag articles for better organization
+yt articles tag ARTICLE-123 documentation tutorial
 
 yt articles tree --project-id PROJECT-123
 yt articles search "authentication"

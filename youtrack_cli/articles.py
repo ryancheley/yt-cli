@@ -577,3 +577,132 @@ class ArticleManager:
 
         self.console.print("\n[bold]Content:[/bold]")
         self.console.print(article.get("content", "No content available"))
+
+    async def get_available_tags(self) -> dict[str, Any]:
+        """Get all available tags that can be used to tag articles."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Specify fields to retrieve for tags
+        fields = "id,name,owner(login,fullName),visibleFor(name,id),color"
+        params = {"fields": fields}
+
+        url = f"{credentials.base_url.rstrip('/')}/api/tags"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            data = self._safe_json_parse(response)
+            return {"status": "success", "data": data}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    async def get_article_tags(self, article_id: str) -> dict[str, Any]:
+        """Get current tags for a specific article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Specify fields to retrieve for tags
+        fields = "id,name,owner(login,fullName),visibleFor(name,id),color"
+        params = {"fields": fields}
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/tags"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            data = self._safe_json_parse(response)
+            return {"status": "success", "data": data}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    async def add_tags_to_article(self, article_id: str, tag_ids: list[str]) -> dict[str, Any]:
+        """Add one or more tags to an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/tags"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json",
+        }
+
+        # Add tags one by one as the API expects individual tag additions
+        results = []
+        for tag_id in tag_ids:
+            tag_data = {"id": tag_id}
+            try:
+                client_manager = get_client_manager()
+                response = await client_manager.make_request("POST", url, headers=headers, json_data=tag_data)
+                data = self._safe_json_parse(response)
+                results.append({"tag_id": tag_id, "status": "success", "data": data})
+            except Exception as e:
+                results.append({"tag_id": tag_id, "status": "error", "message": str(e)})
+
+        # Check if all tags were added successfully
+        success_count = sum(1 for r in results if r["status"] == "success")
+        if success_count == len(tag_ids):
+            return {
+                "status": "success",
+                "message": f"Successfully added {success_count} tags to article {article_id}",
+                "data": results,
+            }
+        else:
+            error_count = len(tag_ids) - success_count
+            return {
+                "status": "partial",
+                "message": f"Added {success_count} tags, failed to add {error_count} tags to article {article_id}",
+                "data": results,
+            }
+
+    async def remove_tags_from_article(self, article_id: str, tag_ids: list[str]) -> dict[str, Any]:
+        """Remove one or more tags from an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Remove tags one by one
+        results = []
+        for tag_id in tag_ids:
+            url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/tags/{tag_id}"
+            headers = {"Authorization": f"Bearer {credentials.token}"}
+
+            try:
+                client_manager = get_client_manager()
+                await client_manager.make_request("DELETE", url, headers=headers)
+                results.append({"tag_id": tag_id, "status": "success"})
+            except Exception as e:
+                results.append({"tag_id": tag_id, "status": "error", "message": str(e)})
+
+        # Check if all tags were removed successfully
+        success_count = sum(1 for r in results if r["status"] == "success")
+        if success_count == len(tag_ids):
+            return {
+                "status": "success",
+                "message": f"Successfully removed {success_count} tags from article {article_id}",
+                "data": results,
+            }
+        else:
+            error_count = len(tag_ids) - success_count
+            return {
+                "status": "partial",
+                "message": f"Removed {success_count} tags, failed to remove {error_count} tags from article {article_id}",  # noqa: E501
+                "data": results,
+            }

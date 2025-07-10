@@ -478,6 +478,114 @@ class TestArticleManager:
             # Check that print was called multiple times for different fields
             assert mock_console.return_value.print.call_count >= 8
 
+    @pytest.mark.asyncio
+    async def test_get_available_tags_success(self, article_manager):
+        """Test successful fetching of available tags."""
+        mock_response = [
+            {"id": "1", "name": "bug", "owner": {"login": "user1"}},
+            {"id": "2", "name": "feature", "owner": {"login": "user2"}},
+        ]
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_response_obj.text = '{"data": "test"}'
+            mock_response_obj.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response_obj)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.get_available_tags()
+
+            assert result["status"] == "success"
+            assert result["data"] == mock_response
+
+    @pytest.mark.asyncio
+    async def test_get_available_tags_auth_error(self, article_manager):
+        """Test get_available_tags with authentication error."""
+        article_manager.auth_manager.load_credentials.return_value = None
+
+        result = await article_manager.get_available_tags()
+
+        assert result["status"] == "error"
+        assert "Not authenticated" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_article_tags_success(self, article_manager):
+        """Test successful fetching of article tags."""
+        mock_response = [
+            {"id": "1", "name": "bug"},
+            {"id": "2", "name": "feature"},
+        ]
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_response_obj.text = '{"data": "test"}'
+            mock_response_obj.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response_obj)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.get_article_tags("123")
+
+            assert result["status"] == "success"
+            assert result["data"] == mock_response
+
+    @pytest.mark.asyncio
+    async def test_add_tags_to_article_success(self, article_manager):
+        """Test successful adding of tags to article."""
+        mock_response = {"id": "1", "name": "bug"}
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_response_obj.text = '{"data": "test"}'
+            mock_response_obj.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response_obj)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.add_tags_to_article("123", ["1", "2"])
+
+            assert result["status"] == "success"
+            assert "Successfully added 2 tags" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_add_tags_to_article_partial_success(self, article_manager):
+        """Test partial success when adding tags to article."""
+        mock_response = {"id": "1", "name": "bug"}
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_response_obj.text = '{"data": "test"}'
+            mock_response_obj.headers = {"content-type": "application/json"}
+
+            # First call succeeds, second fails
+            mock_client_manager.make_request = AsyncMock(side_effect=[mock_response_obj, Exception("Tag not found")])
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.add_tags_to_article("123", ["1", "2"])
+
+            assert result["status"] == "partial"
+            assert "Added 1 tags, failed to add 1 tags" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_remove_tags_from_article_success(self, article_manager):
+        """Test successful removal of tags from article."""
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response_obj = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response_obj)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.remove_tags_from_article("123", ["1", "2"])
+
+            assert result["status"] == "success"
+            assert "Successfully removed 2 tags" in result["message"]
+
 
 class TestArticlesCLI:
     """Test cases for articles CLI commands."""
