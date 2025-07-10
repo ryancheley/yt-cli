@@ -76,6 +76,12 @@ Implement the solution following best practices:
 - Check migrations: `python manage.py makemigrations --dry-run`
 - Lint code: `flake8` or `black` as per project standards
 
+**For CLI/Rich/Texttual development:**
+- install CLI using `uv pip install -e .`
+- use the `.env` file for authentication
+- run the commands to make sure they function as expected
+- use the `FPU` project for all testing
+
 ## 5. Pre-commit Validation
 
 Before committing, validate your changes:
