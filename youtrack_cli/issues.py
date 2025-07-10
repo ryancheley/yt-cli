@@ -519,18 +519,37 @@ class IssueManager:
 
         return await self.update_issue(issue_id, **update_data)
 
+    async def _resolve_project_id(self, project_id_or_short_name: str) -> Optional[str]:
+        """Resolve project short name to internal ID."""
+        from .projects import ProjectManager
+
+        project_manager = ProjectManager(self.auth_manager)
+        result = await project_manager.get_project(project_id_or_short_name, fields="id,shortName")
+
+        if result["status"] == "success":
+            return result["data"]["id"]
+        return None
+
     async def _move_issue_to_project(self, issue_id: str, project_id: str) -> dict[str, Any]:
         """Move an issue to a different project."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
+        # First try to resolve the project short name to internal ID
+        resolved_project_id = await self._resolve_project_id(project_id)
+        if resolved_project_id is None:
+            return {
+                "status": "error",
+                "message": f"Project '{project_id}' not found. Please check the project short name or ID.",
+            }
+
         url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
         }
-        update_data = {"project": {"id": project_id}}
+        update_data = {"project": {"id": resolved_project_id}}
 
         try:
             client_manager = get_client_manager()
