@@ -84,7 +84,7 @@ def projects_list(
     "--leader",
     "-l",
     prompt=True,
-    help="Project leader username or ID",
+    help="Project leader username (e.g., 'admin', 'ryan') or ID (e.g., '2-3')",
 )
 @click.option(
     "--description",
@@ -155,7 +155,7 @@ def projects_create(
 @click.option(
     "--leader",
     "-l",
-    help="New project leader username or ID",
+    help="New project leader username (e.g., 'admin', 'ryan') or ID (e.g., '2-3')",
 )
 @click.option(
     "--show-details",

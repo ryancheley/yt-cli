@@ -141,6 +141,90 @@ class TestProjectManager:
             "leader": {"login": "user1", "fullName": "User One"},
         }
 
+        # Mock the user resolution
+        mock_user_data = {"id": "2-1", "login": "user1"}
+
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_created_project
+            mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "new-project", "name": "New Project"}'
+            mock_response.status_code = 200
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            # Mock the user manager get_user method
+            project_manager.user_manager.get_user = AsyncMock(
+                return_value={"status": "success", "data": mock_user_data}
+            )
+
+            result = await project_manager.create_project(
+                name="New Project",
+                short_name="NP",
+                leader_id="user1",
+                description="Test project",
+                template="scrum",
+            )
+
+            assert result["status"] == "success"
+            assert result["data"]["name"] == "New Project"
+            assert "created successfully" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_create_project_with_username_resolution(self, project_manager, auth_manager):
+        """Test project creation with username resolution."""
+        mock_created_project = {
+            "id": "123",
+            "name": "New Project",
+            "shortName": "NP",
+            "leader": {"login": "admin", "fullName": "Admin User"},
+        }
+
+        # Mock the user resolution
+        mock_user_data = {"id": "2-1", "login": "admin"}
+
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_created_project
+            mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "new-project", "name": "New Project"}'
+            mock_response.status_code = 200
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            # Mock the user manager get_user method
+            project_manager.user_manager.get_user = AsyncMock(
+                return_value={"status": "success", "data": mock_user_data}
+            )
+
+            result = await project_manager.create_project(
+                name="New Project",
+                short_name="NP",
+                leader_id="admin",  # Using username instead of ID
+                description="Test project",
+                template="scrum",
+            )
+
+            assert result["status"] == "success"
+            assert result["data"]["name"] == "New Project"
+            assert "created successfully" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_create_project_with_user_id_passthrough(self, project_manager, auth_manager):
+        """Test project creation with user ID that should pass through unchanged."""
+        mock_created_project = {
+            "id": "123",
+            "name": "New Project",
+            "shortName": "NP",
+            "leader": {"login": "admin", "fullName": "Admin User"},
+        }
+
         with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_created_project
@@ -156,7 +240,7 @@ class TestProjectManager:
             result = await project_manager.create_project(
                 name="New Project",
                 short_name="NP",
-                leader_id="user1",
+                leader_id="2-1",  # Using user ID format
                 description="Test project",
                 template="scrum",
             )
@@ -166,8 +250,30 @@ class TestProjectManager:
             assert "created successfully" in result["message"]
 
     @pytest.mark.asyncio
+    async def test_create_project_invalid_username(self, project_manager, auth_manager):
+        """Test project creation with invalid username."""
+        # Mock the user manager to return user not found
+        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "error", "message": "User not found"})
+
+        result = await project_manager.create_project(
+            name="New Project",
+            short_name="NP",
+            leader_id="nonexistent",
+            description="Test project",
+            template="scrum",
+        )
+
+        assert result["status"] == "error"
+        assert "Failed to resolve leader" in result["message"]
+        assert "User 'nonexistent' not found" in result["message"]
+
+    @pytest.mark.asyncio
     async def test_create_project_invalid_data(self, project_manager, auth_manager):
         """Test project creation with invalid data."""
+        # Mock the user resolution to succeed first
+        mock_user_data = {"id": "2-1", "login": "invalid-user"}
+        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "success", "data": mock_user_data})
+
         with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.status_code = 400
@@ -187,6 +293,10 @@ class TestProjectManager:
     @pytest.mark.asyncio
     async def test_create_project_insufficient_permissions(self, project_manager, auth_manager):
         """Test project creation with insufficient permissions."""
+        # Mock the user resolution to succeed first
+        mock_user_data = {"id": "2-1", "login": "user1"}
+        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "success", "data": mock_user_data})
+
         with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.status_code = 403
@@ -270,6 +380,9 @@ class TestProjectManager:
             "archived": False,
         }
 
+        # Mock the user resolution
+        mock_user_data = {"id": "2-5", "login": "new-leader"}
+
         with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
             mock_response = Mock()
             mock_response.json.return_value = mock_updated_project
@@ -282,6 +395,11 @@ class TestProjectManager:
             mock_client_manager.make_request = AsyncMock(return_value=mock_response)
             mock_get_client_manager.return_value = mock_client_manager
 
+            # Mock the user manager get_user method
+            project_manager.user_manager.get_user = AsyncMock(
+                return_value={"status": "success", "data": mock_user_data}
+            )
+
             result = await project_manager.update_project(
                 project_id="UP", name="Updated Project", leader_id="new-leader"
             )
@@ -289,6 +407,59 @@ class TestProjectManager:
             assert result["status"] == "success"
             assert result["data"]["name"] == "Updated Project"
             assert "updated successfully" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_update_project_with_username_resolution(self, project_manager, auth_manager):
+        """Test project update with username resolution."""
+        mock_updated_project = {
+            "id": "123",
+            "name": "Updated Project",
+            "shortName": "UP",
+            "leader": {"login": "admin", "fullName": "Admin User"},
+            "archived": False,
+        }
+
+        # Mock the user resolution
+        mock_user_data = {"id": "2-1", "login": "admin"}
+
+        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_updated_project
+            mock_response.raise_for_status.return_value = None
+            mock_response.headers = {"content-type": "application/json"}
+            mock_response.text = '{"id": "123", "name": "Updated Project"}'
+            mock_response.status_code = 200
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            # Mock the user manager get_user method
+            project_manager.user_manager.get_user = AsyncMock(
+                return_value={"status": "success", "data": mock_user_data}
+            )
+
+            result = await project_manager.update_project(
+                project_id="UP",
+                name="Updated Project",
+                leader_id="admin",  # Using username
+            )
+
+            assert result["status"] == "success"
+            assert result["data"]["name"] == "Updated Project"
+            assert "updated successfully" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_update_project_invalid_username(self, project_manager, auth_manager):
+        """Test project update with invalid username."""
+        # Mock the user manager to return user not found
+        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "error", "message": "User not found"})
+
+        result = await project_manager.update_project(project_id="UP", name="Updated Project", leader_id="nonexistent")
+
+        assert result["status"] == "error"
+        assert "Failed to resolve leader" in result["message"]
+        assert "User 'nonexistent' not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_update_project_no_changes(self, project_manager, auth_manager):
