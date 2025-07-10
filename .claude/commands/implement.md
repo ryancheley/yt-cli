@@ -70,15 +70,10 @@ Implement the solution following best practices:
 - Consider security implications
 - Ensure accessibility compliance (for frontend changes)
 
-**For Python/Django development:**
-- Run `python manage.py check` for Django projects
-- Execute test suite: `python manage.py test`
-- Check migrations: `python manage.py makemigrations --dry-run`
-- Lint code: `flake8` or `black` as per project standards
-
-**For CLI/Rich/Texttual development:**
+**For local development and verification:**
 - install CLI using `uv pip install -e .`
-- use the `.env.local` file for authentication; use the command `yt auth login` to login
+- use the command `source .env.local && yt auth login --token $YOUTRACK_API_KEY --base-url $BASE_URL` to authenticate
+- prepend all cli commands with `source .env.local && ` to ensure that they work as expected and have no errors
 - run the commands to make sure they function as expected
 - use the `FPU` project for all testing
 - When working on a custom field, the documentation is available [here](https://www.jetbrains.com/help/youtrack/devportal/api-how-to-update-custom-fields-values.html)
