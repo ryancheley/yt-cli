@@ -325,7 +325,64 @@ class IssueManager:
                     "message": f"Failed to update issue: {error_text}",
                 }
         except Exception as e:
-            return {"status": "error", "message": f"Error updating issue: {str(e)}"}
+            error_message = str(e)
+            # Check if this is a priority field requirement issue
+            if "Priority is required" in error_message and priority:
+                try:
+                    client_manager = get_client_manager()
+
+                    # Prepare custom fields format
+                    custom_fields = []
+
+                    # Add Priority field if specified
+                    if priority:
+                        custom_fields.append(
+                            {
+                                "$type": "SingleEnumIssueCustomField",
+                                "name": "Priority",
+                                "value": {"$type": "EnumBundleElement", "name": priority},
+                            }
+                        )
+
+                    # Add Type field if specified
+                    if issue_type:
+                        custom_fields.append(
+                            {
+                                "$type": "SingleEnumIssueCustomField",
+                                "name": "Type",
+                                "value": {"$type": "EnumBundleElement", "name": issue_type},
+                            }
+                        )
+
+                    # Create update data with custom fields format
+                    update_data_custom = {}
+                    if summary:
+                        update_data_custom["summary"] = summary
+                    if description:
+                        update_data_custom["description"] = description
+                    if state:
+                        update_data_custom["state"] = {"name": state}
+                    if assignee:
+                        update_data_custom["assignee"] = {"login": assignee}
+
+                    # Add custom fields if any
+                    if custom_fields:
+                        update_data_custom["customFields"] = custom_fields
+
+                    retry_response = await client_manager.make_request(
+                        "POST", url, headers=headers, json_data=update_data_custom
+                    )
+                    if retry_response.status_code == 200:
+                        data = self._parse_json_response(retry_response)
+                        return {
+                            "status": "success",
+                            "message": f"Issue '{issue_id}' updated successfully (using custom field format)",
+                            "data": data,
+                        }
+                except Exception:
+                    pass  # Fallback failed, return original error
+
+            return {"status": "error", "message": f"Error updating issue: {error_message}"}
 
     async def delete_issue(self, issue_id: str) -> dict[str, Any]:
         """Delete an issue."""
