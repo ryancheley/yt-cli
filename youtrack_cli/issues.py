@@ -884,26 +884,106 @@ class IssueManager:
             }
 
     # Links functionality
+    async def _resolve_link_type(self, link_type_name: str) -> Optional[dict[str, Any]]:
+        """Resolve a link type name to its ID and direction information."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return None
+
+        url = f"{credentials.base_url.rstrip('/')}/api/issueLinkTypes"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "id,name,sourceToTarget,targetToSource,directed"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                link_types = self._parse_json_response(response)
+
+                # Try to find exact match first
+                for link_type in link_types:
+                    if link_type.get("name", "").lower() == link_type_name.lower():
+                        return link_type
+                    # Also check sourceToTarget and targetToSource names
+                    if link_type.get("sourceToTarget", "").lower() == link_type_name.lower():
+                        return {**link_type, "direction": "outward"}
+                    if link_type.get("targetToSource", "").lower() == link_type_name.lower():
+                        return {**link_type, "direction": "inward"}
+
+                return None
+            else:
+                logger.error("Failed to fetch link types", status_code=response.status_code)
+                return None
+        except Exception as e:
+            logger.error("Error fetching link types", error=str(e))
+            return None
+
+    async def _get_issue_database_id(self, issue_id: str) -> Optional[str]:
+        """Get the database ID for an issue given its readable ID."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return None
+
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "id"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return data.get("id")
+            else:
+                logger.error("Failed to fetch issue ID", issue_id=issue_id, status_code=response.status_code)
+                return None
+        except Exception as e:
+            logger.error("Error fetching issue ID", issue_id=issue_id, error=str(e))
+            return None
+
     async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> dict[str, Any]:
         """Create a link between two issues."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues/{source_issue_id}/links"
+        # First resolve the link type name to ID
+        link_type_info = await self._resolve_link_type(link_type)
+        if not link_type_info:
+            return {"status": "error", "message": f"Unknown link type: '{link_type}'"}
+
+        # Get the database ID for the target issue
+        target_db_id = await self._get_issue_database_id(target_issue_id)
+        if not target_db_id:
+            return {"status": "error", "message": f"Could not find issue: '{target_issue_id}'"}
+
+        link_type_id = link_type_info.get("id")
+        is_directed = link_type_info.get("directed", False)
+
+        # Determine the link ID to use in the URL
+        # For directed links, we need to append 's' for outward or 't' for inward
+        if is_directed:
+            # Default to outward direction unless explicitly set
+            direction = link_type_info.get("direction", "outward")
+            if direction == "inward":
+                link_id = f"{link_type_id}t"
+            else:
+                link_id = f"{link_type_id}s"
+        else:
+            link_id = link_type_id
+
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{source_issue_id}/links/{link_id}/issues"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
         }
-        link_data = {
-            "linkType": {"name": link_type},
-            "issues": [{"id": target_issue_id}],
-        }
+        # Only send the target issue database ID in the body
+        link_data = {"id": target_db_id}
 
         try:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=link_data)
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 return {
                     "status": "success",
                     "message": (f"Link created between '{source_issue_id}' and '{target_issue_id}' successfully"),

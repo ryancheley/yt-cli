@@ -356,11 +356,28 @@ Create Links
 
    yt issues links create SOURCE_ISSUE_ID TARGET_ISSUE_ID LINK_TYPE
 
-**Example:**
+**Arguments:**
+  * ``SOURCE_ISSUE_ID`` - The ID of the source issue
+  * ``TARGET_ISSUE_ID`` - The ID of the target issue
+  * ``LINK_TYPE`` - Type of link (e.g., "relates", "depends on", "duplicates", "subtask of")
+
+**Examples:**
 
 .. code-block:: bash
 
+   # Create a dependency link
    yt issues links create PROJ-123 PROJ-124 "depends on"
+
+   # Create a relation link
+   yt issues links create PROJ-123 PROJ-125 relates
+
+   # Create a duplicate link
+   yt issues links create PROJ-123 PROJ-126 duplicates
+
+.. note::
+   The CLI automatically resolves link type names to their internal IDs and handles
+   directed vs undirected link types. Use ``yt issues links types`` to see all
+   available link types in your YouTrack instance.
 
 List Links
 ~~~~~~~~~~
