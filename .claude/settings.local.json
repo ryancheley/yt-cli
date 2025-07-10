@@ -43,7 +43,8 @@
       "WebFetch(domain:github.com)",
       "Bash(git remote get-url:*)",
       "Bash(export YOUTRACK_TOKEN=\"test-token-for-testing\")",
-      "mcp__github__update_issue"
+      "mcp__github__update_issue",
+      "WebFetch(domain:youtrack-support.jetbrains.com)"
     ],
     "deny": []
   }

@@ -81,6 +81,7 @@ Implement the solution following best practices:
 - use the `.env` file for authentication
 - run the commands to make sure they function as expected
 - use the `FPU` project for all testing
+- When working on a custom field, the documentation is available [here](https://www.jetbrains.com/help/youtrack/devportal/api-how-to-update-custom-fields-values.html)
 
 ## 5. Pre-commit Validation
 
