@@ -607,10 +607,35 @@ class TestIssueManager:
     async def test_create_link_success(self, issue_manager):
         """Test successful link creation."""
         with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
-            mock_resp = Mock()
-            mock_resp.status_code = 200
+            # Mock responses for different API calls
+            mock_link_types_resp = Mock()
+            mock_link_types_resp.status_code = 200
+            mock_link_types_resp.json.return_value = [
+                {"id": "depends-on", "name": "Depends", "sourceToTarget": "depends on", "directed": True}
+            ]
+            mock_link_types_resp.text = '{"mock": "response"}'
+            mock_link_types_resp.headers = {"content-type": "application/json"}
+
+            mock_issue_resp = Mock()
+            mock_issue_resp.status_code = 200
+            mock_issue_resp.json.return_value = {"id": "2-124"}
+            mock_issue_resp.text = '{"id": "2-124"}'
+            mock_issue_resp.headers = {"content-type": "application/json"}
+
+            mock_create_resp = Mock()
+            mock_create_resp.status_code = 200
+
+            # Configure mock to return different responses based on URL
+            async def mock_make_request(method, url, **kwargs):
+                if "issueLinkTypes" in url:
+                    return mock_link_types_resp
+                elif "PROJ-124" in url and method == "GET":
+                    return mock_issue_resp
+                else:
+                    return mock_create_resp
+
             mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_client_manager.make_request = AsyncMock(side_effect=mock_make_request)
             mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.create_link("PROJ-123", "PROJ-124", "depends on")
