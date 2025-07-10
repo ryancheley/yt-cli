@@ -555,6 +555,122 @@ def sort(
         raise click.ClickException("Failed to fetch child articles") from e
 
 
+@articles.command(name="tag")
+@click.argument("article_id")
+@click.argument("tags", nargs=-1)
+@click.pass_context
+def tag_article(ctx: click.Context, article_id: str, tags: tuple[str, ...]) -> None:
+    """Add tags to an article. If no tags provided, shows interactive selection."""
+    console = Console()
+
+    async def _tag_article() -> None:
+        from ..articles import ArticleManager
+
+        auth_manager = AuthManager()
+        article_manager = ArticleManager(auth_manager)
+
+        # If no tags provided, show interactive selection
+        if not tags:
+            console.print("🔍 Fetching available tags...", style="blue")
+
+            # Get available tags
+            tags_result = await article_manager.get_available_tags()
+            if tags_result["status"] != "success":
+                console.print(f"❌ {tags_result['message']}", style="red")
+                return
+
+            available_tags = tags_result["data"]
+            if not available_tags:
+                console.print("No tags available.", style="yellow")
+                return
+
+            # Show interactive selection
+            console.print("\n📋 Available tags:", style="green")
+            for i, tag in enumerate(available_tags, 1):
+                console.print(f"  {i}. {tag.get('name', 'Unknown')} (ID: {tag.get('id', 'N/A')})")
+
+            # Get user selection
+            console.print("\n💡 Enter tag numbers separated by spaces (e.g., 1 3 5) or 'q' to quit:")
+            try:
+                user_input = input().strip()
+                if user_input.lower() == "q":
+                    console.print("Tagging cancelled.", style="yellow")
+                    return
+
+                # Parse selected indices
+                selected_indices = [int(x) - 1 for x in user_input.split()]
+                selected_tags = [available_tags[i] for i in selected_indices if 0 <= i < len(available_tags)]
+
+                if not selected_tags:
+                    console.print("No valid tags selected.", style="yellow")
+                    return
+
+                # Get tag IDs
+                tag_ids = [tag.get("id") for tag in selected_tags if tag.get("id")]
+                tag_names = [tag.get("name") for tag in selected_tags if tag.get("name")]
+
+                console.print(f"\n🏷️  Selected tags: {', '.join(tag_names)}", style="green")
+
+            except (ValueError, IndexError):
+                console.print("❌ Invalid selection. Please enter valid numbers.", style="red")
+                return
+            except KeyboardInterrupt:
+                console.print("\nTagging cancelled.", style="yellow")
+                return
+
+        else:
+            # Tags provided via command line, treat as tag names
+            console.print("🔍 Finding tags by name...", style="blue")
+
+            # Get available tags to map names to IDs
+            tags_result = await article_manager.get_available_tags()
+            if tags_result["status"] != "success":
+                console.print(f"❌ {tags_result['message']}", style="red")
+                return
+
+            available_tags = tags_result["data"]
+            tag_map = {tag.get("name", "").lower(): tag.get("id") for tag in available_tags}
+
+            # Find matching tags
+            tag_ids = []
+            tag_names = []
+            not_found = []
+
+            for tag_name in tags:
+                tag_id = tag_map.get(tag_name.lower())
+                if tag_id:
+                    tag_ids.append(tag_id)
+                    tag_names.append(tag_name)
+                else:
+                    not_found.append(tag_name)
+
+            if not_found:
+                console.print(f"⚠️  Tags not found: {', '.join(not_found)}", style="yellow")
+
+            if not tag_ids:
+                console.print("❌ No valid tags found.", style="red")
+                return
+
+            console.print(f"🏷️  Found tags: {', '.join(tag_names)}", style="green")
+
+        # Add tags to article
+        console.print(f"🔄 Adding tags to article {article_id}...", style="blue")
+        result = await article_manager.add_tags_to_article(article_id, tag_ids)
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        elif result["status"] == "partial":
+            console.print(f"⚠️  {result['message']}", style="yellow")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+
+    try:
+        asyncio.run(_tag_article())
+    except Exception as e:
+        console.print(f"❌ Error: {e}", style="red")
+        raise click.ClickException("Failed to tag article") from e
+
+
 @articles.group(name="comments")
 def comments() -> None:
     """Manage article comments."""

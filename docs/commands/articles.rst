@@ -15,6 +15,7 @@ YouTrack articles serve as a knowledge base for documentation, guides, and colla
 * Create, edit, and organize articles
 * Manage article visibility and publishing status
 * Handle hierarchical article structures (parent-child relationships)
+* Tag articles for better organization and categorization
 * Add and manage comments on articles
 * Handle file attachments
 * Search and filter articles
@@ -383,6 +384,72 @@ View and organize child articles under a parent article.
    # Sort child articles and apply changes (requires manual confirmation in YouTrack web interface)
    yt articles sort PARENT-ARTICLE-123 --update
 
+Tag Management
+--------------
+
+tag
+~~~
+
+Add tags to an article for better organization and categorization.
+
+.. code-block:: bash
+
+   yt articles tag ARTICLE_ID [TAG_NAME1] [TAG_NAME2] ...
+
+**Arguments:**
+
+* ``ARTICLE_ID`` - The ID of the article to tag (required)
+* ``TAG_NAME`` - Names of tags to add (optional, if not provided shows interactive selection)
+
+**Interactive Mode:**
+
+When no tag names are provided, the command enters interactive mode where you can:
+
+* View all available tags in the system
+* Select multiple tags using numbered indices
+* Confirm your selection before applying
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Add specific tags to an article
+   yt articles tag ARTICLE-123 bug documentation
+
+   # Interactive tag selection (shows all available tags)
+   yt articles tag ARTICLE-123
+
+   # Add a single tag
+   yt articles tag ARTICLE-123 urgent
+
+**Interactive Mode Usage:**
+
+.. code-block:: text
+
+   🔍 Fetching available tags...
+
+   📋 Available tags:
+     1. bug (ID: 1-0)
+     2. documentation (ID: 2-0)
+     3. feature (ID: 3-0)
+     4. urgent (ID: 4-0)
+     5. review (ID: 5-0)
+
+   💡 Enter tag numbers separated by spaces (e.g., 1 3 5) or 'q' to quit:
+   1 2 4
+
+   🏷️  Selected tags: bug, documentation, urgent
+   🔄 Adding tags to article ARTICLE-123...
+   ✅ Successfully added 3 tags to article ARTICLE-123
+
+**Features:**
+
+* **Tag Name Matching**: When providing tag names directly, the command performs case-insensitive matching
+* **Interactive Selection**: Shows all available tags with their IDs for easy selection
+* **Multi-select**: Can apply multiple tags in a single operation
+* **Validation**: Validates that tags exist before applying them
+* **Error Handling**: Provides clear feedback for invalid tags or articles
+
 Comment Management
 ------------------
 
@@ -679,6 +746,9 @@ Content Management
 
    # View article details
    yt articles edit ARTICLE-123 --show-details
+
+   # Tag articles for better organization
+   yt articles tag ARTICLE-123 documentation tutorial
 
 Working with Markdown Files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
