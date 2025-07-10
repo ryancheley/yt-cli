@@ -1125,10 +1125,10 @@ class IssueManager:
             truncated_text = text[:100] + ("..." if len(text) > 100 else "")
 
             table.add_row(
-                comment.get("id", "N/A"),
+                str(comment.get("id", "N/A")),
                 author_name,
                 truncated_text,
-                comment.get("created", "N/A"),
+                str(comment.get("created", "N/A")),
             )
 
         self.console.print(table)
