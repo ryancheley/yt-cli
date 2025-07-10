@@ -78,7 +78,7 @@ Implement the solution following best practices:
 
 **For CLI/Rich/Texttual development:**
 - install CLI using `uv pip install -e .`
-- use the `.env` file for authentication
+- use the `.env.local` file for authentication; use the command `yt auth login` to login
 - run the commands to make sure they function as expected
 - use the `FPU` project for all testing
 - When working on a custom field, the documentation is available [here](https://www.jetbrains.com/help/youtrack/devportal/api-how-to-update-custom-fields-values.html)
