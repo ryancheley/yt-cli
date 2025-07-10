@@ -325,7 +325,64 @@ class IssueManager:
                     "message": f"Failed to update issue: {error_text}",
                 }
         except Exception as e:
-            return {"status": "error", "message": f"Error updating issue: {str(e)}"}
+            error_message = str(e)
+            # Check if this is a priority field requirement issue
+            if "Priority is required" in error_message and priority:
+                try:
+                    client_manager = get_client_manager()
+
+                    # Prepare custom fields format
+                    custom_fields = []
+
+                    # Add Priority field if specified
+                    if priority:
+                        custom_fields.append(
+                            {
+                                "$type": "SingleEnumIssueCustomField",
+                                "name": "Priority",
+                                "value": {"$type": "EnumBundleElement", "name": priority},
+                            }
+                        )
+
+                    # Add Type field if specified
+                    if issue_type:
+                        custom_fields.append(
+                            {
+                                "$type": "SingleEnumIssueCustomField",
+                                "name": "Type",
+                                "value": {"$type": "EnumBundleElement", "name": issue_type},
+                            }
+                        )
+
+                    # Create update data with custom fields format
+                    update_data_custom = {}
+                    if summary:
+                        update_data_custom["summary"] = summary
+                    if description:
+                        update_data_custom["description"] = description
+                    if state:
+                        update_data_custom["state"] = {"name": state}
+                    if assignee:
+                        update_data_custom["assignee"] = {"login": assignee}
+
+                    # Add custom fields if any
+                    if custom_fields:
+                        update_data_custom["customFields"] = custom_fields
+
+                    retry_response = await client_manager.make_request(
+                        "POST", url, headers=headers, json_data=update_data_custom
+                    )
+                    if retry_response.status_code == 200:
+                        data = self._parse_json_response(retry_response)
+                        return {
+                            "status": "success",
+                            "message": f"Issue '{issue_id}' updated successfully (using custom field format)",
+                            "data": data,
+                        }
+                except Exception:
+                    pass  # Fallback failed, return original error
+
+            return {"status": "error", "message": f"Error updating issue: {error_message}"}
 
     async def delete_issue(self, issue_id: str) -> dict[str, Any]:
         """Delete an issue."""
@@ -402,9 +459,89 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error searching issues: {str(e)}"}
 
+    async def _get_custom_field_id(self, issue_id: str, field_name: str) -> Optional[str]:
+        """Get the custom field ID for a given field name."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return None
+
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "customFields(id,name)"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                for field in data.get("customFields", []):
+                    if field.get("name") == field_name:
+                        return field.get("id")
+        except Exception:
+            pass
+        return None
+
     async def assign_issue(self, issue_id: str, assignee: str) -> dict[str, Any]:
         """Assign an issue to a user."""
-        return await self.update_issue(issue_id, assignee=assignee)
+        # First try the standard field update
+        result = await self.update_issue(issue_id, assignee=assignee)
+
+        # If successful, check if the assignment actually worked
+        if result["status"] == "success":
+            # Get the issue to verify assignment
+            check_result = await self.get_issue(issue_id)
+            if check_result["status"] == "success":
+                issue_data = check_result["data"]
+
+                # Check if assignee was set at top level
+                if issue_data.get("assignee"):
+                    return result
+
+                # If not, try to find and use the custom field
+                field_id = await self._get_custom_field_id(issue_id, "Assignee")
+                if field_id:
+                    # Get user info
+                    from .users import UserManager
+
+                    user_manager = UserManager(self.auth_manager)
+                    user_result = await user_manager.get_user(assignee)
+
+                    if user_result["status"] == "success":
+                        user_data = user_result["data"]
+                        user_id = user_data.get("id")
+
+                        # Update using custom field
+                        credentials = self.auth_manager.load_credentials()
+                        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
+                        headers = {
+                            "Authorization": f"Bearer {credentials.token}",
+                            "Content-Type": "application/json",
+                        }
+
+                        update_data = {
+                            "customFields": [
+                                {
+                                    "$type": "SingleUserIssueCustomField",
+                                    "id": field_id,
+                                    "value": {"$type": "User", "id": user_id},
+                                }
+                            ]
+                        }
+
+                        try:
+                            client_manager = get_client_manager()
+                            response = await client_manager.make_request(
+                                "POST", url, headers=headers, json_data=update_data
+                            )
+                            if response.status_code == 200:
+                                return {
+                                    "status": "success",
+                                    "message": f"Issue '{issue_id}' assigned to '{assignee}' successfully",
+                                }
+                        except Exception as e:
+                            return {"status": "error", "message": f"Error assigning issue: {str(e)}"}
+
+        return result
 
     async def move_issue(
         self,
