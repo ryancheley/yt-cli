@@ -104,7 +104,7 @@ Create a new project with specified settings.
      - Description
    * - ``--leader, -l``
      - string
-     - Project leader username or ID (will prompt if not provided)
+     - Project leader username (e.g., 'admin', 'john.doe') or user ID (e.g., '2-3') (will prompt if not provided)
    * - ``--description, -d``
      - string
      - Project description
@@ -116,8 +116,11 @@ Create a new project with specified settings.
 
 .. code-block:: bash
 
-   # Create a basic project
+   # Create a basic project (using username)
    yt projects create "My New Project" "MNP" --leader john.doe
+
+   # Create a project using user ID
+   yt projects create "My New Project" "MNP" --leader 2-3
 
    # Create a project with description and template
    yt projects create "Scrum Project" "SP" --leader jane.smith \
@@ -157,7 +160,7 @@ Configure project settings or view detailed project information.
      - New project description
    * - ``--leader, -l``
      - string
-     - New project leader username or ID
+     - New project leader username (e.g., 'admin', 'john.doe') or user ID (e.g., '2-3')
    * - ``--show-details``
      - flag
      - Show detailed project information
@@ -416,7 +419,7 @@ Common error scenarios and solutions:
   Check if a project with the same short name already exists. Short names must be unique.
 
 **Invalid Leader**
-  Verify the specified leader username or ID exists and is a valid user.
+  Verify the specified leader username (e.g., 'admin', 'john.doe') or user ID (e.g., '2-3') exists and is a valid user. Use ``yt users list`` to see available users.
 
 **Project Not Found**
   Confirm the project ID or short name is correct and you have access to the project.
