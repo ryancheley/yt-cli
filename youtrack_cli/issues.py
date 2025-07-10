@@ -293,21 +293,25 @@ class IssueManager:
             update_data["summary"] = summary
         if description:
             update_data["description"] = description
-        if state:
-            update_data["state"] = {"name": state}
         if assignee:
             update_data["assignee"] = {"login": assignee}
 
-        # Handle priority and type as potential custom fields
+        # Handle state, priority and type as custom fields
+        if state:
+            custom_fields.append({"$type": "StateIssueCustomField", "name": "State", "value": {"name": state}})
         if priority:
-            # First try standard field format
-            update_data["priority"] = {"name": priority}
+            custom_fields.append(
+                {"$type": "SingleEnumIssueCustomField", "name": "Priority", "value": {"name": priority}}
+            )
         if issue_type:
-            # First try standard field format
-            update_data["type"] = {"name": issue_type}
+            custom_fields.append({"$type": "SingleEnumIssueCustomField", "name": "Type", "value": {"name": issue_type}})
 
         if not update_data and not custom_fields:
             return {"status": "error", "message": "No fields to update"}
+
+        # Add custom fields to update data if present
+        if custom_fields:
+            update_data["customFields"] = custom_fields
 
         url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {
@@ -319,59 +323,6 @@ class IssueManager:
             client_manager = get_client_manager()
             response = await client_manager.make_request("POST", url, headers=headers, json_data=update_data)
             if response.status_code == 200:
-                # If priority or type were specified, verify they were actually updated
-                # by trying the custom field format as well
-                if priority or issue_type:
-                    try:
-                        # Try updating with custom field format
-                        custom_fields = []
-
-                        if priority:
-                            custom_fields.append(
-                                {
-                                    "$type": "SingleEnumIssueCustomField",
-                                    "name": "Priority",
-                                    "value": {"$type": "EnumBundleElement", "name": priority},
-                                }
-                            )
-
-                        if issue_type:
-                            custom_fields.append(
-                                {
-                                    "$type": "SingleEnumIssueCustomField",
-                                    "name": "Type",
-                                    "value": {"$type": "EnumBundleElement", "name": issue_type},
-                                }
-                            )
-
-                        # Build update data for custom fields
-                        update_data_custom = {}
-                        if summary:
-                            update_data_custom["summary"] = summary
-                        if description:
-                            update_data_custom["description"] = description
-                        if state:
-                            update_data_custom["state"] = {"name": state}
-                        if assignee:
-                            update_data_custom["assignee"] = {"login": assignee}
-                        if custom_fields:
-                            update_data_custom["customFields"] = custom_fields
-
-                        # Try the custom field approach
-                        custom_response = await client_manager.make_request(
-                            "POST", url, headers=headers, json_data=update_data_custom
-                        )
-                        if custom_response.status_code == 200:
-                            data = self._parse_json_response(custom_response)
-                            return {
-                                "status": "success",
-                                "message": f"Issue '{issue_id}' updated successfully",
-                                "data": data,
-                            }
-                    except Exception:
-                        # If custom field approach fails, return the original success
-                        pass
-
                 data = self._parse_json_response(response)
                 return {
                     "status": "success",
@@ -385,64 +336,7 @@ class IssueManager:
                     "message": f"Failed to update issue: {error_text}",
                 }
         except Exception as e:
-            error_message = str(e)
-            # Check if this is a priority field requirement issue
-            if "Priority is required" in error_message and (priority or issue_type):
-                try:
-                    client_manager = get_client_manager()
-
-                    # Prepare custom fields format
-                    custom_fields = []
-
-                    # Add Priority field if specified
-                    if priority:
-                        custom_fields.append(
-                            {
-                                "$type": "SingleEnumIssueCustomField",
-                                "name": "Priority",
-                                "value": {"$type": "EnumBundleElement", "name": priority},
-                            }
-                        )
-
-                    # Add Type field if specified
-                    if issue_type:
-                        custom_fields.append(
-                            {
-                                "$type": "SingleEnumIssueCustomField",
-                                "name": "Type",
-                                "value": {"$type": "EnumBundleElement", "name": issue_type},
-                            }
-                        )
-
-                    # Create update data with custom fields format
-                    update_data_custom = {}
-                    if summary:
-                        update_data_custom["summary"] = summary
-                    if description:
-                        update_data_custom["description"] = description
-                    if state:
-                        update_data_custom["state"] = {"name": state}
-                    if assignee:
-                        update_data_custom["assignee"] = {"login": assignee}
-
-                    # Add custom fields if any
-                    if custom_fields:
-                        update_data_custom["customFields"] = custom_fields
-
-                    retry_response = await client_manager.make_request(
-                        "POST", url, headers=headers, json_data=update_data_custom
-                    )
-                    if retry_response.status_code == 200:
-                        data = self._parse_json_response(retry_response)
-                        return {
-                            "status": "success",
-                            "message": f"Issue '{issue_id}' updated successfully (using custom field format)",
-                            "data": data,
-                        }
-                except Exception:
-                    pass  # Fallback failed, return original error
-
-            return {"status": "error", "message": f"Error updating issue: {error_message}"}
+            return {"status": "error", "message": f"Error updating issue: {str(e)}"}
 
     async def delete_issue(self, issue_id: str) -> dict[str, Any]:
         """Delete an issue."""

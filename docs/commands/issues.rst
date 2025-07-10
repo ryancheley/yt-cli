@@ -209,6 +209,12 @@ Move issues between states or projects.
    # Move issue to different project
    yt issues move PROJ-123 -p OTHER-PROJ
 
+.. note::
+   State changes are implemented using YouTrack's custom field format to ensure
+   reliable state transitions. The CLI will report success only when the state
+   change is actually applied in YouTrack. Use exact state names as they appear
+   in your YouTrack workflow.
+
 Tag Management
 ~~~~~~~~~~~~~~
 

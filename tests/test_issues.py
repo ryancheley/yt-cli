@@ -299,6 +299,31 @@ class TestIssueManager:
             assert result["status"] == "success"
 
     @pytest.mark.asyncio
+    async def test_update_issue_state_custom_field_format(self, issue_manager):
+        """Test that issue state updates use correct custom field format."""
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {}
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.update_issue("PROJ-123", state="Fixed")
+
+            assert result["status"] == "success"
+            # Verify the request was made with correct custom field format for state
+            call_args = mock_client_manager.make_request.call_args
+            json_data = call_args[1]["json_data"]
+            assert "customFields" in json_data
+            state_field = json_data["customFields"][0]
+            assert state_field["$type"] == "StateIssueCustomField"
+            assert state_field["name"] == "State"
+            assert state_field["value"]["name"] == "Fixed"
+
+    @pytest.mark.asyncio
     async def test_move_issue_state_success(self, issue_manager):
         """Test successful issue state move."""
         with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
@@ -314,6 +339,11 @@ class TestIssueManager:
             result = await issue_manager.move_issue("PROJ-123", state="In Progress")
 
             assert result["status"] == "success"
+            # Verify the request was made with correct custom field format for state
+            call_args = mock_client_manager.make_request.call_args
+            assert call_args[1]["json_data"]["customFields"][0]["$type"] == "StateIssueCustomField"
+            assert call_args[1]["json_data"]["customFields"][0]["name"] == "State"
+            assert call_args[1]["json_data"]["customFields"][0]["value"]["name"] == "In Progress"
 
     @pytest.mark.asyncio
     async def test_move_issue_project_success(self, issue_manager):
