@@ -1,5 +1,6 @@
 """Issue management for YouTrack CLI."""
 
+from datetime import datetime
 from typing import Any, Optional
 
 import httpx
@@ -1325,11 +1326,24 @@ class IssueManager:
             text = comment.get("text", "N/A")
             truncated_text = text[:100] + ("..." if len(text) > 100 else "")
 
+            # Format timestamp from epoch milliseconds to human-readable format
+            created = comment.get("created", "N/A")
+            if isinstance(created, (int, str)) and created != "N/A":
+                try:
+                    # Convert milliseconds to seconds
+                    timestamp = int(created) / 1000
+                    dt = datetime.fromtimestamp(timestamp)
+                    formatted_date = dt.strftime("%b %d, %Y %H:%M")
+                except (ValueError, TypeError):
+                    formatted_date = str(created)
+            else:
+                formatted_date = str(created)
+
             table.add_row(
                 str(comment.get("id", "N/A")),
                 author_name,
                 truncated_text,
-                str(comment.get("created", "N/A")),
+                formatted_date,
             )
 
         self.console.print(table)
