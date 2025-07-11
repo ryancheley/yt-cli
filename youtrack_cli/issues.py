@@ -232,17 +232,29 @@ class IssueManager:
         self,
         project_id: Optional[str] = None,
         fields: Optional[str] = None,
-        top: Optional[int] = None,
+        page_size: int = 100,
+        top: Optional[int] = None,  # Legacy parameter for backward compatibility
         query: Optional[str] = None,
         state: Optional[str] = None,
         assignee: Optional[str] = None,
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
     ) -> dict[str, Any]:
-        """List issues with optional filtering."""
+        """List issues with optional filtering and cursor pagination support."""
+        from .utils import paginate_results  # Import here to avoid circular imports
+
         progress_manager = get_progress_manager()
 
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
+
+        # Handle legacy top parameter
+        if top is not None:
+            page_size = top
+            use_pagination = False
 
         with progress_manager.spinner("Fetching issues..."):
             params = {}
@@ -256,9 +268,6 @@ class IssueManager:
                     "assignee(login,fullName,id),project(id,name,shortName),created,updated,"
                     "customFields(name,value(name,id,login,fullName))"
                 )
-
-            if top:
-                params["$top"] = str(top)
 
             # Build query string
             query_parts = []
@@ -278,21 +287,51 @@ class IssueManager:
             headers = {"Authorization": f"Bearer {credentials.token}"}
 
             try:
-                client_manager = get_client_manager()
-                response = await client_manager.make_request("GET", url, headers=headers, params=params)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
+                if use_pagination:
+                    # Use enhanced pagination with cursor support
+                    result = await paginate_results(
+                        endpoint=url,
+                        headers=headers,
+                        params=params,
+                        page_size=page_size,
+                        max_results=max_results,
+                        after_cursor=after_cursor,
+                        before_cursor=before_cursor,
+                        use_cursor_pagination=bool(after_cursor or before_cursor),
+                    )
                     return {
                         "status": "success",
-                        "data": data,
-                        "count": len(data),
+                        "data": result["results"],
+                        "count": result["total_results"],
+                        "pagination": {
+                            "has_after": result["has_after"],
+                            "has_before": result["has_before"],
+                            "after_cursor": result["after_cursor"],
+                            "before_cursor": result["before_cursor"],
+                        },
                     }
                 else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to list issues: {error_text}",
-                    }
+                    # Single request (legacy behavior)
+                    if top:
+                        params["$top"] = str(top)
+                    elif page_size != 100:  # Only set if different from default
+                        params["$top"] = str(page_size)
+
+                    client_manager = get_client_manager()
+                    response = await client_manager.make_request("GET", url, headers=headers, params=params)
+                    if response.status_code == 200:
+                        data = self._parse_json_response(response)
+                        return {
+                            "status": "success",
+                            "data": data,
+                            "count": len(data),
+                        }
+                    else:
+                        error_text = response.text
+                        return {
+                            "status": "error",
+                            "message": f"Failed to list issues: {error_text}",
+                        }
             except Exception as e:
                 return {"status": "error", "message": f"Error listing issues: {str(e)}"}
 
@@ -425,21 +464,30 @@ class IssueManager:
         self,
         query: str,
         project_id: Optional[str] = None,
-        top: Optional[int] = None,
+        page_size: int = 100,
+        top: Optional[int] = None,  # Legacy parameter for backward compatibility
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
     ) -> dict[str, Any]:
-        """Search issues with advanced query."""
+        """Search issues with advanced query and cursor pagination support."""
+        from .utils import paginate_results  # Import here to avoid circular imports
+
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
+
+        # Handle legacy top parameter
+        if top is not None:
+            page_size = top
+            use_pagination = False
 
         params = {
             "fields": (
                 "id,summary,description,state,priority,type,assignee(login,fullName),project(id,name),created,updated"
             )
         }
-
-        if top:
-            params["$top"] = str(top)
 
         # Build search query
         search_query = query
@@ -452,21 +500,51 @@ class IssueManager:
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
-            client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params)
-            if response.status_code == 200:
-                data = self._parse_json_response(response)
+            if use_pagination:
+                # Use enhanced pagination with cursor support
+                result = await paginate_results(
+                    endpoint=url,
+                    headers=headers,
+                    params=params,
+                    page_size=page_size,
+                    max_results=max_results,
+                    after_cursor=after_cursor,
+                    before_cursor=before_cursor,
+                    use_cursor_pagination=bool(after_cursor or before_cursor),
+                )
                 return {
                     "status": "success",
-                    "data": data,
-                    "count": len(data),
+                    "data": result["results"],
+                    "count": result["total_results"],
+                    "pagination": {
+                        "has_after": result["has_after"],
+                        "has_before": result["has_before"],
+                        "after_cursor": result["after_cursor"],
+                        "before_cursor": result["before_cursor"],
+                    },
                 }
             else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to search issues: {error_text}",
-                }
+                # Single request (legacy behavior)
+                if top:
+                    params["$top"] = str(top)
+                elif page_size != 100:  # Only set if different from default
+                    params["$top"] = str(page_size)
+
+                client_manager = get_client_manager()
+                response = await client_manager.make_request("GET", url, headers=headers, params=params)
+                if response.status_code == 200:
+                    data = self._parse_json_response(response)
+                    return {
+                        "status": "success",
+                        "data": data,
+                        "count": len(data),
+                    }
+                else:
+                    error_text = response.text
+                    return {
+                        "status": "error",
+                        "message": f"Failed to search issues: {error_text}",
+                    }
         except Exception as e:
             return {"status": "error", "message": f"Error searching issues: {str(e)}"}
 
