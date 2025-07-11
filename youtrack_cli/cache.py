@@ -43,7 +43,14 @@ class Cache:
         """
         self._cache: dict[str, CacheEntry] = {}
         self._default_ttl = default_ttl
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None
+
+    @property
+    def _get_lock(self) -> asyncio.Lock:
+        """Get or create the async lock. Lazy initialization to avoid event loop issues."""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     async def get(self, key: str) -> Optional[Any]:
         """Get a value from the cache.
@@ -54,7 +61,7 @@ class Cache:
         Returns:
             Cached value or None if not found/expired
         """
-        async with self._lock:
+        async with self._get_lock:
             entry = self._cache.get(key)
             if entry is None:
                 logger.debug("Cache miss", key=key)
@@ -77,7 +84,7 @@ class Cache:
             ttl: Time-to-live in seconds (uses default if None)
         """
         ttl = ttl or self._default_ttl
-        async with self._lock:
+        async with self._get_lock:
             self._cache[key] = CacheEntry(
                 value=value,
                 timestamp=time.time(),
@@ -94,7 +101,7 @@ class Cache:
         Returns:
             True if the key was deleted, False if not found
         """
-        async with self._lock:
+        async with self._get_lock:
             if key in self._cache:
                 del self._cache[key]
                 logger.debug("Cache deleted", key=key)
@@ -103,7 +110,7 @@ class Cache:
 
     async def clear(self) -> None:
         """Clear all cached values."""
-        async with self._lock:
+        async with self._get_lock:
             count = len(self._cache)
             self._cache.clear()
             logger.debug("Cache cleared", removed_entries=count)
@@ -114,7 +121,7 @@ class Cache:
         Returns:
             Number of entries removed
         """
-        async with self._lock:
+        async with self._get_lock:
             expired_keys = [key for key, entry in self._cache.items() if entry.is_expired]
 
             for key in expired_keys:
@@ -131,7 +138,7 @@ class Cache:
         Returns:
             Dictionary with cache statistics
         """
-        async with self._lock:
+        async with self._get_lock:
             now = time.time()
             expired_count = sum(1 for entry in self._cache.values() if entry.is_expired)
 

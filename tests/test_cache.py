@@ -65,7 +65,7 @@ class TestCache:
         cache = Cache(default_ttl=600.0)
         assert cache._default_ttl == 600.0
         assert len(cache._cache) == 0
-        assert cache._lock is not None
+        assert cache._get_lock is not None
 
     @pytest.mark.asyncio
     async def test_cache_set_and_get(self):
