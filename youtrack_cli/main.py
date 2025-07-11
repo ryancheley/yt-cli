@@ -175,7 +175,7 @@ main.add_alias("login", "auth")
 
 
 @main.command()
-@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish", "powershell"]))
 @click.option(
     "--install",
     is_flag=True,
@@ -184,7 +184,7 @@ main.add_alias("login", "auth")
 def completion(shell: str, install: bool) -> None:
     """Generate shell completion script.
 
-    Generate completion scripts for bash, zsh, or fish shells.
+    Generate completion scripts for bash, zsh, fish, or PowerShell shells.
 
     Examples:
 
@@ -197,10 +197,15 @@ def completion(shell: str, install: bool) -> None:
         yt completion bash --install
 
         \b
+        # Generate PowerShell completion script
+        yt completion powershell
+
+        \b
         # For manual installation, redirect output to file:
         yt completion bash > ~/.local/share/bash-completion/completions/yt
         yt completion zsh > ~/.zsh/completions/_yt
         yt completion fish > ~/.config/fish/completions/yt.fish
+        yt completion powershell > yt-completion.ps1
     """
     import os
     from pathlib import Path
@@ -283,6 +288,58 @@ function _yt_completion
 end
 
 complete --no-files --command yt --arguments "(_yt_completion)"
+"""
+    elif shell == "powershell":
+        completion_script = """
+# PowerShell completion for yt CLI
+Register-ArgumentCompleter -Native -CommandName yt -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    $Local:word = $wordToComplete
+    $Local:ast = $commandAst.ToString()
+    $Local:cursor = $cursorPosition
+
+    # Get completion words from Click
+    $env:_YT_COMPLETE = "powershell_complete"
+    $env:COMP_WORDS = $ast
+    $env:COMP_CWORD = $cursor
+
+    try {
+        $completions = yt 2>$null
+        if ($completions) {
+            $completions | ForEach-Object {
+                $parts = $_ -split ','
+                if ($parts.Length -eq 2) {
+                    $type = $parts[0]
+                    $value = $parts[1]
+
+                    switch ($type) {
+                        'plain' {
+                            [System.Management.Automation.CompletionResult]::new(
+                                $value, $value, 'ParameterValue', $value)
+                        }
+                        'dir' {
+                            [System.Management.Automation.CompletionResult]::new(
+                                $value, $value, 'ProviderContainer', $value)
+                        }
+                        'file' {
+                            [System.Management.Automation.CompletionResult]::new(
+                                $value, $value, 'ProviderItem', $value)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        # Silently ignore errors
+    }
+    finally {
+        Remove-Item Env:\\_YT_COMPLETE -ErrorAction SilentlyContinue
+        Remove-Item Env:\\COMP_WORDS -ErrorAction SilentlyContinue
+        Remove-Item Env:\\COMP_CWORD -ErrorAction SilentlyContinue
+    }
+}
 """
 
     if not completion_script:
@@ -374,6 +431,54 @@ complete --no-files --command yt --arguments "(_yt_completion)"
 
                 target_file = target_dir / "yt.fish"
 
+            elif shell == "powershell":
+                # PowerShell completion directories
+                # Try to install to PowerShell profile directory
+                import platform
+
+                if platform.system() == "Windows":
+                    # Windows PowerShell profile locations
+                    try:
+                        import subprocess
+
+                        # Get PowerShell profile path
+                        result = subprocess.run(
+                            ["powershell", "-Command", "echo $PROFILE"], capture_output=True, text=True, timeout=10
+                        )
+                        if result.returncode == 0 and result.stdout.strip():
+                            profile_path = Path(result.stdout.strip())
+                            target_dir = profile_path.parent
+                            target_file = target_dir / "yt-completion.ps1"
+                        else:
+                            # Fallback to Documents folder
+                            target_dir = home / "Documents" / "PowerShell"
+                            target_dir.mkdir(parents=True, exist_ok=True)
+                            target_file = target_dir / "yt-completion.ps1"
+                    except (subprocess.SubprocessError, subprocess.TimeoutExpired):
+                        # Fallback to Documents folder
+                        target_dir = home / "Documents" / "PowerShell"
+                        target_dir.mkdir(parents=True, exist_ok=True)
+                        target_file = target_dir / "yt-completion.ps1"
+                else:
+                    # Non-Windows systems with PowerShell Core
+                    completion_dirs = [
+                        home / ".config/powershell",
+                        home / "Documents/PowerShell",
+                    ]
+
+                    target_dir = None
+                    for comp_dir in completion_dirs:
+                        if comp_dir.parent.exists():
+                            comp_dir.mkdir(parents=True, exist_ok=True)
+                            target_dir = comp_dir
+                            break
+
+                    if not target_dir:
+                        target_dir = home / ".config/powershell"
+                        target_dir.mkdir(parents=True, exist_ok=True)
+
+                    target_file = target_dir / "yt-completion.ps1"
+
             # Write the completion script
             target_file.write_text(completion_script)
             console.print(f"✅ [green]Completion script installed to: {target_file}[/green]")
@@ -395,6 +500,15 @@ complete --no-files --command yt --arguments "(_yt_completion)"
             elif shell == "fish":
                 console.print("\n📋 [blue]Completion will be available in new fish sessions.[/blue]")
                 console.print("  To enable immediately, run: exec fish")
+
+            elif shell == "powershell":
+                console.print("\n📋 [blue]To enable completion:[/blue]")
+                console.print("  1. Add this line to your PowerShell profile:")
+                console.print(f"     . '{target_file}'")
+                console.print("  2. Or manually source the script:")
+                console.print(f"     . '{target_file}'")
+                console.print("  3. To find your profile location, run:")
+                console.print("     echo $PROFILE")
 
         except PermissionError:
             console.print("❌ [red]Permission denied. Try running with sudo or use manual installation:[/red]")

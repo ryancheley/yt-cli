@@ -217,7 +217,7 @@ class TestCompletionCommands:
         assert result.exit_code == 0
         assert "Generate shell completion script" in result.output
 
-    @pytest.mark.parametrize("shell", ["bash", "zsh", "fish"])
+    @pytest.mark.parametrize("shell", ["bash", "zsh", "fish", "powershell"])
     def test_completion_generation(self, shell: str):
         """Test completion script generation for all supported shells."""
         runner = CliRunner()
@@ -235,6 +235,9 @@ class TestCompletionCommands:
         elif shell == "fish":
             assert "function _yt_completion" in result.output
             assert "complete --no-files --command yt" in result.output
+        elif shell == "powershell":
+            assert "Register-ArgumentCompleter" in result.output
+            assert "_YT_COMPLETE" in result.output
 
     def test_completion_invalid_shell(self):
         """Test completion with invalid shell."""
@@ -242,7 +245,7 @@ class TestCompletionCommands:
         result = runner.invoke(main, ["completion", "invalid_shell"])
         assert result.exit_code == 2  # Click argument validation error
 
-    @pytest.mark.parametrize("shell", ["bash", "zsh", "fish"])
+    @pytest.mark.parametrize("shell", ["bash", "zsh", "fish", "powershell"])
     def test_completion_install_flag(self, shell: str):
         """Test completion installation flag."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -316,6 +319,19 @@ class TestCompletionCommands:
         assert "_YT_COMPLETE=fish_complete" in script
         assert "function _yt_completion" in script
         assert "complete --no-files --command yt" in script
+
+    def test_completion_script_content_powershell(self):
+        """Test that PowerShell completion script contains required elements."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["completion", "powershell"])
+        assert result.exit_code == 0
+
+        script = result.output
+        # Check for essential PowerShell completion elements
+        assert "_YT_COMPLETE" in script and "powershell_complete" in script
+        assert "Register-ArgumentCompleter" in script
+        assert "-CommandName yt" in script
+        assert "CompletionResult" in script
 
 
 class TestCommandAliases:
