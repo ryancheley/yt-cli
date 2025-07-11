@@ -9,6 +9,7 @@ from rich.text import Text
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .users import UserManager
 
 __all__ = ["ProjectManager"]
 
@@ -24,6 +25,7 @@ class ProjectManager:
         """
         self.auth_manager = auth_manager
         self.console = Console()
+        self.user_manager = UserManager(auth_manager)
 
     def _parse_json_response(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or non-JSON responses."""
@@ -43,6 +45,34 @@ class ProjectManager:
             raise ValueError(
                 f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
+
+    async def _resolve_user_id(self, username_or_id: str) -> tuple[str, Optional[str]]:
+        """Resolve a username or ID to a YouTrack user ID.
+
+        Args:
+            username_or_id: Either a username (login) or user ID
+
+        Returns:
+            Tuple of (user_id, error_message). If successful, error_message is None.
+        """
+        # If it looks like a user ID (contains dash), return as-is
+        if "-" in username_or_id:
+            return username_or_id, None
+
+        # Try to resolve as username
+        try:
+            result = await self.user_manager.get_user(username_or_id, fields="id,login")
+            if result["status"] == "success":
+                user_data = result["data"]
+                user_id = user_data.get("id")
+                if user_id:
+                    return user_id, None
+                else:
+                    return username_or_id, f"User '{username_or_id}' found but missing ID"
+            else:
+                return username_or_id, f"User '{username_or_id}' not found"
+        except Exception as e:
+            return username_or_id, f"Error resolving username '{username_or_id}': {e}"
 
     async def list_projects(
         self,
@@ -143,7 +173,7 @@ class ProjectManager:
         Args:
             name: Project name
             short_name: Project short name/key
-            leader_id: ID of the project leader
+            leader_id: ID or username of the project leader
             description: Project description
             template: Project template (scrum, kanban, etc.)
 
@@ -157,11 +187,19 @@ class ProjectManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
+        # Resolve leader username to user ID
+        resolved_leader_id, error_msg = await self._resolve_user_id(leader_id)
+        if error_msg:
+            return {
+                "status": "error",
+                "message": f"Failed to resolve leader: {error_msg}",
+            }
+
         # Prepare request body
         project_data = {
             "name": name,
             "shortName": short_name,
-            "leader": {"id": leader_id},
+            "leader": {"id": resolved_leader_id},
         }
 
         if description:
@@ -284,7 +322,7 @@ class ProjectManager:
             project_id: Project ID or short name
             name: New project name
             description: New project description
-            leader_id: New project leader ID
+            leader_id: New project leader ID or username
             archived: Archive status
 
         Returns:
@@ -304,7 +342,14 @@ class ProjectManager:
         if description is not None:
             update_data["description"] = description
         if leader_id is not None:
-            update_data["leader"] = {"id": leader_id}
+            # Resolve leader username to user ID
+            resolved_leader_id, error_msg = await self._resolve_user_id(leader_id)
+            if error_msg:
+                return {
+                    "status": "error",
+                    "message": f"Failed to resolve leader: {error_msg}",
+                }
+            update_data["leader"] = {"id": resolved_leader_id}
         if archived is not None:
             update_data["archived"] = archived
 
