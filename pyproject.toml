@@ -78,6 +78,8 @@ select = [
 ignore = [
     "UP045",  # Use `X | None` for type annotations (Python 3.9 compatibility)
     "UP007",  # Use `X | Y` for type annotations (Python 3.9 compatibility)
+    "UP006",  # Use `dict` instead of `Dict` (Python 3.9 compatibility)
+    "UP035",  # `typing.Dict` is deprecated (Python 3.9 compatibility)
 ]
 
 [tool.ruff.format]

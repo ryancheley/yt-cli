@@ -1,7 +1,7 @@
 """Issue management for YouTrack CLI."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from rich.console import Console
@@ -43,7 +43,7 @@ class IssueManager:
                 f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
-    def _get_custom_field_value(self, issue: dict[str, Any], field_name: str) -> Optional[str]:
+    def _get_custom_field_value(self, issue: Dict[str, Any], field_name: str) -> Optional[str]:
         """Extract value from custom fields by field name.
 
         Supports all YouTrack custom field types including:
@@ -76,7 +76,7 @@ class IssueManager:
                     return str(value)
         return None
 
-    def _extract_dict_value(self, value_dict: dict[str, Any]) -> Optional[str]:
+    def _extract_dict_value(self, value_dict: Dict[str, Any]) -> Optional[str]:
         """Extract the most appropriate value from a complex field value dictionary.
 
         Prioritizes extraction in the following order:
@@ -129,7 +129,7 @@ class IssueManager:
         issue_type: Optional[str] = None,
         priority: Optional[str] = None,
         assignee: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Create a new issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -241,7 +241,7 @@ class IssueManager:
         before_cursor: Optional[str] = None,
         use_pagination: bool = False,
         max_results: Optional[int] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """List issues with optional filtering and cursor pagination support."""
         from .utils import paginate_results  # Import here to avoid circular imports
 
@@ -335,7 +335,7 @@ class IssueManager:
             except Exception as e:
                 return {"status": "error", "message": f"Error listing issues: {str(e)}"}
 
-    async def get_issue(self, issue_id: str) -> dict[str, Any]:
+    async def get_issue(self, issue_id: str) -> Dict[str, Any]:
         """Get details of a specific issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -375,14 +375,14 @@ class IssueManager:
         priority: Optional[str] = None,
         assignee: Optional[str] = None,
         issue_type: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Update an existing issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
         # Separate custom fields from regular fields
-        update_data: dict[str, Any] = {}
+        update_data: Dict[str, Any] = {}
         custom_fields = []
 
         if summary:
@@ -434,7 +434,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error updating issue: {str(e)}"}
 
-    async def delete_issue(self, issue_id: str) -> dict[str, Any]:
+    async def delete_issue(self, issue_id: str) -> Dict[str, Any]:
         """Delete an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -470,7 +470,7 @@ class IssueManager:
         before_cursor: Optional[str] = None,
         use_pagination: bool = False,
         max_results: Optional[int] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Search issues with advanced query and cursor pagination support."""
         from .utils import paginate_results  # Import here to avoid circular imports
 
@@ -570,7 +570,7 @@ class IssueManager:
             pass
         return None
 
-    async def assign_issue(self, issue_id: str, assignee: str) -> dict[str, Any]:
+    async def assign_issue(self, issue_id: str, assignee: str) -> Dict[str, Any]:
         """Assign an issue to a user."""
         # First try the standard field update
         result = await self.update_issue(issue_id, assignee=assignee)
@@ -637,9 +637,9 @@ class IssueManager:
         issue_id: str,
         state: Optional[str] = None,
         project_id: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Move an issue to a different state or project."""
-        update_data: dict[str, Any] = {}
+        update_data: Dict[str, Any] = {}
         if state:
             update_data["state"] = state
         if project_id:
@@ -665,7 +665,7 @@ class IssueManager:
             return result["data"]["id"]
         return None
 
-    async def _move_issue_to_project(self, issue_id: str, project_id: str) -> dict[str, Any]:
+    async def _move_issue_to_project(self, issue_id: str, project_id: str) -> Dict[str, Any]:
         """Move an issue to a different project."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -703,7 +703,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error moving issue: {str(e)}"}
 
-    async def find_tag_by_name(self, tag_name: str) -> dict[str, Any]:
+    async def find_tag_by_name(self, tag_name: str) -> Dict[str, Any]:
         """Find a tag by name. Returns tag data with ID if found."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -731,7 +731,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error searching for tag: {str(e)}"}
 
-    async def create_tag(self, tag_name: str) -> dict[str, Any]:
+    async def create_tag(self, tag_name: str) -> Dict[str, Any]:
         """Create a new tag. Returns tag data with ID if successful."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -758,7 +758,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error creating tag: {str(e)}"}
 
-    async def get_or_create_tag(self, tag_name: str) -> dict[str, Any]:
+    async def get_or_create_tag(self, tag_name: str) -> Dict[str, Any]:
         """Get existing tag or create new one. Returns tag data with ID."""
         # First try to find existing tag
         find_result = await self.find_tag_by_name(tag_name)
@@ -771,7 +771,7 @@ class IssueManager:
             # Error occurred during search
             return find_result
 
-    async def add_tag(self, issue_id: str, tag: str) -> dict[str, Any]:
+    async def add_tag(self, issue_id: str, tag: str) -> Dict[str, Any]:
         """Add a tag to an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -810,7 +810,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error adding tag to issue: {str(e)}"}
 
-    async def remove_tag(self, issue_id: str, tag: str) -> dict[str, Any]:
+    async def remove_tag(self, issue_id: str, tag: str) -> Dict[str, Any]:
         """Remove a tag from an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -836,7 +836,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error removing tag: {str(e)}"}
 
-    async def list_tags(self, issue_id: str) -> dict[str, Any]:
+    async def list_tags(self, issue_id: str) -> Dict[str, Any]:
         """List all tags for an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -863,7 +863,7 @@ class IssueManager:
             return {"status": "error", "message": f"Error listing tags: {str(e)}"}
 
     # Comments functionality
-    async def add_comment(self, issue_id: str, text: str) -> dict[str, Any]:
+    async def add_comment(self, issue_id: str, text: str) -> Dict[str, Any]:
         """Add a comment to an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -893,7 +893,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error adding comment: {str(e)}"}
 
-    async def list_comments(self, issue_id: str) -> dict[str, Any]:
+    async def list_comments(self, issue_id: str) -> Dict[str, Any]:
         """List all comments for an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -918,7 +918,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error listing comments: {str(e)}"}
 
-    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> dict[str, Any]:
+    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> Dict[str, Any]:
         """Update an existing comment."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -948,7 +948,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error updating comment: {str(e)}"}
 
-    async def delete_comment(self, issue_id: str, comment_id: str) -> dict[str, Any]:
+    async def delete_comment(self, issue_id: str, comment_id: str) -> Dict[str, Any]:
         """Delete a comment from an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -975,7 +975,7 @@ class IssueManager:
             return {"status": "error", "message": f"Error deleting comment: {str(e)}"}
 
     # Attachments functionality
-    async def upload_attachment(self, issue_id: str, file_path: str) -> dict[str, Any]:
+    async def upload_attachment(self, issue_id: str, file_path: str) -> Dict[str, Any]:
         """Upload an attachment to an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1007,7 +1007,7 @@ class IssueManager:
                 "message": f"Error uploading attachment: {str(e)}",
             }
 
-    async def list_attachments(self, issue_id: str) -> dict[str, Any]:
+    async def list_attachments(self, issue_id: str) -> Dict[str, Any]:
         """List all attachments for an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1035,7 +1035,7 @@ class IssueManager:
                 "message": f"Error listing attachments: {str(e)}",
             }
 
-    async def download_attachment(self, issue_id: str, attachment_id: str, output_path: str) -> dict[str, Any]:
+    async def download_attachment(self, issue_id: str, attachment_id: str, output_path: str) -> Dict[str, Any]:
         """Download an attachment from an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1091,7 +1091,7 @@ class IssueManager:
                 "message": f"Error downloading attachment: {str(e)}",
             }
 
-    async def delete_attachment(self, issue_id: str, attachment_id: str) -> dict[str, Any]:
+    async def delete_attachment(self, issue_id: str, attachment_id: str) -> Dict[str, Any]:
         """Delete an attachment from an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1121,7 +1121,7 @@ class IssueManager:
             }
 
     # Links functionality
-    async def _resolve_link_type(self, link_type_name: str) -> Optional[dict[str, Any]]:
+    async def _resolve_link_type(self, link_type_name: str) -> Optional[Dict[str, Any]]:
         """Resolve a link type name to its ID and direction information."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1178,7 +1178,7 @@ class IssueManager:
             logger.error("Error fetching issue ID", issue_id=issue_id, error=str(e))
             return None
 
-    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> dict[str, Any]:
+    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
         """Create a link between two issues."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1234,7 +1234,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error creating link: {str(e)}"}
 
-    async def list_links(self, issue_id: str) -> dict[str, Any]:
+    async def list_links(self, issue_id: str) -> Dict[str, Any]:
         """List all links for an issue."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1260,7 +1260,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error listing links: {str(e)}"}
 
-    async def delete_link(self, source_issue_id: str, link_id: str) -> dict[str, Any]:
+    async def delete_link(self, source_issue_id: str, link_id: str) -> Dict[str, Any]:
         """Delete a link between issues."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1286,7 +1286,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error deleting link: {str(e)}"}
 
-    async def list_link_types(self) -> dict[str, Any]:
+    async def list_link_types(self) -> Dict[str, Any]:
         """List all available link types."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -1312,7 +1312,7 @@ class IssueManager:
             return {"status": "error", "message": f"Error listing link types: {str(e)}"}
 
     # Display methods
-    def display_issues_table(self, issues: list[dict[str, Any]]) -> None:
+    def display_issues_table(self, issues: List[Dict[str, Any]]) -> None:
         """Display issues in a formatted table."""
         if not issues:
             self.console.print("No issues found.", style="yellow")
@@ -1400,7 +1400,7 @@ class IssueManager:
 
         self.console.print(table)
 
-    def display_issue_details(self, issue: dict[str, Any]) -> None:
+    def display_issue_details(self, issue: Dict[str, Any]) -> None:
         """Display detailed information about a single issue."""
         issue_id = issue.get("id", "N/A")
         self.console.print(f"[bold blue]Issue Details: {issue_id}[/bold blue]")
@@ -1441,7 +1441,7 @@ class IssueManager:
             tag_names = [tag.get("name", "") for tag in tags]
             self.console.print(f"[bold]Tags:[/bold] {', '.join(tag_names)}")
 
-    def display_comments_table(self, comments: list[dict[str, Any]]) -> None:
+    def display_comments_table(self, comments: List[Dict[str, Any]]) -> None:
         """Display comments in a formatted table."""
         if not comments:
             self.console.print("No comments found.", style="yellow")
@@ -1482,7 +1482,7 @@ class IssueManager:
 
         self.console.print(table)
 
-    def display_attachments_table(self, attachments: list[dict[str, Any]]) -> None:
+    def display_attachments_table(self, attachments: List[Dict[str, Any]]) -> None:
         """Display attachments in a formatted table."""
         if not attachments:
             self.console.print("No attachments found.", style="yellow")
@@ -1509,7 +1509,7 @@ class IssueManager:
 
         self.console.print(table)
 
-    def display_links_table(self, links: list[dict[str, Any]]) -> None:
+    def display_links_table(self, links: List[Dict[str, Any]]) -> None:
         """Display issue links in a formatted table."""
         if not links:
             self.console.print("No links found.", style="yellow")
@@ -1539,7 +1539,7 @@ class IssueManager:
 
         self.console.print(table)
 
-    def display_link_types_table(self, link_types: list[dict[str, Any]]) -> None:
+    def display_link_types_table(self, link_types: List[Dict[str, Any]]) -> None:
         """Display available link types in a formatted table."""
         if not link_types:
             self.console.print("No link types found.", style="yellow")

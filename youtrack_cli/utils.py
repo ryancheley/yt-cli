@@ -1,7 +1,7 @@
 """Utility functions for YouTrack CLI."""
 
 from collections.abc import AsyncGenerator
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from rich.console import Console
@@ -33,9 +33,9 @@ console = Console()
 async def make_request(
     method: str,
     url: str,
-    headers: Optional[dict[str, str]] = None,
-    params: Optional[dict[str, Any]] = None,
-    json_data: Optional[dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    json_data: Optional[Dict[str, Any]] = None,
     timeout: Optional[float] = None,
     max_retries: int = 3,
 ) -> httpx.Response:
@@ -72,14 +72,14 @@ async def make_request(
 
 async def paginate_results(
     endpoint: str,
-    headers: Optional[dict[str, str]] = None,
-    params: Optional[dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
     page_size: int = 100,
     max_results: Optional[int] = None,
     after_cursor: Optional[str] = None,
     before_cursor: Optional[str] = None,
     use_cursor_pagination: bool = False,
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """Efficiently paginate through large result sets with support for cursor-based pagination.
 
     Args:
@@ -226,7 +226,7 @@ async def paginate_results(
 
 
 async def batch_requests(
-    requests: list[dict[str, Any]],
+    requests: List[Dict[str, Any]],
     max_concurrent: int = 10,
 ) -> list[httpx.Response]:
     """Execute multiple HTTP requests concurrently.
@@ -246,9 +246,9 @@ async def batch_requests(
 async def batch_get_resources(
     base_url: str,
     resource_ids: list[str],
-    headers: Optional[dict[str, str]] = None,
+    headers: Optional[Dict[str, str]] = None,
     max_concurrent: int = 10,
-) -> list[dict[str, Any]]:
+) -> List[Dict[str, Any]]:
     """Batch fetch multiple resources by ID.
 
     Args:
@@ -323,10 +323,10 @@ async def batch_get_resources(
 
 
 def optimize_fields(
-    base_params: Optional[dict[str, Any]] = None,
+    base_params: Optional[Dict[str, Any]] = None,
     fields: Optional[list[str]] = None,
     exclude_fields: Optional[list[str]] = None,
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """Optimize API request parameters by selecting only needed fields.
 
     Args:
@@ -364,8 +364,8 @@ def optimize_fields(
 
 async def stream_large_response(
     url: str,
-    headers: Optional[dict[str, str]] = None,
-    params: Optional[dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
     chunk_size: int = 8192,
 ) -> AsyncGenerator[bytes, None]:
     """Stream a large response to avoid memory issues.
@@ -410,7 +410,7 @@ async def stream_large_response(
             logger.debug("Streaming download complete", total_bytes=total_bytes)
 
 
-def handle_error(error: Exception, operation: str = "operation") -> dict[str, Any]:
+def handle_error(error: Exception, operation: str = "operation") -> Dict[str, Any]:
     """Handle and format errors for CLI output.
 
     Args:
@@ -448,7 +448,7 @@ def handle_error(error: Exception, operation: str = "operation") -> dict[str, An
         }
 
 
-def display_error(error_result: dict[str, Any]) -> None:
+def display_error(error_result: Dict[str, Any]) -> None:
     """Display an error message to the user.
 
     Args:
