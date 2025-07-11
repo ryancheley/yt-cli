@@ -48,16 +48,8 @@ Before coding, create an implementation plan:
 **Analyze:**
 - What files need to be modified?
 - Are there tests that need to be written/updated?
-- Does this require database migrations?
 - Are there documentation updates needed?
 - What's the testing strategy?
-
-**For Django projects specifically:**
-- Models changes requiring migrations?
-- New views/URLs needed?
-- Template updates required?
-- Admin interface changes?
-- Management commands needed?
 
 ## 4. Development Process
 
@@ -68,7 +60,6 @@ Implement the solution following best practices:
 - Write comprehensive tests (unit, integration)
 - Update documentation as needed
 - Consider security implications
-- Ensure accessibility compliance (for frontend changes)
 
 **adding or updated new commands:**
 - install CLI using `uv pip install -e .`
@@ -83,16 +74,8 @@ Implement the solution following best practices:
 Before committing, validate your changes:
 
 ```bash
-# Run tests
-npm test  # or pytest, or python manage.py test
-
-# Check code quality
-# (adjust based on project tooling)
-black . --check
-flake8
-
-# Verify build
-npm run build  # or appropriate build command
+# Check the pre-commit status
+pre-commit run
 ```
 
 ## 6. Commit Strategy
@@ -237,13 +220,6 @@ done
 - [ ] No sensitive data committed
 - [ ] Performance impact considered
 - [ ] Accessibility requirements met (if UI changes)
-
-**Healthcare/EHR Specific Considerations:**
-- [ ] HIPAA compliance maintained
-- [ ] PHI handling reviewed
-- [ ] Audit logging implemented (if required)
-- [ ] Data validation comprehensive
-- [ ] Error handling robust
 
 ## Emergency Rollback Plan
 
