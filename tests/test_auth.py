@@ -126,7 +126,8 @@ class TestAuthManager:
             "YOUTRACK_TOKEN": "test-token-123",
         },
     )
-    def test_load_credentials_without_username(self):
+    @patch("youtrack_cli.auth.load_dotenv")
+    def test_load_credentials_without_username(self, mock_load_dotenv):
         """Test loading credentials without username."""
         config = self.auth_manager.load_credentials()
 
