@@ -70,7 +70,7 @@ Implement the solution following best practices:
 - Consider security implications
 - Ensure accessibility compliance (for frontend changes)
 
-**For local development and verification:**
+**adding or updated new commands:**
 - install CLI using `uv pip install -e .`
 - use the command `source .env.local && yt auth login --token $YOUTRACK_API_KEY --base-url $BASE_URL` to authenticate
 - prepend all cli commands with `source .env.local && ` to ensure that they work as expected and have no errors
