@@ -161,7 +161,31 @@ def create(
     "--top",
     "-t",
     type=int,
-    help="Maximum number of issues to return",
+    help="Maximum number of issues to return (legacy, use --page-size instead)",
+)
+@click.option(
+    "--page-size",
+    type=int,
+    default=100,
+    help="Number of issues per page (default: 100)",
+)
+@click.option(
+    "--after-cursor",
+    help="Start pagination after this cursor",
+)
+@click.option(
+    "--before-cursor",
+    help="Start pagination before this cursor",
+)
+@click.option(
+    "--all",
+    is_flag=True,
+    help="Fetch all results using pagination",
+)
+@click.option(
+    "--max-results",
+    type=int,
+    help="Maximum total number of results to fetch",
 )
 @click.option(
     "--query",
@@ -182,6 +206,11 @@ def list_issues(
     assignee: Optional[str],
     fields: Optional[str],
     top: Optional[int],
+    page_size: int,
+    after_cursor: Optional[str],
+    before_cursor: Optional[str],
+    all: bool,
+    max_results: Optional[int],
     query: Optional[str],
     format: str,
 ) -> None:
@@ -195,11 +224,26 @@ def list_issues(
     console.print("🔍 Fetching issues...", style="blue")
 
     try:
+        # Determine pagination settings
+        use_pagination = bool(all or after_cursor or before_cursor or max_results)
+
+        # Handle conflicting parameters
+        if top and page_size != 100:
+            console.print(
+                "⚠️  Warning: Both --top and --page-size specified. Using --top for backward compatibility.",
+                style="yellow",
+            )
+
         result = asyncio.run(
             issue_manager.list_issues(
                 project_id=project_id,
                 fields=fields,
                 top=top,
+                page_size=page_size,
+                after_cursor=after_cursor,
+                before_cursor=before_cursor,
+                use_pagination=use_pagination,
+                max_results=max_results,
                 query=query,
                 state=state,
                 assignee=assignee,
@@ -212,6 +256,17 @@ def list_issues(
             if format == "table":
                 issue_manager.display_issues_table(issues)
                 console.print(f"\n[dim]Total: {result['count']} issues[/dim]")
+
+                # Display pagination info if available
+                if "pagination" in result:
+                    pagination = result["pagination"]
+                    if pagination["has_after"] or pagination["has_before"]:
+                        console.print("[dim]Pagination:[/dim]", end="")
+                        if pagination["after_cursor"]:
+                            console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
+                        if pagination["before_cursor"]:
+                            console.print(f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end="")
+                        console.print()
             else:
                 import json
 
@@ -379,7 +434,31 @@ def delete(ctx: click.Context, issue_id: str, confirm: bool) -> None:
     "--top",
     "-t",
     type=int,
-    help="Maximum number of results to return",
+    help="Maximum number of results to return (legacy, use --page-size instead)",
+)
+@click.option(
+    "--page-size",
+    type=int,
+    default=100,
+    help="Number of results per page (default: 100)",
+)
+@click.option(
+    "--after-cursor",
+    help="Start pagination after this cursor",
+)
+@click.option(
+    "--before-cursor",
+    help="Start pagination before this cursor",
+)
+@click.option(
+    "--all",
+    is_flag=True,
+    help="Fetch all results using pagination",
+)
+@click.option(
+    "--max-results",
+    type=int,
+    help="Maximum total number of results to fetch",
 )
 @click.option(
     "--format",
@@ -393,6 +472,11 @@ def search(
     query: str,
     project_id: Optional[str],
     top: Optional[int],
+    page_size: int,
+    after_cursor: Optional[str],
+    before_cursor: Optional[str],
+    all: bool,
+    max_results: Optional[int],
     format: str,
 ) -> None:
     """Advanced issue search."""
@@ -405,11 +489,26 @@ def search(
     console.print(f"🔍 Searching issues for '{query}'...", style="blue")
 
     try:
+        # Determine pagination settings
+        use_pagination = bool(all or after_cursor or before_cursor or max_results)
+
+        # Handle conflicting parameters
+        if top and page_size != 100:
+            console.print(
+                "⚠️  Warning: Both --top and --page-size specified. Using --top for backward compatibility.",
+                style="yellow",
+            )
+
         result = asyncio.run(
             issue_manager.search_issues(
                 query=query,
                 project_id=project_id,
                 top=top,
+                page_size=page_size,
+                after_cursor=after_cursor,
+                before_cursor=before_cursor,
+                use_pagination=use_pagination,
+                max_results=max_results,
             )
         )
 
@@ -419,6 +518,17 @@ def search(
             if format == "table":
                 issue_manager.display_issues_table(issues)
                 console.print(f"\n[dim]Found: {result['count']} issues[/dim]")
+
+                # Display pagination info if available
+                if "pagination" in result:
+                    pagination = result["pagination"]
+                    if pagination["has_after"] or pagination["has_before"]:
+                        console.print("[dim]Pagination:[/dim]", end="")
+                        if pagination["after_cursor"]:
+                            console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
+                        if pagination["before_cursor"]:
+                            console.print(f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end="")
+                        console.print()
             else:
                 import json
 

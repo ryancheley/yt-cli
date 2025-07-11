@@ -76,8 +76,11 @@ async def paginate_results(
     params: Optional[dict[str, Any]] = None,
     page_size: int = 100,
     max_results: Optional[int] = None,
-) -> list[dict[str, Any]]:
-    """Efficiently paginate through large result sets.
+    after_cursor: Optional[str] = None,
+    before_cursor: Optional[str] = None,
+    use_cursor_pagination: bool = False,
+) -> dict[str, Any]:
+    """Efficiently paginate through large result sets with support for cursor-based pagination.
 
     Args:
         endpoint: API endpoint URL
@@ -85,9 +88,12 @@ async def paginate_results(
         params: Optional query parameters
         page_size: Number of items per page (default: 100)
         max_results: Maximum number of results to fetch (None for all)
+        after_cursor: Start pagination after this cursor (for cursor-based pagination)
+        before_cursor: Start pagination before this cursor (for cursor-based pagination)
+        use_cursor_pagination: Whether to use cursor-based pagination or offset-based
 
     Returns:
-        List of all results from paginated responses
+        Dictionary with 'results' list and pagination metadata
 
     Raises:
         YouTrackError: If any request fails
@@ -95,27 +101,47 @@ async def paginate_results(
     all_results = []
     skip = 0
     params = params or {}
+    current_after_cursor = after_cursor
+    current_before_cursor = before_cursor
+    has_after = False
+    has_before = False
+    final_after_cursor = None
+    final_before_cursor = None
 
     logger.debug(
         "Starting pagination",
         endpoint=endpoint,
         page_size=page_size,
         max_results=max_results,
+        use_cursor_pagination=use_cursor_pagination,
+        after_cursor=after_cursor,
+        before_cursor=before_cursor,
     )
 
     while True:
         # Set pagination parameters
         page_params = params.copy()
         page_params["$top"] = str(page_size)
-        page_params["$skip"] = str(skip)
+
+        if use_cursor_pagination:
+            # Use cursor-based pagination
+            if current_after_cursor:
+                page_params["$after"] = current_after_cursor
+            if current_before_cursor:
+                page_params["$before"] = current_before_cursor
+        else:
+            # Use offset-based pagination (legacy)
+            page_params["$skip"] = str(skip)
 
         # Check if we need to limit the current page size
-        if max_results and (skip + page_size) > max_results:
-            page_params["$top"] = str(max_results - skip)
+        if max_results and (len(all_results) + page_size) > max_results:
+            page_params["$top"] = str(max_results - len(all_results))
 
         logger.debug(
             "Fetching page",
-            skip=skip,
+            skip=skip if not use_cursor_pagination else None,
+            after_cursor=current_after_cursor if use_cursor_pagination else None,
+            before_cursor=current_before_cursor if use_cursor_pagination else None,
             top=page_params["$top"],
             total_fetched=len(all_results),
         )
@@ -130,10 +156,20 @@ async def paginate_results(
 
         # Parse response
         try:
-            page_results = response.json()
-            if not isinstance(page_results, list):
+            response_data = response.json()
+            if use_cursor_pagination and isinstance(response_data, dict):
+                # Handle YouTrackSearchResult format
+                page_results = response_data.get("results", [])
+                has_after = response_data.get("hasAfter", False)
+                has_before = response_data.get("hasBefore", False)
+                final_after_cursor = response_data.get("afterCursor")
+                final_before_cursor = response_data.get("beforeCursor")
+            elif isinstance(response_data, list):
+                # Handle direct list responses (legacy format)
+                page_results = response_data
+            else:
                 # Handle single object responses
-                page_results = [page_results] if page_results else []
+                page_results = [response_data] if response_data else []
         except Exception as e:
             logger.error("Failed to parse JSON response", error=str(e))
             raise YouTrackError(f"Failed to parse response: {str(e)}") from e
@@ -145,29 +181,48 @@ async def paginate_results(
             "Page fetched",
             page_size=len(page_results),
             total_fetched=len(all_results),
+            has_after=has_after if use_cursor_pagination else None,
+            has_before=has_before if use_cursor_pagination else None,
         )
 
         # Check if we should continue
-        if (
-            len(page_results) < page_size  # Less than a full page means we're done
-            or (max_results and len(all_results) >= max_results)  # Hit our limit
-            or len(page_results) == 0  # No more results
-        ):
-            break
+        if use_cursor_pagination:
+            # For cursor pagination, check if there are more results
+            if not has_after or len(page_results) == 0:
+                break
+            current_after_cursor = final_after_cursor
+        else:
+            # For offset pagination, check traditional conditions
+            if (
+                len(page_results) < page_size  # Less than a full page means we're done
+                or len(page_results) == 0  # No more results
+            ):
+                break
+            skip += page_size
 
-        skip += page_size
+        # Check if we hit our limit
+        if max_results and len(all_results) >= max_results:
+            break
 
     logger.debug(
         "Pagination complete",
         total_results=len(all_results),
-        pages_fetched=(skip // page_size) + 1,
+        use_cursor_pagination=use_cursor_pagination,
     )
 
     # Trim to max_results if specified
     if max_results and len(all_results) > max_results:
         all_results = all_results[:max_results]
 
-    return all_results
+    # Return structured result with pagination metadata
+    return {
+        "results": all_results,
+        "total_results": len(all_results),
+        "has_after": has_after if use_cursor_pagination else len(all_results) >= (max_results or float("inf")),
+        "has_before": has_before if use_cursor_pagination else skip > 0,
+        "after_cursor": final_after_cursor if use_cursor_pagination else None,
+        "before_cursor": final_before_cursor if use_cursor_pagination else None,
+    }
 
 
 async def batch_requests(
