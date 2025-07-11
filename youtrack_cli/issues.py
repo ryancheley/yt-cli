@@ -44,7 +44,13 @@ class IssueManager:
             ) from e
 
     def _get_custom_field_value(self, issue: dict[str, Any], field_name: str) -> Optional[str]:
-        """Extract value from custom fields by field name."""
+        """Extract value from custom fields by field name.
+
+        Supports all YouTrack custom field types including:
+        - avatarUrl, buildLink, color(id), fullName, isResolved
+        - localizedName, minutes, presentation, text
+        - Complex nested field structures
+        """
         custom_fields = issue.get("customFields", [])
         if not isinstance(custom_fields, list):
             return None
@@ -52,17 +58,67 @@ class IssueManager:
         for field in custom_fields:
             if isinstance(field, dict) and field.get("name") == field_name:
                 value = field.get("value")
-                if isinstance(value, dict):
-                    # Handle single-value bundle fields (like enum fields)
-                    return value.get("name") or value.get("id")
+                if value is None:
+                    return None
+                elif isinstance(value, dict):
+                    # Enhanced extraction for complex field structures
+                    return self._extract_dict_value(value)
                 elif isinstance(value, list):
                     # Handle multi-value fields
                     if value and isinstance(value[0], dict):
-                        return ", ".join(v.get("name", str(v)) for v in value if v)
+                        extracted_values = [
+                            self._extract_dict_value(v) for v in value if v and self._extract_dict_value(v)
+                        ]
+                        return ", ".join(extracted_values)
                     else:
                         return ", ".join(str(v) for v in value if v)
                 elif value is not None:
                     return str(value)
+        return None
+
+    def _extract_dict_value(self, value_dict: dict[str, Any]) -> Optional[str]:
+        """Extract the most appropriate value from a complex field value dictionary.
+
+        Prioritizes extraction in the following order:
+        1. presentation (formatted display value)
+        2. fullName (complete user name)
+        3. localizedName (translated field name)
+        4. text (rich text content)
+        5. name (standard name)
+        6. buildLink (build/deployment links)
+        7. avatarUrl (user avatar images)
+        8. minutes (time duration)
+        9. isResolved (boolean resolution status)
+        10. color(id) (color field ID)
+        11. id (fallback identifier)
+        """
+        if not isinstance(value_dict, dict):
+            return None
+
+        # Priority-based extraction
+        extraction_keys = [
+            "presentation",
+            "fullName",
+            "localizedName",
+            "text",
+            "name",
+            "buildLink",
+            "avatarUrl",
+            "minutes",
+            "isResolved",
+            "color",
+            "id",
+        ]
+
+        for key in extraction_keys:
+            if key in value_dict and value_dict[key] is not None:
+                value = value_dict[key]
+                # Handle nested structures for color(id)
+                if key == "color" and isinstance(value, dict):
+                    return value.get("id") or str(value)
+                # Convert boolean and numeric values to strings
+                return str(value)
+
         return None
 
     async def create_issue(

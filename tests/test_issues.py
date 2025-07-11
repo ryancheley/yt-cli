@@ -1017,6 +1017,215 @@ class TestIssueManager:
         value = issue_manager._get_custom_field_value(issue_with_string_field, "Description")
         assert value == "Some text description"
 
+    def test_get_custom_field_value_avatar_url(self, issue_manager):
+        """Test extracting avatarUrl from user field."""
+        issue_with_avatar = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Reporter",
+                    "value": {
+                        "login": "user1",
+                        "name": "John Doe",
+                        "fullName": "John Doe",
+                        "avatarUrl": "https://example.com/avatar.jpg",
+                        "id": "user-123",
+                    },
+                    "$type": "SingleUserIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_avatar, "Reporter")
+        assert value == "John Doe"
+
+    def test_get_custom_field_value_build_link(self, issue_manager):
+        """Test extracting buildLink field."""
+        issue_with_build_link = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Build",
+                    "value": {"buildLink": "https://build.example.com/job/123", "id": "build-123"},
+                    "$type": "BuildIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_build_link, "Build")
+        assert value == "https://build.example.com/job/123"
+
+    def test_get_custom_field_value_color_id(self, issue_manager):
+        """Test extracting color(id) from enum field."""
+        issue_with_color = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Priority",
+                    "value": {
+                        "name": "High",
+                        "localizedName": "Высокий",
+                        "color": {"id": "red-1"},
+                        "id": "priority-high",
+                    },
+                    "$type": "SingleEnumIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_color, "Priority")
+        assert value == "Высокий"
+
+    def test_get_custom_field_value_full_name_priority(self, issue_manager):
+        """Test fullName has higher priority than name."""
+        issue_with_names = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Assignee",
+                    "value": {"name": "jdoe", "fullName": "John Doe", "login": "john.doe", "id": "user-456"},
+                    "$type": "SingleUserIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_names, "Assignee")
+        assert value == "John Doe"
+
+    def test_get_custom_field_value_is_resolved(self, issue_manager):
+        """Test extracting isResolved boolean field."""
+        issue_with_resolved = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Resolved",
+                    "value": {"isResolved": True, "name": "Fixed", "id": "state-fixed"},
+                    "$type": "StateIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_resolved, "Resolved")
+        assert value == "Fixed"
+
+    def test_get_custom_field_value_localized_name(self, issue_manager):
+        """Test extracting localizedName field."""
+        issue_with_localized = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Status",
+                    "value": {"localizedName": "En Progreso", "name": "In Progress", "id": "status-progress"},
+                    "$type": "SingleEnumIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_localized, "Status")
+        assert value == "En Progreso"
+
+    def test_get_custom_field_value_minutes(self, issue_manager):
+        """Test extracting minutes time field."""
+        issue_with_time = {
+            "id": "TEST-1",
+            "customFields": [
+                {"name": "Time Spent", "value": {"minutes": 120, "id": "time-1"}, "$type": "PeriodIssueCustomField"}
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_time, "Time Spent")
+        assert value == "120"
+
+    def test_get_custom_field_value_presentation(self, issue_manager):
+        """Test extracting presentation field (highest priority)."""
+        issue_with_presentation = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Due Date",
+                    "value": {
+                        "presentation": "Dec 25, 2024",
+                        "timestamp": 1735084800000,
+                        "name": "2024-12-25",
+                        "id": "date-1",
+                    },
+                    "$type": "DateIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_presentation, "Due Date")
+        assert value == "Dec 25, 2024"
+
+    def test_get_custom_field_value_text_field(self, issue_manager):
+        """Test extracting rich text field."""
+        issue_with_text = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Comments",
+                    "value": {"text": "This is a rich text comment with **bold** formatting.", "id": "text-1"},
+                    "$type": "TextIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_text, "Comments")
+        assert value == "This is a rich text comment with **bold** formatting."
+
+    def test_get_custom_field_value_complex_multi_value(self, issue_manager):
+        """Test handling complex multi-value fields with new extraction logic."""
+        issue_with_complex_multi = {
+            "id": "TEST-1",
+            "customFields": [
+                {
+                    "name": "Reviewers",
+                    "value": [
+                        {
+                            "fullName": "Alice Smith",
+                            "name": "asmith",
+                            "avatarUrl": "https://example.com/alice.jpg",
+                            "id": "user-alice",
+                        },
+                        {
+                            "fullName": "Bob Johnson",
+                            "name": "bjohnson",
+                            "avatarUrl": "https://example.com/bob.jpg",
+                            "id": "user-bob",
+                        },
+                    ],
+                    "$type": "MultiUserIssueCustomField",
+                }
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_complex_multi, "Reviewers")
+        assert value == "Alice Smith, Bob Johnson"
+
+    def test_get_custom_field_value_fallback_to_id(self, issue_manager):
+        """Test fallback to id when no other fields are available."""
+        issue_with_id_only = {
+            "id": "TEST-1",
+            "customFields": [
+                {"name": "Custom", "value": {"id": "custom-field-123"}, "$type": "CustomIssueCustomField"}
+            ],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_id_only, "Custom")
+        assert value == "custom-field-123"
+
+    def test_get_custom_field_value_empty_dict(self, issue_manager):
+        """Test handling empty value dictionary."""
+        issue_with_empty_dict = {
+            "id": "TEST-1",
+            "customFields": [{"name": "Empty", "value": {}, "$type": "CustomIssueCustomField"}],
+        }
+        value = issue_manager._get_custom_field_value(issue_with_empty_dict, "Empty")
+        assert value is None
+
+    def test_extract_dict_value_color_nested(self, issue_manager):
+        """Test _extract_dict_value method with nested color structure."""
+        color_dict = {"name": "High Priority", "color": {"id": "red-1", "value": "#FF0000"}, "id": "priority-high"}
+        value = issue_manager._extract_dict_value(color_dict)
+        assert value == "High Priority"
+
+    def test_extract_dict_value_invalid_input(self, issue_manager):
+        """Test _extract_dict_value method with invalid input."""
+        value = issue_manager._extract_dict_value("not a dict")
+        assert value is None
+
+        value = issue_manager._extract_dict_value(None)
+        assert value is None
+
 
 class TestIssuesCLI:
     """Test cases for issues CLI commands."""
