@@ -41,7 +41,7 @@ class BoardManager:
                 if "text/html" in content_type and "<!doctype html>" in response.text.lower():
                     raise ValueError(
                         "Received HTML login page instead of JSON. This usually indicates authentication failure. "
-                        "Please verify your credentials with 'yt auth verify'."
+                        "Please check your credentials with 'yt auth login'."
                     )
                 raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
 
@@ -64,10 +64,10 @@ class BoardManager:
         if not await self._validate_authentication():
             return {
                 "status": "error",
-                "message": "Authentication failed. Please verify your credentials with 'yt auth verify'.",
+                "message": "Authentication failed. Please check your credentials with 'yt auth login'.",
             }
 
-        url = f"{credentials.base_url}/api/agiles"
+        url = f"{credentials.base_url.rstrip('/')}/api/agiles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
@@ -124,7 +124,7 @@ class BoardManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url}/api/agiles/{board_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/agiles/{board_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
@@ -180,7 +180,7 @@ class BoardManager:
         if not update_data:
             return {"status": "error", "message": "No update fields provided"}
 
-        url = f"{credentials.base_url}/api/agiles/{board_id}"
+        url = f"{credentials.base_url.rstrip('/')}/api/agiles/{board_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
