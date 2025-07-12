@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from click.testing import CliRunner
 
-from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.auth import AuthConfig
 from youtrack_cli.issues import IssueManager
 
 
@@ -22,7 +22,7 @@ def mock_credentials():
 @pytest.fixture
 def mock_auth_manager(mock_credentials):
     """Mock auth manager for testing."""
-    auth_manager = MagicMock(spec=AuthManager)
+    auth_manager = MagicMock()
     auth_manager.load_credentials.return_value = mock_credentials
     return auth_manager
 
@@ -360,15 +360,14 @@ class TestIssueManager:
 
             # Mock the project manager's get_project method
             mock_project_manager_instance = Mock()
-            mock_project_manager_instance.get_project = AsyncMock(
-                return_value={"status": "success", "data": {"id": "0-1", "shortName": "OTHER"}}
-            )
-            mock_project_manager.return_value = mock_project_manager_instance
+            with patch.object(mock_project_manager_instance, "get_project", new_callable=AsyncMock) as mock_get_project:
+                mock_get_project.return_value = {"status": "success", "data": {"id": "0-1", "shortName": "OTHER"}}
+                mock_project_manager.return_value = mock_project_manager_instance
 
-            result = await issue_manager.move_issue("PROJ-123", project_id="OTHER")
+                result = await issue_manager.move_issue("PROJ-123", project_id="OTHER")
 
-            assert result["status"] == "success"
-            assert "OTHER" in result["message"]
+                assert result["status"] == "success"
+                assert "OTHER" in result["message"]
 
     @pytest.mark.asyncio
     async def test_move_issue_project_not_found(self, issue_manager):
@@ -376,15 +375,14 @@ class TestIssueManager:
         with patch("youtrack_cli.projects.ProjectManager") as mock_project_manager:
             # Mock the project manager's get_project method to return project not found
             mock_project_manager_instance = Mock()
-            mock_project_manager_instance.get_project = AsyncMock(
-                return_value={"status": "error", "message": "Project not found"}
-            )
-            mock_project_manager.return_value = mock_project_manager_instance
+            with patch.object(mock_project_manager_instance, "get_project", new_callable=AsyncMock) as mock_get_project:
+                mock_get_project.return_value = {"status": "error", "message": "Project not found"}
+                mock_project_manager.return_value = mock_project_manager_instance
 
-            result = await issue_manager.move_issue("PROJ-123", project_id="INVALID")
+                result = await issue_manager.move_issue("PROJ-123", project_id="INVALID")
 
-            assert result["status"] == "error"
-            assert "Project 'INVALID' not found" in result["message"]
+                assert result["status"] == "error"
+                assert "Project 'INVALID' not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_move_issue_no_params(self, issue_manager):

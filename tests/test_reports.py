@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from click.testing import CliRunner
 
-from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.auth import AuthConfig
 from youtrack_cli.main import main
 from youtrack_cli.reports import ReportManager
 
@@ -16,7 +16,7 @@ class TestReportManager:
     @pytest.fixture
     def auth_manager(self):
         """Create a mock auth manager for testing."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         auth_manager.load_credentials.return_value = AuthConfig(
             base_url="https://test.youtrack.cloud",
             token="test-token",

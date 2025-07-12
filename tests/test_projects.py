@@ -6,7 +6,7 @@ import httpx
 import pytest
 from click.testing import CliRunner
 
-from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.auth import AuthConfig
 from youtrack_cli.main import main
 from youtrack_cli.projects import ProjectManager
 
@@ -17,7 +17,7 @@ class TestProjectManager:
     @pytest.fixture
     def auth_manager(self):
         """Create a mock auth manager for testing."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         auth_manager.load_credentials.return_value = AuthConfig(
             base_url="https://test.youtrack.cloud",
             token="test-token",
@@ -157,21 +157,20 @@ class TestProjectManager:
             mock_get_client_manager.return_value = mock_client_manager
 
             # Mock the user manager get_user method
-            project_manager.user_manager.get_user = AsyncMock(
-                return_value={"status": "success", "data": mock_user_data}
-            )
+            with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = {"status": "success", "data": mock_user_data}
 
-            result = await project_manager.create_project(
-                name="New Project",
-                short_name="NP",
-                leader_id="user1",
-                description="Test project",
-                template="scrum",
-            )
+                result = await project_manager.create_project(
+                    name="New Project",
+                    short_name="NP",
+                    leader_id="user1",
+                    description="Test project",
+                    template="scrum",
+                )
 
-            assert result["status"] == "success"
-            assert result["data"]["name"] == "New Project"
-            assert "created successfully" in result["message"]
+                assert result["status"] == "success"
+                assert result["data"]["name"] == "New Project"
+                assert "created successfully" in result["message"]
 
     @pytest.mark.asyncio
     async def test_create_project_with_username_resolution(self, project_manager, auth_manager):
@@ -199,21 +198,20 @@ class TestProjectManager:
             mock_get_client_manager.return_value = mock_client_manager
 
             # Mock the user manager get_user method
-            project_manager.user_manager.get_user = AsyncMock(
-                return_value={"status": "success", "data": mock_user_data}
-            )
+            with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = {"status": "success", "data": mock_user_data}
 
-            result = await project_manager.create_project(
-                name="New Project",
-                short_name="NP",
-                leader_id="admin",  # Using username instead of ID
-                description="Test project",
-                template="scrum",
-            )
+                result = await project_manager.create_project(
+                    name="New Project",
+                    short_name="NP",
+                    leader_id="admin",  # Using username instead of ID
+                    description="Test project",
+                    template="scrum",
+                )
 
-            assert result["status"] == "success"
-            assert result["data"]["name"] == "New Project"
-            assert "created successfully" in result["message"]
+                assert result["status"] == "success"
+                assert result["data"]["name"] == "New Project"
+                assert "created successfully" in result["message"]
 
     @pytest.mark.asyncio
     async def test_create_project_with_user_id_passthrough(self, project_manager, auth_manager):
@@ -253,65 +251,68 @@ class TestProjectManager:
     async def test_create_project_invalid_username(self, project_manager, auth_manager):
         """Test project creation with invalid username."""
         # Mock the user manager to return user not found
-        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "error", "message": "User not found"})
+        with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+            mock_get_user.return_value = {"status": "error", "message": "User not found"}
 
-        result = await project_manager.create_project(
-            name="New Project",
-            short_name="NP",
-            leader_id="nonexistent",
-            description="Test project",
-            template="scrum",
-        )
+            result = await project_manager.create_project(
+                name="New Project",
+                short_name="NP",
+                leader_id="nonexistent",
+                description="Test project",
+                template="scrum",
+            )
 
-        assert result["status"] == "error"
-        assert "Failed to resolve leader" in result["message"]
-        assert "User 'nonexistent' not found" in result["message"]
+            assert result["status"] == "error"
+            assert "Failed to resolve leader" in result["message"]
+            assert "User 'nonexistent' not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_create_project_invalid_data(self, project_manager, auth_manager):
         """Test project creation with invalid data."""
         # Mock the user resolution to succeed first
         mock_user_data = {"id": "2-1", "login": "invalid-user"}
-        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "success", "data": mock_user_data})
+        with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+            mock_get_user.return_value = {"status": "success", "data": mock_user_data}
 
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.status_code = 400
+            with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
+                mock_response = Mock()
+                mock_response.status_code = 400
 
-            mock_request = Mock()
-            http_error = httpx.HTTPStatusError("Bad request", request=mock_request, response=mock_response)
+                mock_request = Mock()
+                http_error = httpx.HTTPStatusError("Bad request", request=mock_request, response=mock_response)
 
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
-            mock_get_client_manager.return_value = mock_client_manager
+                mock_client_manager = Mock()
+                mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+                mock_get_client_manager.return_value = mock_client_manager
 
-            result = await project_manager.create_project(name="", short_name="", leader_id="invalid-user")
+                result = await project_manager.create_project(name="", short_name="", leader_id="invalid-user")
 
-            assert result["status"] == "error"
-            assert "Invalid project data" in result["message"]
+                assert result["status"] == "error"
+                assert "Invalid project data" in result["message"]
 
     @pytest.mark.asyncio
     async def test_create_project_insufficient_permissions(self, project_manager, auth_manager):
         """Test project creation with insufficient permissions."""
         # Mock the user resolution to succeed first
         mock_user_data = {"id": "2-1", "login": "user1"}
-        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "success", "data": mock_user_data})
+        with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+            mock_get_user.return_value = {"status": "success", "data": mock_user_data}
 
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.status_code = 403
+            with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
+                mock_response = Mock()
+                mock_response.status_code = 403
 
-            mock_request = Mock()
-            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
+                mock_request = Mock()
+                http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
 
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
-            mock_get_client_manager.return_value = mock_client_manager
+                mock_client_manager = Mock()
+                mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+                mock_get_client_manager.return_value = mock_client_manager
 
-            result = await project_manager.create_project(name="New Project", short_name="NP", leader_id="user1")
+                result = await project_manager.create_project(name="New Project", short_name="NP", leader_id="user1")
 
-            assert result["status"] == "error"
-            assert "Insufficient permissions" in result["message"]
+                assert result["status"] == "error"
+                assert "Insufficient permissions" in result["message"]
 
     @pytest.mark.asyncio
     async def test_get_project_success(self, project_manager, auth_manager):
@@ -396,17 +397,16 @@ class TestProjectManager:
             mock_get_client_manager.return_value = mock_client_manager
 
             # Mock the user manager get_user method
-            project_manager.user_manager.get_user = AsyncMock(
-                return_value={"status": "success", "data": mock_user_data}
-            )
+            with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = {"status": "success", "data": mock_user_data}
 
-            result = await project_manager.update_project(
-                project_id="UP", name="Updated Project", leader_id="new-leader"
-            )
+                result = await project_manager.update_project(
+                    project_id="UP", name="Updated Project", leader_id="new-leader"
+                )
 
-            assert result["status"] == "success"
-            assert result["data"]["name"] == "Updated Project"
-            assert "updated successfully" in result["message"]
+                assert result["status"] == "success"
+                assert result["data"]["name"] == "Updated Project"
+                assert "updated successfully" in result["message"]
 
     @pytest.mark.asyncio
     async def test_update_project_with_username_resolution(self, project_manager, auth_manager):
@@ -435,31 +435,33 @@ class TestProjectManager:
             mock_get_client_manager.return_value = mock_client_manager
 
             # Mock the user manager get_user method
-            project_manager.user_manager.get_user = AsyncMock(
-                return_value={"status": "success", "data": mock_user_data}
-            )
+            with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = {"status": "success", "data": mock_user_data}
 
-            result = await project_manager.update_project(
-                project_id="UP",
-                name="Updated Project",
-                leader_id="admin",  # Using username
-            )
+                result = await project_manager.update_project(
+                    project_id="UP",
+                    name="Updated Project",
+                    leader_id="admin",  # Using username
+                )
 
-            assert result["status"] == "success"
-            assert result["data"]["name"] == "Updated Project"
-            assert "updated successfully" in result["message"]
+                assert result["status"] == "success"
+                assert result["data"]["name"] == "Updated Project"
+                assert "updated successfully" in result["message"]
 
     @pytest.mark.asyncio
     async def test_update_project_invalid_username(self, project_manager, auth_manager):
         """Test project update with invalid username."""
         # Mock the user manager to return user not found
-        project_manager.user_manager.get_user = AsyncMock(return_value={"status": "error", "message": "User not found"})
+        with patch.object(project_manager.user_manager, "get_user", new_callable=AsyncMock) as mock_get_user:
+            mock_get_user.return_value = {"status": "error", "message": "User not found"}
 
-        result = await project_manager.update_project(project_id="UP", name="Updated Project", leader_id="nonexistent")
+            result = await project_manager.update_project(
+                project_id="UP", name="Updated Project", leader_id="nonexistent"
+            )
 
-        assert result["status"] == "error"
-        assert "Failed to resolve leader" in result["message"]
-        assert "User 'nonexistent' not found" in result["message"]
+            assert result["status"] == "error"
+            assert "Failed to resolve leader" in result["message"]
+            assert "User 'nonexistent' not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_update_project_no_changes(self, project_manager, auth_manager):
@@ -640,7 +642,7 @@ class TestProjectsDisplayMethods:
 
     def test_display_projects_table_empty(self):
         """Test displaying empty projects table."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         project_manager = ProjectManager(auth_manager)
 
         # This should not raise an exception
@@ -648,7 +650,7 @@ class TestProjectsDisplayMethods:
 
     def test_display_projects_table_with_data(self):
         """Test displaying projects table with data."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         project_manager = ProjectManager(auth_manager)
 
         projects = [
@@ -678,7 +680,7 @@ class TestProjectsDisplayMethods:
 
     def test_display_project_details(self):
         """Test displaying project details."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         project_manager = ProjectManager(auth_manager)
 
         project = {
@@ -702,7 +704,7 @@ class TestProjectsDisplayMethods:
 
     def test_display_project_details_minimal_data(self):
         """Test displaying project details with minimal data."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         project_manager = ProjectManager(auth_manager)
 
         project = {

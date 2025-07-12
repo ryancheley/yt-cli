@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.auth import AuthConfig
 from youtrack_cli.boards import BoardManager
 
 
@@ -21,7 +21,7 @@ def mock_credentials():
 @pytest.fixture
 def mock_auth_manager(mock_credentials):
     """Mock auth manager for testing."""
-    auth_manager = MagicMock(spec=AuthManager)
+    auth_manager = MagicMock()
     auth_manager.load_credentials.return_value = mock_credentials
     return auth_manager
 

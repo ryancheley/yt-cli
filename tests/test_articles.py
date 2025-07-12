@@ -7,7 +7,7 @@ import pytest
 from click.testing import CliRunner
 
 from youtrack_cli.articles import ArticleManager
-from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.auth import AuthConfig
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def mock_credentials():
 @pytest.fixture
 def mock_auth_manager(mock_credentials):
     """Mock auth manager for testing."""
-    auth_manager = MagicMock(spec=AuthManager)
+    auth_manager = MagicMock()
     auth_manager.load_credentials.return_value = mock_credentials
     return auth_manager
 
