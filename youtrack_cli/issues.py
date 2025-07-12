@@ -4,11 +4,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import httpx
-from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 from .logging import get_logger
 from .progress import get_progress_manager
 
@@ -22,7 +22,7 @@ class IssueManager:
 
     def __init__(self, auth_manager: AuthManager):
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
 
     def _parse_json_response(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or non-JSON responses."""

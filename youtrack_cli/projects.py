@@ -3,12 +3,12 @@
 from typing import Any, Optional
 
 import httpx
-from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 from .users import UserManager
 
 __all__ = ["ProjectManager"]
@@ -24,7 +24,7 @@ class ProjectManager:
             auth_manager: AuthManager instance for authentication
         """
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
         self.user_manager = UserManager(auth_manager)
 
     def _parse_json_response(self, response: httpx.Response) -> Any:

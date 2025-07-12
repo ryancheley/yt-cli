@@ -394,7 +394,7 @@ class TestArticleManager:
 
     def test_display_articles_table_empty(self, article_manager):
         """Test displaying empty articles table."""
-        with patch("youtrack_cli.articles.Console") as mock_console:
+        with patch("youtrack_cli.articles.get_console") as mock_console:
             article_manager.console = mock_console.return_value
             article_manager.display_articles_table([])
 
@@ -414,7 +414,7 @@ class TestArticleManager:
         ]
 
         with (
-            patch("youtrack_cli.articles.Console") as mock_console,
+            patch("youtrack_cli.articles.get_console") as mock_console,
             patch("youtrack_cli.articles.Table") as mock_table,
         ):
             article_manager.console = mock_console.return_value
@@ -425,7 +425,7 @@ class TestArticleManager:
 
     def test_display_articles_tree_empty(self, article_manager):
         """Test displaying empty articles tree."""
-        with patch("youtrack_cli.articles.Console") as mock_console:
+        with patch("youtrack_cli.articles.get_console") as mock_console:
             article_manager.console = mock_console.return_value
             article_manager.display_articles_tree([])
 
@@ -448,7 +448,7 @@ class TestArticleManager:
         ]
 
         with (
-            patch("youtrack_cli.articles.Console") as mock_console,
+            patch("youtrack_cli.articles.get_console") as mock_console,
             patch("youtrack_cli.articles.Tree") as mock_tree,
         ):
             article_manager.console = mock_console.return_value
@@ -471,7 +471,7 @@ class TestArticleManager:
             "parentArticle": {"summary": "Parent Article"},
         }
 
-        with patch("youtrack_cli.articles.Console") as mock_console:
+        with patch("youtrack_cli.articles.get_console") as mock_console:
             article_manager.console = mock_console.return_value
             article_manager.display_article_details(article)
 

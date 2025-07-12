@@ -8,10 +8,10 @@ from typing import Optional
 import httpx
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
-from rich.console import Console
 
 from .client import reset_client_manager_sync
 from .config import ConfigManager
+from .console import get_console
 from .models import CredentialVerificationResult
 from .security import CredentialManager, SecurityConfig, TokenManager
 
@@ -45,7 +45,7 @@ class AuthManager:
         self.security_config = security_config or SecurityConfig()
         self.credential_manager = CredentialManager(self.security_config)
         self.token_manager = TokenManager(self.security_config)
-        self.console = Console()
+        self.console = get_console()
         load_dotenv(self.config_path)
 
     def _get_default_config_path(self) -> str:

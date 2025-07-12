@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import Any, Optional
 
 import httpx
-from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 
 __all__ = ["ArticleManager"]
 
@@ -19,7 +19,7 @@ class ArticleManager:
 
     def __init__(self, auth_manager: AuthManager):
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
 
     def _safe_json_parse(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or invalid JSON responses."""

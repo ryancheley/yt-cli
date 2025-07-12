@@ -4,10 +4,10 @@ import asyncio
 from typing import Optional
 
 import click
-from rich.console import Console
 
 from ..auth import AuthManager
 from ..cli_utils import AliasedGroup
+from ..console import get_console
 
 
 @click.group(cls=AliasedGroup)
@@ -105,7 +105,7 @@ def create(
     """
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -217,7 +217,7 @@ def list_issues(
     """List issues with filtering."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -331,7 +331,7 @@ def update(
     """Update an existing issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -398,7 +398,7 @@ def delete(ctx: click.Context, issue_id: str, confirm: bool) -> None:
     """Delete an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -482,7 +482,7 @@ def search(
     """Advanced issue search."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -550,7 +550,7 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
     """Assign an issue to a user."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -592,7 +592,7 @@ def move(
     """Move an issue between states or projects."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -630,7 +630,7 @@ def add_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     """Add a tag to an issue. Creates the tag if it doesn't exist."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -658,7 +658,7 @@ def remove_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     """Remove a tag from an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -685,7 +685,7 @@ def list_tags(ctx: click.Context, issue_id: str) -> None:
     """List all tags for an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -724,7 +724,7 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
     """Add a comment to an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -761,7 +761,7 @@ def list_issue_comments(
     """List comments on an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -797,7 +797,7 @@ def update_comment(ctx: click.Context, issue_id: str, comment_id: str, text: str
     """Update an existing comment."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -830,7 +830,7 @@ def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, confirm: 
     """Delete a comment."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -869,7 +869,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     """Upload a file to an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -903,7 +903,7 @@ def download(ctx: click.Context, issue_id: str, attachment_id: str, output: Opti
     """Download an attachment from an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -943,7 +943,7 @@ def list_attachments(
     """List attachments for an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -983,7 +983,7 @@ def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, con
     """Delete an attachment from an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -1023,7 +1023,7 @@ def create_link(ctx: click.Context, source_issue_id: str, target_issue_id: str, 
     """Create a link between two issues."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -1063,7 +1063,7 @@ def list_links(
     """Show all links for an issue."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -1103,7 +1103,7 @@ def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, confirm:
     """Remove a link between issues."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
@@ -1140,7 +1140,7 @@ def types(ctx: click.Context, format: str) -> None:
     """List available link types."""
     from ..issues import IssueManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 

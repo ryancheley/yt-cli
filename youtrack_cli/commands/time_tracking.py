@@ -4,9 +4,9 @@ import asyncio
 from typing import Optional
 
 import click
-from rich.console import Console
 
 from ..auth import AuthManager
+from ..console import get_console
 
 
 @click.group()
@@ -33,7 +33,7 @@ def log(
     """Log work time to an issue."""
     from ..time import TimeManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     time_manager = TimeManager(auth_manager)
 
@@ -76,7 +76,7 @@ def report(
     """Generate time reports with filtering options."""
     from ..time import TimeManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     time_manager = TimeManager(auth_manager)
 
@@ -137,7 +137,7 @@ def summary(
     """View time summaries with aggregation."""
     from ..time import TimeManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     time_manager = TimeManager(auth_manager)
 

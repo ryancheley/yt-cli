@@ -4,10 +4,10 @@ import asyncio
 from typing import Optional
 
 import click
-from rich.console import Console
 from rich.prompt import Prompt
 
 from ..auth import AuthManager
+from ..console import get_console
 
 
 @click.group()
@@ -50,7 +50,7 @@ def list_users(
     """List all users."""
     from ..users import UserManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
@@ -110,7 +110,7 @@ def create_user(
     """Create a new user."""
     from ..users import UserManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
@@ -193,7 +193,7 @@ def users_update(
     """Update user information."""
     from ..users import UserManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
@@ -276,7 +276,7 @@ def permissions(
     """Manage user permissions."""
     from ..users import UserManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 

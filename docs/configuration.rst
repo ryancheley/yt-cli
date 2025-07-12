@@ -212,6 +212,62 @@ Display Settings
      - string
      - Date format string (default: %Y-%m-%d %H:%M)
 
+Theme Settings
+~~~~~~~~~~~~~~
+
+YouTrack CLI supports multiple themes for customizing the appearance of console output.
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``YOUTRACK_THEME``
+     - string
+     - Console theme: default, dark, light (default: default)
+
+**Available Themes:**
+
+* **default**: Standard theme with cyan info text, green success, and red errors
+* **dark**: High-contrast theme optimized for dark terminals with bright colors
+* **light**: Theme optimized for light terminals with darker text colors
+
+**Setting a Theme:**
+
+.. code-block:: bash
+
+   # Set theme via configuration file
+   echo "YOUTRACK_THEME=dark" >> ~/.config/youtrack-cli/.env
+
+   # Set theme via environment variable
+   export YOUTRACK_THEME=light
+
+   # Test different themes
+   YOUTRACK_THEME=dark yt issues list
+   YOUTRACK_THEME=light yt projects list
+
+**Theme Styles:**
+
+Each theme provides consistent styling for:
+
+* **info**: Informational messages and highlights
+* **warning**: Warning messages and cautions
+* **success**: Success messages and confirmations
+* **error**: Error messages and failures
+* **prompt**: Interactive prompts and user input
+* **field**: Field names and labels
+* **value**: Field values and data
+* **highlight**: Important text highlights
+* **link**: URLs and clickable links
+* **header**: Table headers and section titles
+* **title**: Page and section titles
+* **subtitle**: Secondary headings
+* **muted**: Less important or secondary text
+* **progress**: Progress bars and status indicators
+* **table**: Table formatting and structure
+
 Time Tracking Settings
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -305,6 +361,7 @@ Configuration optimized for team development workflows:
    MAX_RESULTS=25
    SHOW_COLORS=true
    DATE_FORMAT=%Y-%m-%d %H:%M
+   YOUTRACK_THEME=dark
 
    # Time tracking
    TIME_ROUND_TO_MINUTES=15
