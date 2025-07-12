@@ -65,10 +65,10 @@ security:
 
 # Testing
 [group('test')]
-test:
+test *args:
     #!/usr/bin/env bash
     echo "Running pytest..."
-    uv run pytest
+    uv run pytest {{ args }}
     echo "✅ Tests complete"
 
 [group('test')]
@@ -93,7 +93,7 @@ check:
     just lint
     just format-check
     just typecheck
-    just test
+    just test -q --tb=no --no-header --disable-warnings
     just security
     echo "✅ All checks passed!"
 
