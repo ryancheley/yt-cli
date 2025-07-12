@@ -340,12 +340,25 @@ def list_articles(
     type=int,
     help="Maximum number of articles to return",
 )
+@click.option(
+    "--show-metadata",
+    is_flag=True,
+    default=True,
+    help="Show metadata like authors and dates",
+)
+@click.option(
+    "--enhanced",
+    is_flag=True,
+    help="Use enhanced tree display with additional metadata",
+)
 @click.pass_context
 def tree(
     ctx: click.Context,
     project_id: Optional[str],
     fields: Optional[str],
     top: Optional[int],
+    show_metadata: bool,
+    enhanced: bool,
 ) -> None:
     """Display articles in hierarchical tree structure."""
     from ..articles import ArticleManager
@@ -367,7 +380,17 @@ def tree(
 
         if result["status"] == "success":
             articles = result["data"]
-            article_manager.display_articles_tree(articles)
+
+            if enhanced:
+                # Use enhanced tree display
+                from ..trees import create_enhanced_articles_tree
+
+                tree = create_enhanced_articles_tree(articles, show_metadata=show_metadata)
+                console.print(tree)
+            else:
+                # Use original tree display
+                article_manager.display_articles_tree(articles)
+
             console.print(f"\n[dim]Total: {result['count']} articles[/dim]")
         else:
             console.print(f"❌ {result['message']}", style="red")

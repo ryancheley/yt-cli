@@ -351,6 +351,12 @@ def list_issues(
     is_flag=True,
     help="Show detailed issue information",
 )
+@click.option(
+    "--format",
+    type=click.Choice(["table", "panel"], case_sensitive=False),
+    default="table",
+    help="Output format for issue details (table or panel)",
+)
 @click.pass_context
 def update(
     ctx: click.Context,
@@ -362,6 +368,7 @@ def update(
     assignee: Optional[str],
     type: Optional[str],
     show_details: bool,
+    format: str,
 ) -> None:
     """Update an existing issue."""
     from ..issues import IssueManager
@@ -377,7 +384,7 @@ def update(
             result = asyncio.run(issue_manager.get_issue(issue_id))
 
             if result["status"] == "success":
-                issue_manager.display_issue_details(result["data"])
+                issue_manager.display_issue_details(result["data"], format_type=format)
             else:
                 console.print(f"❌ {result['message']}", style="red")
                 raise click.ClickException("Failed to get issue details")
@@ -1200,6 +1207,101 @@ def types(ctx: click.Context, format: str) -> None:
     except Exception as e:
         console.print(f"❌ Error listing link types: {e}", style="red")
         raise click.ClickException("Failed to list link types") from e
+
+
+@issues.command()
+@click.argument("issue_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "panel"], case_sensitive=False),
+    default="table",
+    help="Output format for issue details (table or panel)",
+)
+@click.pass_context
+def show(ctx: click.Context, issue_id: str, format: str) -> None:
+    """Show detailed information about an issue."""
+    from ..issues import IssueManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"📋 Fetching issue '{issue_id}' details...", style="blue")
+
+    try:
+        result = asyncio.run(issue_manager.get_issue(issue_id))
+
+        if result["status"] == "success":
+            issue_manager.display_issue_details(result["data"], format_type=format)
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to get issue details")
+
+    except Exception as e:
+        console.print(f"❌ Error getting issue details: {e}", style="red")
+        raise click.ClickException("Failed to get issue details") from e
+
+
+@issues.command()
+@click.argument("issue_id")
+@click.option(
+    "--format",
+    type=click.Choice(["tree", "table"], case_sensitive=False),
+    default="tree",
+    help="Output format for dependencies display",
+)
+@click.option(
+    "--show-status",
+    is_flag=True,
+    default=True,
+    help="Show status indicators in tree view",
+)
+@click.pass_context
+def dependencies(ctx: click.Context, issue_id: str, format: str, show_status: bool) -> None:
+    """Show issue dependencies and relationships in tree format."""
+    from ..issues import IssueManager
+    from ..trees import create_issue_dependencies_tree
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    issue_manager = IssueManager(auth_manager)
+
+    console.print(f"🔗 Fetching dependencies for issue '{issue_id}'...", style="blue")
+
+    async def get_issue_and_links():
+        """Get both issue details and links in a single async context."""
+        issue_result = await issue_manager.get_issue(issue_id)
+        if issue_result["status"] != "success":
+            return issue_result, None
+
+        links_result = await issue_manager.list_links(issue_id)
+        return issue_result, links_result
+
+    try:
+        issue_result, links_result = asyncio.run(get_issue_and_links())
+
+        if issue_result["status"] != "success":
+            console.print(f"❌ {issue_result['message']}", style="red")
+            raise click.ClickException("Failed to get issue details")
+
+        if links_result is None or links_result["status"] != "success":
+            console.print(f"❌ {links_result['message'] if links_result else 'Failed to get links'}", style="red")
+            raise click.ClickException("Failed to get issue links")
+
+        issue_data = issue_result["data"]
+        links_data = links_result["data"]
+
+        if format == "tree":
+            # Create and display dependency tree
+            tree = create_issue_dependencies_tree(issue_data, links_data, show_status)
+            console.print(tree)
+        else:
+            # Fall back to table format
+            issue_manager.display_links_table(links_data)
+
+    except Exception as e:
+        console.print(f"❌ Error getting dependencies: {e}", style="red")
+        raise click.ClickException("Failed to get dependencies") from e
 
 
 # Add aliases for common subcommands
