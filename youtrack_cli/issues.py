@@ -11,6 +11,12 @@ from .client import get_client_manager
 from .console import get_console
 from .logging import get_logger
 from .pagination import create_paginated_display
+from .panels import (
+    PanelGroup,
+    create_custom_fields_panel,
+    create_issue_details_panel,
+    create_issue_overview_panel,
+)
 from .progress import get_progress_manager
 
 __all__ = ["IssueManager"]
@@ -1506,8 +1512,20 @@ class IssueManager:
             issues, build_issues_table, "Issues", show_all=show_all, start_page=start_page
         )
 
-    def display_issue_details(self, issue: Dict[str, Any]) -> None:
-        """Display detailed information about a single issue."""
+    def display_issue_details(self, issue: Dict[str, Any], format_type: str = "table") -> None:
+        """Display detailed information about a single issue.
+
+        Args:
+            issue: Issue data dictionary
+            format_type: Display format - 'table' (default) or 'panel'
+        """
+        if format_type == "panel":
+            self._display_issue_details_panels(issue)
+        else:
+            self._display_issue_details_traditional(issue)
+
+    def _display_issue_details_traditional(self, issue: Dict[str, Any]) -> None:
+        """Display issue details in traditional text format (original implementation)."""
         issue_id = issue.get("id", "N/A")
         self.console.print(f"[bold blue]Issue Details: {issue_id}[/bold blue]")
 
@@ -1546,6 +1564,39 @@ class IssueManager:
         if tags:
             tag_names = [tag.get("name", "") for tag in tags]
             self.console.print(f"[bold]Tags:[/bold] {', '.join(tag_names)}")
+
+    def _display_issue_details_panels(self, issue: Dict[str, Any]) -> None:
+        """Display issue details using Rich panels for enhanced presentation."""
+        issue_id = issue.get("id", "N/A")
+
+        # Create a panel group for organized display
+        panel_group = PanelGroup(title=f"Issue Details: {issue_id}")
+
+        # Add overview panel
+        overview_panel = create_issue_overview_panel(issue)
+        panel_group.add_panel(overview_panel)
+
+        # Add details panel
+        details_panel = create_issue_details_panel(issue)
+        panel_group.add_panel(details_panel)
+
+        # Add custom fields panel if present
+        custom_fields = issue.get("customFields", [])
+        if custom_fields:
+            custom_fields_panel = create_custom_fields_panel(custom_fields)
+            panel_group.add_panel(custom_fields_panel)
+
+        # Add tags panel if present
+        tags = issue.get("tags", [])
+        if tags:
+            tag_names = [tag.get("name", "") for tag in tags]
+            panel_group.add_details_panel(
+                title="Tags",
+                data={"Tags": ", ".join(tag_names)},
+            )
+
+        # Display all panels
+        panel_group.display()
 
     def display_comments_table(self, comments: List[Dict[str, Any]]) -> None:
         """Display comments in a formatted table."""

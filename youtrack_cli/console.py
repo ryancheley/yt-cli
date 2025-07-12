@@ -30,6 +30,9 @@ THEMES: Dict[str, Theme] = {
             "table.header": "bold cyan",
             "table.row": "white",
             "table.row.odd": "bright_black",
+            "panel.border": "cyan",
+            "panel.title": "bold cyan",
+            "panel.subtitle": "dim cyan",
         }
     ),
     "dark": Theme(
@@ -54,6 +57,9 @@ THEMES: Dict[str, Theme] = {
             "table.header": "bold bright_cyan",
             "table.row": "bright_white",
             "table.row.odd": "white",
+            "panel.border": "bright_cyan",
+            "panel.title": "bold bright_cyan",
+            "panel.subtitle": "bright_black",
         }
     ),
     "light": Theme(
@@ -78,6 +84,9 @@ THEMES: Dict[str, Theme] = {
             "table.header": "bold blue",
             "table.row": "black",
             "table.row.odd": "bright_black",
+            "panel.border": "blue",
+            "panel.title": "bold blue",
+            "panel.subtitle": "bright_black",
         }
     ),
 }
