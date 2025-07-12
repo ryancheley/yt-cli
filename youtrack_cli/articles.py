@@ -124,14 +124,16 @@ class ArticleManager:
         params = {"fields": fields}
         if top:
             params["$top"] = str(top)
-        if project_id:
-            params["project"] = project_id
         if parent_id:
             params["parentArticle"] = parent_id
         if query:
             params["query"] = query
 
-        url = f"{credentials.base_url.rstrip('/')}/api/articles"
+        # Use project-specific endpoint when project_id is provided
+        if project_id:
+            url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
+        else:
+            url = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
@@ -309,12 +311,14 @@ class ArticleManager:
                 "reporter(fullName),visibility(type),project(name,shortName)"
             ),
         }
-        if project_id:
-            params["project"] = project_id
         if top:
             params["$top"] = str(top)
 
-        url = f"{credentials.base_url.rstrip('/')}/api/articles"
+        # Use project-specific endpoint when project_id is provided
+        if project_id:
+            url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
+        else:
+            url = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
