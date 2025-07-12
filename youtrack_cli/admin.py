@@ -472,7 +472,7 @@ class AdminManager:
             }
 
         if not fields:
-            fields = "id,name,fieldType,isPrivate,hasStateMachine"
+            fields = "id,name,fieldType(presentation),isPrivate,hasStateMachine"
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
