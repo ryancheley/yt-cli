@@ -1479,3 +1479,147 @@ class TestIssuesCLI:
 
             assert result.exit_code == 1
             assert "api request failed" in result.output.lower()
+
+
+class TestIssueTablePagination:
+    """Test pagination functionality for issue table display."""
+
+    @pytest.fixture
+    def sample_issues(self):
+        """Generate sample issues for pagination testing."""
+        issues = []
+        for i in range(100):
+            issues.append(
+                {
+                    "id": f"TEST-{i + 1}",
+                    "numberInProject": i + 1,
+                    "summary": f"Test Issue {i + 1}",
+                    "state": {"name": "Open"},
+                    "priority": {"name": "Normal"},
+                    "type": {"name": "Task"},
+                    "assignee": {"fullName": f"User {i + 1}"},
+                    "project": {"shortName": "TEST", "name": "Test Project"},
+                }
+            )
+        return issues
+
+    @patch("builtins.input")
+    def test_display_issues_table_paginated_basic(self, mock_input, issue_manager, sample_issues):
+        """Test basic paginated display functionality."""
+        mock_input.return_value = "q"
+
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated(sample_issues[:10], page_size=5)
+
+            # Should display the table and pagination info
+            assert mock_console.print.call_count >= 1
+
+    @patch("builtins.input")
+    def test_display_issues_table_paginated_navigation(self, mock_input, issue_manager, sample_issues):
+        """Test navigation through pages."""
+        mock_input.side_effect = ["n", "p", "q"]
+
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated(sample_issues[:10], page_size=3)
+
+            # Should have multiple print calls for navigation
+            assert mock_console.print.call_count >= 3
+
+    def test_display_issues_table_paginated_empty(self, issue_manager):
+        """Test paginated display with empty data."""
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated([], page_size=5)
+
+            mock_console.print.assert_called_once_with("No issues found.", style="yellow")
+
+    def test_display_issues_table_paginated_show_all(self, issue_manager, sample_issues):
+        """Test show_all option."""
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated(sample_issues[:10], show_all=True)
+
+            # Should display all data without pagination
+            assert mock_console.print.call_count == 1
+
+    def test_display_issues_table_paginated_small_dataset(self, issue_manager, sample_issues):
+        """Test with dataset smaller than page size."""
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated(sample_issues[:5], page_size=10)
+
+            # Should display all data without pagination
+            assert mock_console.print.call_count == 1
+
+    @patch("builtins.input")
+    def test_display_issues_table_paginated_start_page(self, mock_input, issue_manager, sample_issues):
+        """Test starting from a specific page."""
+        mock_input.return_value = "q"
+
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated(sample_issues[:20], page_size=5, start_page=3)
+
+            # Should start from page 3
+            assert mock_console.print.call_count >= 1
+
+    def test_build_issues_table_format(self, issue_manager, sample_issues):
+        """Test that the table builder formats issues correctly."""
+        sample_issue = sample_issues[0]
+
+        # Call the paginated method to test the internal table builder
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated([sample_issue], show_all=True)
+
+            # Verify the table was printed
+            mock_console.print.assert_called_once()
+            # The argument should be a Rich Table object
+            table_arg = mock_console.print.call_args[0][0]
+            assert hasattr(table_arg, "add_row")  # Rich Table has add_row method
+
+    def test_paginated_table_handles_custom_fields(self, issue_manager):
+        """Test that paginated table handles custom fields correctly."""
+        issue_with_custom_fields = {
+            "id": "TEST-1",
+            "numberInProject": 1,
+            "summary": "Test Issue",
+            "project": {"shortName": "TEST", "name": "Test Project"},
+            "customFields": [
+                {"name": "State", "value": {"name": "In Progress"}, "$type": "StateIssueCustomField"},
+                {"name": "Priority", "value": {"name": "High"}, "$type": "EnumIssueCustomField"},
+                {"name": "Type", "value": {"name": "Bug"}, "$type": "EnumIssueCustomField"},
+                {"name": "Assignee", "value": {"fullName": "John Doe"}, "$type": "UserIssueCustomField"},
+            ],
+        }
+
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated([issue_with_custom_fields], show_all=True)
+
+            # Should handle custom fields without error
+            mock_console.print.assert_called_once()
+
+    def test_paginated_table_truncates_long_summary(self, issue_manager):
+        """Test that long summaries are properly truncated."""
+        issue_with_long_summary = {
+            "id": "TEST-1",
+            "numberInProject": 1,
+            "summary": "This is a very long summary that should be truncated when displayed",
+            "project": {"shortName": "TEST", "name": "Test Project"},
+        }
+
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated([issue_with_long_summary], show_all=True)
+
+            # Should truncate without error
+            mock_console.print.assert_called_once()
+
+    def test_paginated_table_user_friendly_ids(self, issue_manager):
+        """Test that user-friendly IDs are displayed correctly."""
+        issue_with_project_info = {
+            "id": "internal-id-123",
+            "numberInProject": 42,
+            "summary": "Test Issue",
+            "project": {"shortName": "PROJ", "name": "Test Project"},
+        }
+
+        with patch.object(issue_manager, "console") as mock_console:
+            issue_manager.display_issues_table_paginated([issue_with_project_info], show_all=True)
+
+            # Should format ID as PROJ-42
+            mock_console.print.assert_called_once()

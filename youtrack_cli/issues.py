@@ -10,6 +10,7 @@ from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
 from .logging import get_logger
+from .pagination import create_paginated_display
 from .progress import get_progress_manager
 
 __all__ = ["IssueManager"]
@@ -1399,6 +1400,111 @@ class IssueManager:
             )
 
         self.console.print(table)
+
+    def display_issues_table_paginated(
+        self, issues: List[Dict[str, Any]], page_size: int = 50, show_all: bool = False, start_page: int = 1
+    ) -> None:
+        """Display issues in a paginated table format.
+
+        Args:
+            issues: List of issues to display
+            page_size: Number of issues per page (default: 50)
+            show_all: If True, display all issues without pagination
+            start_page: Page number to start displaying from
+        """
+        if not issues:
+            self.console.print("No issues found.", style="yellow")
+            return
+
+        def build_issues_table(issue_subset: List[Dict[str, Any]]) -> Table:
+            """Build a Rich table for the given subset of issues."""
+            table = Table(title="Issues")
+            table.add_column("ID", style="cyan", no_wrap=True)
+            table.add_column("Summary", style="blue")
+            table.add_column("State", style="green")
+            table.add_column("Priority", style="red")
+            table.add_column("Type", style="magenta")
+            table.add_column("Assignee", style="yellow")
+            table.add_column("Project", style="white")
+
+            for issue in issue_subset:
+                # Format issue ID to show user-friendly project format
+                issue_id = issue.get("id", "N/A")
+                project = issue.get("project", {})
+                project_short_name = project.get("shortName") if project else None
+                issue_number = issue.get("numberInProject") if issue.get("numberInProject") else None
+
+                # Create user-friendly ID format (e.g., "DATA-5" instead of "2-57152")
+                if project_short_name and issue_number:
+                    formatted_id = f"{project_short_name}-{issue_number}"
+                else:
+                    formatted_id = issue_id
+
+                # Handle assignee - could be in top-level field or custom fields
+                assignee = issue.get("assignee", {})
+                if assignee and (assignee.get("fullName") or assignee.get("login")):
+                    assignee_name = assignee.get("fullName") or assignee.get("login", "Unassigned")
+                else:
+                    # Check custom fields for Assignee
+                    custom_assignee = self._get_custom_field_value(issue, "Assignee")
+                    assignee_name = custom_assignee or "Unassigned"
+
+                project_name = project.get("name", "N/A") if project else "N/A"
+
+                # Handle state field - could be string, object with name, or in custom fields
+                state = issue.get("state")
+                if isinstance(state, dict):
+                    state_name = state.get("name", "N/A")
+                elif isinstance(state, str):
+                    state_name = state
+                else:
+                    # Check custom fields for State or Stage (different YouTrack configs use different names)
+                    state_name = (
+                        self._get_custom_field_value(issue, "State")
+                        or self._get_custom_field_value(issue, "Stage")
+                        or "N/A"
+                    )
+
+                # Handle priority field - could be string, object with name, or in custom fields
+                priority = issue.get("priority")
+                if isinstance(priority, dict):
+                    priority_name = priority.get("name", "N/A")
+                elif isinstance(priority, str):
+                    priority_name = priority
+                else:
+                    # Check custom fields for Priority
+                    priority_name = self._get_custom_field_value(issue, "Priority") or "N/A"
+
+                # Handle type field - could be string, object with name, or in custom fields
+                issue_type = issue.get("type")
+                if isinstance(issue_type, dict):
+                    type_name = issue_type.get("name", "N/A")
+                elif isinstance(issue_type, str):
+                    type_name = issue_type
+                else:
+                    # Check custom fields for Type
+                    type_name = self._get_custom_field_value(issue, "Type") or "N/A"
+
+                summary = issue.get("summary", "N/A")
+                truncated_summary = summary[:50] + ("..." if len(summary) > 50 else "")
+
+                table.add_row(
+                    formatted_id,
+                    truncated_summary,
+                    state_name,
+                    priority_name,
+                    type_name,
+                    assignee_name,
+                    project_name,
+                )
+
+            return table
+
+        # Use pagination display
+        paginated_display = create_paginated_display(self.console, page_size)
+        paginated_display.display_paginated_table(
+            issues, build_issues_table, "Issues", show_all=show_all, start_page=start_page
+        )
 
     def display_issue_details(self, issue: Dict[str, Any]) -> None:
         """Display detailed information about a single issue."""
