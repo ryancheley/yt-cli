@@ -37,6 +37,7 @@ dependencies = [
     "structlog>=25.4.0",
     "keyring>=25.0.0",
     "cryptography>=41.0.0",
+    "ty>=0.0.1a14",
 ]
 
 [project.urls]

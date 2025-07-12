@@ -45,7 +45,8 @@
       "mcp__github__update_issue",
       "WebFetch(domain:youtrack-support.jetbrains.com)",
       "Bash(source:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:docs.astral.sh)"
     ],
     "deny": []
   }

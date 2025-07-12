@@ -280,33 +280,31 @@ class TestCachedDecorator:
     @pytest.mark.asyncio
     async def test_cached_decorator_basic(self):
         """Test basic cached decorator functionality."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cached(ttl=300.0)
         async def test_function(arg: str):
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return f"result_{arg}"
 
         # First call should execute function
         result1 = await test_function("test")
         assert result1 == "result_test"
-        assert call_count == 1
+        assert call_count[0] == 1
 
         # Second call should return cached result
         result2 = await test_function("test")
         assert result2 == "result_test"
-        assert call_count == 1  # Function not called again
+        assert call_count[0] == 1  # Function not called again
 
     @pytest.mark.asyncio
     async def test_cached_decorator_different_args(self):
         """Test cached decorator with different arguments."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cached(ttl=300.0)
         async def test_function(arg: str):
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return f"result_{arg}"
 
         result1 = await test_function("arg1")
@@ -314,17 +312,16 @@ class TestCachedDecorator:
 
         assert result1 == "result_arg1"
         assert result2 == "result_arg2"
-        assert call_count == 2  # Function called twice for different args
+        assert call_count[0] == 2  # Function called twice for different args
 
     @pytest.mark.asyncio
     async def test_cached_decorator_with_kwargs(self):
         """Test cached decorator with keyword arguments."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cached(ttl=300.0)
         async def test_function(arg1: str, arg2: str = "default"):
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return f"result_{arg1}_{arg2}"
 
         result1 = await test_function("test", arg2="custom")
@@ -332,22 +329,21 @@ class TestCachedDecorator:
 
         assert result1 == "result_test_custom"
         assert result2 == "result_test_custom"
-        assert call_count == 1  # Function called once
+        assert call_count[0] == 1  # Function called once
 
     @pytest.mark.asyncio
     async def test_cached_decorator_with_key_prefix(self):
         """Test cached decorator with key prefix."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cached(ttl=300.0, key_prefix="test_prefix")
         async def test_function(arg: str):
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return f"result_{arg}"
 
         result = await test_function("test")
         assert result == "result_test"
-        assert call_count == 1
+        assert call_count[0] == 1
 
         # Verify cache key has prefix
         cache = get_cache()
@@ -357,17 +353,16 @@ class TestCachedDecorator:
     @pytest.mark.asyncio
     async def test_cached_decorator_ttl_expiration(self):
         """Test cached decorator with TTL expiration."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cached(ttl=0.01)  # Very short TTL
         async def test_function(arg: str):
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return f"result_{arg}"
 
         # First call
         await test_function("test")
-        assert call_count == 1
+        assert call_count[0] == 1
 
         # Wait for cache to expire
         await asyncio.sleep(0.02)
@@ -375,7 +370,7 @@ class TestCachedDecorator:
         # Second call should execute function again
         result2 = await test_function("test")
         assert result2 == "result_test"
-        assert call_count == 2  # Function called again
+        assert call_count[0] == 2  # Function called again
 
 
 class TestPredefinedCacheDecorators:
@@ -384,12 +379,11 @@ class TestPredefinedCacheDecorators:
     @pytest.mark.asyncio
     async def test_cache_projects_decorator(self):
         """Test cache_projects decorator."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cache_projects(ttl=600.0)
         async def get_projects():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return ["project1", "project2"]
 
         result1 = await get_projects()
@@ -397,17 +391,16 @@ class TestPredefinedCacheDecorators:
 
         assert result1 == ["project1", "project2"]
         assert result2 == ["project1", "project2"]
-        assert call_count == 1
+        assert call_count[0] == 1
 
     @pytest.mark.asyncio
     async def test_cache_users_decorator(self):
         """Test cache_users decorator."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cache_users(ttl=1800.0)
         async def get_users():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return ["user1", "user2"]
 
         result1 = await get_users()
@@ -415,17 +408,16 @@ class TestPredefinedCacheDecorators:
 
         assert result1 == ["user1", "user2"]
         assert result2 == ["user1", "user2"]
-        assert call_count == 1
+        assert call_count[0] == 1
 
     @pytest.mark.asyncio
     async def test_cache_fields_decorator(self):
         """Test cache_fields decorator."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cache_fields(ttl=3600.0)
         async def get_fields():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return ["field1", "field2"]
 
         result1 = await get_fields()
@@ -433,17 +425,16 @@ class TestPredefinedCacheDecorators:
 
         assert result1 == ["field1", "field2"]
         assert result2 == ["field1", "field2"]
-        assert call_count == 1
+        assert call_count[0] == 1
 
     @pytest.mark.asyncio
     async def test_cache_boards_decorator(self):
         """Test cache_boards decorator."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         @cache_boards(ttl=600.0)
         async def get_boards():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             return ["board1", "board2"]
 
         result1 = await get_boards()
@@ -451,4 +442,4 @@ class TestPredefinedCacheDecorators:
 
         assert result1 == ["board1", "board2"]
         assert result2 == ["board1", "board2"]
-        assert call_count == 1
+        assert call_count[0] == 1
