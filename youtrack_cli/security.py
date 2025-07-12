@@ -9,6 +9,7 @@ from typing import Any, Optional
 
 import keyring
 from cryptography.fernet import Fernet
+from keyring.errors import PasswordDeleteError
 from pydantic import BaseModel, Field
 
 from .logging import get_logger
@@ -322,7 +323,12 @@ class CredentialManager:
             keyring.delete_password(self.KEYRING_SERVICE, key)
             self.logger.info("Credential deleted", key=key)
             return True
+        except PasswordDeleteError:
+            # Expected error when item doesn't exist - log as debug, not error
+            self.logger.debug("Credential not found in keyring", key=key)
+            return False
         except Exception as e:
+            # Unexpected errors should still be logged as errors
             self.logger.error("Failed to delete credential", key=key, error=str(e))
             return False
 
