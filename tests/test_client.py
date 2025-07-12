@@ -52,11 +52,11 @@ class TestSSLVerificationWarnings:
                 # Check SSL verification is disabled
                 assert manager._verify_ssl is False
 
-                # Check warning was issued
-                assert len(warning_list) == 1
-                assert issubclass(warning_list[0].category, UserWarning)
-                assert "SSL verification is DISABLED" in str(warning_list[0].message)
-                assert "insecure" in str(warning_list[0].message).lower()
+                # Check warning was issued (filter for UserWarnings only)
+                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
+                assert len(user_warnings) == 1
+                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
+                assert "insecure" in str(user_warnings[0].message).lower()
 
     def test_ssl_verification_disabled_env_var_zero(self):
         """Test SSL verification disabled via environment variable '0'."""

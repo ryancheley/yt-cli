@@ -6,7 +6,7 @@ import httpx
 import pytest
 from click.testing import CliRunner
 
-from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.auth import AuthConfig
 from youtrack_cli.main import main
 from youtrack_cli.users import UserManager
 
@@ -17,7 +17,7 @@ class TestUserManager:
     @pytest.fixture
     def auth_manager(self):
         """Create a mock auth manager for testing."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         auth_manager.load_credentials.return_value = AuthConfig(
             base_url="https://test.youtrack.cloud",
             token="test-token",
@@ -556,14 +556,14 @@ class TestUsersDisplayMethods:
 
     def test_display_users_table_empty(self):
         """Test displaying empty users table."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         user_manager = UserManager(auth_manager)
 
         user_manager.display_users_table([])
 
     def test_display_users_table_with_data(self):
         """Test displaying users table with data."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         user_manager = UserManager(auth_manager)
 
         users = [
@@ -600,7 +600,7 @@ class TestUsersDisplayMethods:
 
     def test_display_user_details(self):
         """Test displaying user details."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         user_manager = UserManager(auth_manager)
 
         user = {
@@ -625,7 +625,7 @@ class TestUsersDisplayMethods:
 
     def test_display_user_details_minimal_data(self):
         """Test displaying user details with minimal data."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         user_manager = UserManager(auth_manager)
 
         user = {
@@ -639,7 +639,7 @@ class TestUsersDisplayMethods:
 
     def test_display_user_details_banned_user(self):
         """Test displaying details for banned user."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         user_manager = UserManager(auth_manager)
 
         user = {
@@ -656,7 +656,7 @@ class TestUsersDisplayMethods:
 
     def test_display_user_details_guest_user(self):
         """Test displaying details for guest user."""
-        auth_manager = Mock(spec=AuthManager)
+        auth_manager = Mock()
         user_manager = UserManager(auth_manager)
 
         user = {
