@@ -32,32 +32,45 @@ class TestAdminManager:
 
     @pytest.mark.asyncio
     async def test_get_global_settings_success(self, admin_manager, auth_manager):
-        """Test successful global settings retrieval."""
-        mock_settings = [
-            {
-                "name": "server.name",
-                "value": "Test YouTrack",
-                "description": "Server name",
-            },
-            {
-                "name": "server.url",
-                "value": "https://test.youtrack.cloud",
-                "description": "Server URL",
-            },
-        ]
+        """Test successful global settings retrieval with new nested format."""
+        # Mock responses for each endpoint
+        mock_system_settings = {
+            "maxExportItems": 500,
+            "maxUploadFileSize": 10485760,
+            "allowStatisticsCollection": False,
+            "$type": "SystemSettings",
+        }
+        mock_license = {"username": "Test User", "license": "test-license-key", "$type": "License"}
+        mock_appearance = {"logo": {"url": "/test.svg", "$type": "Logo"}, "$type": "AppearanceSettings"}
+        mock_notification = {"emailSettings": {"$type": "EmailSettings"}, "$type": "NotificationSettings"}
 
         with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
             mock_client_manager = Mock()
-            mock_response = Mock()
-            mock_response.json.return_value = mock_settings
 
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            # Mock responses for each endpoint call
+            mock_responses = [
+                Mock(),  # systemSettings
+                Mock(),  # license
+                Mock(),  # appearanceSettings
+                Mock(),  # notificationSettings
+            ]
+            mock_responses[0].json.return_value = mock_system_settings
+            mock_responses[1].json.return_value = mock_license
+            mock_responses[2].json.return_value = mock_appearance
+            mock_responses[3].json.return_value = mock_notification
+
+            mock_client_manager.make_request = AsyncMock(side_effect=mock_responses)
             mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_global_settings()
 
             assert result["status"] == "success"
-            assert result["data"] == mock_settings
+            # Check that we got nested data with the expected categories
+            assert "systemSettings" in result["data"]
+            assert "license" in result["data"]
+            assert "appearanceSettings" in result["data"]
+            assert "notificationSettings" in result["data"]
+            assert result["data"]["systemSettings"] == mock_system_settings
 
     @pytest.mark.asyncio
     async def test_get_global_settings_no_auth(self, admin_manager):
@@ -78,6 +91,7 @@ class TestAdminManager:
             mock_response.status_code = 403
             mock_request = Mock()
             http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
+            # All endpoints return 403
             mock_client_manager.make_request = AsyncMock(side_effect=http_error)
             mock_get_client.return_value = mock_client_manager
 
@@ -365,6 +379,24 @@ class TestAdminManager:
 
             # Verify that print was called multiple times
             assert mock_print.call_count >= 2
+
+    def test_display_global_settings_nested(self, admin_manager):
+        """Test global settings display for new nested format."""
+        nested_settings = {
+            "systemSettings": {
+                "maxExportItems": 500,
+                "maxUploadFileSize": 10485760,
+                "allowStatisticsCollection": False,
+                "$type": "SystemSettings",
+            },
+            "license": {"username": "Test User", "license": "test-license-key", "$type": "License"},
+        }
+
+        with patch("rich.console.Console.print") as mock_print:
+            admin_manager.display_global_settings(nested_settings)
+
+            # Verify that a table was printed (should call print once for the table)
+            mock_print.assert_called_once()
 
     def test_display_license_info(self, admin_manager):
         """Test license information display."""
