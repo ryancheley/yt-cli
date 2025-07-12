@@ -73,7 +73,7 @@ class BoardManager:
             "Accept": "application/json",
         }
 
-        params = {}
+        params = {"fields": "id,name,projects(id,name),owner(id,name,fullName)"}
         if project_id:
             params["project"] = project_id
 
@@ -94,7 +94,7 @@ class BoardManager:
                     board.get("id", ""),
                     board.get("name", ""),
                     (board.get("projects", [{}])[0].get("name", "N/A") if board.get("projects") else "N/A"),
-                    board.get("owner", {}).get("name", "N/A"),
+                    board.get("owner", {}).get("fullName", "N/A"),
                 )
 
             self.console.print(table)
