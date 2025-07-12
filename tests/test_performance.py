@@ -275,11 +275,10 @@ class TestBenchmarkRequests:
     @pytest.mark.asyncio
     async def test_benchmark_simple_function(self):
         """Test benchmarking a simple async function."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         async def test_function():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             await asyncio.sleep(0.01)
             return "result"
 
@@ -296,16 +295,15 @@ class TestBenchmarkRequests:
         assert all(d >= 0.01 for d in result.durations)
         assert result.avg_duration >= 0.01
         assert result.operations_per_second > 0
-        assert call_count == 3  # No warmup, so only 3 calls
+        assert call_count[0] == 3  # No warmup, so only 3 calls
 
     @pytest.mark.asyncio
     async def test_benchmark_with_warmup(self):
         """Test benchmarking with warmup iterations."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         async def test_function():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             await asyncio.sleep(0.001)
 
         result = await benchmark_requests(
@@ -315,17 +313,16 @@ class TestBenchmarkRequests:
         assert result.total_operations == 2
         assert result.successful_operations == 2
         assert len(result.durations) == 2
-        assert call_count == 3  # 1 warmup + 2 actual
+        assert call_count[0] == 3  # 1 warmup + 2 actual
 
     @pytest.mark.asyncio
     async def test_benchmark_with_failures(self):
         """Test benchmarking function that sometimes fails."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         async def failing_function():
-            nonlocal call_count
-            call_count += 1
-            if call_count % 2 == 0:  # Fail every second call
+            call_count[0] += 1
+            if call_count[0] % 2 == 0:  # Fail every second call
                 raise ValueError("Test error")
             await asyncio.sleep(0.001)
 
@@ -345,11 +342,10 @@ class TestBenchmarkRequests:
     @pytest.mark.asyncio
     async def test_benchmark_concurrent_requests(self):
         """Test benchmarking with concurrent requests."""
-        call_count = 0
+        call_count = [0]  # Use list to avoid nonlocal issues
 
         async def test_function():
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             await asyncio.sleep(0.01)
 
         result = await benchmark_requests(
@@ -363,7 +359,7 @@ class TestBenchmarkRequests:
         assert result.total_operations == 2
         assert result.successful_operations == 2
         assert len(result.durations) == 2
-        assert call_count == 6  # 2 iterations * 3 concurrent = 6 calls
+        assert call_count[0] == 6  # 2 iterations * 3 concurrent = 6 calls
 
     @pytest.mark.asyncio
     async def test_benchmark_statistics_calculation(self):

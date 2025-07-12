@@ -54,8 +54,13 @@ class TestCachedResponse:
 
     def test_cached_response_extra_fields_allowed(self):
         """Test that extra fields are allowed."""
-        response = CachedResponse(data={"test": "data"}, status_code=201, extra_field="extra_value")
+        # Create with extra fields using dict construction
+        from typing import Any, cast
 
+        response_data = cast(Any, {"data": {"test": "data"}, "status_code": 201, "extra_field": "extra_value"})
+        response = CachedResponse(**response_data)  # type: ignore[misc]
+
+        assert hasattr(response, "extra_field")
         assert response.extra_field == "extra_value"
 
 
@@ -105,16 +110,16 @@ class TestYouTrackUser:
         """Test creating user with all fields."""
         user = YouTrackUser(
             login="testuser",
-            fullName="Test User",
+            fullName="Test User",  # ty: ignore[unknown-argument]
             email="test@example.com",
-            jabberAccountName="test@jabber.com",
-            ringId="ring123",
+            jabberAccountName="test@jabber.com",  # ty: ignore[unknown-argument]
+            ringId="ring123",  # ty: ignore[unknown-argument]
             guest=False,
             online=True,
             banned=False,
             tags=["tag1", "tag2"],
-            savedQueries=["query1", "query2"],
-            avatarUrl="https://example.com/avatar.jpg",
+            savedQueries=["query1", "query2"],  # ty: ignore[unknown-argument]
+            avatarUrl="https://example.com/avatar.jpg",  # ty: ignore[unknown-argument]
             profiles={"github": "testuser"},
         )
 
@@ -131,16 +136,15 @@ class TestYouTrackUser:
 
     def test_user_field_aliases(self):
         """Test that field aliases work correctly."""
-        user_data = {
-            "login": "testuser",
-            "fullName": "Test User",
-            "jabberAccountName": "test@jabber.com",
-            "ringId": "ring123",
-            "savedQueries": ["query1"],
-            "avatarUrl": "https://example.com/avatar.jpg",
-        }
-
-        user = YouTrackUser(**user_data)
+        # Test creating user with API field names (aliases)
+        user = YouTrackUser(
+            login="testuser",
+            fullName="Test User",  # ty: ignore[unknown-argument]
+            jabberAccountName="test@jabber.com",  # ty: ignore[unknown-argument]
+            ringId="ring123",  # ty: ignore[unknown-argument]
+            savedQueries=["query1"],  # ty: ignore[unknown-argument]
+            avatarUrl="https://example.com/avatar.jpg",  # ty: ignore[unknown-argument]
+        )
 
         assert user.full_name == "Test User"
         assert user.jabber_account_name == "test@jabber.com"
@@ -154,7 +158,7 @@ class TestYouTrackProject:
 
     def test_project_minimal_creation(self):
         """Test creating project with minimal required fields."""
-        project = YouTrackProject(id="proj123", name="Test Project", shortName="TP")
+        project = YouTrackProject(id="proj123", name="Test Project", shortName="TP")  # ty: ignore[unknown-argument]
 
         assert project.id == "proj123"
         assert project.name == "Test Project"
@@ -174,14 +178,14 @@ class TestYouTrackProject:
         project = YouTrackProject(
             id="proj123",
             name="Test Project",
-            shortName="TP",
+            shortName="TP",  # ty: ignore[unknown-argument]
             description="A test project",
             leader=leader,
-            createdBy=created_by,
+            createdBy=created_by,  # ty: ignore[unknown-argument]
             created=created_time,
             updated=updated_time,
-            resolvedIssuesCount=10,
-            issuesCount=25,
+            resolvedIssuesCount=10,  # ty: ignore[unknown-argument]
+            issuesCount=25,  # ty: ignore[unknown-argument]
             archived=False,
             template=True,
         )
@@ -198,7 +202,11 @@ class TestYouTrackProject:
     def test_project_validation_error(self):
         """Test project validation with missing required fields."""
         with pytest.raises(ValidationError):
-            YouTrackProject()  # Missing required fields
+            # Test that required fields are validated
+            from typing import Any, cast
+
+            empty_dict = cast(Any, {})
+            YouTrackProject(**empty_dict)  # type: ignore[misc] # Missing required fields
 
 
 class TestYouTrackCustomField:
@@ -245,8 +253,8 @@ class TestYouTrackIssueTag:
             query="Type: Bug",
             color="#ff0000",
             untagged=False,
-            visibleForAuthor=True,
-            visibleForAssignee=True,
+            visible_for_author=True,
+            visible_for_assignee=True,
         )
 
         assert tag.id == "tag123"
@@ -269,10 +277,10 @@ class TestYouTrackComment:
         comment = YouTrackComment(
             id="comment123",
             text="This is a comment",
-            textPreview="This is a...",
+            textPreview="This is a...",  # ty: ignore[unknown-argument]
             created=created_time,
             author=author,
-            issueId="issue123",
+            issueId="issue123",  # ty: ignore[unknown-argument]
         )
 
         assert comment.id == "comment123"
@@ -289,7 +297,7 @@ class TestYouTrackIssue:
 
     def test_issue_minimal_creation(self):
         """Test creating issue with minimal required fields."""
-        issue = YouTrackIssue(id="issue123", entityId="entity456", fieldHash=789, number=1, summary="Test Issue")
+        issue = YouTrackIssue(id="issue123", entityId="entity456", fieldHash=789, number=1, summary="Test Issue")  # ty: ignore[unknown-argument]
 
         assert issue.id == "issue123"
         assert issue.entity_id == "entity456"
@@ -304,7 +312,7 @@ class TestYouTrackIssue:
 
     def test_issue_with_relationships(self):
         """Test issue with related objects."""
-        project = YouTrackProject(id="proj1", name="Project", shortName="P")
+        project = YouTrackProject(id="proj1", name="Project", shortName="P")  # ty: ignore[unknown-argument]
         reporter = YouTrackUser(login="reporter")
         custom_field = YouTrackCustomField(id="cf1", name="Priority")
         tag = YouTrackIssueTag(id="tag1", name="bug")
@@ -312,13 +320,13 @@ class TestYouTrackIssue:
 
         issue = YouTrackIssue(
             id="issue123",
-            entityId="entity456",
-            fieldHash=789,
+            entityId="entity456",  # ty: ignore[unknown-argument]
+            fieldHash=789,  # ty: ignore[unknown-argument]
             number=1,
             summary="Test Issue",
             project=project,
             reporter=reporter,
-            customFields=[custom_field],
+            customFields=[custom_field],  # ty: ignore[unknown-argument]
             tags=[tag],
             comments=[comment],
             description="Issue description",
@@ -396,15 +404,15 @@ class TestYouTrackSearchResult:
     def test_search_result_creation(self):
         """Test creating search result."""
         user = YouTrackUser(login="user1")
-        project = YouTrackProject(id="p1", name="Project", shortName="P")
+        project = YouTrackProject(id="p1", name="Project", shortName="P")  # ty: ignore[unknown-argument]
 
         result = YouTrackSearchResult(
-            totalHits=100,
+            totalHits=100,  # ty: ignore[unknown-argument]
             skip=0,
             top=20,
-            hasAfter=True,
-            hasBefore=False,
-            afterCursor="cursor123",
+            hasAfter=True,  # ty: ignore[unknown-argument]
+            hasBefore=False,  # ty: ignore[unknown-argument]
+            afterCursor="cursor123",  # ty: ignore[unknown-argument]
             results=[user, project],
         )
 
@@ -428,8 +436,8 @@ class TestModelValidation:
 
         issue = YouTrackIssue(
             id="issue123",
-            entityId="entity456",
-            fieldHash=789,
+            entityId="entity456",  # ty: ignore[unknown-argument]
+            fieldHash=789,  # ty: ignore[unknown-argument]
             number=1,
             summary="Test Issue",
             created=now,
@@ -445,8 +453,8 @@ class TestModelValidation:
         """Test optional nested model relationships."""
         issue = YouTrackIssue(
             id="issue123",
-            entityId="entity456",
-            fieldHash=789,
+            entityId="entity456",  # ty: ignore[unknown-argument]
+            fieldHash=789,  # ty: ignore[unknown-argument]
             number=1,
             summary="Test Issue",
             project=None,
@@ -460,7 +468,7 @@ class TestModelValidation:
 
     def test_list_field_defaults(self):
         """Test default empty lists for list fields."""
-        issue = YouTrackIssue(id="issue123", entityId="entity456", fieldHash=789, number=1, summary="Test Issue")
+        issue = YouTrackIssue(id="issue123", entityId="entity456", fieldHash=789, number=1, summary="Test Issue")  # ty: ignore[unknown-argument]
 
         assert issue.custom_fields == []
         assert issue.tags == []
@@ -470,8 +478,14 @@ class TestModelValidation:
 
     def test_extra_fields_allowed(self):
         """Test that extra fields are allowed in models."""
-        user = YouTrackUser(login="testuser", extra_field="extra_value", another_field={"nested": "data"})
+        # Create user with extra fields using dict construction
+        from typing import Any, cast
+
+        user_data = cast(Any, {"login": "testuser", "extra_field": "extra_value", "another_field": {"nested": "data"}})
+        user = YouTrackUser(**user_data)  # type: ignore[misc]
 
         assert user.login == "testuser"
+        assert hasattr(user, "extra_field")
         assert user.extra_field == "extra_value"
+        assert hasattr(user, "another_field")
         assert user.another_field == {"nested": "data"}
