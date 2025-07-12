@@ -9,6 +9,7 @@ from rich.text import Text
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .pagination import create_paginated_display
 from .users import UserManager
 
 __all__ = ["ProjectManager"]
@@ -458,6 +459,71 @@ class ProjectManager:
             )
 
         self.console.print(table)
+
+    def display_projects_table_paginated(
+        self, projects: list[dict[str, Any]], page_size: int = 50, show_all: bool = False, start_page: int = 1
+    ) -> None:
+        """Display projects in a paginated table format.
+
+        Args:
+            projects: List of project dictionaries
+            page_size: Number of projects per page (default: 50)
+            show_all: If True, display all projects without pagination
+            start_page: Page number to start displaying from
+        """
+        if not projects:
+            self.console.print("No projects found.", style="yellow")
+            return
+
+        def build_projects_table(project_subset: list[dict[str, Any]]) -> Table:
+            """Build a Rich table for the given subset of projects."""
+            table = Table(title="YouTrack Projects")
+            table.add_column("Short Name", style="cyan", no_wrap=True)
+            table.add_column("Name", style="blue")
+            table.add_column("Leader", style="green")
+            table.add_column("Status", style="magenta")
+            table.add_column("Description", style="dim")
+
+            for project in project_subset:
+                # Skip None projects
+                if project is None:
+                    continue
+
+                short_name = project.get("shortName", "N/A")
+                name = project.get("name", "N/A")
+
+                # Format leader info
+                leader = project.get("leader", {})
+                if leader and isinstance(leader, dict):
+                    leader_name = leader.get("fullName") or leader.get("login", "No leader")
+                else:
+                    leader_name = "No leader"
+
+                # Format status with appropriate color
+                archived = project.get("archived", False)
+                status = "Archived" if archived else "Active"
+                status_style = "dim" if archived else "green"
+
+                # Truncate description if too long
+                description = project.get("description", "No description")
+                if len(description) > 50:
+                    description = description[:47] + "..."
+
+                table.add_row(
+                    short_name,
+                    name,
+                    leader_name,
+                    Text(status, style=status_style),
+                    description,
+                )
+
+            return table
+
+        # Use pagination display
+        paginated_display = create_paginated_display(self.console, page_size)
+        paginated_display.display_paginated_table(
+            projects, build_projects_table, "Projects", show_all=show_all, start_page=start_page
+        )
 
     def display_project_details(self, project: dict[str, Any]) -> None:
         """Display detailed information about a project.

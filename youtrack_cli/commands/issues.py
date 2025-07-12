@@ -198,6 +198,28 @@ def create(
     default="table",
     help="Output format",
 )
+@click.option(
+    "--paginated",
+    is_flag=True,
+    help="Use interactive pagination for table display",
+)
+@click.option(
+    "--display-page-size",
+    type=int,
+    default=50,
+    help="Number of items per page for paginated display (default: 50)",
+)
+@click.option(
+    "--show-all",
+    is_flag=True,
+    help="Show all results without pagination",
+)
+@click.option(
+    "--start-page",
+    type=int,
+    default=1,
+    help="Page number to start displaying from",
+)
 @click.pass_context
 def list_issues(
     ctx: click.Context,
@@ -213,6 +235,10 @@ def list_issues(
     max_results: Optional[int],
     query: Optional[str],
     format: str,
+    paginated: bool,
+    display_page_size: int,
+    show_all: bool,
+    start_page: int,
 ) -> None:
     """List issues with filtering."""
     from ..issues import IssueManager
@@ -254,19 +280,28 @@ def list_issues(
             issues = result["data"]
 
             if format == "table":
-                issue_manager.display_issues_table(issues)
-                console.print(f"\n[dim]Total: {result['count']} issues[/dim]")
+                if paginated:
+                    # Use interactive pagination
+                    issue_manager.display_issues_table_paginated(
+                        issues, page_size=display_page_size, show_all=show_all, start_page=start_page
+                    )
+                else:
+                    # Use traditional table display
+                    issue_manager.display_issues_table(issues)
+                    console.print(f"\n[dim]Total: {result['count']} issues[/dim]")
 
-                # Display pagination info if available
-                if "pagination" in result:
-                    pagination = result["pagination"]
-                    if pagination["has_after"] or pagination["has_before"]:
-                        console.print("[dim]Pagination:[/dim]", end="")
-                        if pagination["after_cursor"]:
-                            console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
-                        if pagination["before_cursor"]:
-                            console.print(f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end="")
-                        console.print()
+                    # Display pagination info if available
+                    if "pagination" in result:
+                        pagination = result["pagination"]
+                        if pagination["has_after"] or pagination["has_before"]:
+                            console.print("[dim]Pagination:[/dim]", end="")
+                            if pagination["after_cursor"]:
+                                console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
+                            if pagination["before_cursor"]:
+                                console.print(
+                                    f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end=""
+                                )
+                            console.print()
             else:
                 import json
 

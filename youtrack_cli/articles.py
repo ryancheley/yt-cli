@@ -10,6 +10,7 @@ from rich.tree import Tree
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .pagination import create_paginated_display
 
 __all__ = ["ArticleManager"]
 
@@ -470,6 +471,86 @@ class ArticleManager:
             )
 
         self.console.print(table)
+
+    def display_articles_table_paginated(
+        self, articles: list[dict[str, Any]], page_size: int = 50, show_all: bool = False, start_page: int = 1
+    ) -> None:
+        """Display articles in a paginated table format.
+
+        Args:
+            articles: List of article dictionaries
+            page_size: Number of articles per page (default: 50)
+            show_all: If True, display all articles without pagination
+            start_page: Page number to start displaying from
+        """
+        if not articles:
+            self.console.print("No articles found.", style="yellow")
+            return
+
+        def build_articles_table(article_subset: list[dict[str, Any]]) -> Table:
+            """Build a Rich table for the given subset of articles."""
+            table = Table(title="Articles")
+            table.add_column("ID", style="cyan")
+            table.add_column("Title", style="green")
+            table.add_column("Summary", style="blue")
+            table.add_column("Author", style="magenta")
+            table.add_column("Created", style="yellow")
+            table.add_column("Visibility", style="red")
+
+            for article in article_subset:
+                # Get the content field and create a truncated version for summary display
+                content = article.get("content", "")
+                if content:
+                    summary_text = content[:50] + "..." if len(content) > 50 else content
+                else:
+                    # If no content, show "No Summary Available"
+                    summary_text = "No Summary Available"
+
+                # Get author info (using reporter field for articles)
+                author_info = article.get("reporter", {})
+                author_name = author_info.get("fullName", "Unknown Author") if author_info else "Unknown Author"
+
+                # Map visibility type to user-friendly name
+                visibility_info = article.get("visibility", {})
+                visibility_type = visibility_info.get("$type", "")
+                if visibility_type == "UnlimitedVisibility":
+                    visibility_display = "Visible"
+                elif visibility_type == "LimitedVisibility":
+                    visibility_display = "Hidden"
+                else:
+                    visibility_display = "Unknown"
+
+                # Format the created timestamp
+                created_timestamp = article.get("created")
+                if created_timestamp:
+                    try:
+                        # Handle both numeric timestamps (from API) and string timestamps (from tests)
+                        if isinstance(created_timestamp, (int, float)):
+                            created_date = datetime.fromtimestamp(created_timestamp / 1000).strftime("%Y-%m-%d %H:%M")
+                        else:
+                            # For string timestamps, just use as-is (test data)
+                            created_date = str(created_timestamp)
+                    except (ValueError, TypeError):
+                        created_date = str(created_timestamp)
+                else:
+                    created_date = "N/A"
+
+                table.add_row(
+                    str(article.get("idReadable", article.get("id", "N/A"))),  # Use friendly ID first
+                    str(article.get("summary", "N/A")),
+                    str(summary_text),
+                    str(author_name),
+                    str(created_date),
+                    str(visibility_display),
+                )
+
+            return table
+
+        # Use pagination display
+        paginated_display = create_paginated_display(self.console, page_size)
+        paginated_display.display_paginated_table(
+            articles, build_articles_table, "Articles", show_all=show_all, start_page=start_page
+        )
 
     def display_articles_tree(self, articles: list[dict[str, Any]]) -> None:
         """Display articles in a tree format."""

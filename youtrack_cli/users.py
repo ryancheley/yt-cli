@@ -8,6 +8,7 @@ from rich.text import Text
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .pagination import create_paginated_display
 
 __all__ = ["UserManager"]
 
@@ -393,6 +394,65 @@ class UserManager:
             )
 
         self.console.print(table)
+
+    def display_users_table_paginated(
+        self, users: list[dict[str, Any]], page_size: int = 50, show_all: bool = False, start_page: int = 1
+    ) -> None:
+        """Display users in a paginated table format.
+
+        Args:
+            users: List of user dictionaries
+            page_size: Number of users per page (default: 50)
+            show_all: If True, display all users without pagination
+            start_page: Page number to start displaying from
+        """
+        if not users:
+            self.console.print("No users found.", style="yellow")
+            return
+
+        def build_users_table(user_subset: list[dict[str, Any]]) -> Table:
+            """Build a Rich table for the given subset of users."""
+            table = Table(title="YouTrack Users")
+            table.add_column("Login", style="cyan", no_wrap=True)
+            table.add_column("Full Name", style="blue")
+            table.add_column("Email", style="green")
+            table.add_column("Status", style="magenta")
+            table.add_column("Type", style="dim")
+
+            for user in user_subset:
+                login = user.get("login", "N/A")
+                full_name = user.get("fullName", "N/A")
+                email = user.get("email", "N/A")
+
+                # Format status
+                if user.get("banned", False):
+                    status = "Banned"
+                    status_style = "red"
+                elif user.get("online", False):
+                    status = "Online"
+                    status_style = "green"
+                else:
+                    status = "Offline"
+                    status_style = "yellow"
+
+                # Format user type
+                user_type = "Guest" if user.get("guest", False) else "User"
+
+                table.add_row(
+                    login,
+                    full_name,
+                    email,
+                    Text(status, style=status_style),
+                    user_type,
+                )
+
+            return table
+
+        # Use pagination display
+        paginated_display = create_paginated_display(self.console, page_size)
+        paginated_display.display_paginated_table(
+            users, build_users_table, "Users", show_all=show_all, start_page=start_page
+        )
 
     def display_user_details(self, user: dict[str, Any]) -> None:
         """Display detailed information about a user.
