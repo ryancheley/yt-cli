@@ -2,11 +2,11 @@
 
 from typing import Any, Optional
 
-from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 from .progress import get_progress_manager
 
 __all__ = ["ReportManager"]
@@ -22,7 +22,7 @@ class ReportManager:
             auth_manager: AuthManager instance for authentication
         """
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
 
     async def generate_burndown_report(
         self,

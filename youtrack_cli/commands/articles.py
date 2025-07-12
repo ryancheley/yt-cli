@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from rich.console import Console
 
 from ..auth import AuthManager
+from ..console import get_console
 
 
 @click.group()
@@ -63,7 +63,7 @@ def create(
     """Create a new article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
 
     # Validate that either content or file is provided, but not both
     if content and file:
@@ -162,7 +162,7 @@ def edit(
     """Edit an existing article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -222,7 +222,7 @@ def publish(ctx: click.Context, article_id: str) -> None:
     """Publish a draft article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -287,7 +287,7 @@ def list_articles(
     """List articles with filtering."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -350,7 +350,7 @@ def tree(
     """Display articles in hierarchical tree structure."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -408,7 +408,7 @@ def search(
     """Search articles."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -463,7 +463,7 @@ def draft(
     """Manage article drafts."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -512,7 +512,7 @@ def sort(
     """Sort child articles under a parent article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -561,7 +561,7 @@ def sort(
 @click.pass_context
 def tag_article(ctx: click.Context, article_id: str, tags: tuple[str, ...]) -> None:
     """Add tags to an article. If no tags provided, shows interactive selection."""
-    console = Console()
+    console = get_console()
 
     async def _tag_article() -> None:
         from ..articles import ArticleManager
@@ -685,7 +685,7 @@ def add_comment(ctx: click.Context, article_id: str, text: str) -> None:
     """Add a comment to an article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -722,7 +722,7 @@ def list_comments(
     """List comments on an article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -776,7 +776,7 @@ def list_comments(
 @click.pass_context
 def update_comment(ctx: click.Context, comment_id: str, text: str) -> None:
     """Update an existing comment."""
-    console = Console()
+    console = get_console()
     console.print("⚠️  Comment update functionality not yet implemented", style="yellow")
     console.print("This feature requires additional API endpoints", style="blue")
 
@@ -791,7 +791,7 @@ def update_comment(ctx: click.Context, comment_id: str, text: str) -> None:
 @click.pass_context
 def delete_comment(ctx: click.Context, comment_id: str, confirm: bool) -> None:
     """Delete a comment."""
-    console = Console()
+    console = get_console()
 
     if not confirm:
         if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
@@ -814,7 +814,7 @@ def attach() -> None:
 @click.pass_context
 def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
-    console = Console()
+    console = get_console()
     console.print("⚠️  File upload functionality not yet implemented", style="yellow")
     console.print("This feature requires multipart form upload implementation", style="blue")
 
@@ -831,7 +831,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
 @click.pass_context
 def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]) -> None:
     """Download an attachment from an article."""
-    console = Console()
+    console = get_console()
     console.print("⚠️  File download functionality not yet implemented", style="yellow")
     console.print("This feature requires binary file handling", style="blue")
 
@@ -853,7 +853,7 @@ def list_attachments(
     """List attachments for an article."""
     from ..articles import ArticleManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
@@ -914,7 +914,7 @@ def list_attachments(
 @click.pass_context
 def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, confirm: bool) -> None:
     """Delete an attachment from an article."""
-    console = Console()
+    console = get_console()
 
     if not confirm:
         if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):

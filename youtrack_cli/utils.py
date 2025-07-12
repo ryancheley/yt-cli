@@ -4,9 +4,9 @@ from collections.abc import AsyncGenerator
 from typing import Any, Dict, List, Optional
 
 import httpx
-from rich.console import Console
 
 from .client import get_client_manager
+from .console import get_console
 from .exceptions import (
     YouTrackError,
 )
@@ -27,7 +27,7 @@ __all__ = [
 ]
 
 logger = get_logger(__name__)
-console = Console()
+console = get_console()
 
 
 async def make_request(

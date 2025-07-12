@@ -4,8 +4,8 @@ from functools import wraps
 from typing import Callable
 
 import click
-from rich.console import Console
 
+from .console import get_console
 from .logging import setup_logging
 
 __all__ = ["common_options", "output_options", "async_command", "handle_exceptions"]
@@ -64,9 +64,11 @@ def common_options(f: Callable) -> Callable:
 
         # Configure console color
         if no_color:
+            from rich.console import Console
+
             console = Console(color_system=None)
         else:
-            console = Console()
+            console = get_console()
 
         # Add common options to kwargs for the command
         kwargs["format"] = format_type
@@ -137,7 +139,7 @@ def handle_exceptions(f: Callable) -> Callable:
         except Exception as e:
             from .utils import display_error, handle_error
 
-            kwargs.get("console", Console())
+            kwargs.get("console", get_console())
             error_result = handle_error(e, getattr(f, "__name__", "command"))
             display_error(error_result)
 

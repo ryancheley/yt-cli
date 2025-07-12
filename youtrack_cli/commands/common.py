@@ -3,9 +3,10 @@
 from typing import Optional
 
 import click
-from rich.console import Console
 
-console = Console()
+from ..console import get_console
+
+console = get_console()
 
 
 def handle_api_error(error: Exception, ctx: click.Context) -> None:

@@ -2,12 +2,12 @@
 
 from typing import Any, Optional
 
-from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 
 __all__ = ["UserManager"]
 
@@ -22,7 +22,7 @@ class UserManager:
             auth_manager: AuthManager instance for authentication
         """
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
 
     async def list_users(
         self,

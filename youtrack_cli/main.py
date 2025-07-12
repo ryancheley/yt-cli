@@ -4,7 +4,6 @@ import asyncio
 from typing import Optional
 
 import click
-from rich.console import Console
 from rich.prompt import Prompt
 
 from . import __version__
@@ -13,6 +12,7 @@ from .auth import AuthManager
 from .cli_utils import AliasedGroup
 from .commands import articles, boards, issues, projects, time, users
 from .config import ConfigManager
+from .console import get_console
 from .logging import setup_logging
 from .progress import set_progress_enabled
 from .reports import ReportManager
@@ -210,7 +210,7 @@ def completion(shell: str, install: bool) -> None:
     import os
     from pathlib import Path
 
-    console = Console()
+    console = get_console()
 
     # Use Click's shell completion
     completion_script = None
@@ -545,7 +545,7 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
         # Setup without validating the connection
         yt setup --skip-validation
     """
-    console = Console()
+    console = get_console()
 
     console.print("🎯 [bold blue]Welcome to YouTrack CLI Setup![/bold blue]")
     console.print("\nThis wizard will help you configure YouTrack CLI for the first time.\n")
@@ -659,7 +659,7 @@ def reports_burndown(
     """Generate a burndown report for a project or sprint."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     report_manager = ReportManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_burndown() -> None:
         result = await report_manager.generate_burndown_report(
@@ -696,7 +696,7 @@ def reports_velocity(
     """Generate a velocity report for recent sprints."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     report_manager = ReportManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_velocity() -> None:
         result = await report_manager.generate_velocity_report(
@@ -743,7 +743,7 @@ def login(
     no_verify_ssl: bool,
 ) -> None:
     """Authenticate with YouTrack."""
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 
     console.print("🔐 Authenticating with YouTrack...", style="blue")
@@ -777,7 +777,7 @@ def login(
 @click.pass_context
 def logout(ctx: click.Context) -> None:
     """Clear authentication credentials."""
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 
     # Check if credentials exist
@@ -801,7 +801,7 @@ def logout(ctx: click.Context) -> None:
 @click.pass_context
 def token(ctx: click.Context, show: bool, update: bool) -> None:
     """Manage API tokens."""
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 
     if show:
@@ -861,7 +861,7 @@ def config() -> None:
 @click.pass_context
 def set(ctx: click.Context, key: str, value: str) -> None:
     """Set a configuration value."""
-    console = Console()
+    console = get_console()
     config_manager = ConfigManager(ctx.obj.get("config"))
 
     try:
@@ -877,7 +877,7 @@ def set(ctx: click.Context, key: str, value: str) -> None:
 @click.pass_context
 def get(ctx: click.Context, key: str) -> None:
     """Get a configuration value."""
-    console = Console()
+    console = get_console()
     config_manager = ConfigManager(ctx.obj.get("config"))
 
     try:
@@ -896,7 +896,7 @@ def get(ctx: click.Context, key: str) -> None:
 @click.pass_context
 def list_config(ctx: click.Context) -> None:
     """List all configuration values."""
-    console = Console()
+    console = get_console()
     config_manager = ConfigManager(ctx.obj.get("config"))
 
     try:
@@ -954,7 +954,7 @@ def security() -> None:
 @click.pass_context
 def audit(ctx: click.Context, limit: int, output_format: str) -> None:
     """View command audit log."""
-    console = Console()
+    console = get_console()
     audit_logger = ctx.obj.get("audit_logger") or AuditLogger()
 
     try:
@@ -1004,7 +1004,7 @@ def audit(ctx: click.Context, limit: int, output_format: str) -> None:
 @click.pass_context
 def clear_audit(ctx: click.Context, force: bool) -> None:
     """Clear the command audit log."""
-    console = Console()
+    console = get_console()
 
     if not force:
         if not click.confirm("Are you sure you want to clear the audit log?"):
@@ -1025,7 +1025,7 @@ def clear_audit(ctx: click.Context, force: bool) -> None:
 @click.pass_context
 def token_status(ctx: click.Context) -> None:
     """Check token expiration status."""
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 
     try:
@@ -1077,7 +1077,7 @@ def get_settings(ctx: click.Context, name: Optional[str]) -> None:
     """Get global settings."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_get_settings() -> None:
         result = await admin_manager.get_global_settings()
@@ -1108,7 +1108,7 @@ def set_setting(ctx: click.Context, name: str, value: str) -> None:
     """Set a global setting."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_set_setting() -> None:
         result = await admin_manager.set_global_setting(name, value)
@@ -1128,7 +1128,7 @@ def list_settings(ctx: click.Context) -> None:
     """List all global settings."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_list_settings() -> None:
         result = await admin_manager.get_global_settings()
@@ -1154,7 +1154,7 @@ def show(ctx: click.Context) -> None:
     """Display license information."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_license_info() -> None:
         result = await admin_manager.get_license_info()
@@ -1174,7 +1174,7 @@ def usage(ctx: click.Context) -> None:
     """Show license usage statistics."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_license_usage() -> None:
         result = await admin_manager.get_license_usage()
@@ -1209,7 +1209,7 @@ def clear_cache(ctx: click.Context, confirm: bool) -> None:
     """Clear system caches."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     if not confirm:
         console.print("[yellow]Warning:[/yellow] This will clear all system caches.")
@@ -1241,7 +1241,7 @@ def check(ctx: click.Context) -> None:
     """Run health diagnostics."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_health_check() -> None:
         result = await admin_manager.get_system_health()
@@ -1267,7 +1267,7 @@ def list_groups(ctx: click.Context) -> None:
     """List all user groups."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_list_groups() -> None:
         result = await admin_manager.list_user_groups()
@@ -1289,7 +1289,7 @@ def create(ctx: click.Context, name: str, description: Optional[str]) -> None:
     """Create a new user group."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_create_group() -> None:
         result = await admin_manager.create_user_group(name, description)
@@ -1317,7 +1317,7 @@ def list_fields(ctx: click.Context) -> None:
     """List all custom fields."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
-    console = Console()
+    console = get_console()
 
     async def run_list_fields() -> None:
         result = await admin_manager.list_custom_fields()

@@ -3,11 +3,11 @@
 from typing import Any, Optional
 
 import httpx
-from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 
 __all__ = ["AdminManager"]
 
@@ -22,7 +22,7 @@ class AdminManager:
             auth_manager: AuthManager instance for authentication
         """
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
 
     # Global Settings Management
     async def get_global_settings(self, setting_key: Optional[str] = None) -> dict[str, Any]:

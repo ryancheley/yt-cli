@@ -4,9 +4,9 @@ import asyncio
 from typing import Optional
 
 import click
-from rich.console import Console
 
 from ..auth import AuthManager
+from ..console import get_console
 
 
 @click.group()
@@ -36,7 +36,7 @@ def list_boards(
     """List all agile boards."""
     from ..boards import BoardManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     board_manager = BoardManager(auth_manager)
 
@@ -74,7 +74,7 @@ def view_board(
     """View details of a specific agile board."""
     from ..boards import BoardManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     board_manager = BoardManager(auth_manager)
 
@@ -111,7 +111,7 @@ def update_board(
     """Update an agile board configuration."""
     from ..boards import BoardManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     board_manager = BoardManager(auth_manager)
 

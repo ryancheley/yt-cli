@@ -4,9 +4,9 @@ import asyncio
 from typing import Optional
 
 import click
-from rich.console import Console
 
 from ..auth import AuthManager
+from ..console import get_console
 
 
 @click.group()
@@ -49,7 +49,7 @@ def projects_list(
     """List all projects."""
     from ..projects import ProjectManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
@@ -109,7 +109,7 @@ def projects_create(
     """Create a new project."""
     from ..projects import ProjectManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
@@ -174,7 +174,7 @@ def configure(
     """Configure project settings."""
     from ..projects import ProjectManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
@@ -245,7 +245,7 @@ def archive(
     """Archive a project."""
     from ..projects import ProjectManager
 
-    console = Console()
+    console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 

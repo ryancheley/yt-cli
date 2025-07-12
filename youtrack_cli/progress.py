@@ -20,6 +20,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
+from .console import get_console
+
 T = TypeVar("T")
 
 
@@ -33,7 +35,7 @@ class ProgressManager:
             console: Rich console instance to use for output
             enabled: Whether progress indicators are enabled
         """
-        self.console = console or Console()
+        self.console = console or get_console()
         self.enabled = enabled
 
     @contextlib.contextmanager

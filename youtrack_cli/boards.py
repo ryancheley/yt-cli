@@ -3,11 +3,11 @@
 from typing import Any, Optional
 
 import httpx
-from rich.console import Console
 from rich.table import Table
 
 from .auth import AuthManager
 from .client import get_client_manager
+from .console import get_console
 
 __all__ = ["BoardManager"]
 
@@ -17,7 +17,7 @@ class BoardManager:
 
     def __init__(self, auth_manager: AuthManager):
         self.auth_manager = auth_manager
-        self.console = Console()
+        self.console = get_console()
 
     async def _validate_authentication(self) -> bool:
         """Validate authentication before making API calls."""
