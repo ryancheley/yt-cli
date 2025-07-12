@@ -1080,7 +1080,7 @@ def get_settings(ctx: click.Context, name: Optional[str]) -> None:
     console = get_console()
 
     async def run_get_settings() -> None:
-        result = await admin_manager.get_global_settings()
+        result = await admin_manager.get_global_settings(name)
 
         if result["status"] == "error":
             console.print(f"[red]Error:[/red] {result['message']}")
@@ -1088,12 +1088,8 @@ def get_settings(ctx: click.Context, name: Optional[str]) -> None:
 
         settings = result["data"]
         if name:
-            # Filter for specific setting
-            filtered_settings = [s for s in settings if s.get("name") == name]
-            if filtered_settings:
-                admin_manager.display_global_settings(filtered_settings[0])
-            else:
-                console.print(f"[yellow]Setting '{name}' not found[/yellow]")
+            # For specific setting requests, the data should be the setting itself
+            admin_manager.display_global_settings(settings)
         else:
             admin_manager.display_global_settings(settings)
 

@@ -305,10 +305,10 @@ List all custom fields configured across YouTrack projects.
    yt admin fields list
 
    # List fields with specific information
-   yt admin fields list --fields "id,name,fieldType,isPrivate"
+   yt admin fields list --fields "id,name,fieldType(presentation),isPrivate"
 
    # List field types and usage
-   yt admin fields list --fields "name,fieldType,projects(name)"
+   yt admin fields list --fields "name,fieldType(presentation),projects(name)"
 
 Administrative Features
 ----------------------

@@ -46,32 +46,97 @@ class AdminManager:
             "Accept": "application/json",
         }
 
-        endpoint = "/api/admin/globalSettings"
-        if setting_key:
-            endpoint += f"/{setting_key}"
-
         client_manager = get_client_manager()
-        try:
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}{endpoint}",
-                headers=headers,
-                timeout=10.0,
-            )
 
-            settings = response.json()
-            return {"status": "success", "data": settings}
+        if setting_key:
+            # Single setting request - add fields parameter for meaningful data
+            endpoint = f"/api/admin/globalSettings/{setting_key}"
 
-        except httpx.HTTPError as e:
-            if hasattr(e, "response") and e.response is not None:
-                if e.response.status_code == 403:
+            # Add appropriate fields based on the setting category
+            if setting_key == "systemSettings":
+                endpoint += (
+                    "?fields=baseUrl,isApplicationReadOnly,maxUploadFileSize,"
+                    "maxExportItems,allowStatisticsCollection,restApiUrl,maxIssuesInSinglePageExport"
+                )
+            elif setting_key == "license":
+                endpoint += "?fields=username,organizations,license,expirationDate"
+            elif setting_key == "appearanceSettings":
+                endpoint += "?fields=logo(url),applicationName,title"
+            elif setting_key == "notificationSettings":
+                endpoint += "?fields=jabberSettings,emailSettings,mailProtocol"
+
+            try:
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{credentials.base_url.rstrip('/')}{endpoint}",
+                    headers=headers,
+                    timeout=10.0,
+                )
+                settings = response.json()
+                # Return single category in the nested format for consistency
+                return {"status": "success", "data": {setting_key: settings}}
+            except httpx.HTTPError as e:
+                if hasattr(e, "response") and e.response is not None:
+                    if e.response.status_code == 403:
+                        return {
+                            "status": "error",
+                            "message": "Insufficient permissions for global settings.",
+                        }
+                    elif e.response.status_code == 404:
+                        return {
+                            "status": "error",
+                            "message": f"Setting category '{setting_key}' not found.",
+                        }
+                return {"status": "error", "message": f"HTTP error: {e}"}
+            except Exception as e:
+                if "not found" in str(e):
                     return {
                         "status": "error",
-                        "message": "Insufficient permissions for global settings.",
+                        "message": f"Setting category '{setting_key}' not found.",
                     }
-            return {"status": "error", "message": f"HTTP error: {e}"}
-        except Exception as e:
-            return {"status": "error", "message": f"Unexpected error: {e}"}
+                return {"status": "error", "message": f"Unexpected error: {e}"}
+        else:
+            # Comprehensive settings - try multiple known endpoints with fields
+            endpoints_to_try = [
+                (
+                    "/api/admin/globalSettings/systemSettings?fields=baseUrl,isApplicationReadOnly,"
+                    "maxUploadFileSize,maxExportItems,allowStatisticsCollection,restApiUrl,maxIssuesInSinglePageExport"
+                ),
+                "/api/admin/globalSettings/license?fields=username,organizations,license,expirationDate",
+                "/api/admin/globalSettings/appearanceSettings?fields=logo(url),applicationName,title",
+                "/api/admin/globalSettings/notificationSettings?fields=jabberSettings,emailSettings,mailProtocol",
+            ]
+
+            all_settings = {}
+            permission_errors = 0
+            total_endpoints = len(endpoints_to_try)
+
+            for endpoint in endpoints_to_try:
+                try:
+                    response = await client_manager.make_request(
+                        "GET",
+                        f"{credentials.base_url.rstrip('/')}{endpoint}",
+                        headers=headers,
+                        timeout=10.0,
+                    )
+                    category_data = response.json()
+                    category_name = endpoint.split("/")[-1].split("?")[0]  # Extract category name, remove query params
+                    all_settings[category_name] = category_data
+                except httpx.HTTPError as e:
+                    if hasattr(e, "response") and e.response is not None and e.response.status_code == 403:
+                        permission_errors += 1
+                    # Continue trying other endpoints
+                    continue
+
+            if all_settings:
+                return {"status": "success", "data": all_settings}
+            elif permission_errors == total_endpoints:
+                return {
+                    "status": "error",
+                    "message": "Insufficient permissions for global settings.",
+                }
+            else:
+                return {"status": "error", "message": "No settings could be retrieved"}
 
     async def set_global_setting(self, setting_key: str, value: str) -> dict[str, Any]:
         """Set a global YouTrack setting.
@@ -472,7 +537,7 @@ class AdminManager:
             }
 
         if not fields:
-            fields = "id,name,fieldType,isPrivate,hasStateMachine"
+            fields = "id,name,fieldType(presentation),isPrivate,hasStateMachine"
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
@@ -510,29 +575,107 @@ class AdminManager:
         """Display global settings in a formatted table.
 
         Args:
-            settings: Settings dictionary
+            settings: Settings dictionary (can be nested by category or legacy format)
         """
-        if isinstance(settings, list):
-            # Multiple settings
-            table = Table(title="Global Settings")
-            table.add_column("Setting", style="cyan", no_wrap=True)
-            table.add_column("Value", style="green")
-            table.add_column("Description", style="dim")
-
-            for setting in settings:
-                table.add_row(
-                    setting.get("name", "N/A"),
-                    str(setting.get("value", "N/A")),
-                    setting.get("description", ""),
-                )
-
-            self.console.print(table)
+        # Check if this is the new nested format (multiple categories)
+        if self._is_nested_settings_format(settings):
+            self._display_nested_global_settings(settings)
+        elif isinstance(settings, list):
+            # Legacy format: Multiple settings
+            self._display_legacy_settings_list(settings)
         else:
-            # Single setting
-            self.console.print(f"[cyan]Setting:[/cyan] {settings.get('name', 'N/A')}")
-            self.console.print(f"[cyan]Value:[/cyan] {settings.get('value', 'N/A')}")
-            if settings.get("description"):
-                self.console.print(f"[cyan]Description:[/cyan] {settings['description']}")
+            # Legacy format: Single setting
+            self._display_legacy_single_setting(settings)
+
+    def _is_nested_settings_format(self, settings: dict[str, Any]) -> bool:
+        """Check if settings are in the new nested format with categories."""
+        # The new format has category keys like 'systemSettings', 'license', etc.
+        # and each category contains settings data
+        if not isinstance(settings, dict):
+            return False
+        known_categories = {"systemSettings", "license", "appearanceSettings", "notificationSettings"}
+        return any(key in known_categories for key in settings.keys())
+
+    def _display_nested_global_settings(self, settings: dict[str, Any]) -> None:
+        """Display nested global settings grouped by category."""
+        table = Table(title="Global Settings")
+        table.add_column("Category", style="bold magenta", no_wrap=True)
+        table.add_column("Setting", style="cyan", no_wrap=True)
+        table.add_column("Value", style="green")
+
+        for category_name, category_data in settings.items():
+            if isinstance(category_data, dict):
+                # Skip metadata fields
+                filtered_data = {k: v for k, v in category_data.items() if not k.startswith("$") and k != "id"}
+
+                if filtered_data:
+                    # Display category header for first setting in category
+                    first_setting = True
+                    for setting_key, setting_value in filtered_data.items():
+                        category_display = self._format_category_name(category_name) if first_setting else ""
+                        formatted_key = self._format_setting_key(setting_key)
+                        formatted_value = self._format_setting_value(setting_value)
+
+                        table.add_row(category_display, formatted_key, formatted_value)
+                        first_setting = False
+
+        self.console.print(table)
+
+    def _display_legacy_settings_list(self, settings: list) -> None:
+        """Display legacy format settings list."""
+        table = Table(title="Global Settings")
+        table.add_column("Setting", style="cyan", no_wrap=True)
+        table.add_column("Value", style="green")
+        table.add_column("Description", style="dim")
+
+        for setting in settings:
+            table.add_row(
+                setting.get("name", "N/A"),
+                str(setting.get("value", "N/A")),
+                setting.get("description", ""),
+            )
+
+        self.console.print(table)
+
+    def _display_legacy_single_setting(self, settings: dict[str, Any]) -> None:
+        """Display legacy format single setting."""
+        self.console.print(f"[cyan]Setting:[/cyan] {settings.get('name', 'N/A')}")
+        self.console.print(f"[cyan]Value:[/cyan] {settings.get('value', 'N/A')}")
+        if settings.get("description"):
+            self.console.print(f"[cyan]Description:[/cyan] {settings['description']}")
+
+    def _format_category_name(self, category_name: str) -> str:
+        """Format category name for display."""
+        # Convert camelCase to Title Case
+        import re
+
+        formatted = re.sub(r"([A-Z])", r" \1", category_name).strip()
+        return formatted.title()
+
+    def _format_setting_key(self, key: str) -> str:
+        """Format setting key for display."""
+        # Convert camelCase to readable format
+        import re
+
+        formatted = re.sub(r"([A-Z])", r" \1", key).strip()
+        return formatted.title()
+
+    def _format_setting_value(self, value: Any) -> str:
+        """Format setting value for display."""
+        if isinstance(value, bool):
+            return "✓" if value else "✗"
+        elif isinstance(value, dict):
+            # For nested objects, show a summary or key fields
+            if "$type" in value:
+                return f"[{value['$type']}]"
+            else:
+                return str(value)
+        elif isinstance(value, (int, float)):
+            return str(value)
+        elif value is None:
+            return "N/A"
+        else:
+            return str(value)
 
     def display_license_info(self, license_info: dict[str, Any]) -> None:
         """Display license information.
