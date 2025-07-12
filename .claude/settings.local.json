@@ -35,7 +35,6 @@
       "Bash(rm:*)",
       "Bash(yt:*)",
       "Bash(git branch:*)",
-      "Bash(yt:*)",
       "WebFetch(domain:pypi.org)",
       "mcp__github__create_issue",
       "mcp__claude-code__Read",
@@ -45,7 +44,8 @@
       "Bash(export YOUTRACK_TOKEN=\"test-token-for-testing\")",
       "mcp__github__update_issue",
       "WebFetch(domain:youtrack-support.jetbrains.com)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

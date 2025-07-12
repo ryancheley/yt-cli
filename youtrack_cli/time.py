@@ -68,7 +68,7 @@ class TimeManager:
         if work_type:
             work_item_data["type"] = {"name": work_type}
 
-        url = f"{credentials.base_url}/api/issues/{issue_id}/timeTracking/workItems"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -120,10 +120,10 @@ class TimeManager:
 
         if issue_id:
             # Get time entries for a specific issue
-            url = f"{credentials.base_url}/api/issues/{issue_id}/timeTracking/workItems"
+            url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
         else:
             # Get all time entries
-            url = f"{credentials.base_url}/api/workItems"
+            url = f"{credentials.base_url.rstrip('/')}/api/workItems"
 
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
