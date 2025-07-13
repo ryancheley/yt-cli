@@ -13,6 +13,7 @@ Overview
 The issues command group offers complete issue lifecycle management including:
 
 * Creating and updating issues with all custom fields
+* Batch operations for creating and updating multiple issues from files
 * Advanced searching and filtering with YouTrack query language
 * Managing issue comments and attachments
 * Handling issue relationships and links
@@ -410,6 +411,207 @@ Display available link types in your YouTrack instance.
 
 **Options:**
   * ``--format [table|json]`` - Output format
+
+Batch Operations
+----------------
+
+The ``yt issues batch`` command group provides efficient bulk operations for creating and updating multiple issues from CSV or JSON files. This is ideal for migrating issues, bulk updates, or data imports.
+
+Batch Create Issues
+~~~~~~~~~~~~~~~~~~~
+
+Create multiple issues from a CSV or JSON file.
+
+.. code-block:: bash
+
+   yt issues batch create --file INPUT_FILE [OPTIONS]
+
+**Options:**
+  * ``-f, --file PATH`` - Path to CSV or JSON file containing issue data (required)
+  * ``--dry-run`` - Validate and preview operations without executing them
+  * ``--continue-on-error`` - Continue processing after errors (default: true)
+  * ``--save-failed PATH`` - Save failed operations to specified file for retry
+  * ``--rollback-on-error`` - Rollback (delete) created issues if any operation fails
+
+**CSV File Format:**
+The CSV file should have the following columns:
+
+.. code-block:: csv
+
+   project_id,summary,description,type,priority,assignee
+   FPU,Fix login bug,Login fails on mobile devices,Bug,High,john.doe
+   FPU,Add user dashboard,Create dashboard with user metrics,Feature,Medium,jane.smith
+
+**JSON File Format:**
+The JSON file should contain an array of issue objects:
+
+.. code-block:: json
+
+   [
+     {
+       "project_id": "FPU",
+       "summary": "Fix login bug",
+       "description": "Login fails on mobile devices",
+       "type": "Bug",
+       "priority": "High",
+       "assignee": "john.doe"
+     },
+     {
+       "project_id": "FPU",
+       "summary": "Add user dashboard",
+       "description": "Create dashboard with user metrics",
+       "type": "Feature",
+       "priority": "Medium",
+       "assignee": "jane.smith"
+     }
+   ]
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Create issues from CSV file
+   yt issues batch create --file issues.csv
+
+   # Dry run to preview operations
+   yt issues batch create --file issues.csv --dry-run
+
+   # Create with error handling and save failed operations
+   yt issues batch create --file issues.csv --save-failed failed.csv
+
+   # Create with automatic rollback on errors
+   yt issues batch create --file issues.csv --rollback-on-error
+
+Batch Update Issues
+~~~~~~~~~~~~~~~~~~~
+
+Update multiple issues from a CSV or JSON file.
+
+.. code-block:: bash
+
+   yt issues batch update --file INPUT_FILE [OPTIONS]
+
+**Options:**
+  * ``-f, --file PATH`` - Path to CSV or JSON file containing update data (required)
+  * ``--dry-run`` - Validate and preview operations without executing them
+  * ``--continue-on-error`` - Continue processing after errors (default: true)
+  * ``--save-failed PATH`` - Save failed operations to specified file for retry
+
+**CSV File Format:**
+The CSV file should include ``issue_id`` and any fields to update:
+
+.. code-block:: csv
+
+   issue_id,summary,description,state,type,priority,assignee
+   FPU-1,Updated summary,,In Progress,,High,
+   FPU-2,,Updated description text,Done,,,john.doe
+
+**JSON File Format:**
+The JSON file should contain an array of update objects:
+
+.. code-block:: json
+
+   [
+     {
+       "issue_id": "FPU-1",
+       "summary": "Updated summary",
+       "state": "In Progress",
+       "priority": "High"
+     },
+     {
+       "issue_id": "FPU-2",
+       "description": "Updated description text",
+       "state": "Done",
+       "assignee": "john.doe"
+     }
+   ]
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Update issues from CSV file
+   yt issues batch update --file updates.csv
+
+   # Dry run to preview updates
+   yt issues batch update --file updates.csv --dry-run
+
+   # Update with error handling
+   yt issues batch update --file updates.csv --save-failed failed.csv
+
+Validate Batch Files
+~~~~~~~~~~~~~~~~~~~~~
+
+Validate a batch operation file without executing operations.
+
+.. code-block:: bash
+
+   yt issues batch validate --file INPUT_FILE --operation OPERATION
+
+**Arguments:**
+  * ``--file PATH`` - Path to CSV or JSON file to validate (required)
+  * ``--operation [create|update]`` - Type of operation to validate for (required)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Validate a file for batch create
+   yt issues batch validate --file issues.csv --operation create
+
+   # Validate a file for batch update
+   yt issues batch validate --file updates.json --operation update
+
+Generate Template Files
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generate template files for batch operations.
+
+.. code-block:: bash
+
+   yt issues batch templates [OPTIONS]
+
+**Options:**
+  * ``--format [csv|json]`` - Template format to generate (default: csv)
+  * ``-o, --output-dir PATH`` - Directory to save template files (default: current directory)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Generate CSV templates in current directory
+   yt issues batch templates
+
+   # Generate JSON templates in specific directory
+   yt issues batch templates --format json --output-dir ./templates
+
+Batch Operations Best Practices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**File Preparation:**
+  * Always validate your files before running batch operations
+  * Use dry-run mode to preview operations and catch potential issues
+  * Keep backup copies of your data files
+
+**Error Handling:**
+  * Use ``--save-failed`` to capture failed operations for retry
+  * Review error messages to understand why operations failed
+  * Consider using ``--rollback-on-error`` for create operations when consistency is critical
+
+**Performance:**
+  * Batch operations are faster than individual commands for large datasets
+  * Progress bars show real-time status and estimated completion time
+  * Operations are logged for audit trail and troubleshooting
+
+**Data Quality:**
+  * Ensure project IDs, usernames, and field values are valid before processing
+  * Use consistent formatting for dates, priorities, and other field values
+  * Remove empty rows and columns from CSV files to avoid validation errors
+
+**Workflow Integration:**
+  * Generate templates to ensure consistent field mapping
+  * Use validation commands in CI/CD pipelines for automated quality checks
+  * Combine with scripts for complex data transformations before import
 
 Authentication
 --------------

@@ -8,6 +8,7 @@ and validation to ensure data integrity.
 """
 
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -1365,6 +1366,328 @@ def benchmark(ctx: click.Context, project_id: Optional[str], sample_size: int) -
     except Exception as e:
         console.print(f"❌ Benchmark failed: {e}", style="red")
         raise click.ClickException("Benchmark failed") from e
+
+
+@issues.group()
+def batch() -> None:
+    """Batch operations for issues."""
+    pass
+
+
+@batch.command(name="create")
+@click.option(
+    "--file",
+    "-f",
+    "file_path",
+    type=click.Path(exists=True, path_type=Path),
+    required=True,
+    help="Path to CSV or JSON file containing issue data",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Validate and preview operations without executing them",
+)
+@click.option(
+    "--continue-on-error",
+    is_flag=True,
+    default=True,
+    help="Continue processing after errors (default: true)",
+)
+@click.option(
+    "--save-failed",
+    type=click.Path(path_type=Path),
+    help="Save failed operations to specified file for retry",
+)
+@click.option(
+    "--rollback-on-error",
+    is_flag=True,
+    help="Rollback (delete) created issues if any operation fails",
+)
+@click.pass_context
+def batch_create(
+    ctx: click.Context,
+    file_path: Path,
+    dry_run: bool,
+    continue_on_error: bool,
+    save_failed: Optional[Path],
+    rollback_on_error: bool,
+) -> None:
+    r"""Batch create issues from CSV or JSON file.
+
+    Create multiple issues at once from a properly formatted CSV or JSON file.
+    The file should contain columns/fields for: project_id, summary, description,
+    type, priority, and assignee.
+
+    Examples:
+        \b
+        # Create issues from CSV file
+        yt issues batch create --file issues.csv
+
+        \b
+        # Dry run to preview operations
+        yt issues batch create --file issues.csv --dry-run
+
+        \b
+        # Create with error handling
+        yt issues batch create --file issues.csv --save-failed failed.csv
+
+        \b
+        # Create with rollback on error
+        yt issues batch create --file issues.csv --rollback-on-error
+    """
+    from ..batch import BatchOperationManager, BatchValidationError
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    batch_manager = BatchOperationManager(auth_manager)
+
+    console.print(f"🔍 Validating batch create file: {file_path}", style="blue")
+
+    try:
+        # Validate the input file
+        validated_items = batch_manager.validate_file(file_path, "create")
+        console.print(f"✅ Validation successful! Found {len(validated_items)} items to process.", style="green")
+
+        # Perform the batch operation
+        result = asyncio.run(
+            batch_manager.batch_create_issues(validated_items, dry_run=dry_run, continue_on_error=continue_on_error)  # type: ignore[arg-type]
+        )
+
+        # Display summary
+        batch_manager.display_operation_summary(result)
+
+        # Handle failures
+        if result.errors:
+            if rollback_on_error and result.created_items and not dry_run:
+                console.print(f"[yellow]Rolling back {len(result.created_items)} created issues...[/yellow]")
+                rollback_count = asyncio.run(batch_manager.rollback_created_issues(result.created_items))
+                console.print(f"[yellow]Rolled back {rollback_count} issues.[/yellow]")
+
+            if save_failed:
+                batch_manager.save_failed_operations(result, save_failed)
+
+        # Exit with appropriate code
+        if result.failed > 0 and not dry_run:
+            raise click.ClickException(f"Batch operation completed with {result.failed} failures")
+
+    except BatchValidationError as e:
+        console.print(f"❌ Validation failed: {e.message}", style="red")
+        batch_manager.display_validation_errors(e.errors)
+        raise click.ClickException("File validation failed") from e
+    except Exception as e:
+        console.print(f"❌ Error during batch create: {e}", style="red")
+        raise click.ClickException("Batch create failed") from e
+
+
+@batch.command(name="update")
+@click.option(
+    "--file",
+    "-f",
+    "file_path",
+    type=click.Path(exists=True, path_type=Path),
+    required=True,
+    help="Path to CSV or JSON file containing issue update data",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Validate and preview operations without executing them",
+)
+@click.option(
+    "--continue-on-error",
+    is_flag=True,
+    default=True,
+    help="Continue processing after errors (default: true)",
+)
+@click.option(
+    "--save-failed",
+    type=click.Path(path_type=Path),
+    help="Save failed operations to specified file for retry",
+)
+@click.pass_context
+def batch_update(
+    ctx: click.Context,
+    file_path: Path,
+    dry_run: bool,
+    continue_on_error: bool,
+    save_failed: Optional[Path],
+) -> None:
+    r"""Batch update issues from CSV or JSON file.
+
+    Update multiple issues at once from a properly formatted CSV or JSON file.
+    The file should contain columns/fields for: issue_id (required), and any
+    combination of summary, description, state, type, priority, assignee.
+
+    Examples:
+        \b
+        # Update issues from CSV file
+        yt issues batch update --file updates.csv
+
+        \b
+        # Dry run to preview operations
+        yt issues batch update --file updates.csv --dry-run
+
+        \b
+        # Update with error handling
+        yt issues batch update --file updates.csv --save-failed failed.csv
+    """
+    from ..batch import BatchOperationManager, BatchValidationError
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    batch_manager = BatchOperationManager(auth_manager)
+
+    console.print(f"🔍 Validating batch update file: {file_path}", style="blue")
+
+    try:
+        # Validate the input file
+        validated_items = batch_manager.validate_file(file_path, "update")
+        console.print(f"✅ Validation successful! Found {len(validated_items)} items to process.", style="green")
+
+        # Perform the batch operation
+        result = asyncio.run(
+            batch_manager.batch_update_issues(validated_items, dry_run=dry_run, continue_on_error=continue_on_error)  # type: ignore[arg-type]
+        )
+
+        # Display summary
+        batch_manager.display_operation_summary(result)
+
+        # Handle failures
+        if result.errors and save_failed:
+            batch_manager.save_failed_operations(result, save_failed)
+
+        # Exit with appropriate code
+        if result.failed > 0 and not dry_run:
+            raise click.ClickException(f"Batch operation completed with {result.failed} failures")
+
+    except BatchValidationError as e:
+        console.print(f"❌ Validation failed: {e.message}", style="red")
+        batch_manager.display_validation_errors(e.errors)
+        raise click.ClickException("File validation failed") from e
+    except Exception as e:
+        console.print(f"❌ Error during batch update: {e}", style="red")
+        raise click.ClickException("Batch update failed") from e
+
+
+@batch.command()
+@click.option(
+    "--file",
+    "-f",
+    "file_path",
+    type=click.Path(exists=True, path_type=Path),
+    required=True,
+    help="Path to CSV or JSON file to validate",
+)
+@click.option(
+    "--operation",
+    type=click.Choice(["create", "update"]),
+    required=True,
+    help="Type of operation to validate for",
+)
+@click.pass_context
+def validate(
+    ctx: click.Context,
+    file_path: Path,
+    operation: str,
+) -> None:
+    r"""Validate a batch operation file without executing operations.
+
+    Check if a CSV or JSON file is properly formatted for batch operations
+    and display any validation errors found.
+
+    Examples:
+        \b
+        # Validate a file for batch create
+        yt issues batch validate --file issues.csv --operation create
+
+        \b
+        # Validate a file for batch update
+        yt issues batch validate --file updates.json --operation update
+    """
+    from ..batch import BatchOperationManager, BatchValidationError
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    batch_manager = BatchOperationManager(auth_manager)
+
+    console.print(f"🔍 Validating {operation} file: {file_path}", style="blue")
+
+    try:
+        validated_items = batch_manager.validate_file(file_path, operation)
+        console.print("✅ Validation successful!", style="green")
+        console.print(f"Found {len(validated_items)} valid items for {operation} operation.", style="green")
+
+        # Show a preview of the first few items
+        if validated_items:
+            console.print(f"\n📋 Preview of first {min(3, len(validated_items))} items:", style="blue")
+            for i, item in enumerate(validated_items[:3]):
+                console.print(f"  {i + 1}. {item}", style="dim")
+
+            if len(validated_items) > 3:
+                console.print(f"  ... and {len(validated_items) - 3} more items", style="dim")
+
+    except BatchValidationError as e:
+        console.print(f"❌ Validation failed: {e.message}", style="red")
+        batch_manager.display_validation_errors(e.errors)
+        raise click.ClickException("File validation failed") from e
+    except Exception as e:
+        console.print(f"❌ Error during validation: {e}", style="red")
+        raise click.ClickException("Validation failed") from e
+
+
+@batch.command()
+@click.option(
+    "--format",
+    type=click.Choice(["csv", "json"]),
+    default="csv",
+    help="Template format to generate (default: csv)",
+)
+@click.option(
+    "--output-dir",
+    "-o",
+    type=click.Path(path_type=Path),
+    default=".",
+    help="Directory to save template files (default: current directory)",
+)
+@click.pass_context
+def templates(
+    ctx: click.Context,
+    format: str,
+    output_dir: Path,
+) -> None:
+    r"""Generate template files for batch operations.
+
+    Create example template files that can be used as starting points
+    for batch create and update operations.
+
+    Examples:
+        \b
+        # Generate CSV templates in current directory
+        yt issues batch templates
+
+        \b
+        # Generate JSON templates in specific directory
+        yt issues batch templates --format json --output-dir ./templates
+    """
+    from ..batch import generate_template_files
+
+    console = get_console()
+
+    console.print(f"📄 Generating {format.upper()} template files in {output_dir}...", style="blue")
+
+    try:
+        generate_template_files(output_dir, format)
+
+        console.print("\n💡 [blue]Next steps:[/blue]")
+        console.print("1. Edit the template files with your data")
+        console.print(f"2. Validate: [cyan]yt issues batch validate --file template.{format} --operation create[/cyan]")
+        console.print(f"3. Test: [cyan]yt issues batch create --file template.{format} --dry-run[/cyan]")
+        console.print(f"4. Execute: [cyan]yt issues batch create --file template.{format}[/cyan]")
+
+    except Exception as e:
+        console.print(f"❌ Error generating templates: {e}", style="red")
+        raise click.ClickException("Template generation failed") from e
 
 
 # Add aliases for common subcommands
