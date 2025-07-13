@@ -58,7 +58,7 @@ Implement the solution following best practices:
 **Code Quality:**
 - Follow project coding standards
 - Write comprehensive tests (unit, integration)
-- Update documentation as needed
+- Update documentation as needed (all docs/ files must be .rst format, never .md)
 - Update CHANGELOG.md with new features, changes, or fixes
 - Consider security implications
 
@@ -139,7 +139,7 @@ Brief description of changes made.
 
 ## Documentation
 - [ ] Code comments added where needed
-- [ ] Documentation updated
+- [ ] Documentation updated (docs/ files in .rst format only)
 - [ ] CHANGELOG.md updated with changes
 
 Fixes #$ARGUMENTS" \
@@ -172,7 +172,7 @@ $(for issue in $ARGUMENTS; do echo "- #$issue"; done)
 
 ## Documentation
 - [ ] Code comments added where needed
-- [ ] Documentation updated
+- [ ] Documentation updated (docs/ files in .rst format only)
 - [ ] CHANGELOG.md updated with changes
 
 Fixes $FIXES_LINE" \
@@ -217,7 +217,7 @@ done
 **Before PR Creation:**
 - [ ] Code follows project conventions
 - [ ] All tests pass locally using tox
-- [ ] Documentation updated
+- [ ] Documentation updated (docs/ files in .rst format only)
 - [ ] CHANGELOG.md updated with changes
 - [ ] No sensitive data committed
 - [ ] Performance impact considered
