@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from rich import box
 from rich.panel import Panel
@@ -23,6 +23,9 @@ class TutorialStep:
     command_example: Optional[str] = None
     validation_command: Optional[str] = None
     tips: Optional[List[str]] = None
+    execute_action: Optional[Callable] = None
+    validation_check: Optional[Callable] = None
+    cleanup_action: Optional[Callable] = None
 
 
 @dataclass
@@ -198,10 +201,22 @@ class TutorialEngine:
             self.console.print("\n" + "=" * 60 + "\n")
             module.display_step(step, step_number, total_steps)
 
+            # Execute step action if present
+            execution_success = True
+            if step.execute_action:
+                execution_success = await self._execute_step_action(step, step_number)
+
             # Wait for user to proceed
-            action = Prompt.ask(
-                "What would you like to do?", choices=["next", "repeat", "skip", "quit"], default="next"
-            )
+            if execution_success:
+                action = Prompt.ask(
+                    "What would you like to do?", choices=["next", "repeat", "skip", "quit"], default="next"
+                )
+            else:
+                action = Prompt.ask(
+                    "Step execution failed. What would you like to do?",
+                    choices=["retry", "skip", "quit"],
+                    default="retry",
+                )
 
             if action == "quit":
                 self.console.print("[yellow]Tutorial paused. You can resume later with:[/yellow]")
@@ -211,7 +226,7 @@ class TutorialEngine:
                 self.progress_tracker.save_progress(progress)
                 return False
 
-            elif action == "repeat":
+            elif action == "repeat" or action == "retry":
                 continue  # Stay on current step
 
             elif action == "skip":
@@ -232,6 +247,33 @@ class TutorialEngine:
         progress.completed_at = self.progress_tracker.get_current_timestamp()
         self.progress_tracker.save_progress(progress)
         return True
+
+    async def _execute_step_action(self, step: TutorialStep, step_number: int) -> bool:
+        """Execute a step's action and validate its success."""
+        try:
+            self.console.print(f"\n[blue]⚡ Executing step {step_number} action...[/blue]")
+
+            # Execute the step action
+            if step.execute_action:
+                await step.execute_action()
+
+            # Validate the action if validation check is provided
+            if step.validation_check:
+                if step.validation_check():
+                    self.console.print("[green]✓ Step executed successfully![/green]")
+                    return True
+                else:
+                    self.console.print("[red]✗ Step execution validation failed![/red]")
+                    return False
+            else:
+                self.console.print("[green]✓ Step executed successfully![/green]")
+                return True
+
+        except Exception as e:
+            self.console.print(f"[red]✗ Step execution failed: {e}[/red]")
+            if hasattr(e, "__cause__") and e.__cause__:
+                self.console.print(f"[red]  Caused by: {e.__cause__}[/red]")
+            return False
 
     def display_completion(self, module: TutorialModule) -> None:
         """Display tutorial completion message."""
