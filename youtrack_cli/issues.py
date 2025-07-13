@@ -9,6 +9,7 @@ from rich.table import Table
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .field_selection import get_field_selector
 from .logging import get_logger
 from .pagination import create_paginated_display
 from .panels import (
@@ -239,6 +240,7 @@ class IssueManager:
         self,
         project_id: Optional[str] = None,
         fields: Optional[str] = None,
+        field_profile: Optional[str] = None,
         page_size: int = 100,
         top: Optional[int] = None,  # Legacy parameter for backward compatibility
         query: Optional[str] = None,
@@ -265,16 +267,20 @@ class IssueManager:
 
         with progress_manager.spinner("Fetching issues..."):
             params = {}
+            
+            # Use field selector for optimized field selection
+            field_selector = get_field_selector()
             if fields:
-                params["fields"] = fields
+                # User provided custom fields
+                if field_selector.validate_fields(fields, "issues"):
+                    params["fields"] = fields
+                else:
+                    logger.warning("Invalid field specification, using standard profile", fields=fields)
+                    params["fields"] = field_selector.get_fields("issues", "standard")
             else:
-                # Try to get comprehensive field data using multiple approaches
-                params["fields"] = (
-                    "id,numberInProject,summary,description,"
-                    "state(name,id),priority(name,id),type(name,id),"
-                    "assignee(login,fullName,id),project(id,name,shortName),created,updated,"
-                    "customFields(name,value(name,id,login,fullName))"
-                )
+                # Use field profile or default to standard
+                profile = field_profile or "standard"
+                params["fields"] = field_selector.get_fields("issues", profile)
 
             # Build query string
             query_parts = []
@@ -471,6 +477,8 @@ class IssueManager:
         self,
         query: str,
         project_id: Optional[str] = None,
+        fields: Optional[str] = None,
+        field_profile: Optional[str] = None,
         page_size: int = 100,
         top: Optional[int] = None,  # Legacy parameter for backward compatibility
         after_cursor: Optional[str] = None,
@@ -490,11 +498,21 @@ class IssueManager:
             page_size = top
             use_pagination = False
 
-        params = {
-            "fields": (
-                "id,summary,description,state,priority,type,assignee(login,fullName),project(id,name),created,updated"
-            )
-        }
+        # Use field selector for optimized field selection
+        field_selector = get_field_selector()
+        if fields:
+            # User provided custom fields
+            if field_selector.validate_fields(fields, "issues"):
+                selected_fields = fields
+            else:
+                logger.warning("Invalid field specification, using standard profile", fields=fields)
+                selected_fields = field_selector.get_fields("issues", "standard")
+        else:
+            # Use field profile or default to standard for search
+            profile = field_profile or "standard"
+            selected_fields = field_selector.get_fields("issues", profile)
+        
+        params = {"fields": selected_fields}
 
         # Build search query
         search_query = query
