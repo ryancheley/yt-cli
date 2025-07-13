@@ -570,6 +570,138 @@ class AdminManager:
         except Exception as e:
             return {"status": "error", "message": f"Unexpected error: {e}"}
 
+    # Locale Management
+    async def get_locale_settings(self) -> dict[str, Any]:
+        """Get current locale settings.
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+
+        client_manager = get_client_manager()
+        try:
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/localeSettings",
+                headers=headers,
+                timeout=10.0,
+            )
+
+            locale_settings = response.json()
+            return {"status": "success", "data": locale_settings}
+
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view locale settings.",
+                    }
+                elif e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": "Locale settings endpoint not found.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
+
+    async def set_locale_settings(self, locale_id: str) -> dict[str, Any]:
+        """Set locale settings.
+
+        Args:
+            locale_id: Locale ID to set (e.g., 'en_US', 'de_DE')
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        locale_data = {"locale": {"id": locale_id}}
+
+        client_manager = get_client_manager()
+        try:
+            await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/localeSettings",
+                headers=headers,
+                json_data=locale_data,
+                timeout=10.0,
+            )
+
+            return {
+                "status": "success",
+                "message": f"Locale updated to '{locale_id}' successfully",
+            }
+
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to modify locale settings.",
+                    }
+                elif e.response.status_code == 400:
+                    return {
+                        "status": "error",
+                        "message": f"Invalid locale ID: '{locale_id}'",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
+
+    async def get_available_locales(self) -> dict[str, Any]:
+        """Get list of available locales.
+
+        Note: This method tries to get locale options from the general system settings
+        as YouTrack may not have a dedicated endpoint for available locales.
+
+        Returns:
+            Dictionary with operation result
+        """
+        # For now, return common locales as YouTrack may not have a dedicated endpoint
+        # This is a fallback implementation
+        common_locales = [
+            {"id": "en_US", "name": "English (US)", "locale": "en_US", "language": "en", "community": False},
+            {"id": "de_DE", "name": "German (Germany)", "locale": "de_DE", "language": "de", "community": False},
+            {"id": "fr_FR", "name": "French (France)", "locale": "fr_FR", "language": "fr", "community": False},
+            {"id": "es_ES", "name": "Spanish (Spain)", "locale": "es_ES", "language": "es", "community": False},
+            {"id": "ja_JP", "name": "Japanese (Japan)", "locale": "ja_JP", "language": "ja", "community": False},
+            {"id": "zh_CN", "name": "Chinese (Simplified)", "locale": "zh_CN", "language": "zh", "community": False},
+            {"id": "ru_RU", "name": "Russian (Russia)", "locale": "ru_RU", "language": "ru", "community": False},
+        ]
+
+        return {
+            "status": "success",
+            "data": common_locales,
+            "message": (
+                "Note: This is a list of common locales. "
+                "Actual available locales may vary based on your YouTrack installation."
+            ),
+        }
+
     # Display Methods
     def display_global_settings(self, settings: dict[str, Any]) -> None:
         """Display global settings in a formatted table.
@@ -802,5 +934,62 @@ class AdminManager:
             has_state_machine = "Yes" if field.get("hasStateMachine", False) else "No"
 
             table.add_row(name, field_type, is_private, has_state_machine)
+
+        self.console.print(table)
+
+    def display_locale_settings(self, locale_settings: dict[str, Any]) -> None:
+        """Display locale settings in a formatted table.
+
+        Args:
+            locale_settings: Locale settings dictionary
+        """
+        self.console.print("\n[bold blue]Locale Settings[/bold blue]")
+
+        locale = locale_settings.get("locale", {})
+        is_rtl = locale_settings.get("isRTL", False)
+
+        self.console.print(f"[cyan]Language:[/cyan] {locale.get('name', 'N/A')}")
+        self.console.print(f"[cyan]Locale ID:[/cyan] {locale.get('id', 'N/A')}")
+        self.console.print(f"[cyan]Language Code:[/cyan] {locale.get('language', 'N/A')}")
+        self.console.print(f"[cyan]Full Locale:[/cyan] {locale.get('locale', 'N/A')}")
+
+        # Display community status
+        is_community = locale.get("community", False)
+        community_text = "Yes" if is_community else "No"
+        community_color = "yellow" if is_community else "green"
+        self.console.print(f"[cyan]Community Language:[/cyan] [{community_color}]{community_text}[/{community_color}]")
+
+        # Display RTL status
+        rtl_text = "Yes" if is_rtl else "No"
+        rtl_color = "blue" if is_rtl else "green"
+        self.console.print(f"[cyan]Right-to-Left:[/cyan] [{rtl_color}]{rtl_text}[/{rtl_color}]")
+
+    def display_available_locales(self, locales: list[dict[str, Any]], message: Optional[str] = None) -> None:
+        """Display available locales in a formatted table.
+
+        Args:
+            locales: List of locale dictionaries
+            message: Optional message to display
+        """
+        if message:
+            self.console.print(f"[yellow]{message}[/yellow]\n")
+
+        if not locales:
+            self.console.print("No locales found.", style="yellow")
+            return
+
+        table = Table(title="Available Locales")
+        table.add_column("Locale ID", style="cyan", no_wrap=True)
+        table.add_column("Name", style="blue")
+        table.add_column("Language", style="green")
+        table.add_column("Community", style="magenta")
+
+        for locale in locales:
+            locale_id = locale.get("id", "N/A")
+            name = locale.get("name", "N/A")
+            language = locale.get("language", "N/A")
+            is_community = "Yes" if locale.get("community", False) else "No"
+
+            table.add_row(locale_id, name, language, is_community)
 
         self.console.print(table)

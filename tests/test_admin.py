@@ -697,3 +697,140 @@ class TestAdminCommands:
         assert result.exit_code == 0
         assert "Manage custom fields" in result.output
         assert "list" in result.output
+
+    def test_admin_locale_help(self):
+        """Test admin locale help command."""
+        result = self.runner.invoke(main, ["admin", "locale", "--help"])
+
+        assert result.exit_code == 0
+        assert "Manage YouTrack locale" in result.output
+        assert "get" in result.output
+        assert "set" in result.output
+        assert "list" in result.output
+
+    def test_admin_i18n_help(self):
+        """Test admin i18n help command."""
+        result = self.runner.invoke(main, ["admin", "i18n", "--help"])
+
+        assert result.exit_code == 0
+        assert "internationalization settings" in result.output
+        assert "get" in result.output
+        assert "set" in result.output
+
+
+@pytest.mark.unit
+class TestAdminLocaleManager:
+    """Test AdminManager locale functionality."""
+
+    @pytest.fixture
+    def auth_manager(self):
+        """Create a mock auth manager for testing."""
+        auth_manager = Mock()
+        auth_manager.load_credentials.return_value = AuthConfig(
+            base_url="https://test.youtrack.cloud",
+            token="test-token",
+            username="test-user",
+        )
+        return auth_manager
+
+    @pytest.fixture
+    def admin_manager(self, auth_manager):
+        """Create an AdminManager instance for testing."""
+        return AdminManager(auth_manager)
+
+    @pytest.mark.asyncio
+    async def test_get_locale_settings_success(self, admin_manager, auth_manager):
+        """Test successful locale settings retrieval."""
+        mock_locale_settings = {
+            "locale": {"name": "English", "locale": "en_US", "community": False, "id": "en_US", "language": "en"},
+            "isRTL": False,
+        }
+
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response = Mock()
+            mock_response.json.return_value = mock_locale_settings
+
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await admin_manager.get_locale_settings()
+
+            assert result["status"] == "success"
+            assert result["data"] == mock_locale_settings
+
+    @pytest.mark.asyncio
+    async def test_get_locale_settings_no_auth(self, admin_manager):
+        """Test locale settings retrieval without authentication."""
+        admin_manager.auth_manager.load_credentials.return_value = None
+
+        result = await admin_manager.get_locale_settings()
+
+        assert result["status"] == "error"
+        assert "Not authenticated" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_set_locale_settings_success(self, admin_manager, auth_manager):
+        """Test successful locale settings update."""
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock()
+            mock_get_client.return_value = mock_client_manager
+
+            result = await admin_manager.set_locale_settings("de_DE")
+
+            assert result["status"] == "success"
+            assert "de_DE" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_set_locale_settings_invalid_locale(self, admin_manager, auth_manager):
+        """Test locale settings update with invalid locale."""
+        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_response = Mock()
+            mock_response.status_code = 400
+            mock_request = Mock()
+            http_error = httpx.HTTPStatusError("Bad Request", request=mock_request, response=mock_response)
+            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await admin_manager.set_locale_settings("invalid_locale")
+
+            assert result["status"] == "error"
+            assert "Invalid locale ID" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_available_locales_success(self, admin_manager, auth_manager):
+        """Test successful available locales retrieval."""
+        result = await admin_manager.get_available_locales()
+
+        assert result["status"] == "success"
+        assert "data" in result
+        assert len(result["data"]) > 0
+        assert any(locale["id"] == "en_US" for locale in result["data"])
+
+    def test_display_locale_settings(self, admin_manager):
+        """Test locale settings display."""
+        locale_settings = {
+            "locale": {"name": "English", "locale": "en_US", "community": False, "id": "en_US", "language": "en"},
+            "isRTL": False,
+        }
+
+        with patch("rich.console.Console.print") as mock_print:
+            admin_manager.display_locale_settings(locale_settings)
+
+            # Verify that print was called multiple times for different fields
+            assert mock_print.call_count >= 5
+
+    def test_display_available_locales(self, admin_manager):
+        """Test available locales display."""
+        locales = [
+            {"id": "en_US", "name": "English (US)", "language": "en", "community": False},
+            {"id": "de_DE", "name": "German (Germany)", "language": "de", "community": False},
+        ]
+
+        with patch("rich.console.Console.print") as mock_print:
+            admin_manager.display_available_locales(locales)
+
+            # Verify that print was called (for the table)
+            mock_print.assert_called()

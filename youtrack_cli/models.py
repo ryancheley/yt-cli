@@ -411,3 +411,24 @@ class CredentialVerificationResult(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
     message: Optional[str] = None
+
+
+class YouTrackLocale(BaseModel):
+    """YouTrack locale information model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    name: str
+    locale: str
+    language: str
+    community: bool = False
+
+
+class YouTrackLocaleSettings(BaseModel):
+    """YouTrack locale settings model."""
+
+    model_config = ConfigDict(extra="allow")
+
+    locale: YouTrackLocale
+    is_rtl: bool = Field(False, alias="isRTL")
