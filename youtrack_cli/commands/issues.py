@@ -27,24 +27,20 @@ def issues() -> None:
     manage comments and attachments, and handle issue relationships.
 
     Common workflows:
-        \b
+
         # Create and assign a bug report
         yt issues create PROJECT-123 "Login fails on mobile" \\
             --type Bug --priority High --assignee john.doe
 
-        \b
         # List open issues assigned to you
         yt issues list --assignee me --state Open
 
-        \b
         # Search for issues by keywords
         yt issues search "API error priority:Critical"
 
-        \b
         # Update issue status
         yt issues update ISSUE-456 --state "In Progress"
 
-        \b
         # Add a comment
         yt issues comments add ISSUE-456 "Fixed in build 1.2.3"
     """
@@ -91,11 +87,9 @@ def create(
     priority, and assignee.
 
     Examples:
-        \b
         # Create a simple bug report
         yt issues create WEB-123 "Fix login error on mobile"
 
-        \b
         # Create a feature request with full details
         yt issues create API-456 "Add user authentication endpoint" \\
             --description "Need OAuth2 support for mobile app" \\
@@ -103,7 +97,6 @@ def create(
             --priority High \\
             --assignee john.doe
 
-        \b
         # Create a task assigned to yourself
         yt issues create INFRA-789 "Update server certificates" \\
             --type Task \\
@@ -1420,19 +1413,15 @@ def batch_create(
     type, priority, and assignee.
 
     Examples:
-        \b
         # Create issues from CSV file
         yt issues batch create --file issues.csv
 
-        \b
         # Dry run to preview operations
         yt issues batch create --file issues.csv --dry-run
 
-        \b
         # Create with error handling
         yt issues batch create --file issues.csv --save-failed failed.csv
 
-        \b
         # Create with rollback on error
         yt issues batch create --file issues.csv --rollback-on-error
     """
@@ -1520,15 +1509,12 @@ def batch_update(
     combination of summary, description, state, type, priority, assignee.
 
     Examples:
-        \b
         # Update issues from CSV file
         yt issues batch update --file updates.csv
 
-        \b
         # Dry run to preview operations
         yt issues batch update --file updates.csv --dry-run
 
-        \b
         # Update with error handling
         yt issues batch update --file updates.csv --save-failed failed.csv
     """
@@ -1597,11 +1583,9 @@ def validate(
     and display any validation errors found.
 
     Examples:
-        \b
         # Validate a file for batch create
         yt issues batch validate --file issues.csv --operation create
 
-        \b
         # Validate a file for batch update
         yt issues batch validate --file updates.json --operation update
     """
@@ -1662,11 +1646,9 @@ def templates(
     for batch create and update operations.
 
     Examples:
-        \b
         # Generate CSV templates in current directory
         yt issues batch templates
 
-        \b
         # Generate JSON templates in specific directory
         yt issues batch templates --format json --output-dir ./templates
     """

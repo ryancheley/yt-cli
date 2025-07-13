@@ -18,41 +18,43 @@ from ..tutorial.modules import get_default_modules
 
 @click.group(cls=AliasedGroup)
 def tutorial() -> None:
-    r"""Interactive tutorials for learning YouTrack CLI.
+    """Interactive tutorials for learning YouTrack CLI.
 
     Learn YouTrack CLI through guided, hands-on tutorials. Each tutorial
     covers essential workflows and best practices with step-by-step instructions.
 
     Key features:
-        \b
-        • Interactive step-by-step guidance
-        • Progress tracking and resume capability
-        • Real-world examples and tips
-        • Beginner-friendly explanations
+
+    • Interactive step-by-step guidance
+
+    • Progress tracking and resume capability
+
+    • Real-world examples and tips
+
+    • Beginner-friendly explanations
 
     Available tutorials:
-        \b
-        • setup     - Authentication and configuration
-        • issues    - Creating and managing issues
-        • projects  - Working with projects
-        • time      - Time tracking workflows
+
+    • setup     - Authentication and configuration
+
+    • issues    - Creating and managing issues
+
+    • projects  - Working with projects
+
+    • time      - Time tracking workflows
 
     Examples:
-        \b
-        # List available tutorials
-        yt tutorial list
+    # List available tutorials
+    yt tutorial list
 
-        \b
-        # Start the setup tutorial
-        yt tutorial run setup
+    # Start the setup tutorial
+    yt tutorial run setup
 
-        \b
-        # Resume a tutorial from a specific step
-        yt tutorial run issues --step 3
+    # Resume a tutorial from a specific step
+    yt tutorial run issues --step 3
 
-        \b
-        # Reset tutorial progress
-        yt tutorial reset issues
+    # Reset tutorial progress
+    yt tutorial reset issues
     """
     pass
 
