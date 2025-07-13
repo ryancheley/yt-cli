@@ -8,8 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- CHANGELOG.md file following Keep a Changelog format
-- CONTRIBUTING.md file with comprehensive contribution guidelines
+- Convert docs from Markdown to reStructuredText (#217)
+
+### Fixed
+- Docker tutorial execution - container now actually starts (#222)
+- Backspace sequences appearing as literal text in CLI help (#219)
+- Missing Sphinx extensions for documentation build (#218)
+
+## [0.8.0] - 2025-07-13
+
+### Added
+- API field selection optimization for improved performance (#184, #213)
+- Internationalization/locale settings commands (#215)
+- Docker-based YouTrack instance option in tutorial (#216)
+
+### Fixed
+- Type checking issues with type ignore comments (#214)
+
+## [0.7.0] - 2025-07-13
+
+### Added
+- Tutorial command for guided learning experience (#183, #211)
+- CHANGELOG.md file following Keep a Changelog format (#210)
+- CONTRIBUTING.md file with comprehensive contribution guidelines (#210)
 
 ## [0.6.1] - 2025-07-13
 
