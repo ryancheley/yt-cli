@@ -72,7 +72,7 @@ def main(
     no_progress: bool,
     secure: bool,
 ) -> None:
-    r"""Youtrack CLI - Command line interface for JetBrains YouTrack.
+    r"""YouTrack CLI - Command line interface for JetBrains YouTrack.
 
     A powerful command line tool for managing YouTrack issues, projects, users,
     time tracking, and more. Designed for developers and teams who want to integrate

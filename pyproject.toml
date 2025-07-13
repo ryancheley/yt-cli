@@ -92,7 +92,7 @@ indent-style = "space"
 
 [tool.pydocstyle]
 convention = "google"
-add_ignore = ["D100", "D104", "D105", "D107"]
+add_ignore = ["D100", "D104", "D105", "D107", "D403"]
 match_dir = "youtrack_cli"
 match = "(?!test_).*\\.py"
 
