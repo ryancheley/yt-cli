@@ -163,6 +163,11 @@ def create(
     help="Comma-separated list of fields to return",
 )
 @click.option(
+    "--profile",
+    type=click.Choice(["minimal", "standard", "full"]),
+    help="Field selection profile (minimal, standard, full). Standard is default.",
+)
+@click.option(
     "--top",
     "-t",
     type=int,
@@ -232,6 +237,7 @@ def list_issues(
     state: Optional[str],
     assignee: Optional[str],
     fields: Optional[str],
+    profile: Optional[str],
     top: Optional[int],
     page_size: int,
     after_cursor: Optional[str],
@@ -269,6 +275,7 @@ def list_issues(
             issue_manager.list_issues(
                 project_id=project_id,
                 fields=fields,
+                field_profile=profile,
                 top=top,
                 page_size=page_size,
                 after_cursor=after_cursor,
@@ -508,6 +515,16 @@ def delete(ctx: click.Context, issue_id: str, confirm: bool) -> None:
     help="Maximum total number of results to fetch",
 )
 @click.option(
+    "--fields",
+    "-f",
+    help="Comma-separated list of fields to return",
+)
+@click.option(
+    "--profile",
+    type=click.Choice(["minimal", "standard", "full"]),
+    help="Field selection profile (minimal, standard, full). Standard is default.",
+)
+@click.option(
     "--format",
     type=click.Choice(["table", "json"]),
     default="table",
@@ -518,6 +535,8 @@ def search(
     ctx: click.Context,
     query: str,
     project_id: Optional[str],
+    fields: Optional[str],
+    profile: Optional[str],
     top: Optional[int],
     page_size: int,
     after_cursor: Optional[str],
@@ -550,6 +569,8 @@ def search(
             issue_manager.search_issues(
                 query=query,
                 project_id=project_id,
+                fields=fields,
+                field_profile=profile,
                 top=top,
                 page_size=page_size,
                 after_cursor=after_cursor,
@@ -1307,6 +1328,43 @@ def dependencies(ctx: click.Context, issue_id: str, format: str, show_status: bo
     except Exception as e:
         console.print(f"❌ Error getting dependencies: {e}", style="red")
         raise click.ClickException("Failed to get dependencies") from e
+
+
+@issues.command()
+@click.option(
+    "--project-id",
+    "-p",
+    help="Project ID to benchmark with",
+)
+@click.option(
+    "--sample-size",
+    type=int,
+    default=50,
+    help="Number of issues to fetch for benchmarking (default: 50)",
+)
+@click.pass_context
+def benchmark(ctx: click.Context, project_id: Optional[str], sample_size: int) -> None:
+    """Benchmark field selection performance improvements.
+
+    This command runs performance tests comparing minimal, standard, and full
+    field selection profiles to demonstrate the optimization benefits.
+    """
+    from ..performance_benchmark import run_benchmark
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+
+    console.print("🚀 Starting field selection performance benchmark...", style="blue")
+    console.print(f"Sample size: {sample_size} issues", style="dim")
+    if project_id:
+        console.print(f"Project: {project_id}", style="dim")
+
+    try:
+        asyncio.run(run_benchmark(auth_manager=auth_manager, project_id=project_id, sample_size=sample_size))
+
+    except Exception as e:
+        console.print(f"❌ Benchmark failed: {e}", style="red")
+        raise click.ClickException("Benchmark failed") from e
 
 
 # Add aliases for common subcommands
