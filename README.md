@@ -17,6 +17,7 @@ A powerful command line interface for JetBrains YouTrack issue tracking system.
 - **Enhanced Error Handling**: User-friendly error messages with actionable suggestions
 - **Advanced Logging**: Rich logging with debug and verbose modes for troubleshooting
 - **Robust HTTP Operations**: Automatic retry logic with exponential backoff for reliability
+- **Performance Optimization**: Dynamic field selection reduces API response sizes by up to 75%
 
 ## Quick Start
 

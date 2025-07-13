@@ -153,7 +153,7 @@ Response Optimization
 Field Selection Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**NEW in v2.0**: Dynamic field selection optimization reduces API response sizes and improves performance by only requesting needed fields.
+**NEW in v0.8.0**: Dynamic field selection optimization reduces API response sizes and improves performance by only requesting needed fields.
 
 Field Selection Profiles
 """""""""""""""""""""""""
