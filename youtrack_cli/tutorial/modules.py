@@ -122,7 +122,7 @@ class IssuesTutorial(TutorialModule):
                 tips=[
                     "Use --assignee me to see issues assigned to you",
                     "Filter by state with --state Open or --state Resolved",
-                    "The --project flag restricts results to a specific project",
+                    "The --project-id flag restricts results to a specific project",
                 ],
             ),
             TutorialStep(
@@ -138,6 +138,7 @@ class IssuesTutorial(TutorialModule):
                     "Use quotes around summaries with spaces",
                     "You can add a description with --description",
                     "Set issue type with --type (Bug, Task, Feature, etc.)",
+                    "Note: Issue creation requires proper project permissions",
                 ],
             ),
             TutorialStep(
@@ -148,10 +149,10 @@ class IssuesTutorial(TutorialModule):
                     "View the full issue details including custom fields",
                     "Try different output formats (table, json, yaml)",
                 ],
-                command_example="yt issues get ISSUE-ID",
+                command_example="yt issues show ISSUE-ID",
                 tips=[
                     "Use --format json for machine-readable output",
-                    "The show command is an alias for get",
+                    "The show command displays detailed issue information",
                     "You can copy issue IDs from the list command",
                 ],
             ),
@@ -223,7 +224,7 @@ class ProjectsTutorial(TutorialModule):
                     "View its configuration, custom fields, and workflows",
                     "Understand the project's structure",
                 ],
-                command_example="yt projects get PROJECT-ID",
+                command_example="yt projects list",
                 tips=[
                     "Custom fields vary between projects",
                     "Workflows define how issues move through states",
@@ -238,7 +239,7 @@ class ProjectsTutorial(TutorialModule):
                     "Understand field types (text, enum, user, date, etc.)",
                     "See which fields are required vs optional",
                 ],
-                command_example="yt projects fields PROJECT-ID",
+                command_example="# Note: Project field details require admin access",
                 tips=[
                     "Enum fields have predefined values",
                     "User fields can be assigned to team members",
@@ -288,6 +289,7 @@ class TimeTutorial(TutorialModule):
                     "Be specific in your work descriptions",
                     "Log time regularly for accurate tracking",
                     "Include the --work-type flag if your project requires it",
+                    "Note: Time tracking requires appropriate permissions",
                 ],
             ),
             TutorialStep(
