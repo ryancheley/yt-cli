@@ -14,6 +14,7 @@ from youtrack_cli.exceptions import ConnectionError, YouTrackError, YouTrackNetw
 from youtrack_cli.security import AuditLogger
 
 
+@pytest.mark.unit
 class TestSSLVerificationWarnings:
     """Test SSL verification warnings and audit logging."""
 
@@ -335,6 +336,7 @@ class TestSSLVerificationWarnings:
                         )
 
 
+@pytest.mark.unit
 class TestHTTPClientManager:
     """Test HTTPClientManager class directly."""
 
@@ -390,6 +392,7 @@ class TestHTTPClientManager:
             assert call_args[1]["verify"] is True
 
 
+@pytest.mark.unit
 class TestSecurityIntegration:
     """Test security integration aspects."""
 
@@ -500,6 +503,7 @@ class TestSecurityIntegration:
         assert _client_manager is None
 
 
+@pytest.mark.unit
 class TestExceptionHandling:
     """Test exception handling in HTTPClientManager."""
 

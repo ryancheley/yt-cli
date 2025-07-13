@@ -2,12 +2,14 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
 from rich.console import Console
 from rich.table import Table
 
 from youtrack_cli.pagination import PaginatedTableDisplay, create_paginated_display
 
 
+@pytest.mark.unit
 class TestPaginatedTableDisplay:
     """Test the PaginatedTableDisplay class."""
 
@@ -239,6 +241,7 @@ class TestPaginatedTableDisplay:
         assert action == "quit"
 
 
+@pytest.mark.unit
 class TestCreatePaginatedDisplay:
     """Test the factory function."""
 

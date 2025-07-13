@@ -94,6 +94,7 @@ def sample_issue_with_custom_fields():
     }
 
 
+@pytest.mark.unit
 class TestIssueManager:
     """Test cases for IssueManager class."""
 
@@ -1225,6 +1226,7 @@ class TestIssueManager:
         assert value is None
 
 
+@pytest.mark.unit
 class TestIssuesCLI:
     """Test cases for issues CLI commands."""
 
@@ -1479,6 +1481,7 @@ class TestIssuesCLI:
             assert "api request failed" in result.output.lower()
 
 
+@pytest.mark.unit
 class TestIssueTablePagination:
     """Test pagination functionality for issue table display."""
 

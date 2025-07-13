@@ -12,6 +12,7 @@ from youtrack_cli.auth import AuthConfig, AuthManager
 from youtrack_cli.config import ConfigManager
 
 
+@pytest.mark.unit
 class TestAuthConfig:
     """Test AuthConfig model."""
 
@@ -39,6 +40,7 @@ class TestAuthConfig:
             AuthConfig()
 
 
+@pytest.mark.unit
 class TestAuthManager:
     """Test AuthManager class."""
 

@@ -7,6 +7,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from youtrack_cli.logging import (
     SensitiveDataFilter,
     get_log_file_path,
@@ -17,6 +19,7 @@ from youtrack_cli.logging import (
 )
 
 
+@pytest.mark.unit
 class TestSensitiveDataFilter:
     """Test the SensitiveDataFilter class."""
 
@@ -136,6 +139,7 @@ class TestSensitiveDataFilter:
         assert record.args[0] == 200
 
 
+@pytest.mark.unit
 class TestLoggingSetup:
     """Test the logging setup functionality."""
 
@@ -199,6 +203,7 @@ class TestLoggingSetup:
             assert len(rotating_handlers) >= 1
 
 
+@pytest.mark.unit
 class TestLoggerRetrieval:
     """Test logger retrieval functionality."""
 
@@ -224,6 +229,7 @@ class TestLoggerRetrieval:
         assert "test_logging" in str(logger)
 
 
+@pytest.mark.unit
 class TestStructuredLogging:
     """Test structured logging functions."""
 
@@ -305,6 +311,7 @@ class TestStructuredLogging:
             assert "other=value" in kwargs["url"]
 
 
+@pytest.mark.unit
 class TestLogFilePath:
     """Test log file path functionality."""
 
@@ -339,6 +346,7 @@ class TestLogFilePath:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
+@pytest.mark.unit
 class TestLoggingIntegration:
     """Integration tests for the logging system."""
 

@@ -11,6 +11,7 @@ from youtrack_cli.auth import AuthConfig
 from youtrack_cli.main import main
 
 
+@pytest.mark.unit
 class TestAdminManager:
     """Test AdminManager functionality."""
 
@@ -493,6 +494,7 @@ class TestAdminManager:
             mock_print.assert_called()
 
 
+@pytest.mark.unit
 class TestAdminCommands:
     """Test admin CLI commands."""
 

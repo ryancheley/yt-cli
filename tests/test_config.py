@@ -5,9 +5,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from youtrack_cli.config import ConfigManager
 
 
+@pytest.mark.unit
 class TestConfigManager:
     """Test ConfigManager class."""
 
