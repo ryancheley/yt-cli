@@ -1,4 +1,14 @@
-"""HTTP client manager with connection pooling and performance optimizations."""
+"""HTTP client manager with connection pooling and performance optimizations.
+
+This module provides a high-performance HTTP client manager for YouTrack API
+interactions with connection pooling, automatic retries, caching, and
+comprehensive error handling.
+
+Example:
+    >>> manager = get_client_manager()
+    >>> async with manager.request('GET', 'https://api.example.com') as response:
+    ...     data = await response.json()
+"""
 
 from __future__ import annotations
 
@@ -35,7 +45,16 @@ logger = get_logger(__name__)
 
 
 class HTTPClientManager:
-    """Manages HTTP connections with pooling and performance optimizations."""
+    """Manages HTTP connections with pooling and performance optimizations.
+
+    Provides a thread-safe, connection-pooled HTTP client with automatic
+    retry logic, caching support, and comprehensive error handling for
+    YouTrack API interactions.
+
+    The manager maintains a single httpx.AsyncClient instance with configurable
+    connection limits and timeouts, ensuring optimal performance for concurrent
+    API requests.
+    """
 
     def __init__(
         self,
@@ -49,10 +68,15 @@ class HTTPClientManager:
 
         Args:
             max_keepalive_connections: Maximum number of keepalive connections
-            max_connections: Maximum number of total connections
-            keepalive_expiry: How long to keep idle connections alive (seconds)
-            default_timeout: Default timeout for requests (seconds)
-            verify_ssl: Whether to verify SSL certificates
+                to maintain in the pool. Defaults to 20.
+            max_connections: Maximum number of total connections allowed.
+                Defaults to 100.
+            keepalive_expiry: How long to keep idle connections alive in seconds.
+                Defaults to 30.0.
+            default_timeout: Default timeout for requests in seconds.
+                Defaults to 30.0.
+            verify_ssl: Whether to verify SSL certificates. Defaults to True.
+                Set to False only for development with self-signed certificates.
         """
         self._limits = httpx.Limits(
             max_keepalive_connections=max_keepalive_connections,
@@ -65,7 +89,14 @@ class HTTPClientManager:
         self._lock: Optional[asyncio.Lock] = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
-        """Ensure the HTTP client is initialized."""
+        """Ensure the HTTP client is initialized.
+
+        Creates a new httpx.AsyncClient if one doesn't exist or if the
+        existing client has been closed. Uses a lock to ensure thread safety.
+
+        Returns:
+            Initialized httpx.AsyncClient instance.
+        """
         if self._client is None or self._client.is_closed:
             # Create lock if it doesn't exist (for Python 3.9 compatibility)
             if self._lock is None:
@@ -89,7 +120,17 @@ class HTTPClientManager:
 
     @asynccontextmanager
     async def get_client(self) -> AsyncGenerator[httpx.AsyncClient, None]:
-        """Get the HTTP client as a context manager."""
+        """Get the HTTP client as a context manager.
+
+        Provides access to the underlying httpx.AsyncClient while ensuring
+        proper initialization and error handling.
+
+        Yields:
+            httpx.AsyncClient: The initialized HTTP client.
+
+        Raises:
+            Any exception from the client operation is re-raised.
+        """
         client = await self._ensure_client()
         try:
             yield client

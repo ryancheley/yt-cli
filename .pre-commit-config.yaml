@@ -33,6 +33,12 @@ repos:
         language: system
         types: [python]
         exclude: ^tests/
+      - id: pydocstyle
+        name: pydocstyle
+        entry: uv run pydocstyle
+        language: system
+        types: [python]
+        exclude: ^tests/
       - id: pytest
         name: pytest
         entry: uv run pytest

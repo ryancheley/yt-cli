@@ -22,6 +22,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx_autodoc_typehints",
+    "sphinx_click",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -64,16 +66,17 @@ html_theme_options = {
 
 # Napoleon settings for Google/NumPy style docstrings
 napoleon_google_docstring = True
-napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False
+napoleon_numpy_docstring = False  # Focus on Google style
+napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = False
 napoleon_include_special_with_doc = True
-napoleon_use_admonition_for_examples = False
-napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
 napoleon_use_admonition_for_references = False
 napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
+napoleon_preprocess_types = True
 
 # Intersphinx mapping
 intersphinx_mapping = {
@@ -95,3 +98,9 @@ autodoc_default_options = {
 
 # Auto-generate summaries
 autosummary_generate = True
+
+# Type hints settings
+typehints_fully_qualified = False
+typehints_document_rtype = True
+typehints_use_signature = True
+typehints_use_signature_return = True

@@ -72,7 +72,7 @@ def main(
     no_progress: bool,
     secure: bool,
 ) -> None:
-    """YouTrack CLI - Command line interface for JetBrains YouTrack.
+    r"""YouTrack CLI - Command line interface for JetBrains YouTrack.
 
     A powerful command line tool for managing YouTrack issues, projects, users,
     time tracking, and more. Designed for developers and teams who want to integrate
@@ -182,12 +182,11 @@ main.add_alias("login", "auth")
     help="Install the completion script to the appropriate location",
 )
 def completion(shell: str, install: bool) -> None:
-    """Generate shell completion script.
+    r"""Generate shell completion script.
 
     Generate completion scripts for bash, zsh, fish, or PowerShell shells.
 
     Examples:
-
         \b
         # Generate bash completion script
         yt completion bash
@@ -530,13 +529,12 @@ Register-ArgumentCompleter -Native -CommandName yt -ScriptBlock {
 )
 @click.pass_context
 def setup(ctx: click.Context, skip_validation: bool) -> None:
-    """Interactive setup wizard for first-time configuration.
+    r"""Interactive setup wizard for first-time configuration.
 
     This command guides you through setting up YouTrack CLI for the first time.
     It will help you configure your YouTrack URL, authentication, and basic preferences.
 
     Examples:
-
         \b
         # Run the interactive setup wizard
         yt setup
