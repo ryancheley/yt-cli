@@ -59,6 +59,7 @@ Implement the solution following best practices:
 - Follow project coding standards
 - Write comprehensive tests (unit, integration)
 - Update documentation as needed
+- Update CHANGELOG.md with new features, changes, or fixes
 - Consider security implications
 
 **adding or updated new commands:**
@@ -139,7 +140,7 @@ Brief description of changes made.
 ## Documentation
 - [ ] Code comments added where needed
 - [ ] Documentation updated
-- [ ] Changelog updated (if applicable)
+- [ ] CHANGELOG.md updated with changes
 
 Fixes #$ARGUMENTS" \
       --assignee "@me" \
@@ -172,7 +173,7 @@ $(for issue in $ARGUMENTS; do echo "- #$issue"; done)
 ## Documentation
 - [ ] Code comments added where needed
 - [ ] Documentation updated
-- [ ] Changelog updated (if applicable)
+- [ ] CHANGELOG.md updated with changes
 
 Fixes $FIXES_LINE" \
       --assignee "@me" \
@@ -217,9 +218,10 @@ done
 - [ ] Code follows project conventions
 - [ ] All tests pass locally using tox
 - [ ] Documentation updated
+- [ ] CHANGELOG.md updated with changes
 - [ ] No sensitive data committed
 - [ ] Performance impact considered
-- [ ] Validate chagnes using the local YouTrack instance
+- [ ] Validate changes using the local YouTrack instance
 
 ## Emergency Rollback Plan
 
