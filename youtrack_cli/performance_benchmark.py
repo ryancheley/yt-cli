@@ -22,18 +22,15 @@ class FieldSelectionBenchmark:
         self.field_selector = get_field_selector()
 
     async def benchmark_profile_performance(
-        self,
-        project_id: Optional[str] = None,
-        query: Optional[str] = None,
-        sample_size: int = 100
+        self, project_id: Optional[str] = None, query: Optional[str] = None, sample_size: int = 100
     ) -> Dict[str, Dict[str, float]]:
         """Benchmark performance across different field selection profiles.
-        
+
         Args:
             project_id: Project to test with
             query: Query filter to apply
             sample_size: Number of issues to fetch for benchmarking
-            
+
         Returns:
             Dictionary with benchmark results for each profile
         """
@@ -44,7 +41,7 @@ class FieldSelectionBenchmark:
             "Starting field selection performance benchmark",
             project_id=project_id,
             query=query,
-            sample_size=sample_size
+            sample_size=sample_size,
         )
 
         for profile in profiles:
@@ -63,42 +60,29 @@ class FieldSelectionBenchmark:
             min_time = min(times)
             max_time = max(times)
 
-            results[profile] = {
-                "avg_time": avg_time,
-                "min_time": min_time,
-                "max_time": max_time,
-                "times": times
-            }
+            results[profile] = {"avg_time": avg_time, "min_time": min_time, "max_time": max_time, "times": times}
 
             logger.info(
                 f"Profile {profile} benchmark completed",
                 avg_time=f"{avg_time:.3f}s",
                 min_time=f"{min_time:.3f}s",
-                max_time=f"{max_time:.3f}s"
+                max_time=f"{max_time:.3f}s",
             )
 
         return results
 
     async def _run_single_benchmark(
-        self,
-        project_id: Optional[str],
-        query: Optional[str],
-        profile: str,
-        sample_size: int
+        self, project_id: Optional[str], query: Optional[str], profile: str, sample_size: int
     ) -> float:
         """Run a single benchmark iteration.
-        
+
         Returns:
             Duration in seconds
         """
         start_time = time.time()
 
         result = await self.issue_manager.list_issues(
-            project_id=project_id,
-            query=query,
-            field_profile=profile,
-            page_size=sample_size,
-            top=sample_size
+            project_id=project_id, query=query, field_profile=profile, page_size=sample_size, top=sample_size
         )
 
         end_time = time.time()
@@ -111,10 +95,10 @@ class FieldSelectionBenchmark:
 
     def analyze_performance_gains(self, results: Dict[str, Dict[str, float]]) -> Dict[str, float]:
         """Analyze performance improvements from using optimized field selection.
-        
+
         Args:
             results: Benchmark results from benchmark_profile_performance
-            
+
         Returns:
             Dictionary with performance improvement percentages
         """
@@ -145,20 +129,20 @@ class FieldSelectionBenchmark:
             "Performance analysis completed",
             minimal_improvement=f"{improvements.get('minimal_vs_full', 0):.1f}%",
             standard_improvement=f"{improvements.get('standard_vs_full', 0):.1f}%",
-            data_reduction=f"{improvements.get('estimated_data_reduction', 0):.1f}%"
+            data_reduction=f"{improvements.get('estimated_data_reduction', 0):.1f}%",
         )
 
         return improvements
 
     def print_benchmark_report(self, results: Dict[str, Dict[str, float]]) -> None:
         """Print a formatted benchmark report.
-        
+
         Args:
             results: Benchmark results from benchmark_profile_performance
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("FIELD SELECTION PERFORMANCE BENCHMARK REPORT")
-        print("="*60)
+        print("=" * 60)
 
         print(f"\n{'Profile':<12} {'Avg Time':<12} {'Min Time':<12} {'Max Time':<12}")
         print("-" * 50)
@@ -191,16 +175,12 @@ class FieldSelectionBenchmark:
         print("• Use 'standard' profile for general issue management")
         print("• Use 'full' profile only when you need all issue details")
         print("• Consider custom field selection for specific use cases")
-        print("="*60)
+        print("=" * 60)
 
 
-async def run_benchmark(
-    auth_manager: AuthManager,
-    project_id: Optional[str] = None,
-    sample_size: int = 50
-) -> None:
+async def run_benchmark(auth_manager: AuthManager, project_id: Optional[str] = None, sample_size: int = 50) -> None:
     """Run a complete field selection benchmark.
-    
+
     Args:
         auth_manager: Authenticated auth manager
         project_id: Project ID to benchmark (optional)
@@ -209,10 +189,7 @@ async def run_benchmark(
     benchmark = FieldSelectionBenchmark(auth_manager)
 
     try:
-        results = await benchmark.benchmark_profile_performance(
-            project_id=project_id,
-            sample_size=sample_size
-        )
+        results = await benchmark.benchmark_profile_performance(project_id=project_id, sample_size=sample_size)
 
         benchmark.print_benchmark_report(results)
 

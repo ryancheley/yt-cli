@@ -166,7 +166,7 @@ Three predefined profiles optimize for different use cases:
 
 .. code-block:: bash
 
-   # Use minimal profile for quick issue lists  
+   # Use minimal profile for quick issue lists
    yt issues list --profile minimal
 
    # Use standard profile (default)
@@ -218,7 +218,7 @@ Example benchmark results:
    Profile      Avg Time     Performance Gain
    ----------------------------------------
    minimal      0.015s       55% faster
-   standard     0.018s       43% faster  
+   standard     0.018s       43% faster
    full         0.033s       baseline
 
 Programmatic Usage
@@ -236,7 +236,7 @@ Use field selection in your code:
 
    # Custom field selection with exclusions
    fields = selector.get_fields(
-       "issues", 
+       "issues",
        "standard",
        custom_fields=["priority(name)", "tags(name)"],
        exclude_fields=["description"]

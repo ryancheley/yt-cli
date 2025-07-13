@@ -232,20 +232,18 @@ class FieldSelector:
                 if configured_profile and configured_profile in self.get_available_profiles(entity_type):
                     self._default_profiles[entity_type] = configured_profile
                     logger.debug(
-                        "Loaded default profile from config",
-                        entity_type=entity_type,
-                        profile=configured_profile
+                        "Loaded default profile from config", entity_type=entity_type, profile=configured_profile
                     )
         except Exception as e:
             logger.warning("Failed to load field profile defaults from config", error=str(e))
 
     def save_default_to_config(self, entity_type: str, profile_name: str) -> bool:
         """Save default profile preference to configuration.
-        
+
         Args:
             entity_type: Type of entity
             profile_name: Profile name to save as default
-            
+
         Returns:
             True if saved successfully, False otherwise
         """
@@ -260,10 +258,7 @@ class FieldSelector:
             config_key = f"FIELD_PROFILE_{entity_type.upper()}"
             self._config_manager.set_config(config_key, profile_name)
             logger.info(
-                "Saved default profile to config",
-                entity_type=entity_type,
-                profile=profile_name,
-                config_key=config_key
+                "Saved default profile to config", entity_type=entity_type, profile=profile_name, config_key=config_key
             )
             return True
         except Exception as e:
@@ -272,11 +267,11 @@ class FieldSelector:
 
     def get_profile(self, entity_type: str, profile_name: str) -> Optional[FieldProfile]:
         """Get a specific field profile.
-        
+
         Args:
             entity_type: Type of entity (issues, projects, users, etc.)
             profile_name: Name of profile (minimal, standard, full)
-            
+
         Returns:
             FieldProfile if found, None otherwise
         """
@@ -290,7 +285,7 @@ class FieldSelector:
                 "Unknown profile for entity type",
                 entity_type=entity_type,
                 profile_name=profile_name,
-                available_profiles=list(profiles.keys())
+                available_profiles=list(profiles.keys()),
             )
             return None
 
@@ -301,16 +296,16 @@ class FieldSelector:
         entity_type: str,
         profile: Optional[str] = None,
         custom_fields: Optional[Union[str, List[str]]] = None,
-        exclude_fields: Optional[List[str]] = None
+        exclude_fields: Optional[List[str]] = None,
     ) -> str:
         """Get optimized field selection for an entity type.
-        
+
         Args:
             entity_type: Type of entity (issues, projects, users, etc.)
             profile: Profile name (minimal, standard, full) or None for default
             custom_fields: Custom field specification (string or list)
             exclude_fields: Fields to exclude from the selection
-            
+
         Returns:
             Comma-separated field string for API calls
         """
@@ -322,11 +317,7 @@ class FieldSelector:
         field_profile = self.get_profile(entity_type, profile)
         if not field_profile:
             # Fallback to full profile for unknown entity/profile
-            logger.warning(
-                "Falling back to full profile",
-                entity_type=entity_type,
-                requested_profile=profile
-            )
+            logger.warning("Falling back to full profile", entity_type=entity_type, requested_profile=profile)
             field_profile = self.get_profile(entity_type, "full")
             if not field_profile:
                 # Last resort - return basic fields
@@ -358,7 +349,7 @@ class FieldSelector:
             entity_type=entity_type,
             profile=profile,
             field_count=len(fields_set),
-            fields=result[:100] + "..." if len(result) > 100 else result
+            fields=result[:100] + "..." if len(result) > 100 else result,
         )
 
         return result
@@ -373,11 +364,11 @@ class FieldSelector:
 
     def set_default_profile(self, entity_type: str, profile_name: str) -> bool:
         """Set the default profile for an entity type.
-        
+
         Args:
             entity_type: Type of entity
             profile_name: Name of profile to set as default
-            
+
         Returns:
             True if successful, False if entity type or profile doesn't exist
         """
@@ -387,20 +378,16 @@ class FieldSelector:
             return False
 
         self._default_profiles[entity_type] = profile_name
-        logger.info(
-            "Default profile updated",
-            entity_type=entity_type,
-            profile=profile_name
-        )
+        logger.info("Default profile updated", entity_type=entity_type, profile=profile_name)
         return True
 
     def validate_fields(self, fields: str, entity_type: str) -> bool:
         """Validate that field specification is syntactically correct.
-        
+
         Args:
             fields: Comma-separated field specification
             entity_type: Type of entity for context
-            
+
         Returns:
             True if fields appear valid, False otherwise
         """
@@ -440,10 +427,10 @@ _field_selector: Optional[FieldSelector] = None
 
 def get_field_selector(config_manager=None) -> FieldSelector:
     """Get the global field selector instance.
-    
+
     Args:
         config_manager: Optional config manager for loading/saving preferences
-        
+
     Returns:
         FieldSelector instance
     """

@@ -267,7 +267,7 @@ class IssueManager:
 
         with progress_manager.spinner("Fetching issues..."):
             params = {}
-            
+
             # Use field selector for optimized field selection
             field_selector = get_field_selector()
             if fields:
@@ -511,7 +511,7 @@ class IssueManager:
             # Use field profile or default to standard for search
             profile = field_profile or "standard"
             selected_fields = field_selector.get_fields("issues", profile)
-        
+
         params = {"fields": selected_fields}
 
         # Build search query

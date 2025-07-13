@@ -1345,7 +1345,7 @@ def dependencies(ctx: click.Context, issue_id: str, format: str, show_status: bo
 @click.pass_context
 def benchmark(ctx: click.Context, project_id: Optional[str], sample_size: int) -> None:
     """Benchmark field selection performance improvements.
-    
+
     This command runs performance tests comparing minimal, standard, and full
     field selection profiles to demonstrate the optimization benefits.
     """
@@ -1360,11 +1360,7 @@ def benchmark(ctx: click.Context, project_id: Optional[str], sample_size: int) -
         console.print(f"Project: {project_id}", style="dim")
 
     try:
-        asyncio.run(run_benchmark(
-            auth_manager=auth_manager,
-            project_id=project_id,
-            sample_size=sample_size
-        ))
+        asyncio.run(run_benchmark(auth_manager=auth_manager, project_id=project_id, sample_size=sample_size))
 
     except Exception as e:
         console.print(f"❌ Benchmark failed: {e}", style="red")
