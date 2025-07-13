@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from youtrack_cli.security import (
     AuditLogger,
     CredentialManager,
@@ -14,6 +16,7 @@ from youtrack_cli.security import (
 )
 
 
+@pytest.mark.unit
 class TestSecurityConfig:
     """Test SecurityConfig model."""
 
@@ -38,6 +41,7 @@ class TestSecurityConfig:
         assert config.token_warning_days == 14
 
 
+@pytest.mark.unit
 class TestAuditLogger:
     """Test AuditLogger functionality."""
 
@@ -129,6 +133,7 @@ class TestAuditLogger:
             assert entries[2].command == "command4"
 
 
+@pytest.mark.unit
 class TestCredentialManager:
     """Test CredentialManager functionality."""
 
@@ -224,6 +229,7 @@ class TestCredentialManager:
         mock_keyring.delete_password.assert_called_once()
 
 
+@pytest.mark.unit
 class TestTokenManager:
     """Test TokenManager functionality."""
 
@@ -296,6 +302,7 @@ class TestTokenManager:
         assert result is None
 
 
+@pytest.mark.unit
 class TestSensitiveDataMasking:
     """Test sensitive data masking functionality."""
 
@@ -376,6 +383,7 @@ class TestSensitiveDataMasking:
             assert result == expected
 
 
+@pytest.mark.unit
 class TestSecurityIntegration:
     """Test integration between security components."""
 
@@ -429,6 +437,7 @@ class TestSecurityIntegration:
 
 
 # Performance and stress tests
+@pytest.mark.unit
 class TestSecurityPerformance:
     """Test performance aspects of security features."""
 
@@ -512,6 +521,7 @@ class TestSecurityPerformance:
         assert "normal_data=value" in masked  # Non-sensitive data preserved
 
 
+@pytest.mark.unit
 class TestClientManagerSecurity:
     """Test security aspects of the HTTP client manager."""
 

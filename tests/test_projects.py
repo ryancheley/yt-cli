@@ -11,6 +11,7 @@ from youtrack_cli.main import main
 from youtrack_cli.projects import ProjectManager
 
 
+@pytest.mark.unit
 class TestProjectManager:
     """Test ProjectManager functionality."""
 

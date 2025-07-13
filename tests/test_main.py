@@ -9,6 +9,7 @@ from click.testing import CliRunner
 from youtrack_cli.main import main
 
 
+@pytest.mark.unit
 def test_main_help() -> None:
     """Test that the main command shows help."""
     runner = CliRunner()
@@ -17,6 +18,7 @@ def test_main_help() -> None:
     assert "YouTrack CLI" in result.output
 
 
+@pytest.mark.unit
 def test_main_version() -> None:
     """Test that the version command works."""
     runner = CliRunner()
@@ -41,6 +43,7 @@ def test_main_version() -> None:
         "setup",
     ],
 )
+@pytest.mark.unit
 def test_command_groups_exist(command: str) -> None:
     """Test that all main command groups are available."""
     runner = CliRunner()

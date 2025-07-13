@@ -20,6 +20,7 @@ from youtrack_cli.models import (
 )
 
 
+@pytest.mark.unit
 class TestCachedResponse:
     """Test CachedResponse model."""
 
@@ -64,6 +65,7 @@ class TestCachedResponse:
         assert response.extra_field == "extra_value"
 
 
+@pytest.mark.unit
 class TestApiResponse:
     """Test ApiResponse model."""
 
@@ -92,6 +94,7 @@ class TestApiResponse:
         assert response.message == "Something went wrong"
 
 
+@pytest.mark.unit
 class TestYouTrackUser:
     """Test YouTrackUser model."""
 
@@ -153,6 +156,7 @@ class TestYouTrackUser:
         assert user.avatar_url == "https://example.com/avatar.jpg"
 
 
+@pytest.mark.unit
 class TestYouTrackProject:
     """Test YouTrackProject model."""
 
@@ -209,6 +213,7 @@ class TestYouTrackProject:
             YouTrackProject(**empty_dict)  # type: ignore[misc] # Missing required fields
 
 
+@pytest.mark.unit
 class TestYouTrackCustomField:
     """Test YouTrackCustomField model."""
 
@@ -242,6 +247,7 @@ class TestYouTrackCustomField:
         assert field4.value == ["item1", "item2"]
 
 
+@pytest.mark.unit
 class TestYouTrackIssueTag:
     """Test YouTrackIssueTag model."""
 
@@ -266,6 +272,7 @@ class TestYouTrackIssueTag:
         assert tag.visible_for_assignee is True
 
 
+@pytest.mark.unit
 class TestYouTrackComment:
     """Test YouTrackComment model."""
 
@@ -292,6 +299,7 @@ class TestYouTrackComment:
         assert comment.deleted is False
 
 
+@pytest.mark.unit
 class TestYouTrackIssue:
     """Test YouTrackIssue model."""
 
@@ -345,6 +353,7 @@ class TestYouTrackIssue:
         assert issue.votes == 5
 
 
+@pytest.mark.unit
 class TestYouTrackErrorResponse:
     """Test YouTrackErrorResponse model."""
 
@@ -374,6 +383,7 @@ class TestYouTrackErrorResponse:
         assert error.localized_error == "Solicitud inválida"
 
 
+@pytest.mark.unit
 class TestCredentialVerificationResult:
     """Test CredentialVerificationResult model."""
 
@@ -398,6 +408,7 @@ class TestCredentialVerificationResult:
         assert result.username is None
 
 
+@pytest.mark.unit
 class TestYouTrackSearchResult:
     """Test YouTrackSearchResult model."""
 
@@ -427,6 +438,7 @@ class TestYouTrackSearchResult:
         assert result.results[1] == project
 
 
+@pytest.mark.unit
 class TestModelValidation:
     """Test model validation edge cases."""
 

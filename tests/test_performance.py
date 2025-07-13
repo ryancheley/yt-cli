@@ -16,6 +16,7 @@ from youtrack_cli.performance import (
 )
 
 
+@pytest.mark.unit
 class TestPerformanceMetrics:
     """Test PerformanceMetrics dataclass."""
 
@@ -49,6 +50,7 @@ class TestPerformanceMetrics:
         assert metrics.metadata["error"] == "Permission denied"
 
 
+@pytest.mark.unit
 class TestBenchmarkResult:
     """Test BenchmarkResult dataclass."""
 
@@ -83,6 +85,7 @@ class TestBenchmarkResult:
         assert result.durations == durations
 
 
+@pytest.mark.unit
 class TestPerformanceMonitor:
     """Test PerformanceMonitor functionality."""
 
@@ -207,6 +210,7 @@ class TestPerformanceMonitor:
         assert summary["failed_operations"] == 1
 
 
+@pytest.mark.unit
 class TestPerformanceTimer:
     """Test performance_timer context manager."""
 
@@ -269,6 +273,7 @@ class TestPerformanceTimer:
             mock_record.assert_called_once()
 
 
+@pytest.mark.unit
 class TestBenchmarkRequests:
     """Test benchmark_requests function."""
 
@@ -382,6 +387,7 @@ class TestBenchmarkRequests:
         assert result.operations_per_second == result.successful_operations / result.total_duration
 
 
+@pytest.mark.unit
 class TestGlobalPerformanceMonitor:
     """Test global performance monitor functionality."""
 
@@ -406,6 +412,7 @@ class TestGlobalPerformanceMonitor:
         assert metrics[0].operation == "test_op"
 
 
+@pytest.mark.unit
 class TestPerformanceIntegration:
     """Test integration between performance components."""
 

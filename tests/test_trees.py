@@ -14,6 +14,7 @@ from youtrack_cli.trees import (
 )
 
 
+@pytest.mark.unit
 class TestEnhancedTreeBuilder:
     """Test the EnhancedTreeBuilder class."""
 
@@ -102,6 +103,7 @@ class TestEnhancedTreeBuilder:
         mock_console.print.assert_called_once_with(builder.tree)
 
 
+@pytest.mark.unit
 class TestIssueDependenciesTree:
     """Test the issue dependencies tree function."""
 
@@ -185,6 +187,7 @@ class TestIssueDependenciesTree:
         assert isinstance(tree, Tree)
 
 
+@pytest.mark.unit
 class TestProjectHierarchyTree:
     """Test the project hierarchy tree function."""
 
@@ -256,6 +259,7 @@ class TestProjectHierarchyTree:
         assert isinstance(tree, Tree)
 
 
+@pytest.mark.unit
 class TestEnhancedArticlesTree:
     """Test the enhanced articles tree function."""
 
@@ -354,6 +358,7 @@ class TestEnhancedArticlesTree:
         assert isinstance(tree, Tree)
 
 
+@pytest.mark.unit
 class TestStatusColorFunction:
     """Test the status color utility function."""
 

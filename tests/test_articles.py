@@ -34,6 +34,7 @@ def article_manager(mock_auth_manager):
     return ArticleManager(mock_auth_manager)
 
 
+@pytest.mark.unit
 class TestArticleManager:
     """Test cases for ArticleManager class."""
 
@@ -587,6 +588,7 @@ class TestArticleManager:
             assert "Successfully removed 2 tags" in result["message"]
 
 
+@pytest.mark.unit
 class TestArticlesCLI:
     """Test cases for articles CLI commands."""
 

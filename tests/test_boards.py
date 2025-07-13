@@ -32,6 +32,7 @@ def board_manager(mock_auth_manager):
     return BoardManager(mock_auth_manager)
 
 
+@pytest.mark.unit
 class TestBoardManager:
     """Test cases for BoardManager class."""
 

@@ -255,35 +255,77 @@ Testing
 Test Structure
 ~~~~~~~~~~~~~~
 
-Tests are organized into categories:
+Tests are organized into two main categories with proper pytest markers:
 
-* **Unit tests**: Test individual functions and classes
-* **Integration tests**: Test interaction with YouTrack API
-* **End-to-end tests**: Test complete CLI workflows
+* **Unit tests** (``@pytest.mark.unit``): Fast, isolated tests of individual functions and classes with no external dependencies
+* **Integration tests** (``@pytest.mark.integration``): End-to-end tests that require real YouTrack API access
+
+Test Organization:
+
+.. code-block:: text
+
+   tests/
+   ├── conftest.py                     # Global test fixtures
+   ├── test_*.py                       # Unit tests (marked with @pytest.mark.unit)
+   └── integration/                    # Integration tests directory
+       ├── conftest.py                 # Integration-specific fixtures
+       ├── test_auth_integration.py    # Authentication integration tests
+       ├── test_issues_integration.py  # Issue management integration tests
+       └── test_projects_integration.py # Project management integration tests
 
 Running Tests
 ~~~~~~~~~~~~~
 
-The project uses pytest with randomized test execution to improve test reliability and catch order-dependent bugs.
+**Quick Test Runner (Recommended):**
 
-Run all tests (automatically randomized order):
-
-.. code-block:: bash
-
-   uv run pytest
-
-Run specific test categories:
+Use the included test runner script for easy test execution:
 
 .. code-block:: bash
 
+   # Run only unit tests (fast)
+   python test_runner.py unit
+
+   # Run only integration tests
+   python test_runner.py integration
+
+   # Run all tests (unit + integration)
+   python test_runner.py all
+
+   # Run unit tests with coverage
+   python test_runner.py unit --coverage
+
+   # Run tests with verbose output
+   python test_runner.py all --verbose
+
+**Direct pytest Commands:**
+
+.. code-block:: bash
+
+   # Run all unit tests (no external dependencies)
    uv run pytest -m unit
+
+   # Run all integration tests (requires YouTrack API access)
    uv run pytest -m integration
 
-Run with coverage:
+   # Run all tests
+   uv run pytest
+
+   # Run with coverage (unit tests only)
+   uv run pytest -m unit --cov=youtrack_cli --cov-report=html
+
+**Integration Test Requirements:**
+
+Integration tests require real YouTrack API access. Set these environment variables:
 
 .. code-block:: bash
 
-   uv run pytest --cov=youtrack_cli --cov-report=html
+   # Required
+   export YOUTRACK_BASE_URL="https://your-instance.youtrack.cloud"
+   export YOUTRACK_API_KEY="your-api-token"
+
+   # Optional
+   export YOUTRACK_TEST_PROJECT="FPU"  # Default project for testing
+   export YOUTRACK_USERNAME="your-username"  # For assignment tests
 
 **Randomized Testing Options:**
 
@@ -312,34 +354,87 @@ Test against multiple Python versions using tox:
 Writing Tests
 ~~~~~~~~~~~~~
 
+**Unit Test Guidelines:**
+
+All unit tests should be marked with ``@pytest.mark.unit`` and should:
+
+* Test individual functions/classes in isolation
+* Use mocks for external dependencies
+* Be fast and deterministic
+* Not require network access or external services
+
 Example unit test:
 
 .. code-block:: python
 
    import pytest
-   from youtrack_cli.utils import parse_issue_id
+   from unittest.mock import Mock, patch
+   from youtrack_cli.issues import IssueManager
 
-   def test_parse_issue_id():
-       project, number = parse_issue_id("PROJECT-123")
-       assert project == "PROJECT"
-       assert number == 123
+   @pytest.mark.unit
+   class TestIssueManager:
+       def test_parse_issue_id(self):
+           project, number = IssueManager.parse_issue_id("PROJECT-123")
+           assert project == "PROJECT"
+           assert number == 123
 
-   def test_parse_issue_id_invalid():
-       with pytest.raises(ValueError):
-           parse_issue_id("invalid-id")
+       def test_parse_issue_id_invalid(self):
+           with pytest.raises(ValueError):
+               IssueManager.parse_issue_id("invalid-id")
+
+       @patch('youtrack_cli.issues.YouTrackClient')
+       def test_create_issue(self, mock_client):
+           mock_client.return_value.create_issue.return_value = {"id": "PROJ-1"}
+           manager = IssueManager(mock_client)
+           result = manager.create_issue("PROJ", "Test", "Description")
+           assert result["id"] == "PROJ-1"
+
+**Integration Test Guidelines:**
+
+All integration tests should be marked with ``@pytest.mark.integration`` and should:
+
+* Test real API interactions with YouTrack
+* Use the FPU project for testing by default
+* Clean up any created test data
+* Be resilient to varying YouTrack configurations
 
 Example integration test:
 
 .. code-block:: python
 
    import pytest
-   from youtrack_cli.client import YouTrackClient
 
    @pytest.mark.integration
-   def test_list_issues(youtrack_client):
-       issues = youtrack_client.issues.list(limit=5)
-       assert len(issues) <= 5
-       assert all(hasattr(issue, 'id') for issue in issues)
+   class TestIssuesIntegration:
+       def test_create_and_delete_issue_workflow(
+           self,
+           integration_issue_manager,
+           test_issue_data,
+           cleanup_test_issues
+       ):
+           """Test complete create and delete issue workflow."""
+           # Create issue
+           created_issue = integration_issue_manager.create_issue(
+               project_id=test_issue_data["project"]["id"],
+               summary=test_issue_data["summary"],
+               description=test_issue_data["description"]
+           )
+
+           assert created_issue is not None
+           issue_id = created_issue["id"]
+           cleanup_test_issues(issue_id)  # Schedule cleanup
+
+           # Verify issue was created
+           retrieved_issue = integration_issue_manager.get_issue(issue_id)
+           assert retrieved_issue["summary"] == test_issue_data["summary"]
+
+**Test Data Management:**
+
+Integration tests include automatic cleanup of test data:
+
+* Use ``cleanup_test_issues`` fixture to track created issues
+* Use ``integration_test_data`` fixture for unique test identifiers
+* Test data is automatically cleaned up after each test
 
 Adding New Commands
 -------------------

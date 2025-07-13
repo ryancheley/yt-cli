@@ -52,6 +52,7 @@ class TestCacheEntry:
         assert entry.is_expired
 
 
+@pytest.mark.unit
 class TestCache:
     """Test Cache class functionality."""
 
@@ -236,6 +237,7 @@ class TestCache:
             assert value == f"value_{i}"
 
 
+@pytest.mark.unit
 class TestGlobalCacheFunctions:
     """Test global cache functions."""
 
@@ -267,6 +269,7 @@ class TestGlobalCacheFunctions:
         assert value is None
 
 
+@pytest.mark.unit
 class TestCachedDecorator:
     """Test cached decorator functionality."""
 
@@ -373,6 +376,7 @@ class TestCachedDecorator:
         assert call_count[0] == 2  # Function called again
 
 
+@pytest.mark.unit
 class TestPredefinedCacheDecorators:
     """Test predefined cache decorators."""
 

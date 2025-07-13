@@ -32,6 +32,7 @@ def time_manager(mock_auth_manager):
     return TimeManager(mock_auth_manager)
 
 
+@pytest.mark.unit
 class TestTimeManager:
     """Test cases for TimeManager class."""
 

@@ -10,6 +10,7 @@ from youtrack_cli.main import main
 from youtrack_cli.reports import ReportManager
 
 
+@pytest.mark.unit
 class TestReportManager:
     """Test ReportManager functionality."""
 
@@ -224,6 +225,7 @@ class TestReportManager:
             assert no_data_found
 
 
+@pytest.mark.unit
 class TestReportsCommands:
     """Test reports CLI commands."""
 

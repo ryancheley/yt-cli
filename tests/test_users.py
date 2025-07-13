@@ -11,6 +11,7 @@ from youtrack_cli.main import main
 from youtrack_cli.users import UserManager
 
 
+@pytest.mark.unit
 class TestUserManager:
     """Test UserManager functionality."""
 
@@ -399,6 +400,7 @@ class TestUserManager:
             assert "not found" in result["message"]
 
 
+@pytest.mark.unit
 class TestUsersCLI:
     """Test users CLI commands."""
 
@@ -551,6 +553,7 @@ class TestUsersCLI:
                 assert result.exit_code in [0, 1]
 
 
+@pytest.mark.unit
 class TestUsersDisplayMethods:
     """Test users display methods."""
 

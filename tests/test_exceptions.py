@@ -15,6 +15,7 @@ from youtrack_cli.exceptions import (
 )
 
 
+@pytest.mark.unit
 class TestYouTrackError:
     """Test base YouTrackError exception."""
 
@@ -40,6 +41,7 @@ class TestYouTrackError:
         assert isinstance(error, YouTrackError)
 
 
+@pytest.mark.unit
 class TestAuthenticationError:
     """Test AuthenticationError exception."""
 
@@ -66,6 +68,7 @@ class TestAuthenticationError:
         assert isinstance(error, AuthenticationError)
 
 
+@pytest.mark.unit
 class TestConnectionError:
     """Test ConnectionError exception."""
 
@@ -92,6 +95,7 @@ class TestConnectionError:
         assert isinstance(error, ConnectionError)
 
 
+@pytest.mark.unit
 class TestValidationError:
     """Test ValidationError exception."""
 
@@ -118,6 +122,7 @@ class TestValidationError:
         assert isinstance(error, ValidationError)
 
 
+@pytest.mark.unit
 class TestNotFoundError:
     """Test NotFoundError exception."""
 
@@ -150,6 +155,7 @@ class TestNotFoundError:
         assert isinstance(error, NotFoundError)
 
 
+@pytest.mark.unit
 class TestPermissionError:
     """Test PermissionError exception."""
 
@@ -182,6 +188,7 @@ class TestPermissionError:
         assert isinstance(error, PermissionError)
 
 
+@pytest.mark.unit
 class TestRateLimitError:
     """Test RateLimitError exception."""
 
@@ -214,6 +221,7 @@ class TestRateLimitError:
         assert isinstance(error, RateLimitError)
 
 
+@pytest.mark.unit
 class TestYouTrackNetworkError:
     """Test YouTrackNetworkError exception."""
 
@@ -246,6 +254,7 @@ class TestYouTrackNetworkError:
         assert isinstance(error, YouTrackNetworkError)
 
 
+@pytest.mark.unit
 class TestYouTrackServerError:
     """Test YouTrackServerError exception."""
 
@@ -291,6 +300,7 @@ class TestYouTrackServerError:
         assert isinstance(error, YouTrackServerError)
 
 
+@pytest.mark.unit
 class TestExceptionHierarchy:
     """Test exception hierarchy and relationships."""
 
@@ -342,6 +352,7 @@ class TestExceptionHierarchy:
             pytest.fail("Should have been caught as ValidationError")
 
 
+@pytest.mark.unit
 class TestExceptionMessages:
     """Test exception message formatting and suggestions."""
 
@@ -388,6 +399,7 @@ class TestExceptionMessages:
         assert error.suggestion == "Test suggestion"
 
 
+@pytest.mark.unit
 class TestExceptionUsagePatterns:
     """Test common exception usage patterns."""
 

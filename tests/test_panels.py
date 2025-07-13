@@ -16,6 +16,7 @@ from youtrack_cli.panels import (
 )
 
 
+@pytest.mark.unit
 class TestPanelFactory:
     """Test the PanelFactory class."""
 
@@ -102,6 +103,7 @@ class TestPanelFactory:
         assert "Error" in str(panel.title)
 
 
+@pytest.mark.unit
 class TestPanelGroup:
     """Test the PanelGroup class."""
 
@@ -173,6 +175,7 @@ class TestPanelGroup:
         mock_console.print.assert_called_once()
 
 
+@pytest.mark.unit
 class TestIssuePanelFunctions:
     """Test issue-specific panel functions."""
 

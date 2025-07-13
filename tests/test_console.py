@@ -1,5 +1,6 @@
 """Tests for console management module."""
 
+import pytest
 from rich.console import Console
 from rich.theme import Theme
 
@@ -17,6 +18,7 @@ from youtrack_cli.console import (
 )
 
 
+@pytest.mark.unit
 class TestThemes:
     """Test theme-related functionality."""
 
@@ -73,6 +75,7 @@ class TestThemes:
                 assert style in theme.styles, f"Style '{style}' missing from theme '{theme_name}'"
 
 
+@pytest.mark.unit
 class TestConsoleManager:
     """Test ConsoleManager functionality."""
 
@@ -129,6 +132,7 @@ class TestConsoleManager:
         assert manager.get_theme() == get_default_theme()
 
 
+@pytest.mark.unit
 class TestGlobalFunctions:
     """Test global console functions."""
 
@@ -176,6 +180,7 @@ class TestGlobalFunctions:
         # Theme should remain unchanged
 
 
+@pytest.mark.unit
 class TestConfigIntegration:
     """Test integration with configuration system."""
 
@@ -229,6 +234,7 @@ class TestConfigIntegration:
         assert theme == get_default_theme()
 
 
+@pytest.mark.unit
 class TestThemeContent:
     """Test theme content and styling."""
 
