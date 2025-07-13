@@ -1,4 +1,11 @@
-"""Utility functions for YouTrack CLI."""
+"""Utility functions for YouTrack CLI.
+
+This module provides common utility functions for HTTP requests, error handling,
+user interface operations, and data processing used throughout the YouTrack CLI.
+
+The utilities provide consistent interfaces for API interactions, response
+handling, and user feedback with proper error handling and logging.
+"""
 
 from collections.abc import AsyncGenerator
 from typing import Any, Dict, List, Optional
@@ -41,22 +48,24 @@ async def make_request(
 ) -> httpx.Response:
     """Make an HTTP request with retry logic and proper error handling.
 
-    This is a backward-compatible wrapper around the HTTPClientManager.
+    This is a backward-compatible wrapper around the HTTPClientManager
+    that provides simplified request handling with automatic retries.
 
     Args:
-        method: HTTP method (GET, POST, etc.)
-        url: Request URL
-        headers: Optional request headers
-        params: Optional query parameters
-        json_data: Optional JSON data for POST/PUT requests
-        timeout: Request timeout in seconds
-        max_retries: Maximum number of retry attempts
+        method: HTTP method (GET, POST, PUT, DELETE, etc.).
+        url: Target request URL.
+        headers: Optional HTTP headers to include.
+        params: Optional query parameters.
+        json_data: Optional JSON payload for request body.
+        timeout: Request timeout in seconds. Uses client default if None.
+        max_retries: Maximum number of retry attempts. Defaults to 3.
 
     Returns:
-        HTTP response object
+        httpx.Response: The HTTP response object.
 
     Raises:
-        YouTrackError: Various specific error types based on response
+        YouTrackError: For API-specific errors.
+        httpx.HTTPError: For general HTTP errors.
     """
     client_manager = get_client_manager()
     return await client_manager.make_request(

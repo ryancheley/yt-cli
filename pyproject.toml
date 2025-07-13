@@ -90,6 +90,12 @@ indent-style = "space"
 [tool.ty]
 # ty configuration can be added here if needed in the future
 
+[tool.pydocstyle]
+convention = "google"
+add_ignore = ["D100", "D104", "D105", "D107"]
+match_dir = "youtrack_cli"
+match = "(?!test_).*\\.py"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
@@ -129,9 +135,12 @@ dev = [
     "zizmor>=1.11.0",
     "twine>=6.1.0",
     "pre-commit>=3.0.0",
+    "pydocstyle>=6.3.0",
 ]
 docs = [
     "sphinx>=7.0.0",
     "sphinx-rtd-theme>=2.0.0",
     "sphinx-autobuild>=2021.3.14",
+    "sphinx-autodoc-typehints>=1.24.0",
+    "sphinx-click>=5.0.0",
 ]

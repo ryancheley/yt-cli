@@ -1,4 +1,11 @@
-"""Issues command group for YouTrack CLI."""
+"""Issues command group for YouTrack CLI.
+
+This module provides comprehensive issue management commands including creation,
+updating, searching, commenting, and workflow management for YouTrack issues.
+
+The commands support both interactive and batch operations with rich formatting
+and validation to ensure data integrity.
+"""
 
 import asyncio
 from typing import Optional
@@ -12,14 +19,13 @@ from ..console import get_console
 
 @click.group(cls=AliasedGroup)
 def issues() -> None:
-    """Manage issues - create, update, search, and organize your work.
+    r"""Manage issues - create, update, search, and organize your work.
 
     The issues command group provides comprehensive issue management capabilities.
     You can create new issues, update existing ones, search and filter issues,
     manage comments and attachments, and handle issue relationships.
 
     Common workflows:
-
         \b
         # Create and assign a bug report
         yt issues create PROJECT-123 "Login fails on mobile" \\
@@ -77,14 +83,13 @@ def create(
     priority: Optional[str],
     assignee: Optional[str],
 ) -> None:
-    """Create a new issue.
+    r"""Create a new issue.
 
     Create a new issue in the specified project with the given summary.
     You can optionally specify additional fields like description, type,
     priority, and assignee.
 
     Examples:
-
         \b
         # Create a simple bug report
         yt issues create WEB-123 "Fix login error on mobile"

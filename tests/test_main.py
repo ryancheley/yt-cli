@@ -15,7 +15,7 @@ def test_main_help() -> None:
     runner = CliRunner()
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
-    assert "YouTrack CLI" in result.output
+    assert "Youtrack CLI" in result.output
 
 
 @pytest.mark.unit

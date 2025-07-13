@@ -1,4 +1,13 @@
-"""Configuration management for YouTrack CLI."""
+"""Configuration management for YouTrack CLI.
+
+This module provides configuration file management using environment files
+with automatic path resolution, validation, and secure storage.
+
+Example:
+    >>> config = ConfigManager()
+    >>> config.set_config('BASE_URL', 'https://youtrack.example.com')
+    >>> url = config.get_config('BASE_URL')
+"""
 
 import os
 from pathlib import Path
@@ -10,13 +19,22 @@ __all__ = ["ConfigManager"]
 
 
 class ConfigManager:
-    """Manages configuration for YouTrack CLI."""
+    """Manages configuration for YouTrack CLI.
+
+    Provides file-based configuration management using environment files
+    stored in the user's home directory. Supports reading, writing, and
+    validation of configuration values with automatic file creation.
+
+    Configuration files are stored as .env files in ~/.config/youtrack-cli/
+    and are compatible with standard dotenv format.
+    """
 
     def __init__(self, config_path: Optional[str] = None):
         """Initialize the config manager.
 
         Args:
-            config_path: Path to configuration file
+            config_path: Path to configuration file. If None, uses default
+                location in ~/.config/youtrack-cli/.env.
         """
         self.config_path = config_path or self._get_default_config_path()
         self._ensure_config_file_exists()
@@ -28,13 +46,23 @@ class ConfigManager:
             pass
 
     def _get_default_config_path(self) -> str:
-        """Get the default configuration file path."""
+        """Get the default configuration file path.
+
+        Creates the configuration directory if it doesn't exist.
+
+        Returns:
+            Path to the default configuration file.
+        """
         config_dir = Path.home() / ".config" / "youtrack-cli"
         config_dir.mkdir(parents=True, exist_ok=True)
         return str(config_dir / ".env")
 
     def _ensure_config_file_exists(self) -> None:
-        """Ensure the configuration file exists."""
+        """Ensure the configuration file exists.
+
+        Creates the configuration file and any necessary parent directories
+        if they don't already exist.
+        """
         config_path = Path(self.config_path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
         if not config_path.exists():
@@ -44,8 +72,8 @@ class ConfigManager:
         """Set a configuration value.
 
         Args:
-            key: Configuration key
-            value: Configuration value
+            key: Configuration key to set.
+            value: Configuration value to store.
         """
         set_key(self.config_path, key, value)
         # Reload environment variables after setting

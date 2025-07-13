@@ -1,4 +1,11 @@
-"""Pagination infrastructure for table displays."""
+"""Pagination infrastructure for table displays.
+
+This module provides pagination functionality for large data sets displayed
+in tables, with interactive navigation controls and configurable page sizes.
+
+Supports both automatic pagination for large result sets and user-controlled
+navigation through multiple pages of data.
+"""
 
 import math
 from typing import Any, Callable, List
@@ -9,14 +16,19 @@ from rich.text import Text
 
 
 class PaginatedTableDisplay:
-    """Handle paginated display of table data with user navigation controls."""
+    """Handle paginated display of table data with user navigation controls.
+
+    Provides automatic pagination for large data sets with interactive navigation
+    including page forward/backward, jump to specific pages, and configurable
+    page sizes. Integrates with Rich console for formatted output.
+    """
 
     def __init__(self, console: Console, page_size: int = 50):
         """Initialize paginated table display.
 
         Args:
-            console: Rich console instance for output
-            page_size: Number of items per page (default: 50)
+            console: Rich console instance for formatted output.
+            page_size: Number of items to display per page. Defaults to 50.
         """
         self.console = console
         self.page_size = page_size

@@ -1,4 +1,8 @@
-"""Projects command group for YouTrack CLI."""
+"""Projects command group for YouTrack CLI.
+
+This module provides project management commands for listing, viewing,
+and managing YouTrack projects including their metadata and configuration.
+"""
 
 import asyncio
 from typing import Optional
@@ -11,7 +15,16 @@ from ..console import get_console
 
 @click.group()
 def projects() -> None:
-    """Manage projects."""
+    """Manage projects - list, view, and configure project settings.
+
+    The projects command group provides access to project-level operations
+    including listing available projects, viewing project details, and
+    managing project configuration.
+
+    Example:
+        yt projects list
+        yt projects show PROJECT-ID
+    """
     pass
 
 

@@ -1,4 +1,14 @@
-"""Authentication management for YouTrack CLI."""
+"""Authentication management for YouTrack CLI.
+
+This module provides secure authentication management including token storage,
+credential verification, and session management for YouTrack API access.
+
+Example:
+    >>> auth_manager = AuthManager()
+    >>> result = await auth_manager.verify_credentials()
+    >>> if result.status == 'success':
+    ...     print(f"Authenticated as {result.username}")
+"""
 
 import os
 from datetime import datetime
@@ -19,7 +29,17 @@ __all__ = ["AuthConfig", "AuthManager"]
 
 
 class AuthConfig(BaseModel):
-    """Configuration for YouTrack authentication."""
+    """Configuration for YouTrack authentication.
+
+    Stores authentication configuration including base URL, API token,
+    and optional metadata like username and token expiry.
+
+    Attributes:
+        base_url: YouTrack instance URL (required).
+        token: API token for authentication (required).
+        username: Username associated with token (optional).
+        token_expiry: Token expiration date (optional).
+    """
 
     base_url: str = Field(..., description="YouTrack instance URL")
     token: str = Field(..., description="API token for authentication")
@@ -28,7 +48,15 @@ class AuthConfig(BaseModel):
 
 
 class AuthManager:
-    """Manages authentication for YouTrack CLI."""
+    """Manages authentication for YouTrack CLI.
+
+    Provides comprehensive authentication management including secure token
+    storage using system keyring, credential verification, and session
+    management for YouTrack API interactions.
+
+    The manager handles both environment-based and keyring-based credential
+    storage with automatic fallback mechanisms and security best practices.
+    """
 
     def __init__(
         self,
@@ -38,8 +66,10 @@ class AuthManager:
         """Initialize the auth manager.
 
         Args:
-            config_path: Path to configuration file
-            security_config: Security configuration
+            config_path: Path to configuration file. If None, uses default
+                location in user's home directory.
+            security_config: Security configuration for encryption and keyring.
+                If None, uses default security settings.
         """
         self.config_path = config_path or self._get_default_config_path()
         self.security_config = security_config or SecurityConfig()

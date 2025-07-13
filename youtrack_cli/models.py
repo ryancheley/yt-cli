@@ -1,5 +1,4 @@
-"""
-Pydantic models for YouTrack API responses.
+"""Pydantic models for YouTrack API responses.
 
 This module provides typed models for all YouTrack API responses,
 replacing generic dictionary returns with proper type safety.
@@ -14,7 +13,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CachedResponse(BaseModel):
-    """Cached HTTP response model to replace inline MockResponse class."""
+    """Cached HTTP response model to replace inline MockResponse class.
+
+    This model provides a cached representation of HTTP responses that mimics
+    the httpx.Response interface for testing and caching purposes.
+
+    Attributes:
+        data: The response data as a dictionary.
+        status_code: HTTP status code. Defaults to 200.
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -22,17 +29,34 @@ class CachedResponse(BaseModel):
     status_code: int = 200
 
     def json(self) -> dict[str, Any]:
-        """Return JSON data, mimicking httpx.Response interface."""
+        """Return JSON data, mimicking httpx.Response interface.
+
+        Returns:
+            The response data as a dictionary.
+        """
         return self.data
 
     @property
     def text(self) -> str:
-        """Return text representation of data."""
+        """Return text representation of data.
+
+        Returns:
+            String representation of the response data.
+        """
         return str(self.data)
 
 
 class ApiResponse(BaseModel):
-    """Generic API response wrapper."""
+    """Generic API response wrapper.
+
+    Provides a standardized format for API responses with status,
+    optional message, and data payload.
+
+    Attributes:
+        status: Response status, either 'success' or 'error'.
+        message: Optional descriptive message.
+        data: Optional response data payload.
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -42,7 +66,25 @@ class ApiResponse(BaseModel):
 
 
 class YouTrackUser(BaseModel):
-    """YouTrack user model."""
+    """YouTrack user model.
+
+    Represents a user account in YouTrack with all associated metadata
+    including authentication status, contact information, and preferences.
+
+    Attributes:
+        login: User's login name (required).
+        full_name: User's full display name.
+        email: User's email address.
+        jabber_account_name: Jabber/XMPP account name for notifications.
+        ring_id: Ring ID for YouTrack integration.
+        guest: Whether user is a guest account.
+        online: Current online status.
+        banned: Whether user account is banned.
+        tags: User-associated tags.
+        saved_queries: List of saved search queries.
+        avatar_url: URL to user's avatar image.
+        profiles: Additional user profile data.
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -61,7 +103,25 @@ class YouTrackUser(BaseModel):
 
 
 class YouTrackProject(BaseModel):
-    """YouTrack project model."""
+    """YouTrack project model.
+
+    Represents a YouTrack project with metadata, statistics, and configuration.
+    Projects are the primary organizational unit for issues in YouTrack.
+
+    Attributes:
+        id: Unique project identifier.
+        name: Full project name.
+        short_name: Short project identifier used in issue IDs.
+        description: Optional project description.
+        leader: Project lead user.
+        created_by: User who created the project.
+        created: Project creation timestamp.
+        updated: Last modification timestamp.
+        resolved_issues_count: Number of resolved issues.
+        issues_count: Total number of issues.
+        archived: Whether project is archived.
+        template: Whether project is a template.
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -145,7 +205,36 @@ class YouTrackAttachment(BaseModel):
 
 
 class YouTrackIssue(BaseModel):
-    """YouTrack issue model."""
+    """YouTrack issue model.
+
+    Represents a YouTrack issue with all associated metadata including
+    custom fields, comments, attachments, and workflow state.
+
+    Attributes:
+        id: Unique issue identifier.
+        entity_id: Entity ID for database operations.
+        field_hash: Hash of field values for change tracking.
+        project: Associated project.
+        number: Issue number within project.
+        created: Issue creation timestamp.
+        updated: Last modification timestamp.
+        updater: User who last updated the issue.
+        resolved: Resolution timestamp if resolved.
+        reporter: User who reported the issue.
+        summary: Issue title/summary.
+        description: Detailed issue description.
+        custom_fields: List of custom field values.
+        tags: Issue tags for categorization.
+        comments: List of comments on the issue.
+        attachments: List of file attachments.
+        links: Related issues and links.
+        visibility: Visibility restrictions.
+        votes: Number of votes.
+        votes_count: Vote count.
+        wiki_text: Wiki-formatted text content.
+        text_preview: Preview of issue text.
+        has_star: Whether issue is starred by current user.
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -261,7 +350,21 @@ class YouTrackArticle(BaseModel):
 
 
 class YouTrackSearchResult(BaseModel):
-    """YouTrack search result model."""
+    """YouTrack search result model.
+
+    Represents paginated search results from YouTrack API with cursor-based
+    pagination support and result metadata.
+
+    Attributes:
+        total_hits: Total number of matching results.
+        skip: Number of results to skip (offset).
+        top: Maximum number of results per page.
+        has_after: Whether more results available after current page.
+        has_before: Whether results available before current page.
+        after_cursor: Cursor for next page navigation.
+        before_cursor: Cursor for previous page navigation.
+        results: List of search result objects (issues, articles, users, or projects).
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -288,7 +391,18 @@ class YouTrackErrorResponse(BaseModel):
 
 
 class CredentialVerificationResult(BaseModel):
-    """Result of credential verification."""
+    """Result of credential verification.
+
+    Contains the outcome of authenticating user credentials with YouTrack
+    including user information and status details.
+
+    Attributes:
+        status: Verification status, either 'success' or 'error'.
+        username: Verified username if successful.
+        full_name: User's full name if available.
+        email: User's email address if available.
+        message: Descriptive message about verification result.
+    """
 
     model_config = ConfigDict(extra="allow")
 
