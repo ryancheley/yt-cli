@@ -365,6 +365,8 @@ class DockerTutorial(TutorialModule):
                     "On Linux, ensure your user is in the docker group",
                     "If Docker is not available, install it from docker.com",
                 ],
+                execute_action=self._execute_docker_check,
+                validation_check=self._validate_docker_available,
             ),
             TutorialStep(
                 title="Port Availability Check",
@@ -379,6 +381,8 @@ class DockerTutorial(TutorialModule):
                     "If in use, stop other services or we'll use a different port",
                     "Common services using 8080: Jenkins, other web applications",
                 ],
+                execute_action=self._execute_port_check,
+                validation_check=self._validate_port_available,
             ),
             TutorialStep(
                 title="Download YouTrack Image",
@@ -393,6 +397,8 @@ class DockerTutorial(TutorialModule):
                     "The image is about 1GB in size",
                     "This only needs to be done once",
                 ],
+                execute_action=self._execute_image_pull,
+                validation_check=self._validate_image_pulled,
             ),
             TutorialStep(
                 title="Start YouTrack Container",
@@ -407,6 +413,8 @@ class DockerTutorial(TutorialModule):
                     "Initial startup takes several minutes",
                     "We'll wait for YouTrack to be fully ready",
                 ],
+                execute_action=self._execute_container_start,
+                validation_check=self._validate_container_running,
             ),
             TutorialStep(
                 title="YouTrack Initial Setup",
@@ -557,6 +565,72 @@ class DockerTutorial(TutorialModule):
             "- Stop if you're done for now but might return",
             "- Remove if you want to clean up completely",
         ]
+
+    # Execution methods for Docker tutorial steps
+    async def _execute_docker_check(self) -> None:
+        """Execute Docker availability check."""
+        check_docker_available()
+
+    async def _execute_port_check(self) -> None:
+        """Execute port availability check."""
+        check_port_available()
+
+    async def _execute_image_pull(self) -> None:
+        """Execute YouTrack image pull."""
+        pull_youtrack_image()
+
+    async def _execute_container_start(self) -> None:
+        """Execute YouTrack container start."""
+        start_youtrack_container()
+        wait_for_youtrack_ready()
+
+    # Validation methods for Docker tutorial steps
+    def _validate_docker_available(self) -> bool:
+        """Validate Docker is available."""
+        try:
+            check_docker_available()
+            return True
+        except DockerNotAvailableError:
+            return False
+
+    def _validate_port_available(self) -> bool:
+        """Validate port 8080 is available."""
+        try:
+            check_port_available()
+            return True
+        except PortInUseError:
+            return False
+
+    def _validate_image_pulled(self) -> bool:
+        """Validate YouTrack image is available."""
+        try:
+            # Import locally to avoid issues
+            import docker
+
+            client = docker.from_env()
+            client.images.get("jetbrains/youtrack:latest")
+            return True
+        except Exception:
+            return False
+
+    def _validate_container_running(self) -> bool:
+        """Validate YouTrack container is running and ready."""
+        try:
+            # Check if container is running first
+            import docker
+
+            client = docker.from_env()
+            containers = client.containers.list(filters={"name": "youtrack"})
+            if not containers:
+                return False
+
+            # Check if YouTrack is ready
+            import requests
+
+            response = requests.get(get_youtrack_url(), timeout=5)
+            return response.status_code == 200
+        except Exception:
+            return False
 
     def cleanup_resources(self, remove_data: bool = False) -> None:
         """Clean up Docker resources."""
