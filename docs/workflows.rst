@@ -590,8 +590,8 @@ Project Release Process
    just release-check 0.2.3
 
    # 2. Update changelog
-   # Edit docs/changelog.rst to document changes
-   vim docs/changelog.rst
+   # Edit CHANGELOG.md to document changes
+   vim CHANGELOG.md
 
    # Add entry for new version:
    # [0.2.3] - 2024-07-05
@@ -602,7 +602,7 @@ Project Release Process
    # - Version consistency between files
 
    # 3. Commit changelog updates
-   git add docs/changelog.rst
+   git add CHANGELOG.md
    git commit -m "📝 Update changelog for v0.2.3"
    git push origin main
 
