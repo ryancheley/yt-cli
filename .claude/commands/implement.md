@@ -215,11 +215,11 @@ done
 
 **Before PR Creation:**
 - [ ] Code follows project conventions
-- [ ] All tests pass locally
+- [ ] All tests pass locally using tox
 - [ ] Documentation updated
 - [ ] No sensitive data committed
 - [ ] Performance impact considered
-- [ ] Accessibility requirements met (if UI changes)
+- [ ] Validate chagnes using the local YouTrack instance
 
 ## Emergency Rollback Plan
 
