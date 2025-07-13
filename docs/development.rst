@@ -787,6 +787,37 @@ The release process automatically triggers GitHub Actions workflows:
 3. **GitHub Release**: Creates GitHub release with assets and attestations
 4. **Security Attestations**: Generates digital attestations for packages
 
+Documentation Builds
+~~~~~~~~~~~~~~~~~~~~~
+
+The project uses ReadTheDocs for automatic documentation building and hosting. The documentation builds are configured to trigger only when version tags are pushed, aligning with our release strategy.
+
+**ReadTheDocs Configuration:**
+
+The ``.readthedocs.yaml`` file in the project root configures the build environment and specifies that documentation should only be built for version releases, not on every commit to main.
+
+**Manual ReadTheDocs Setup Required:**
+
+To complete the setup for version-only builds, the following must be configured in the ReadTheDocs admin interface:
+
+1. **Navigate to ReadTheDocs Admin**: Go to your project's admin page on ReadTheDocs
+2. **Configure Automation Rules**: Under "Automation Rules", configure builds to trigger only on:
+
+   - Version tags matching pattern ``v*`` (e.g., ``v1.0.0``, ``v2.1.3``)
+   - Manual builds when needed
+
+3. **Disable Branch Builds**: Ensure that automatic builds on ``main`` branch commits are disabled
+
+**Verification:**
+
+After configuring ReadTheDocs automation rules:
+
+- Documentation builds should only occur when version tags are pushed via the release process
+- No builds should trigger on regular commits to the main branch
+- Documentation will be automatically updated when new versions are released to PyPI
+
+This approach ensures that documentation stays synchronized with released versions while avoiding unnecessary builds on development commits.
+
 Contributing Guidelines
 -----------------------
 

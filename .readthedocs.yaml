@@ -1,5 +1,8 @@
 # Read the Docs configuration file for YouTrack CLI
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+#
+# This configuration is designed to work with ReadTheDocs build automation
+# that triggers only on version tags (configured in ReadTheDocs admin interface)
 
 # Required
 version: 2
@@ -19,3 +22,8 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
+
+# Additional output formats for releases
+formats:
+  - pdf
+  - epub
