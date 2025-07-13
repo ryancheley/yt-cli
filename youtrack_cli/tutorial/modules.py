@@ -3,6 +3,19 @@
 from typing import List
 
 from .core import TutorialModule, TutorialStep
+from .docker_utils import (
+    DockerNotAvailableError,
+    PortInUseError,
+    YouTrackStartupError,
+    check_docker_available,
+    check_port_available,
+    cleanup_youtrack_resources,
+    get_setup_instructions,
+    get_youtrack_url,
+    pull_youtrack_image,
+    start_youtrack_container,
+    wait_for_youtrack_ready,
+)
 
 
 class SetupTutorial(TutorialModule):
@@ -310,6 +323,246 @@ class TimeTutorial(TutorialModule):
         ]
 
 
+class DockerTutorial(TutorialModule):
+    """Tutorial for setting up a local YouTrack instance with Docker."""
+
+    def __init__(self):
+        super().__init__(
+            module_id="docker",
+            title="Local YouTrack with Docker",
+            description="Set up a local YouTrack instance using Docker for hands-on learning.",
+        )
+
+    def create_steps(self) -> List[TutorialStep]:
+        """Create tutorial steps."""
+        return [
+            TutorialStep(
+                title="Welcome to Docker Tutorial",
+                description="This tutorial will guide you through setting up a local YouTrack instance "
+                "using Docker, perfect for learning and experimentation.",
+                instructions=[
+                    "We'll use the official YouTrack Docker image",
+                    "Your local instance will be accessible at http://localhost:8080",
+                    "All data will be stored locally and can be preserved or removed",
+                    "You'll get hands-on experience with a real YouTrack instance",
+                ],
+                tips=[
+                    "Docker must be installed and running on your system",
+                    "The first startup may take several minutes",
+                    "You can keep or remove the instance when finished",
+                ],
+            ),
+            TutorialStep(
+                title="Docker Environment Check",
+                description="Let's verify that Docker is available and ready for use.",
+                instructions=[
+                    "We'll check if Docker is installed and running on your system",
+                    "This step will verify Docker availability",
+                    "Any issues will be reported with helpful solutions",
+                ],
+                tips=[
+                    "Docker Desktop must be running if you're on Windows/macOS",
+                    "On Linux, ensure your user is in the docker group",
+                    "If Docker is not available, install it from docker.com",
+                ],
+            ),
+            TutorialStep(
+                title="Port Availability Check",
+                description="Verify that port 8080 is available for YouTrack.",
+                instructions=[
+                    "We'll check if port 8080 is available for YouTrack",
+                    "This port will be used to access your local YouTrack instance",
+                    "Any conflicts will be identified with suggestions",
+                ],
+                tips=[
+                    "Port 8080 is the default for YouTrack",
+                    "If in use, stop other services or we'll use a different port",
+                    "Common services using 8080: Jenkins, other web applications",
+                ],
+            ),
+            TutorialStep(
+                title="Download YouTrack Image",
+                description="Download the official YouTrack Docker image.",
+                instructions=[
+                    "We'll download the official jetbrains/youtrack Docker image",
+                    "This step may take a few minutes on first run",
+                    "The image will be cached for future use",
+                ],
+                tips=[
+                    "This may take a few minutes depending on your internet speed",
+                    "The image is about 1GB in size",
+                    "This only needs to be done once",
+                ],
+            ),
+            TutorialStep(
+                title="Start YouTrack Container",
+                description="Launch your local YouTrack instance.",
+                instructions=[
+                    "We'll start a YouTrack container using the downloaded image",
+                    "The container will be configured with appropriate settings",
+                    "We'll wait for YouTrack to be fully ready before proceeding",
+                ],
+                tips=[
+                    "The container will start in the background",
+                    "Initial startup takes several minutes",
+                    "We'll wait for YouTrack to be fully ready",
+                ],
+            ),
+            TutorialStep(
+                title="YouTrack Initial Setup",
+                description="Complete the initial YouTrack configuration in your browser.",
+                instructions=self._get_web_setup_instructions(),
+                tips=[
+                    "Use any credentials you like - this is your local instance",
+                    "Create a test project for practicing CLI commands",
+                    "The 'FPU' project name works well for examples",
+                ],
+            ),
+            TutorialStep(
+                title="Configure CLI for Local Instance",
+                description="Set up the YouTrack CLI to work with your local instance.",
+                instructions=self._get_cli_config_instructions(),
+                command_example="yt auth login --base-url http://localhost:8080 --token YOUR_TOKEN",
+                tips=[
+                    "Get your API token from Profile → Account Security → API Tokens",
+                    "The base URL should be http://localhost:8080",
+                    "Test the connection with 'yt projects list'",
+                ],
+            ),
+            TutorialStep(
+                title="Practice with Your Local Instance",
+                description="Try some basic operations with your local YouTrack.",
+                instructions=[
+                    "List your projects: yt projects list",
+                    "Create a test issue: yt issues create PROJECT-ID 'Test issue'",
+                    "View the issue: yt issues show PROJECT-123",
+                    "Update the issue: yt issues update PROJECT-123 --state 'In Progress'",
+                ],
+                tips=[
+                    "Replace PROJECT-ID with your actual project ID",
+                    "Issue IDs follow the pattern PROJECT-NUMBER",
+                    "Try different commands to explore the CLI",
+                ],
+            ),
+            TutorialStep(
+                title="Cleanup Options",
+                description="Decide what to do with your local YouTrack instance.",
+                instructions=self._get_cleanup_instructions(),
+                tips=[
+                    "Keeping the instance lets you continue practicing",
+                    "Removing saves disk space and cleans up resources",
+                    "You can always create a new instance later",
+                ],
+            ),
+        ]
+
+    def _get_docker_check_instructions(self) -> List[str]:
+        """Get instructions for Docker availability check."""
+        try:
+            check_docker_available()
+            return [
+                "✓ Docker is available and running!",
+                "Your system is ready to run YouTrack containers",
+                "Proceeding to the next step...",
+            ]
+        except DockerNotAvailableError as e:
+            return [
+                f"✗ Docker check failed: {e}",
+                "Please install Docker and ensure it's running",
+                "Visit https://docker.com for installation instructions",
+                "Restart this tutorial after Docker is ready",
+            ]
+
+    def _get_port_check_instructions(self) -> List[str]:
+        """Get instructions for port availability check."""
+        try:
+            check_port_available()
+            return [
+                "✓ Port 8080 is available!",
+                "YouTrack will be accessible at http://localhost:8080",
+                "Ready to proceed with container setup",
+            ]
+        except PortInUseError as e:
+            return [
+                f"✗ Port check failed: {e}",
+                "Please stop any services using port 8080",
+                "Or we can use a different port if needed",
+                "Common culprits: Jenkins, other web servers",
+            ]
+
+    def _get_image_pull_instructions(self) -> List[str]:
+        """Get instructions for pulling YouTrack image."""
+        try:
+            pull_youtrack_image()
+            return [
+                "✓ YouTrack image downloaded successfully!",
+                "Image is now available for container creation",
+                "Ready to start the YouTrack container",
+            ]
+        except Exception as e:
+            return [
+                f"✗ Image pull failed: {e}",
+                "Check your internet connection",
+                "Ensure Docker has permission to pull images",
+                "You may need to retry this step",
+            ]
+
+    def _get_container_start_instructions(self) -> List[str]:
+        """Get instructions for starting YouTrack container."""
+        try:
+            container_id = start_youtrack_container()
+            wait_for_youtrack_ready()
+            return [
+                f"✓ YouTrack container started! (ID: {container_id[:12]})",
+                "✓ YouTrack is now ready and accessible",
+                f"You can access it at: {get_youtrack_url()}",
+                "Ready for initial setup in your browser",
+            ]
+        except (Exception, YouTrackStartupError) as e:
+            return [
+                f"✗ Container startup failed: {e}",
+                "Check Docker logs for more details",
+                "Ensure no other services are using port 8080",
+                "You may need to retry this step",
+            ]
+
+    def _get_web_setup_instructions(self) -> List[str]:
+        """Get web setup instructions."""
+        return get_setup_instructions()
+
+    def _get_cli_config_instructions(self) -> List[str]:
+        """Get CLI configuration instructions."""
+        return [
+            "Now let's configure the CLI to use your local YouTrack:",
+            "1. In YouTrack, go to your Profile (top right)",
+            "2. Go to Account Security → API Tokens",
+            "3. Create a new token with appropriate permissions",
+            "4. Copy the token and run the command below",
+            f"5. Use base URL: {get_youtrack_url()}",
+        ]
+
+    def _get_cleanup_instructions(self) -> List[str]:
+        """Get cleanup instructions."""
+        return [
+            "What would you like to do with your local YouTrack instance?",
+            "",
+            "Options:",
+            "1. Keep running - Continue using it for practice",
+            "2. Stop container - Keep data but stop the service",
+            "3. Remove container - Remove container but keep data volume",
+            "4. Full cleanup - Remove everything (container + data)",
+            "",
+            "Choose based on your needs:",
+            "- Keep if you want to continue learning",
+            "- Stop if you're done for now but might return",
+            "- Remove if you want to clean up completely",
+        ]
+
+    def cleanup_resources(self, remove_data: bool = False) -> None:
+        """Clean up Docker resources."""
+        cleanup_youtrack_resources(remove_data=remove_data)
+
+
 def get_default_modules() -> List[TutorialModule]:
     """Get the default set of tutorial modules."""
     return [
@@ -317,4 +570,5 @@ def get_default_modules() -> List[TutorialModule]:
         IssuesTutorial(),
         ProjectsTutorial(),
         TimeTutorial(),
+        DockerTutorial(),
     ]

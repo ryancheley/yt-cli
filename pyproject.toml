@@ -38,6 +38,7 @@ dependencies = [
     "keyring>=25.0.0",
     "cryptography>=41.0.0",
     "ty>=0.0.1a14",
+    "docker>=7.0.0",
 ]
 
 [project.urls]

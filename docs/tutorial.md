@@ -42,6 +42,17 @@ Master time tracking for project management. This tutorial covers:
 - Viewing time entries and reports
 - Best practices for time tracking
 
+### Docker Tutorial (`docker`)
+Set up a local YouTrack instance using Docker for hands-on learning. This tutorial covers:
+- Checking Docker availability and requirements
+- Downloading and starting a YouTrack container
+- Configuring the initial YouTrack setup
+- Connecting the CLI to your local instance
+- Practicing with a real YouTrack environment
+- Managing and cleaning up the Docker resources
+
+**Requirements**: Docker must be installed and running on your system. This tutorial creates a local YouTrack instance at `http://localhost:8080` for learning purposes.
+
 ## Using the Tutorial System
 
 ### List Available Tutorials
@@ -156,6 +167,14 @@ Each tutorial step includes:
 - Ensure you're authenticated with `yt auth login`
 - Verify your YouTrack instance is accessible
 - Check that you have appropriate permissions
+
+### Docker Tutorial Issues
+- **Docker not available**: Install Docker Desktop and ensure it's running
+- **Port 8080 in use**: Stop other services using the port or modify the tutorial to use a different port
+- **Container won't start**: Check Docker logs with `docker logs youtrack-tutorial`
+- **YouTrack takes too long to start**: Initial startup can take 5-10 minutes, especially on slower systems
+- **Permission denied**: Ensure your user has Docker permissions (add to docker group on Linux)
+- **Out of disk space**: YouTrack image is ~1GB, ensure sufficient space available
 
 ## Advanced Usage
 
