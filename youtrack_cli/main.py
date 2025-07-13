@@ -10,7 +10,7 @@ from . import __version__
 from .admin import AdminManager
 from .auth import AuthManager
 from .cli_utils import AliasedGroup
-from .commands import articles, boards, issues, projects, time, users
+from .commands import articles, boards, issues, projects, time, tutorial, users
 from .config import ConfigManager
 from .console import get_console
 from .logging import setup_logging
@@ -28,6 +28,7 @@ __all__ = [
     "boards",
     "admin",
     "time",
+    "tutorial",
     "reports",
     "auth",
     "config",
@@ -158,6 +159,7 @@ main.add_command(articles)
 main.add_command(projects)
 main.add_command(users)
 main.add_command(time)
+main.add_command(tutorial)
 main.add_command(boards)
 
 # Add aliases for main command groups
@@ -167,6 +169,7 @@ main.add_alias("p", "projects")
 main.add_alias("u", "users")
 main.add_alias("t", "time")
 main.add_alias("b", "boards")
+# Note: No short alias for tutorial to avoid conflicts
 
 # Add aliases for top-level commands
 main.add_alias("c", "config")
