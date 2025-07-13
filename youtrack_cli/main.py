@@ -81,19 +81,15 @@ def main(
 
     Quick Start:
 
-        \b
         # Set up authentication
         yt auth login  (or: yt login)
 
-        \b
         # List your projects
         yt projects list  (or: yt p list)
 
-        \b
         # Create an issue
         yt issues create PROJECT-123 "Fix the bug"  (or: yt i create ...)
 
-        \b
         # Log work time
         yt time log ISSUE-456 "2h 30m" --description "Fixed the issue"
         # (or: yt t log ...)
@@ -104,7 +100,6 @@ def main(
 
     For more help on specific commands, use:
 
-        \b
         yt COMMAND --help
 
     Documentation: https://yt-cli.readthedocs.io/
@@ -190,19 +185,15 @@ def completion(shell: str, install: bool) -> None:
     Generate completion scripts for bash, zsh, fish, or PowerShell shells.
 
     Examples:
-        \b
         # Generate bash completion script
         yt completion bash
 
-        \b
         # Install bash completion (requires sudo on some systems)
         yt completion bash --install
 
-        \b
         # Generate PowerShell completion script
         yt completion powershell
 
-        \b
         # For manual installation, redirect output to file:
         yt completion bash > ~/.local/share/bash-completion/completions/yt
         yt completion zsh > ~/.zsh/completions/_yt
@@ -538,11 +529,9 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
     It will help you configure your YouTrack URL, authentication, and basic preferences.
 
     Examples:
-        \b
         # Run the interactive setup wizard
         yt setup
 
-        \b
         # Setup without validating the connection
         yt setup --skip-validation
     """
