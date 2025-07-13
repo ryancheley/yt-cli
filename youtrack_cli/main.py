@@ -1328,5 +1328,148 @@ def list_fields(ctx: click.Context) -> None:
     asyncio.run(run_list_fields())
 
 
+@admin.group()
+def locale() -> None:
+    """Manage YouTrack locale and language settings."""
+    pass
+
+
+@locale.command(name="get")
+@click.pass_context
+def get_locale(ctx: click.Context) -> None:
+    """View current locale settings."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_get_locale() -> None:
+        result = await admin_manager.get_locale_settings()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_locale_settings(result["data"])
+
+    asyncio.run(run_get_locale())
+
+
+@locale.command(name="set")
+@click.option(
+    "--language",
+    "-l",
+    required=True,
+    help="Locale ID to set (e.g., en_US, de_DE, fr_FR)",
+)
+@click.pass_context
+def set_locale(ctx: click.Context, language: str) -> None:
+    """Set system language locale."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_set_locale() -> None:
+        result = await admin_manager.set_locale_settings(language)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        console.print(f"[green]Success:[/green] {result['message']}")
+
+    asyncio.run(run_set_locale())
+
+
+@locale.command(name="list")
+@click.pass_context
+def list_locales(ctx: click.Context) -> None:
+    """List available locales."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_list_locales() -> None:
+        result = await admin_manager.get_available_locales()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_available_locales(result["data"], result.get("message"))
+
+    asyncio.run(run_list_locales())
+
+
+@admin.group()
+def i18n() -> None:
+    """Manage internationalization settings (alias for locale)."""
+    pass
+
+
+@i18n.command(name="get")
+@click.pass_context
+def get_i18n(ctx: click.Context) -> None:
+    """View all internationalization settings (same as locale get)."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_get_i18n() -> None:
+        result = await admin_manager.get_locale_settings()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_locale_settings(result["data"])
+
+    asyncio.run(run_get_i18n())
+
+
+@i18n.command(name="set")
+@click.option(
+    "--language",
+    "-l",
+    help="Locale ID to set (e.g., en_US, de_DE, fr_FR)",
+)
+@click.option(
+    "--timezone",
+    "-tz",
+    help="Timezone to set (Note: Not implemented in this version)",
+)
+@click.option(
+    "--date-format",
+    "-df",
+    help="Date format to set (Note: Not implemented in this version)",
+)
+@click.pass_context
+def set_i18n(ctx: click.Context, language: Optional[str], timezone: Optional[str], date_format: Optional[str]) -> None:
+    """Set internationalization settings."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    if not any([language, timezone, date_format]):
+        console.print("[red]Error:[/red] At least one option must be specified.")
+        console.print("Use --language to set locale, --timezone for timezone, or --date-format for date format.")
+        return
+
+    async def run_set_i18n() -> None:
+        if language:
+            result = await admin_manager.set_locale_settings(language)
+            if result["status"] == "error":
+                console.print(f"[red]Error:[/red] {result['message']}")
+                return
+            console.print(f"[green]Success:[/green] {result['message']}")
+
+        if timezone:
+            console.print("[yellow]Note:[/yellow] Timezone setting is not yet implemented.")
+
+        if date_format:
+            console.print("[yellow]Note:[/yellow] Date format setting is not yet implemented.")
+
+    asyncio.run(run_set_i18n())
+
+
 if __name__ == "__main__":
     main()
