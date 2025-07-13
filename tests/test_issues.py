@@ -1,5 +1,6 @@
 """Tests for issue management functionality."""
 
+import re
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -880,9 +881,11 @@ class TestIssueManager:
         issue_manager.display_issue_details(sample_issue)
 
         captured = capsys.readouterr()
-        assert "PROJ-123" in captured.out
-        assert "Test Issue" in captured.out
-        assert "High" in captured.out
+        # Remove ANSI escape codes for consistent testing across environments
+        clean_output = re.sub(r"\x1b\[[0-9;]*m", "", captured.out)
+        assert "PROJ-123" in clean_output
+        assert "Test Issue" in clean_output
+        assert "High" in clean_output
 
     def test_display_comments_table(self, issue_manager, capsys):
         """Test comments table display."""
