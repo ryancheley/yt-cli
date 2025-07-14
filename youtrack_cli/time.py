@@ -305,22 +305,58 @@ class TimeManager:
         table.add_column("Type", style="red")
 
         for entry in time_entries:
+            # Handle duration - YouTrack API may not include minutes field
             duration = entry.get("duration", {})
-            minutes = duration.get("minutes", 0) if isinstance(duration, dict) else 0
-            hours = round(minutes / 60, 2)
-            duration_str = f"{hours}h ({minutes}m)"
+            if isinstance(duration, dict):
+                minutes = duration.get("minutes", 0)
+            else:
+                minutes = 0
+            hours = round(minutes / 60, 2) if minutes > 0 else 0
+            duration_str = f"{hours}h ({minutes}m)" if minutes > 0 else "No duration"
 
+            # Handle issue information
             issue = entry.get("issue", {})
-            issue_str = f"{issue.get('id', 'N/A')} - {issue.get('summary', 'No summary')[:30]}"
+            if isinstance(issue, dict):
+                issue_str = f"{issue.get('id', 'N/A')} - {issue.get('summary', 'No summary')[:30]}"
+            else:
+                issue_str = "N/A"
+
+            # Format date from timestamp to readable format
+            date_value = entry.get("date")
+            if isinstance(date_value, int):
+                formatted_date = datetime.fromtimestamp(date_value / 1000).strftime("%Y-%m-%d %H:%M")
+            else:
+                formatted_date = str(date_value) if date_value else "N/A"
+
+            # Handle author information
+            author = entry.get("author", {})
+            if isinstance(author, dict):
+                author_name = author.get("fullName", "N/A")
+            else:
+                author_name = "N/A"
+
+            # Handle work type - can be null/None
+            work_type = entry.get("type")
+            if isinstance(work_type, dict):
+                type_name = work_type.get("name", "N/A")
+            else:
+                type_name = "N/A"
+
+            # Handle description
+            description = entry.get("description", "N/A")
+            if description and len(str(description)) > 40:
+                description = str(description)[:40]
+            elif not description:
+                description = "N/A"
 
             table.add_row(
-                entry.get("id", "N/A"),
+                str(entry.get("id", "N/A")),
                 issue_str,
                 duration_str,
-                entry.get("date", "N/A"),
-                entry.get("author", {}).get("fullName", "N/A"),
-                entry.get("description", "N/A")[:40],
-                entry.get("type", {}).get("name", "N/A"),
+                formatted_date,
+                author_name,
+                str(description),
+                type_name,
             )
 
         self.console.print(table)
