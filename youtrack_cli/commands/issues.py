@@ -14,7 +14,7 @@ from typing import Optional
 import click
 
 from ..auth import AuthManager
-from ..cli_utils import AliasedGroup
+from ..cli_utils import AliasedGroup, enhanced_option, validate_issue_id_format, validate_project_id_format
 from ..console import get_console
 
 
@@ -48,27 +48,30 @@ def issues() -> None:
 
 
 @issues.command()
-@click.argument("project_id")
+@click.argument("project_id", callback=validate_project_id_format)
 @click.argument("summary")
-@click.option(
+@enhanced_option(
     "--description",
     "-d",
     help="Issue description",
+    usage_examples=["--description 'Detailed description of the issue'"],
 )
-@click.option(
+@enhanced_option(
     "--type",
     "-t",
     help="Issue type (e.g., Bug, Feature, Task)",
+    suggestions=["Bug", "Feature", "Task", "Epic", "Story"],
+    usage_examples=["--type Bug", "--type Feature"],
 )
-@click.option(
+@enhanced_option(
     "--priority",
     "-p",
     help="Issue priority (e.g., Critical, High, Medium, Low)",
+    suggestions=["Critical", "High", "Medium", "Low"],
+    usage_examples=["--priority High", "--priority Critical"],
 )
-@click.option(
-    "--assignee",
-    "-a",
-    help="Assignee username",
+@enhanced_option(
+    "--assignee", "-a", help="Assignee username", usage_examples=["--assignee john.doe", "--assignee admin"]
 )
 @click.pass_context
 def create(
@@ -102,7 +105,9 @@ def create(
             --type Task \\
             --priority Medium
     """
+    from ..exceptions import UsageError, ValidationError
     from ..issues import IssueManager
+    from ..utils import display_error, display_success, handle_error
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -123,15 +128,50 @@ def create(
         )
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            display_success(f"{result['message']}")
             issue = result["data"]
-            console.print(f"Issue ID: {issue.get('id', 'N/A')}", style="blue")
+            console.print(f"[blue]Issue ID:[/blue] {issue.get('id', 'N/A')}")
         else:
-            console.print(f"❌ {result['message']}", style="red")
+            # Create enhanced error for common API failures
+            if "project" in result["message"].lower() and "not found" in result["message"].lower():
+                error = ValidationError(f"Project '{project_id}' not found", field="project_id")
+                error.suggestion = (
+                    f"Check if project '{project_id}' exists and you have access to it. "
+                    "Use 'yt projects list' to see available projects."
+                )
+                error_result = handle_error(error, "create issue")
+                display_error(error_result)
+            else:
+                console.print(f"❌ {result['message']}", style="red")
+
             raise click.ClickException("Failed to create issue")
 
+    except click.ClickException:
+        raise
     except Exception as e:
-        console.print(f"❌ Error creating issue: {e}", style="red")
+        # Provide helpful guidance for common errors
+        error_result = handle_error(e, "create issue")
+        display_error(error_result)
+
+        # Add usage guidance for common mistakes
+        usage_error = UsageError(
+            "Issue creation failed",
+            command_path="yt issues create",
+            usage_syntax="yt issues create PROJECT_ID SUMMARY [OPTIONS]",
+            examples=[
+                "yt issues create WEB-123 'Fix login bug'",
+                "yt issues create API-456 'Add new endpoint' --type Feature --priority High",
+                "yt issues create INFRA-789 'Update certificates' --assignee admin",
+            ],
+            common_mistakes=[
+                "Using lowercase in project ID (use 'WEB-123' not 'web-123')",
+                "Missing quotes around summary with spaces",
+                "Invalid issue type or priority values",
+            ],
+        )
+        usage_result = handle_error(usage_error, "issue creation guidance")
+        display_error(usage_result)
+
         raise click.ClickException("Failed to create issue") from e
 
 
@@ -788,14 +828,49 @@ def list_tags(ctx: click.Context, issue_id: str) -> None:
         raise click.ClickException("Failed to list tags") from e
 
 
-@issues.group()
+class CommentsGroup(AliasedGroup):
+    """Enhanced comments group with specific error handling for create vs add."""
+
+    def get_command(self, ctx: click.Context, cmd_name: str):
+        # Handle the specific case of 'create' -> 'add' suggestion
+        if cmd_name == "create":
+            from ..exceptions import CommandValidationError
+            from ..utils import display_error, handle_error
+
+            error = CommandValidationError(
+                "Command 'create' not found for comments",
+                command_path=f"{ctx.info_name} comments create",
+                similar_commands=["add"],
+                usage_example=f'{ctx.info_name} comments add ISSUE-ID "Your comment text"',
+            )
+
+            error_result = handle_error(error, "command lookup")
+            display_error(error_result)
+
+            # Return None to let Click show its normal error, but we've already shown helpful info
+            return None
+
+        return super().get_command(ctx, cmd_name)
+
+
+@issues.group(cls=CommentsGroup)
 def comments() -> None:
-    """Manage issue comments."""
+    """Manage issue comments.
+
+    Use 'add' to create new comments, not 'create'.
+
+    Examples:
+        # Add a comment to an issue
+        yt issues comments add ISSUE-123 "Your comment text"
+
+        # List comments on an issue
+        yt issues comments list ISSUE-123
+    """
     pass
 
 
 @comments.command(name="add")
-@click.argument("issue_id")
+@click.argument("issue_id", callback=validate_issue_id_format)
 @click.argument("text")
 @click.pass_context
 def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:

@@ -35,7 +35,30 @@ __all__ = [
 ]
 
 
-@click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
+class MainGroup(AliasedGroup):
+    """Enhanced main group with specific error handling for common mistakes."""
+
+    def get_command(self, ctx: click.Context, cmd_name: str):
+        # Handle common version/help mistakes
+        if cmd_name in ["version", "v"]:
+            from .exceptions import CommandValidationError
+            from .utils import display_error, handle_error
+
+            error = CommandValidationError(
+                f"Command '{cmd_name}' not found",
+                command_path=f"{ctx.info_name} {cmd_name}",
+                similar_commands=["--version"],
+                usage_example=f"{ctx.info_name} --version",
+            )
+
+            error_result = handle_error(error, "command lookup")
+            display_error(error_result)
+            return None
+
+        return super().get_command(ctx, cmd_name)
+
+
+@click.group(cls=MainGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=__version__)
 @click.option(
     "--config",

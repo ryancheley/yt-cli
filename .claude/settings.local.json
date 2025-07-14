@@ -47,7 +47,9 @@
       "Bash(source:*)",
       "Bash(curl:*)",
       "WebFetch(domain:docs.astral.sh)",
-      "Bash(just:*)"
+      "Bash(just:*)",
+      "Bash(ty:*)",
+      "Bash(ruff check:*)"
     ],
     "deny": []
   }
