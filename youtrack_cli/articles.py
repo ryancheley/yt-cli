@@ -22,6 +22,35 @@ class ArticleManager:
         self.auth_manager = auth_manager
         self.console = get_console()
 
+    async def _resolve_project_id(self, project_identifier: str) -> str:
+        """Resolve project short name to project ID."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            raise ValueError("Not authenticated")
+
+        # If it looks like an ID (contains hyphen), return as-is
+        if "-" in project_identifier:
+            return project_identifier
+
+        # Otherwise, treat it as a short name and resolve to ID
+        url = f"{credentials.base_url.rstrip('/')}/api/admin/projects"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "id,shortName", "$top": "1000"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            projects_data = self._safe_json_parse(response)
+
+            for project in projects_data:
+                if project.get("shortName") == project_identifier:
+                    return project.get("id")
+
+            # If not found, raise an error
+            raise ValueError(f"Project '{project_identifier}' not found")
+        except Exception as e:
+            raise ValueError(f"Failed to resolve project ID: {str(e)}") from e
+
     def _safe_json_parse(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or invalid JSON responses."""
         try:
@@ -55,7 +84,7 @@ class ArticleManager:
         self,
         title: str,
         content: str,
-        project_id: Optional[str] = None,
+        project_id: str,
         parent_id: Optional[str] = None,
         summary: Optional[str] = None,
         visibility: str = "public",
@@ -68,13 +97,20 @@ class ArticleManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
+        try:
+            # Resolve project short name to project ID
+            resolved_project_id = await self._resolve_project_id(project_id)
+        except ValueError as e:
+            return {
+                "status": "error",
+                "message": str(e),
+            }
+
         article_data = {
             "summary": title,
             "content": content,
+            "project": {"id": resolved_project_id},
         }
-
-        if project_id:
-            article_data["project"] = {"id": project_id}
         if parent_id:
             article_data["parentArticle"] = {"id": parent_id}
         if summary:

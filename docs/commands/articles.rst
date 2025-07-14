@@ -61,7 +61,7 @@ Create a new article in YouTrack.
      - Path to markdown file containing article content (required if --content not provided)
    * - ``--project-id, -p``
      - string
-     - Project ID to associate with the article
+     - Project ID or short name to associate with the article (required)
    * - ``--parent-id``
      - string
      - Parent article ID for nested articles
@@ -77,22 +77,22 @@ Create a new article in YouTrack.
 .. code-block:: bash
 
    # Create a simple article with inline content
-   yt articles create "Getting Started Guide" --content "This is a comprehensive guide..."
+   yt articles create "Getting Started Guide" --content "This is a comprehensive guide..." --project-id FPU
 
    # Create an article from a markdown file
-   yt articles create "Getting Started Guide" --file getting-started.md
+   yt articles create "Getting Started Guide" --file getting-started.md --project-id FPU
 
    # Create an article in a specific project from a file
-   yt articles create "API Documentation" --file api-docs.md --project-id PROJECT-123
+   yt articles create "API Documentation" --file api-docs.md --project-id FPU
 
    # Create a nested article (child of another article) from a file
-   yt articles create "Advanced Features" --file advanced.md --parent-id ARTICLE-456
+   yt articles create "Advanced Features" --file advanced.md --parent-id ARTICLE-456 --project-id FPU
 
    # Create a draft article (private visibility) from a file
-   yt articles create "Draft Article" --file draft.md --visibility private
+   yt articles create "Draft Article" --file draft.md --visibility private --project-id FPU
 
    # Create an article with inline content (traditional approach)
-   yt articles create "API Documentation" --content "API usage guide" --project-id PROJECT-123
+   yt articles create "API Documentation" --content "API usage guide" --project-id FPU
 
 edit
 ~~~~
@@ -706,7 +706,7 @@ Creating Documentation Structure
 .. code-block:: bash
 
    # Create main documentation article
-   yt articles create "Project Documentation" --content "Main documentation hub" --project-id PROJECT-123
+   yt articles create "Project Documentation" --content "Main documentation hub" --project-id FPU
 
    # Create child articles
    yt articles create "Getting Started" --content "How to get started" --parent-id MAIN-ARTICLE-ID
@@ -714,7 +714,7 @@ Creating Documentation Structure
    yt articles create "Troubleshooting" --content "Common issues" --parent-id MAIN-ARTICLE-ID
 
    # View the documentation tree
-   yt articles tree --project-id PROJECT-123
+   yt articles tree --project-id FPU
 
 Draft to Publication Workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -722,7 +722,7 @@ Draft to Publication Workflow
 .. code-block:: bash
 
    # Create a draft article
-   yt articles create "New Feature Guide" --content "Draft content" --visibility private
+   yt articles create "New Feature Guide" --content "Draft content" --visibility private --project-id FPU
 
    # Edit and refine the draft
    yt articles edit ARTICLE-123 --content "Updated draft content"
@@ -756,16 +756,16 @@ Working with Markdown Files
 .. code-block:: bash
 
    # Create articles from existing markdown files
-   yt articles create "Installation Guide" --file docs/installation.md
+   yt articles create "Installation Guide" --file docs/installation.md --project-id FPU
 
    # Create multiple articles from markdown files
-   yt articles create "User Manual" --file user-manual.md --project-id PROJECT-123
-   yt articles create "Developer Guide" --file dev-guide.md --project-id PROJECT-123
+   yt articles create "User Manual" --file user-manual.md --project-id FPU
+   yt articles create "Developer Guide" --file dev-guide.md --project-id FPU
 
    # Organize markdown documentation into YouTrack articles
    for file in docs/*.md; do
        title=$(basename "$file" .md)
-       yt articles create "$title" --file "$file" --project-id PROJECT-123
+       yt articles create "$title" --file "$file" --project-id FPU
    done
 
 Best Practices

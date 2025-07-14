@@ -60,6 +60,7 @@ class TestArticleManager:
             result = await article_manager.create_article(
                 title="Test Article",
                 content="Test content",
+                project_id="TEST-PROJECT",
             )
 
             assert result["status"] == "success"
@@ -77,6 +78,7 @@ class TestArticleManager:
             result = await article_manager.create_article(
                 title="Test Article",
                 content="Test content",
+                project_id="TEST-PROJECT",
             )
 
             assert result["status"] == "error"
@@ -325,7 +327,7 @@ class TestArticleManager:
         """Test operations when not authenticated."""
         article_manager.auth_manager.load_credentials.return_value = None
 
-        result = await article_manager.create_article("Title", "Content")
+        result = await article_manager.create_article("Title", "Content", "TEST-PROJECT")
         assert result["status"] == "error"
         assert "Not authenticated" in result["message"]
         assert "yt auth login" in result["message"]
@@ -613,7 +615,9 @@ class TestArticlesCLI:
                 "data": {"id": "123"},
             }
 
-            result = runner.invoke(main, ["articles", "create", "Test Title", "--content", "Test content"])
+            result = runner.invoke(
+                main, ["articles", "create", "Test Title", "--content", "Test content", "--project-id", "TEST-PROJECT"]
+            )
 
             assert result.exit_code == 0
             assert "Creating article" in result.output
@@ -644,7 +648,9 @@ class TestArticlesCLI:
                 "data": {"id": "123"},
             }
 
-            result = runner.invoke(main, ["articles", "create", "Test Title", "--file", str(test_file)])
+            result = runner.invoke(
+                main, ["articles", "create", "Test Title", "--file", str(test_file), "--project-id", "TEST-PROJECT"]
+            )
 
             assert result.exit_code == 0
             assert "Reading content from" in result.output
@@ -656,7 +662,9 @@ class TestArticlesCLI:
 
         runner = CliRunner()
 
-        result = runner.invoke(main, ["articles", "create", "Test Title", "--file", "nonexistent.md"])
+        result = runner.invoke(
+            main, ["articles", "create", "Test Title", "--file", "nonexistent.md", "--project-id", "TEST-PROJECT"]
+        )
 
         assert result.exit_code != 0
         assert "does not exist" in result.output
@@ -672,7 +680,18 @@ class TestArticlesCLI:
             test_file.write_text("Test content")
 
             result = runner.invoke(
-                main, ["articles", "create", "Test Title", "--content", "Test content", "--file", str(test_file)]
+                main,
+                [
+                    "articles",
+                    "create",
+                    "Test Title",
+                    "--content",
+                    "Test content",
+                    "--file",
+                    str(test_file),
+                    "--project-id",
+                    "TEST-PROJECT",
+                ],
             )
 
             assert result.exit_code != 0
@@ -687,7 +706,19 @@ class TestArticlesCLI:
         result = runner.invoke(main, ["articles", "create", "Test Title"])
 
         assert result.exit_code != 0
-        assert "Either --content or --file must be specified" in result.output
+        # Should fail because project-id is required
+        assert "Missing option" in result.output or "required" in result.output
+
+    def test_articles_create_command_missing_project_id(self):
+        """Test articles create command without required project-id parameter."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["articles", "create", "Test Title", "--content", "Test content"])
+
+        assert result.exit_code != 0
+        assert "Missing option" in result.output or "required" in result.output
 
     def test_articles_create_command_empty_file(self):
         """Test articles create command with empty file."""
@@ -699,7 +730,9 @@ class TestArticlesCLI:
             test_file = Path("empty.md")
             test_file.write_text("")
 
-            result = runner.invoke(main, ["articles", "create", "Test Title", "--file", str(test_file)])
+            result = runner.invoke(
+                main, ["articles", "create", "Test Title", "--file", str(test_file), "--project-id", "TEST-PROJECT"]
+            )
 
             assert result.exit_code != 0
             assert "is empty" in result.output
