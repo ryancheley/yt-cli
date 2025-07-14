@@ -46,7 +46,8 @@
       "WebFetch(domain:youtrack-support.jetbrains.com)",
       "Bash(source:*)",
       "Bash(curl:*)",
-      "WebFetch(domain:docs.astral.sh)"
+      "WebFetch(domain:docs.astral.sh)",
+      "Bash(just:*)"
     ],
     "deny": []
   }

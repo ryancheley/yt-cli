@@ -609,7 +609,19 @@ def search(
 @click.argument("assignee")
 @click.pass_context
 def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
-    """Assign an issue to a user."""
+    """Assign an issue to a user.
+
+    Assigns the specified issue to a user by their username.
+
+    Examples:
+        # Assign issue to a specific user
+        yt issues assign DEMO-20 admin
+
+        # Assign issue to yourself (use your username)
+        yt issues assign WEB-123 john.doe
+
+    Note: Use the username directly as a positional argument, not --assignee flag.
+    """
     from ..issues import IssueManager
 
     console = get_console()
@@ -627,8 +639,12 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to assign issue")
 
+    except click.ClickException:
+        raise
     except Exception as e:
         console.print(f"❌ Error assigning issue: {e}", style="red")
+        console.print("💡 Correct usage: yt issues assign ISSUE-ID USERNAME", style="blue")
+        console.print("💡 Example: yt issues assign DEMO-20 admin", style="blue")
         raise click.ClickException("Failed to assign issue") from e
 
 
@@ -783,7 +799,20 @@ def comments() -> None:
 @click.argument("text")
 @click.pass_context
 def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
-    """Add a comment to an issue."""
+    """Add a comment to an issue.
+
+    Adds a comment to the specified issue with the provided text.
+
+    Examples:
+        # Add a simple comment
+        yt issues comments add DEMO-20 "Fixed in latest build"
+
+        # Add a longer comment with quotes
+        yt issues comments add WEB-123 "This issue was caused by a race condition in the login module"
+
+    Note: Use the comment text directly as a positional argument, not --text flag.
+    There is no 'create' subcommand; use 'add' instead.
+    """
     from ..issues import IssueManager
 
     console = get_console()
@@ -801,8 +830,13 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to add comment")
 
+    except click.ClickException:
+        raise
     except Exception as e:
         console.print(f"❌ Error adding comment: {e}", style="red")
+        console.print('💡 Correct usage: yt issues comments add ISSUE-ID "Your comment text"', style="blue")
+        console.print('💡 Example: yt issues comments add DEMO-20 "Fixed in latest build"', style="blue")
+        console.print("💡 Note: Use 'add' not 'create' for comments", style="blue")
         raise click.ClickException("Failed to add comment") from e
 
 
@@ -919,7 +953,20 @@ def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, confirm: 
 
 @issues.group()
 def attach() -> None:
-    """Manage issue attachments."""
+    """Manage issue attachments.
+
+    This command group requires a subcommand to specify the action.
+    Available subcommands: list, upload, download, delete
+
+    Examples:
+        # List attachments for an issue
+        yt issues attach list ISSUE-123
+
+        # Upload a file to an issue
+        yt issues attach upload ISSUE-123 /path/to/file.txt
+
+    Note: Use 'yt issues attach --help' to see all available subcommands.
+    """
     pass
 
 

@@ -119,7 +119,21 @@ def projects_create(
     description: Optional[str],
     template: Optional[str],
 ) -> None:
-    """Create a new project."""
+    """Create a new project.
+
+    Creates a new project with the specified name and short name.
+    Both name and short_name are required positional arguments.
+
+    Examples:
+        # Create a basic project (will prompt for leader)
+        yt projects create "CLI Testing Project" CLI-TEST
+
+        # Create a project with all options
+        yt projects create "My Project" MP --leader admin --description "Project description" --template scrum
+
+    Note: Both NAME and SHORT_NAME are required positional arguments.
+    The leader will be prompted interactively if not specified with --leader.
+    """
     from ..projects import ProjectManager
 
     console = get_console()

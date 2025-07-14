@@ -21,13 +21,13 @@ def articles() -> None:
 @click.option(
     "--content",
     "-c",
-    help="Article content",
+    help="Article content (required if --file not specified)",
 )
 @click.option(
     "--file",
     "-f",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to markdown file containing article content",
+    help="Path to markdown file containing article content (required if --content not specified)",
 )
 @click.option(
     "--project-id",
@@ -61,7 +61,21 @@ def create(
     summary: Optional[str],
     visibility: str,
 ) -> None:
-    """Create a new article."""
+    """Create a new article.
+
+    Create a new knowledge base article with the specified title.
+    Either --content or --file must be provided along with --project-id.
+
+    Examples:
+        # Create article with inline content
+        yt articles create "Installation Guide" --content "Follow these steps..." --project-id DOCS
+
+        # Create article from file
+        yt articles create "API Reference" --file ./api-docs.md --project-id DOCS
+
+        # Create article with visibility setting
+        yt articles create "Internal Notes" --content "Team notes..." --project-id TEAM --visibility private
+    """
     from ..articles import ArticleManager
 
     console = get_console()
@@ -69,10 +83,15 @@ def create(
     # Validate that either content or file is provided, but not both
     if content and file:
         console.print("❌ Cannot specify both --content and --file options", style="red")
+        console.print("💡 Use either --content for inline text or --file for file content, not both", style="blue")
         raise click.ClickException("Use either --content or --file, not both")
 
     if not content and not file:
         console.print("❌ Either --content or --file must be specified", style="red")
+        console.print(
+            '💡 Try: yt articles create "Title" --content "Your content here" --project-id PROJECT', style="blue"
+        )
+        console.print('💡 Or:  yt articles create "Title" --file ./content.md --project-id PROJECT', style="blue")
         raise click.ClickException("Article content is required")
 
     # Read content from file if provided

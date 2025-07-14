@@ -107,7 +107,22 @@ def create_user(
     banned: bool,
     force_change_password: bool,
 ) -> None:
-    """Create a new user."""
+    """Create a new user.
+
+    Creates a new user with the specified login, full name, and email.
+    All three parameters are required as positional arguments.
+    Password will be prompted interactively if not provided.
+
+    Examples:
+        # Create user with interactive password prompt
+        yt users create testuser "Test User" "test@example.com"
+
+        # Create user with password and options
+        yt users create jdoe "John Doe" "john@company.com" --password secret123 --force-change-password
+
+    Note: LOGIN, FULL_NAME, and EMAIL are all required positional arguments.
+    Use quotes around full name if it contains spaces. Password will be prompted securely.
+    """
     from ..users import UserManager
 
     console = get_console()
@@ -260,7 +275,7 @@ def users_update(
     "-a",
     type=click.Choice(["add_to_group", "remove_from_group"]),
     required=True,
-    help="Permission action to perform",
+    help="Permission action to perform (required)",
 )
 @click.option(
     "--group-id",
@@ -274,7 +289,20 @@ def permissions(
     action: str,
     group_id: Optional[str],
 ) -> None:
-    """Manage user permissions."""
+    """Manage user permissions.
+
+    Manages user permissions by adding or removing users from groups.
+    The --action parameter is required to specify the operation.
+
+    Examples:
+        # Add user to a group
+        yt users permissions admin --action add_to_group --group-id developers
+
+        # Remove user from a group
+        yt users permissions john.doe --action remove_from_group --group-id testers
+
+    Note: USER_ID is a positional argument, and --action is required.
+    """
     from ..users import UserManager
 
     console = get_console()

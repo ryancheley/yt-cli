@@ -671,6 +671,174 @@ Common Error Messages
 2. Check API token permissions
 3. Test login in YouTrack web interface
 
+Command Syntax Errors
+----------------------
+
+This section addresses common command syntax errors and their solutions.
+
+Articles Command Issues
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt articles create "Test Article" --project-id TEST`` fails with content required error.
+
+**Solution**: Either ``--content`` or ``--file`` is required along with ``--project-id``:
+
+.. code-block:: bash
+
+   # ✅ Correct with inline content:
+   yt articles create "Test Article" --content "Your content here" --project-id TEST
+
+   # ✅ Correct with file:
+   yt articles create "Test Article" --file ./content.md --project-id TEST
+
+   # ❌ Wrong - missing content:
+   yt articles create "Test Article" --project-id TEST
+
+Issues Command Issues
+~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt issues assign DEMO-20 --assignee admin`` fails with "no such option" error.
+
+**Solution**: Use positional arguments, not flags:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt issues assign DEMO-20 admin
+
+   # ❌ Wrong:
+   yt issues assign DEMO-20 --assignee admin
+
+**Problem**: ``yt issues attach 3-19`` fails with "Missing command" error.
+
+**Solution**: Attach requires a subcommand:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt issues attach list ISSUE-123
+   yt issues attach upload ISSUE-123 /path/to/file.txt
+
+   # ❌ Wrong:
+   yt issues attach ISSUE-123
+
+**Problem**: ``yt issues comments add DEMO-20 --text "comment"`` fails with "no such option" error.
+
+**Solution**: Use positional arguments for comment text:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt issues comments add DEMO-20 "Your comment here"
+
+   # ❌ Wrong:
+   yt issues comments add DEMO-20 --text "comment"
+
+**Problem**: ``yt issues comments create DEMO-20`` fails with "no such command" error.
+
+**Solution**: Use ``add`` instead of ``create`` for comments:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt issues comments add DEMO-20 "Your comment"
+
+   # ❌ Wrong:
+   yt issues comments create DEMO-20
+
+Projects Command Issues
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt projects create "CLI-TEST"`` fails with missing arguments error.
+
+**Solution**: Both NAME and SHORT_NAME are required positional arguments:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt projects create "CLI Testing Project" CLI-TEST
+
+   # ❌ Wrong:
+   yt projects create "CLI-TEST"
+
+Reports Command Issues
+~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt reports burndown --project DEMO`` fails with "no such option" error.
+
+**Solution**: Use project ID as positional argument:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt reports burndown DEMO
+
+   # ❌ Wrong:
+   yt reports burndown --project DEMO
+
+Users Command Issues
+~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt users create testuser --email "test@example.com"`` fails with missing arguments error.
+
+**Solution**: All user details are positional arguments:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt users create testuser "Test User" "test@example.com"
+
+   # ❌ Wrong:
+   yt users create testuser --email "test@example.com"
+
+**Problem**: ``yt users permissions admin`` fails with missing required option error.
+
+**Solution**: The ``--action`` parameter is required:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt users permissions admin --action add_to_group --group-id developers
+
+   # ❌ Wrong:
+   yt users permissions admin
+
+Version Command Issues
+~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt version`` fails with "no such command" error.
+
+**Solution**: Use ``--version`` flag instead:
+
+.. code-block:: bash
+
+   # ✅ Correct:
+   yt --version
+
+   # ❌ Wrong:
+   yt version
+
+Interactive Command Behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Several commands have interactive behavior that prompts for additional information:
+
+**Setup Command**:
+  ``yt setup`` launches an interactive wizard for initial configuration.
+
+**Authentication Commands**:
+  - ``yt auth login`` - Interactive authentication setup
+  - ``yt auth token update`` - Interactive token updating
+
+**Tutorial Command**:
+  ``yt tutorial run`` provides interactive learning modules.
+
+**User Creation**:
+  ``yt users create`` will prompt for password interactively for security.
+
+**Project Creation**:
+  ``yt projects create`` will prompt for project leader if not specified with ``--leader``.
+
 Release and Development Issues
 -------------------------------
 
