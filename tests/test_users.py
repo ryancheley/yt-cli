@@ -172,6 +172,11 @@ class TestUserManager:
             assert result["data"]["login"] == "newuser"
             assert "created successfully" in result["message"]
 
+            # Verify that the Hub API endpoint was called
+            mock_client_manager.make_request.assert_called_once()
+            call_args = mock_client_manager.make_request.call_args
+            assert "/hub/api/rest/users" in call_args[0][1]
+
     @pytest.mark.asyncio
     async def test_create_user_invalid_data(self, user_manager, auth_manager):
         """Test user creation with invalid data."""

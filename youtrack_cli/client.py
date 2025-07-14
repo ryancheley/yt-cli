@@ -223,7 +223,13 @@ class HTTPClientManager:
                         # Try to get error details from response
                         try:
                             error_data = response.json()
-                            error_message = error_data.get("error", {}).get("description", response.text)
+                            # Try multiple possible error message formats
+                            error_message = (
+                                error_data.get("error_description")
+                                or error_data.get("error", {}).get("description")
+                                or error_data.get("message")
+                                or response.text
+                            )
                         except Exception:
                             error_message = response.text or f"HTTP {response.status_code}"
 

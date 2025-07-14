@@ -137,6 +137,7 @@ def create_user(
             user = result["data"]
             console.print(f"User ID: {user.get('id', 'N/A')}", style="blue")
             console.print(f"Login: {user.get('login', 'N/A')}", style="blue")
+            console.print(f"Name: {user.get('name', user.get('fullName', 'N/A'))}", style="blue")
             console.print(f"Email: {user.get('email', 'N/A')}", style="blue")
         else:
             console.print(f"❌ {result['message']}", style="red")

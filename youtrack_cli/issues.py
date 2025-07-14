@@ -143,8 +143,16 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
+        # Resolve project short name to internal ID
+        resolved_project_id = await self._resolve_project_id(project_id)
+        if resolved_project_id is None:
+            return {
+                "status": "error",
+                "message": f"Project '{project_id}' not found. Please check the project short name or ID.",
+            }
+
         issue_data = {
-            "project": {"id": project_id},
+            "project": {"id": resolved_project_id},
             "summary": summary,
         }
 
