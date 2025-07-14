@@ -322,3 +322,75 @@ class TestTimeManager:
         assert result["groups"]["Testing"]["minutes"] == 30
         assert result["groups"]["Testing"]["hours"] == 0.5
         assert result["groups"]["Testing"]["entries"] == 1
+
+    @pytest.mark.asyncio
+    async def test_get_time_entries_empty_response(self, time_manager):
+        """Test get_time_entries handles empty API response without NoneType error."""
+        with patch("youtrack_cli.time.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.text = ""  # Empty response body
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await time_manager.get_time_entries(issue_id="ISSUE-123")
+
+            assert result["status"] == "success"
+            assert result["data"] == []  # Should return empty list, not None
+            assert result["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_get_time_entries_none_response(self, time_manager):
+        """Test get_time_entries handles None response from JSON parsing."""
+        with patch("youtrack_cli.time.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json = lambda: None  # JSON parsing returns None
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await time_manager.get_time_entries(issue_id="ISSUE-123")
+
+            assert result["status"] == "success"
+            assert result["data"] == []  # Should convert None to empty list
+            assert result["count"] == 0
+
+    def test_display_time_entries_none_input(self, time_manager):
+        """Test display_time_entries handles None input without error."""
+        with patch.object(time_manager, "console") as mock_console:
+            # Should not raise AttributeError: 'NoneType' object has no attribute 'get'
+            time_manager.display_time_entries(None)
+
+            mock_console.print.assert_called_once_with("No time entries found.", style="yellow")
+
+    def test_display_time_entries_empty_list(self, time_manager):
+        """Test display_time_entries handles empty list."""
+        with patch.object(time_manager, "console") as mock_console:
+            time_manager.display_time_entries([])
+
+            mock_console.print.assert_called_once_with("No time entries found.", style="yellow")
+
+    def test_display_time_entries_non_list_input(self, time_manager):
+        """Test display_time_entries converts non-list input to list."""
+        single_entry = {
+            "id": "123",
+            "duration": {"minutes": 120},
+            "date": 1704067200000,  # 2024-01-01 00:00:00 UTC in milliseconds
+            "author": {"fullName": "Test User"},
+            "issue": {"id": "ISSUE-123", "summary": "Test Issue"},
+            "type": {"name": "Development"},
+            "description": "Test work",
+        }
+
+        with patch.object(time_manager, "console") as mock_console:
+            time_manager.display_time_entries(single_entry)
+
+            # Should convert single entry to list and display table
+            # Table rendering makes multiple print calls (at least for the table)
+            assert mock_console.print.call_count >= 1
+            # Verify it's not showing "No time entries found"
+            calls = [call.args for call in mock_console.print.call_calls]
+            no_entries_calls = [call for call in calls if "No time entries found" in str(call)]
+            assert len(no_entries_calls) == 0
