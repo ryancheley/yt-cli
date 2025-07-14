@@ -75,7 +75,9 @@ class TestCommandValidation:
 
         # Test close match
         suggestions = validator.suggest_similar_command("issue")
-        assert "issues" in [s for s in suggestions if "issues" in s]
+        # Should find commands containing "issues"
+        issues_suggestions = [s for s in suggestions if "issues" in s]
+        assert len(issues_suggestions) > 0, f"Expected suggestions with 'issues', got: {suggestions}"
 
         # Test common mistake
         suggestions = validator.suggest_similar_command("version")
@@ -98,14 +100,17 @@ class TestParameterValidation:
 
     def test_project_id_validation(self):
         """Test project ID format validation."""
-        from click import Parameter
-        from click.testing import make_context
+        from click import Option
 
         from youtrack_cli.cli_utils.validation import validate_project_id_format
 
         # Create a mock context and parameter
-        ctx = make_context("test", [])
-        param = Parameter(["--project-id"])
+        @click.command()
+        def test_cmd():
+            pass
+        
+        ctx = click.Context(test_cmd, info_name="test")
+        param = Option(["--project-id"])
 
         # Valid project IDs should pass
         assert validate_project_id_format(ctx, param, "WEB") == "WEB"
@@ -121,14 +126,17 @@ class TestParameterValidation:
 
     def test_issue_id_validation(self):
         """Test issue ID format validation."""
-        from click import Parameter
-        from click.testing import make_context
+        from click import Option
 
         from youtrack_cli.cli_utils.validation import validate_issue_id_format
 
         # Create a mock context and parameter
-        ctx = make_context("test", [])
-        param = Parameter(["--issue-id"])
+        @click.command()
+        def test_cmd():
+            pass
+        
+        ctx = click.Context(test_cmd, info_name="test")
+        param = Option(["--issue-id"])
 
         # Valid issue IDs should pass
         assert validate_issue_id_format(ctx, param, "WEB-123") == "WEB-123"
