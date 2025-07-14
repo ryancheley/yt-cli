@@ -23,16 +23,14 @@ class TimeManager:
         """Safely parse JSON response, handling empty or non-JSON responses."""
         try:
             if not response.text.strip():
-                raise ValueError("Empty response body")
+                # Return empty list for empty responses
+                return []
 
             return response.json()
         except ValueError as e:
-            if "Expecting value" in str(e):
-                # This is the specific error from the issue
-                raise ValueError(
-                    "Received empty response. This may indicate no time entries exist "
-                    "or time tracking is not enabled for your account."
-                ) from e
+            if "Expecting value" in str(e) or "Empty response body" in str(e):
+                # Return empty list for empty responses instead of raising an error
+                return []
             raise ValueError(f"Failed to parse JSON response: {str(e)}") from e
         except Exception as e:
             raise ValueError(f"Unexpected error parsing response: {str(e)}") from e
@@ -61,6 +59,7 @@ class TimeManager:
         work_item_data = {
             "duration": {"minutes": duration_minutes},
             "date": work_date,
+            "issue": {"id": issue_id},
         }
 
         if description:
@@ -68,7 +67,7 @@ class TimeManager:
         if work_type:
             work_item_data["type"] = {"name": work_type}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
+        url = f"{credentials.base_url.rstrip('/')}/api/workItems"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
@@ -120,7 +119,8 @@ class TimeManager:
 
         if issue_id:
             # Get time entries for a specific issue
-            url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
+            url = f"{credentials.base_url.rstrip('/')}/api/workItems"
+            params["issue"] = issue_id
         else:
             # Get all time entries
             url = f"{credentials.base_url.rstrip('/')}/api/workItems"
@@ -132,10 +132,15 @@ class TimeManager:
             response = await client_manager.make_request(method="GET", url=url, params=params, headers=headers)
             if response.status_code == 200:
                 data = self._parse_json_response(response)
+                # Handle empty response or None data
+                if data is None:
+                    data = []
+                elif not isinstance(data, list):
+                    data = [data] if data else []
                 return {
                     "status": "success",
                     "data": data,
-                    "count": len(data) if isinstance(data, list) else 1,
+                    "count": len(data),
                 }
             else:
                 error_text = response.text
@@ -291,6 +296,16 @@ class TimeManager:
 
     def display_time_entries(self, time_entries: list[dict[str, Any]]) -> None:
         """Display time entries in a table format."""
+        # Handle None
+        if time_entries is None:
+            self.console.print("No time entries found.", style="yellow")
+            return
+
+        # Ensure time_entries is a list
+        if not isinstance(time_entries, list):
+            time_entries = [time_entries] if time_entries else []
+
+        # Handle empty list
         if not time_entries:
             self.console.print("No time entries found.", style="yellow")
             return
