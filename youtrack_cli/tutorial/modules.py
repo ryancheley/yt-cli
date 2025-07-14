@@ -608,7 +608,7 @@ class DockerTutorial(TutorialModule):
             import docker
 
             client = docker.from_env()
-            client.images.get("jetbrains/youtrack:latest")
+            client.images.get("jetbrains/youtrack:2025.1.66652")
             return True
         except Exception:
             return False

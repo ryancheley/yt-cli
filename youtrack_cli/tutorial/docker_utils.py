@@ -10,7 +10,7 @@ from rich.console import Console
 
 console = Console()
 
-YOUTRACK_IMAGE = "jetbrains/youtrack:latest"
+YOUTRACK_IMAGE = "jetbrains/youtrack:2025.1.66652"
 CONTAINER_NAME = "youtrack-tutorial"
 VOLUME_NAME = "youtrack-tutorial-data"
 DEFAULT_PORT = 8080
