@@ -75,7 +75,7 @@ class TestDockerUtils:
 
         pull_youtrack_image()
 
-        mock_client.images.pull.assert_called_once_with("jetbrains/youtrack:latest")
+        mock_client.images.pull.assert_called_once_with("jetbrains/youtrack:2025.1.66652")
 
     @patch("youtrack_cli.tutorial.docker_utils.docker.from_env")
     def test_pull_youtrack_image_failure(self, mock_docker):
