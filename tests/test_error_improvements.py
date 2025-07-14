@@ -108,7 +108,7 @@ class TestParameterValidation:
         @click.command()
         def test_cmd():
             pass
-        
+
         ctx = click.Context(test_cmd, info_name="test")
         param = Option(["--project-id"])
 
@@ -134,7 +134,7 @@ class TestParameterValidation:
         @click.command()
         def test_cmd():
             pass
-        
+
         ctx = click.Context(test_cmd, info_name="test")
         param = Option(["--issue-id"])
 
