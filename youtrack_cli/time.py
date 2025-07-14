@@ -55,8 +55,8 @@ class TimeManager:
         if duration_minutes is None:
             return {"status": "error", "message": "Invalid duration format"}
 
-        # Parse date or use current date
-        work_date = self._parse_date(date) if date else datetime.now().isoformat()
+        # Parse date or use current timestamp
+        work_date = self._parse_date(date) if date else int(datetime.now().timestamp() * 1000)
 
         work_item_data = {
             "duration": {"minutes": duration_minutes},
@@ -226,8 +226,8 @@ class TimeManager:
 
         return total_minutes if total_minutes > 0 else None
 
-    def _parse_date(self, date_str: str) -> str:
-        """Parse date string to ISO format."""
+    def _parse_date(self, date_str: str) -> int:
+        """Parse date string to timestamp in milliseconds."""
         try:
             # Try different date formats
             formats = ["%Y-%m-%d", "%m/%d/%Y", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S"]
@@ -235,19 +235,22 @@ class TimeManager:
             for fmt in formats:
                 try:
                     parsed_date = datetime.strptime(date_str, fmt)
-                    return parsed_date.isoformat()
+                    return int(parsed_date.timestamp() * 1000)
                 except ValueError:
                     continue
 
             # If no format matches, try relative dates
             if date_str.lower() == "today":
-                return datetime.now().isoformat()
+                return int(datetime.now().timestamp() * 1000)
             elif date_str.lower() == "yesterday":
-                return (datetime.now() - timedelta(days=1)).isoformat()
+                return int((datetime.now() - timedelta(days=1)).timestamp() * 1000)
 
-            return date_str
+            # If all else fails, try to parse as ISO format
+            parsed_date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return int(parsed_date.timestamp() * 1000)
         except Exception:
-            return date_str
+            # Default to current timestamp if parsing fails
+            return int(datetime.now().timestamp() * 1000)
 
     def _aggregate_time_data(self, time_entries: list[dict[str, Any]], group_by: str) -> dict[str, Any]:
         """Aggregate time data by specified grouping."""
