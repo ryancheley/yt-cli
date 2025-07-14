@@ -646,7 +646,23 @@ def reports_burndown(
     start_date: Optional[str],
     end_date: Optional[str],
 ) -> None:
-    """Generate a burndown report for a project or sprint."""
+    """Generate a burndown report for a project or sprint.
+
+    Generates a burndown report for the specified project.
+    The project ID is required as a positional argument.
+
+    Examples:
+        # Generate burndown report for a project
+        yt reports burndown DEMO
+
+        # Generate report for specific sprint
+        yt reports burndown WEB-PROJECT --sprint "Sprint 1"
+
+        # Generate report for date range
+        yt reports burndown API --start-date 2024-01-01 --end-date 2024-01-31
+
+    Note: Use project ID as a positional argument, not --project flag.
+    """
     auth_manager = AuthManager(ctx.obj.get("config"))
     report_manager = ReportManager(auth_manager)
     console = get_console()
@@ -706,7 +722,21 @@ def reports_velocity(
 @main.group()
 @click.pass_context
 def auth(ctx: click.Context) -> None:
-    """Authentication management."""
+    """Authentication management.
+
+    Manage authentication credentials for YouTrack CLI.
+    The auth commands are interactive and will prompt for required information.
+
+    Examples:
+        # Interactive login (will prompt for URL and token)
+        yt auth login
+
+        # Check authentication status
+        yt auth status
+
+        # Update token interactively
+        yt auth token update
+    """
     pass
 
 
@@ -732,7 +762,27 @@ def login(
     username: Optional[str],
     no_verify_ssl: bool,
 ) -> None:
-    """Authenticate with YouTrack."""
+    """Authenticate with YouTrack.
+
+    Interactive authentication setup for YouTrack CLI.
+    This command will prompt for your YouTrack URL and API token.
+
+    The command will:
+    - Prompt for YouTrack instance URL if not provided
+    - Prompt for API token securely (hidden input)
+    - Validate the connection
+    - Save credentials for future use
+
+    Examples:
+        # Interactive login (recommended)
+        yt auth login
+
+        # Login with URL specified
+        yt auth login --base-url https://company.youtrack.cloud
+
+        # Login with username
+        yt auth login --username john.doe
+    """
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 

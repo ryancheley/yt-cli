@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Convert docs from Markdown to reStructuredText (#217)
 
+### Improved
+- Command syntax documentation with clearer examples and error messages (#246, #247)
+- Help text for common commands to prevent syntax errors
+- Interactive command behavior documentation
+- Comprehensive troubleshooting guide for command syntax errors
+- Better error messages with helpful suggestions for incorrect command usage
+
 ### Fixed
 - Docker tutorial execution - container now actually starts (#222)
 - Backspace sequences appearing as literal text in CLI help (#219)
