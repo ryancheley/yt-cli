@@ -36,11 +36,13 @@ FIELD_PROFILES: Dict[str, Dict[str, List[str]]] = {
             "description",
             "state(name,id)",
             "priority(name,id)",
+            "type(name,id)",
             "assignee(login,fullName,id)",
             "reporter(login,fullName,id)",
             "project(id,name,shortName)",
             "created",
             "updated",
+            "customFields(name,value(name,id,login,fullName,text,presentation))",
         ],
         "full": [
             "id",
