@@ -110,14 +110,21 @@ class UserManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        # Prepare request body
+        # Prepare request body for Hub API
         user_data = {
             "login": login,
-            "fullName": full_name,
+            "name": full_name,
             "email": email,
             "banned": banned,
-            "forceChangePassword": force_change_password,
         }
+
+        # Add profile information
+        profile_data = {}
+        if force_change_password:
+            profile_data["forceChangePassword"] = force_change_password
+
+        if profile_data:
+            user_data["profile"] = profile_data
 
         if password:
             user_data["password"] = password
@@ -132,10 +139,10 @@ class UserManager:
             client_manager = get_client_manager()
             response = await client_manager.make_request(
                 "POST",
-                f"{credentials.base_url.rstrip('/')}/api/users",
+                f"{credentials.base_url.rstrip('/')}/hub/api/rest/users",
                 headers=headers,
                 json_data=user_data,
-                params={"fields": "id,login,fullName,email,banned"},
+                params={"fields": "id,login,name,email,banned"},
                 timeout=10.0,
             )
 
