@@ -102,7 +102,11 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_create_issue_success(self, issue_manager, sample_issue):
         """Test successful issue creation."""
-        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+        with (
+            patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
+            patch.object(issue_manager, "_resolve_project_id") as mock_resolve_project,
+        ):
+            mock_resolve_project.return_value = "PROJ"
             mock_resp = Mock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = sample_issue
@@ -139,7 +143,11 @@ class TestIssueManager:
     @pytest.mark.asyncio
     async def test_create_issue_api_error(self, issue_manager):
         """Test issue creation with API error."""
-        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+        with (
+            patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
+            patch.object(issue_manager, "_resolve_project_id") as mock_resolve_project,
+        ):
+            mock_resolve_project.return_value = "PROJ"
             mock_resp = Mock()
             mock_resp.status_code = 400
             mock_resp.text = "Bad Request"
@@ -151,6 +159,17 @@ class TestIssueManager:
 
             assert result["status"] == "error"
             assert "Bad Request" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_create_issue_project_not_found(self, issue_manager):
+        """Test issue creation with project not found."""
+        with patch.object(issue_manager, "_resolve_project_id") as mock_resolve_project:
+            mock_resolve_project.return_value = None
+
+            result = await issue_manager.create_issue("NONEXISTENT", "Test Issue")
+
+            assert result["status"] == "error"
+            assert "Project 'NONEXISTENT' not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_list_issues_success(self, issue_manager, sample_issue):
