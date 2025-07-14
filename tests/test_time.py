@@ -190,21 +190,40 @@ class TestTimeManager:
 
     def test_parse_date_formats(self, time_manager):
         """Test parsing various date formats."""
+        from datetime import datetime
+
+        # Test specific date formats return correct timestamps
         test_cases = [
-            ("2024-01-01", "2024-01-01T00:00:00"),
-            ("01/01/2024", "2024-01-01T00:00:00"),
-            ("01.01.2024", "2024-01-01T00:00:00"),
-            ("today", None),  # Will be current date
-            ("yesterday", None),  # Will be yesterday
+            ("2024-01-01", datetime(2024, 1, 1).timestamp() * 1000),
+            ("01/01/2024", datetime(2024, 1, 1).timestamp() * 1000),
+            ("01.01.2024", datetime(2024, 1, 1).timestamp() * 1000),
         ]
 
-        for date_str, expected_prefix in test_cases:
+        for date_str, expected_timestamp in test_cases:
             result = time_manager._parse_date(date_str)
-            if expected_prefix:
-                assert result == expected_prefix
-            else:
-                # For relative dates, just check they return a valid ISO string
-                assert "T" in result or result == date_str
+            assert result == int(expected_timestamp), f"Failed for {date_str}"
+
+        # Test relative dates return valid timestamps
+        today_result = time_manager._parse_date("today")
+        yesterday_result = time_manager._parse_date("yesterday")
+
+        assert isinstance(today_result, int)
+        assert isinstance(yesterday_result, int)
+        assert today_result > yesterday_result  # today should be later than yesterday
+
+    def test_parse_date_returns_timestamp(self, time_manager):
+        """Test that _parse_date returns timestamps in milliseconds."""
+        # Test with a known date
+        result = time_manager._parse_date("2024-01-01")
+
+        # Should be a timestamp in milliseconds (13-digit number for dates around 2024)
+        assert isinstance(result, int)
+        assert len(str(result)) == 13  # milliseconds since epoch should be 13 digits in 2024
+
+        # Test with invalid date - should still return a valid timestamp
+        invalid_result = time_manager._parse_date("invalid-date")
+        assert isinstance(invalid_result, int)
+        assert len(str(invalid_result)) == 13
 
     def test_aggregate_time_data_by_user(self, time_manager):
         """Test aggregating time data by user."""
