@@ -47,7 +47,20 @@
       "Bash(source:*)",
       "Bash(curl:*)",
       "WebFetch(domain:docs.astral.sh)",
-      "Bash(just:*)"
+      "Bash(just:*)",
+      "Bash(ty:*)",
+      "Bash(ruff check:*)",
+      "Bash(/Users/ryan/.cargo/bin/uv run tox -e py39)",
+      "Bash(/Users/ryan/.cargo/bin/uv run pytest tests/test_error_improvements.py::TestCommandValidation::test_command_validator_suggestions -v)",
+      "Bash(/Users/ryan/.cargo/bin/uv run pytest tests/test_error_improvements.py::TestParameterValidation::test_project_id_validation -v)",
+      "Bash(/Users/ryan/.cargo/bin/uv run python -c \"import click; help(click.Context)\")",
+      "Bash(/Users/ryan/.cargo/bin/uv run python -c \"\nimport click\n# Create a simple command to get context\n@click.command()\ndef test_cmd():\n    pass\n\nctx = click.Context(test_cmd)\nprint(''Context created successfully'')\nprint(''Info name:'', ctx.info_name)\n\")",
+      "Bash(/Users/ryan/.cargo/bin/uv run pytest tests/test_error_improvements.py::TestParameterValidation -v)",
+      "Bash(/Users/ryan/.cargo/bin/uv run pytest tests/test_error_improvements.py -v)",
+      "Bash(/Users/ryan/.cargo/bin/uv run pytest tests/test_error_improvements.py -v --tb=short)",
+      "Bash(/Users/ryan/.cargo/bin/uv run ruff check .)",
+      "Bash(/Users/ryan/.cargo/bin/uv run ruff check --fix .)",
+      "Bash(/Users/ryan/.cargo/bin/uv run ruff format .)"
     ],
     "deny": []
   }

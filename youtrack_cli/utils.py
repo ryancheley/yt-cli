@@ -15,6 +15,9 @@ import httpx
 from .client import get_client_manager
 from .console import get_console
 from .exceptions import (
+    CommandValidationError,
+    ParameterError,
+    UsageError,
     YouTrackError,
 )
 from .logging import get_logger
@@ -442,6 +445,20 @@ def handle_error(error: Exception, operation: str = "operation") -> Dict[str, An
         }
         if error.suggestion:
             result["suggestion"] = error.suggestion
+
+        # Add special handling for enhanced error types
+        if isinstance(error, UsageError):
+            result["usage_syntax"] = error.usage_syntax
+            result["examples"] = error.examples
+            result["common_mistakes"] = error.common_mistakes
+        elif isinstance(error, CommandValidationError):
+            result["similar_commands"] = error.similar_commands
+            result["usage_example"] = error.usage_example
+        elif isinstance(error, ParameterError):
+            result["parameter_name"] = error.parameter_name
+            result["valid_choices"] = error.valid_choices
+            result["usage_example"] = error.usage_example
+
         return result
     else:
         logger.error(
@@ -463,10 +480,40 @@ def display_error(error_result: Dict[str, Any]) -> None:
     Args:
         error_result: Error information dictionary from handle_error()
     """
-    console.print(f"[red]Error:[/red] {error_result['message']}")
+    console.print(f"[red]❌ Error:[/red] {error_result['message']}")
 
-    if "suggestion" in error_result:
-        console.print(f"[yellow]Suggestion:[/yellow] {error_result['suggestion']}")
+    # Handle enhanced error types with rich formatting
+    if "usage_syntax" in error_result:
+        # UsageError with comprehensive formatting
+        console.print(f"\n[blue]Usage:[/blue] {error_result['usage_syntax']}")
+
+        if error_result.get("examples"):
+            console.print("\n[green]Examples:[/green]")
+            for i, example in enumerate(error_result["examples"], 1):
+                console.print(f"  {i}. [cyan]{example}[/cyan]")
+
+        if error_result.get("common_mistakes"):
+            console.print("\n[yellow]Common mistakes to avoid:[/yellow]")
+            for mistake in error_result["common_mistakes"]:
+                console.print(f"  • [dim]{mistake}[/dim]")
+
+    elif "similar_commands" in error_result and error_result["similar_commands"]:
+        # CommandValidationError with suggestions
+        console.print(f"[yellow]💡 Did you mean:[/yellow] {', '.join(error_result['similar_commands'])}")
+        if error_result.get("usage_example"):
+            console.print(f"[blue]Usage:[/blue] {error_result['usage_example']}")
+
+    elif "parameter_name" in error_result:
+        # ParameterError with specific guidance
+        if error_result.get("valid_choices"):
+            choices_str = ", ".join(error_result["valid_choices"])
+            console.print(f"[yellow]Valid choices:[/yellow] {choices_str}")
+        if error_result.get("usage_example"):
+            console.print(f"[blue]Example:[/blue] {error_result['usage_example']}")
+
+    elif "suggestion" in error_result:
+        # Standard suggestion display
+        console.print(f"[yellow]💡 Suggestion:[/yellow] {error_result['suggestion']}")
 
 
 def display_success(message: str) -> None:

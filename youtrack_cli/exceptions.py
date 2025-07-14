@@ -1,6 +1,6 @@
 """Custom exceptions and error handling for YouTrack CLI."""
 
-from typing import Optional
+from typing import List, Optional
 
 __all__ = [
     "YouTrackError",
@@ -12,6 +12,9 @@ __all__ = [
     "RateLimitError",
     "YouTrackNetworkError",
     "YouTrackServerError",
+    "CommandValidationError",
+    "ParameterError",
+    "UsageError",
 ]
 
 
@@ -97,3 +100,84 @@ class YouTrackServerError(YouTrackError):
             message = f"Server error (HTTP {status_code}): {message}"
         super().__init__(message, suggestion="The server may be temporarily unavailable. Try again later")
         self.status_code = status_code
+
+
+class CommandValidationError(YouTrackError):
+    """Errors related to command structure and usage."""
+
+    def __init__(
+        self,
+        message: str,
+        command_path: Optional[str] = None,
+        usage_example: Optional[str] = None,
+        similar_commands: Optional[List[str]] = None,
+    ):
+        suggestion_parts = []
+        if similar_commands:
+            suggestion_parts.append(f"Did you mean: {', '.join(similar_commands)}")
+        if usage_example:
+            suggestion_parts.append(f"Usage: {usage_example}")
+
+        suggestion = " | ".join(suggestion_parts) if suggestion_parts else None
+        super().__init__(message, suggestion)
+        self.command_path = command_path
+        self.usage_example = usage_example
+        self.similar_commands = similar_commands
+
+
+class ParameterError(YouTrackError):
+    """Errors related to command parameters and arguments."""
+
+    def __init__(
+        self,
+        message: str,
+        parameter_name: Optional[str] = None,
+        expected_type: Optional[str] = None,
+        usage_example: Optional[str] = None,
+        valid_choices: Optional[List[str]] = None,
+    ):
+        suggestion_parts = []
+        if expected_type:
+            suggestion_parts.append(f"Expected {expected_type}")
+        if valid_choices:
+            suggestion_parts.append(f"Valid choices: {', '.join(valid_choices)}")
+        if usage_example:
+            suggestion_parts.append(f"Example: {usage_example}")
+
+        suggestion = " | ".join(suggestion_parts) if suggestion_parts else None
+        super().__init__(message, suggestion)
+        self.parameter_name = parameter_name
+        self.expected_type = expected_type
+        self.usage_example = usage_example
+        self.valid_choices = valid_choices
+
+
+class UsageError(YouTrackError):
+    """Errors that provide comprehensive usage guidance."""
+
+    def __init__(
+        self,
+        message: str,
+        command_path: str,
+        usage_syntax: str,
+        examples: Optional[List[str]] = None,
+        common_mistakes: Optional[List[str]] = None,
+    ):
+        suggestion_parts = [f"Usage: {usage_syntax}"]
+
+        if examples:
+            suggestion_parts.append("Examples:")
+            for i, example in enumerate(examples, 1):
+                suggestion_parts.append(f"  {i}. {example}")
+
+        if common_mistakes:
+            suggestion_parts.append("Common mistakes to avoid:")
+            for mistake in common_mistakes:
+                suggestion_parts.append(f"  - {mistake}")
+
+        suggestion = "\n".join(suggestion_parts)
+        super().__init__(message, suggestion)
+        self.command_path = command_path
+        self.usage_syntax = usage_syntax
+        self.examples = examples or []
+        self.common_mistakes = common_mistakes or []
