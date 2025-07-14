@@ -32,7 +32,8 @@ def articles() -> None:
 @click.option(
     "--project-id",
     "-p",
-    help="Project ID to associate with the article",
+    required=True,
+    help="Project ID or short name to associate with the article (required)",
 )
 @click.option(
     "--parent-id",
@@ -55,7 +56,7 @@ def create(
     title: str,
     content: Optional[str],
     file: Optional[Path],
-    project_id: Optional[str],
+    project_id: str,
     parent_id: Optional[str],
     summary: Optional[str],
     visibility: str,
