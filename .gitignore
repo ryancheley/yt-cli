@@ -144,3 +144,10 @@ issue-order.md
 scratch/
 potential-issues/
 findings.md
+
+# Node.js files (not needed for Python project)
+package*.json
+node_modules/
+
+# Custom scripts
+test_runner.py
