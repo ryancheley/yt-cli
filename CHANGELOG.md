@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interactive command behavior documentation
 - Comprehensive troubleshooting guide for command syntax errors
 - Better error messages with helpful suggestions for incorrect command usage
+- Best practices documentation with accurate --dry-run flag usage examples (#254)
+- Performance optimization documentation with comprehensive batch operation examples (#255)
 
 ### Fixed
 - Docker tutorial execution - container now actually starts (#222)

@@ -518,7 +518,15 @@ Script Safety Tips
    yt issues search "project:TEST-PROJECT" --limit 5
 
    # 3. Use dry-run when available
-   echo "Would update: $(yt issues search 'tag:to-update' --format json | jq 'length') issues"
+   # Preview batch operations before executing
+   yt issues batch update --file updates.csv --dry-run
+
+   # Or for batch creation
+   yt issues batch create --file new-issues.csv --dry-run
+
+   # Note: Currently --dry-run is supported for batch create and batch update commands
+   # For other commands, use manual preview techniques:
+   # echo "Would update: $(yt issues search 'tag:to-update' --format json | jq 'length') issues"
 
    # 4. Add rate limiting
    sleep 1  # Between API calls
@@ -536,7 +544,33 @@ Performance Optimization
    yt issues search "project:WEB created:today" --limit 50
 
    # 2. Batch operations when possible
-   # Instead of individual updates, use bulk patterns
+   # Instead of individual updates:
+   # DON'T DO THIS (inefficient):
+   for issue in WEB-100 WEB-101 WEB-102; do
+     yt issues update $issue --state "In Progress"
+   done
+
+   # DO THIS (efficient batch update):
+   # Create a CSV file with updates
+   cat > batch-updates.csv << EOF
+   issue_id,state,assignee
+   WEB-100,In Progress,dev1
+   WEB-101,In Progress,dev2
+   WEB-102,In Progress,dev3
+   EOF
+
+   # Execute batch update
+   yt issues batch update --file batch-updates.csv
+
+   # Or for creating multiple issues:
+   cat > new-issues.csv << EOF
+   project,summary,description,type,priority
+   WEB,Setup CI/CD pipeline,Configure GitHub Actions,Task,Normal
+   WEB,Add unit tests,Increase test coverage to 80%,Task,High
+   WEB,Update documentation,Update API docs,Task,Normal
+   EOF
+
+   yt issues batch create --file new-issues.csv
 
    # 3. Cache frequently accessed data
    yt projects list --format json > projects-cache.json
