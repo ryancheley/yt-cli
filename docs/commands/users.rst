@@ -105,7 +105,7 @@ Create a new user account with specified settings.
      - Description
    * - ``--password, -p``
      - string
-     - User password (will prompt if not provided)
+     - User password (will prompt securely if not provided; shows warning if provided via command line)
    * - ``--banned``
      - flag
      - Create user as banned (inactive)
@@ -127,8 +127,17 @@ Create a new user account with specified settings.
    # Create a banned user
    yt users create spamuser "Spam User" "spam@example.com" --banned
 
-   # Create user with password prompt for security
+   # Create user with password prompt for security (recommended)
    yt users create secureuser "Secure User" "secure@company.com"
+
+   # Non-interactive creation for automation (shows security warning)
+   yt users create autouser "Auto User" "auto@company.com" \
+     --password "temp123" --force-change-password
+
+.. warning::
+   When using ``--password`` in scripts, the password may be visible in command
+   history and process lists. Consider using environment variables or secure
+   password prompting for production automation.
 
 update
 ~~~~~~

@@ -827,16 +827,16 @@ def update_comment(ctx: click.Context, comment_id: str, text: str) -> None:
 @comments.command(name="delete")
 @click.argument("comment_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_comment(ctx: click.Context, comment_id: str, confirm: bool) -> None:
+def delete_comment(ctx: click.Context, comment_id: str, force: bool) -> None:
     """Delete a comment."""
     console = get_console()
 
-    if not confirm:
+    if not force:
         if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
@@ -967,16 +967,16 @@ def list_attachments(
 @click.argument("article_id")
 @click.argument("attachment_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, confirm: bool) -> None:
+def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, force: bool) -> None:
     """Delete an attachment from an article."""
     console = get_console()
 
-    if not confirm:
+    if not force:
         if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return

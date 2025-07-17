@@ -503,6 +503,40 @@ class TestUsersCLI:
                     assert result.exit_code in [0, 1]
 
     @patch("youtrack_cli.users.UserManager")
+    def test_users_create_non_interactive_automation(self, mock_user_manager_class):
+        """Test users create command with --password for automation (non-interactive)."""
+        mock_user_manager = Mock()
+        mock_user_manager_class.return_value = mock_user_manager
+
+        mock_result = {
+            "status": "success",
+            "data": {"id": "123", "login": "autouser", "fullName": "Auto User"},
+            "message": "User 'autouser' created successfully",
+        }
+
+        with patch("asyncio.run", return_value=mock_result):
+            with patch("youtrack_cli.auth.AuthManager"):
+                runner = CliRunner()
+                # Test non-interactive creation with --password option
+                result = runner.invoke(
+                    main,
+                    [
+                        "users",
+                        "create",
+                        "autouser",
+                        "Auto User",
+                        "auto@test.com",
+                        "--password",
+                        "secret123",
+                    ],
+                )
+
+                # Should show security warning and not prompt for password
+                assert "Warning: Password provided via command line" in result.output
+                assert "Enter password for new user" not in result.output
+                assert result.exit_code in [0, 1]
+
+    @patch("youtrack_cli.users.UserManager")
     def test_users_update_show_details(self, mock_user_manager_class):
         """Test users update command with show details option."""
         mock_user_manager = Mock()

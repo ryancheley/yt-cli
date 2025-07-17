@@ -96,7 +96,6 @@ def projects_list(
 @click.option(
     "--leader",
     "-l",
-    prompt=True,
     help="Project leader username (e.g., 'admin', 'ryan') or ID (e.g., '2-3')",
 )
 @click.option(
@@ -115,7 +114,7 @@ def projects_create(
     ctx: click.Context,
     name: str,
     short_name: str,
-    leader: str,
+    leader: Optional[str],
     description: Optional[str],
     template: Optional[str],
 ) -> None:
@@ -139,6 +138,10 @@ def projects_create(
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
+
+    # Prompt for leader if not provided (maintains backward compatibility)
+    if not leader:
+        leader = click.prompt("Project leader username (e.g., 'admin', 'ryan') or ID (e.g., '2-3')")
 
     console.print(f"🚀 Creating project '{name}'...", style="blue")
 
@@ -259,7 +262,7 @@ def configure(
 @projects.command()
 @click.argument("project_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
@@ -267,7 +270,7 @@ def configure(
 def archive(
     ctx: click.Context,
     project_id: str,
-    confirm: bool,
+    force: bool,
 ) -> None:
     """Archive a project."""
     from ..projects import ProjectManager
@@ -276,7 +279,7 @@ def archive(
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
-    if not confirm:
+    if not force:
         confirmation_msg = f"Are you sure you want to archive project '{project_id}'?"
         if not click.confirm(confirmation_msg):
             console.print("Archive cancelled.", style="yellow")

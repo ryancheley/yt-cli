@@ -104,7 +104,7 @@ Create a new project with specified settings.
      - Description
    * - ``--leader, -l``
      - string
-     - Project leader username (e.g., 'admin', 'john.doe') or user ID (e.g., '2-3') (will prompt if not provided)
+     - Project leader username (e.g., 'admin', 'john.doe') or user ID (e.g., '2-3') (will prompt if not provided for interactive use)
    * - ``--description, -d``
      - string
      - Project description
@@ -129,6 +129,14 @@ Create a new project with specified settings.
    # Create a Kanban project
    yt projects create "Development Board" "DEV" --leader admin \
      --template kanban --description "Main development tracking"
+
+   # Non-interactive creation for automation
+   yt projects create "CI Project" "CI" --leader admin \
+     --description "Automated project creation"
+
+.. note::
+   For automation scripts and CI/CD pipelines, always provide the ``--leader``
+   option to avoid interactive prompts.
 
 configure
 ~~~~~~~~~

@@ -132,6 +132,9 @@ def create_user(
     # Prompt for password if not provided
     if not password:
         password = Prompt.ask("Enter password for new user", password=True)
+    elif password:
+        # Show security warning when password is provided via command line
+        console.print("⚠️  Warning: Password provided via command line may be visible in shell history", style="yellow")
 
     console.print(f"👤 Creating user '{login}'...", style="blue")
 
