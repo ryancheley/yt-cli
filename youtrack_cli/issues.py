@@ -849,7 +849,16 @@ class IssueManager:
         if not credentials:
             return {"status": "error", "message": "Not authenticated"}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/tags/{tag}"
+        # First find the tag to get its ID
+        tag_result = await self.find_tag_by_name(tag)
+        if tag_result["status"] == "not_found":
+            return {"status": "error", "message": f"Tag '{tag}' not found"}
+        elif tag_result["status"] != "success":
+            return tag_result
+
+        tag_id = tag_result["tag"]["id"]
+
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/tags/{tag_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
 
         try:
