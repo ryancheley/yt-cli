@@ -339,3 +339,159 @@ def permissions(
     except Exception as e:
         console.print(f"❌ Error managing user permissions: {e}", style="red")
         raise click.ClickException("Failed to manage user permissions") from e
+
+
+@users.command("groups")
+@click.argument("user_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def users_groups(ctx: click.Context, user_id: str, format: str) -> None:
+    """Display groups that a user belongs to.
+
+    Shows all groups the specified user is a member of, including group
+    descriptions and permissions.
+
+    Examples:
+        # View user's groups in table format
+        yt users groups john.doe
+
+        # View user's groups in JSON format
+        yt users groups admin --format json
+    """
+    from ..users import UserManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    user_manager = UserManager(auth_manager)
+
+    console.print(f"👥 Fetching groups for user '{user_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(user_manager.get_user_groups(user_id))
+
+        if result["status"] == "success":
+            groups = result["data"]
+
+            if format == "table":
+                user_manager.display_user_groups(groups, user_id)
+                console.print(f"\n[dim]Total: {len(groups)} groups[/dim]")
+            else:
+                import json
+
+                console.print(json.dumps(groups, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to get user groups")
+
+    except Exception as e:
+        console.print(f"❌ Error getting user groups: {e}", style="red")
+        raise click.ClickException("Failed to get user groups") from e
+
+
+@users.command("roles")
+@click.argument("user_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def users_roles(ctx: click.Context, user_id: str, format: str) -> None:
+    """Display roles assigned to a user.
+
+    Shows all roles assigned to the specified user, including role
+    descriptions and permissions.
+
+    Examples:
+        # View user's roles in table format
+        yt users roles john.doe
+
+        # View user's roles in JSON format
+        yt users roles admin --format json
+    """
+    from ..users import UserManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    user_manager = UserManager(auth_manager)
+
+    console.print(f"🔐 Fetching roles for user '{user_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(user_manager.get_user_roles(user_id))
+
+        if result["status"] == "success":
+            roles = result["data"]
+
+            if format == "table":
+                user_manager.display_user_roles(roles, user_id)
+                console.print(f"\n[dim]Total: {len(roles)} roles[/dim]")
+            else:
+                import json
+
+                console.print(json.dumps(roles, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to get user roles")
+
+    except Exception as e:
+        console.print(f"❌ Error getting user roles: {e}", style="red")
+        raise click.ClickException("Failed to get user roles") from e
+
+
+@users.command("teams")
+@click.argument("user_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def users_teams(ctx: click.Context, user_id: str, format: str) -> None:
+    """Display teams that a user is a member of.
+
+    Shows all teams the specified user belongs to, including team
+    descriptions.
+
+    Examples:
+        # View user's teams in table format
+        yt users teams john.doe
+
+        # View user's teams in JSON format
+        yt users teams jane.smith --format json
+    """
+    from ..users import UserManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    user_manager = UserManager(auth_manager)
+
+    console.print(f"🏆 Fetching teams for user '{user_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(user_manager.get_user_teams(user_id))
+
+        if result["status"] == "success":
+            teams = result["data"]
+
+            if format == "table":
+                user_manager.display_user_teams(teams, user_id)
+                console.print(f"\n[dim]Total: {len(teams)} teams[/dim]")
+            else:
+                import json
+
+                console.print(json.dumps(teams, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to get user teams")
+
+    except Exception as e:
+        console.print(f"❌ Error getting user teams: {e}", style="red")
+        raise click.ClickException("Failed to get user teams") from e
