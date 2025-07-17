@@ -100,6 +100,84 @@ class TestUserManager:
             assert result["data"][0]["login"] == "admin"
 
     @pytest.mark.asyncio
+    async def test_list_users_active_only(self, user_manager, auth_manager):
+        """Test user listing with active_only filter."""
+        mock_users = [
+            {
+                "id": "1",
+                "login": "active_user",
+                "fullName": "Active User",
+                "email": "active@test.com",
+                "banned": False,
+                "online": True,
+                "guest": False,
+            },
+            {
+                "id": "2",
+                "login": "banned_user",
+                "fullName": "Banned User",
+                "email": "banned@test.com",
+                "banned": True,
+                "online": False,
+                "guest": False,
+            },
+        ]
+
+        with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_users
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await user_manager.list_users(active_only=True)
+
+            assert result["status"] == "success"
+            assert len(result["data"]) == 1
+            assert result["data"][0]["login"] == "active_user"
+            assert result["count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_list_users_active_only_with_query(self, user_manager, auth_manager):
+        """Test user listing with active_only filter and query."""
+        mock_users = [
+            {
+                "id": "1",
+                "login": "admin",
+                "fullName": "Admin User",
+                "email": "admin@test.com",
+                "banned": False,
+                "online": True,
+                "guest": False,
+            },
+            {
+                "id": "2",
+                "login": "banned_admin",
+                "fullName": "Banned Admin",
+                "email": "banned_admin@test.com",
+                "banned": True,
+                "online": False,
+                "guest": False,
+            },
+        ]
+
+        with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_users
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await user_manager.list_users(query="admin", active_only=True)
+
+            assert result["status"] == "success"
+            assert len(result["data"]) == 1
+            assert result["data"][0]["login"] == "admin"
+            assert result["count"] == 1
+
+    @pytest.mark.asyncio
     async def test_list_users_not_authenticated(self, auth_manager):
         """Test user listing when not authenticated."""
         auth_manager.load_credentials.return_value = None
