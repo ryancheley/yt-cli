@@ -64,12 +64,15 @@ Set up a local YouTrack instance using Docker for hands-on learning. This tutori
 
 - Checking Docker availability and requirements
 - Downloading and starting a YouTrack container
-- Configuring the initial YouTrack setup
+- Accessing the YouTrack Configuration Wizard with a one-time token
+- Completing the initial YouTrack setup (5-10 minutes)
 - Connecting the CLI to your local instance
 - Practicing with a real YouTrack environment
 - Managing and cleaning up the Docker resources
 
 **Requirements**: Docker must be installed and running on your system. This tutorial creates a local YouTrack instance at ``http://localhost:8080`` for learning purposes.
+
+**Initial Setup Time**: The YouTrack configuration wizard typically takes 5-10 minutes to complete, including setting up an administrator account, configuring basic settings, and creating your first project.
 
 Using the Tutorial System
 -------------------------
@@ -196,6 +199,8 @@ Docker Tutorial Issues
 - **YouTrack takes too long to start**: Initial startup can take 5-10 minutes, especially on slower systems
 - **Permission denied**: Ensure your user has Docker permissions (add to docker group on Linux)
 - **Out of disk space**: YouTrack image is ~1GB, ensure sufficient space available
+- **Configuration Wizard URL not displayed**: The tutorial automatically captures the wizard token from container logs and displays the complete URL
+- **Wizard token expired**: If you wait too long to access the URL, restart the container to get a new token
 
 Advanced Usage
 --------------

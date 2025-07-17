@@ -1,8 +1,9 @@
 """Docker utilities for YouTrack tutorial system."""
 
+import re
 import socket
 import time
-from typing import Optional
+from typing import Optional, Tuple
 
 import docker
 from docker.errors import DockerException, NotFound
@@ -90,14 +91,14 @@ def pull_youtrack_image() -> None:
         raise DockerError(f"Failed to pull YouTrack image: {e}") from e
 
 
-def start_youtrack_container(port: int = DEFAULT_PORT) -> str:
+def start_youtrack_container(port: int = DEFAULT_PORT) -> Tuple[str, str]:
     """Start YouTrack container.
 
     Args:
         port: Host port to bind to.
 
     Returns:
-        Container ID.
+        Tuple of (Container ID, Wizard URL).
 
     Raises:
         DockerError: If container startup fails.
@@ -132,7 +133,14 @@ def start_youtrack_container(port: int = DEFAULT_PORT) -> str:
         )
 
         console.print(f"[green]✓ YouTrack container started with ID: {container.short_id}[/green]")
-        return container.id
+
+        # Wait a bit for the container to generate logs
+        time.sleep(2)
+
+        # Get the wizard URL from logs
+        wizard_url = get_wizard_url(port, CONTAINER_NAME)
+
+        return container.id, wizard_url
 
     except DockerException as e:
         raise DockerError(f"Failed to start YouTrack container: {e}") from e
@@ -273,22 +281,90 @@ def get_youtrack_url(port: int = DEFAULT_PORT) -> str:
     return f"http://localhost:{port}"
 
 
-def get_setup_instructions(port: int = DEFAULT_PORT) -> list[str]:
+def get_container_logs(container_name: str = CONTAINER_NAME, lines: int = 100) -> Optional[str]:
+    """Get logs from the YouTrack container.
+
+    Args:
+        container_name: Name of the container.
+        lines: Number of log lines to retrieve.
+
+    Returns:
+        Container logs as string, or None if container not found.
+    """
+    try:
+        client = docker.from_env()
+        container = client.containers.get(container_name)
+        logs = container.logs(tail=lines).decode("utf-8")
+        return logs
+    except (DockerException, NotFound):
+        return None
+
+
+def extract_wizard_token(logs: str) -> Optional[str]:
+    """Extract the wizard token from YouTrack container logs.
+
+    Args:
+        logs: Container log output.
+
+    Returns:
+        Wizard token if found, None otherwise.
+    """
+    # Pattern to match the wizard token in the URL
+    pattern = r"wizard_token=([a-zA-Z0-9_-]+)"
+    match = re.search(pattern, logs)
+    if match:
+        return match.group(1)
+    return None
+
+
+def get_wizard_url(port: int = DEFAULT_PORT, container_name: str = CONTAINER_NAME) -> str:
+    """Get the complete wizard URL with token from container logs.
+
+    Args:
+        port: Port number YouTrack is running on.
+        container_name: Name of the container.
+
+    Returns:
+        Complete wizard URL with token, or base URL if token not found.
+    """
+    logs = get_container_logs(container_name)
+    if logs:
+        token = extract_wizard_token(logs)
+        if token:
+            return f"http://localhost:{port}/?wizard_token={token}"
+
+    # Return base URL if we can't find the token
+    return get_youtrack_url(port)
+
+
+def get_setup_instructions(port: int = DEFAULT_PORT, wizard_url: Optional[str] = None) -> list[str]:
     """Get step-by-step setup instructions for YouTrack.
 
     Args:
         port: Port number.
+        wizard_url: Optional wizard URL with token.
 
     Returns:
         List of instruction strings.
     """
-    url = get_youtrack_url(port)
+    url = wizard_url or get_youtrack_url(port)
     return [
         f"1. Open your web browser and go to: {url}",
-        "2. Complete the initial YouTrack setup wizard:",
-        "   - Set up the administrator account",
-        "   - Configure basic settings",
-        "   - Create a sample project (recommended: 'FPU')",
-        "3. Once setup is complete, return here to configure the CLI",
-        "4. Keep the browser tab open for reference",
+        "",
+        "2. Complete the YouTrack Configuration Wizard (5-10 minutes):",
+        "   - Step 1: Set up the administrator account",
+        "   - Step 2: Configure basic YouTrack settings",
+        "   - Step 3: Configure email notifications (optional)",
+        "   - Step 4: Create your first project (recommended: 'FPU')",
+        "   - Step 5: Review and confirm your settings",
+        "",
+        "3. After completing the wizard:",
+        "   - YouTrack will restart and apply your configuration",
+        "   - This may take 1-2 minutes",
+        "   - Keep the browser tab open for reference",
+        "",
+        "4. Once YouTrack is ready, return here to configure the CLI",
+        "",
+        "Note: The initial setup process typically takes 5-10 minutes.",
+        "Be patient as YouTrack configures itself for first use.",
     ]

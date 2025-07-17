@@ -1,6 +1,6 @@
 """Built-in tutorial modules for YouTrack CLI."""
 
-from typing import List
+from typing import List, Optional
 
 from .core import TutorialModule, TutorialStep
 from .docker_utils import (
@@ -327,6 +327,7 @@ class DockerTutorial(TutorialModule):
     """Tutorial for setting up a local YouTrack instance with Docker."""
 
     def __init__(self):
+        self._wizard_url: Optional[str] = None
         super().__init__(
             module_id="docker",
             title="Local YouTrack with Docker",
@@ -518,13 +519,18 @@ class DockerTutorial(TutorialModule):
     def _get_container_start_instructions(self) -> List[str]:
         """Get instructions for starting YouTrack container."""
         try:
-            container_id = start_youtrack_container()
+            container_id, wizard_url = start_youtrack_container()
             wait_for_youtrack_ready()
+            # Store wizard URL for later use
+            self._wizard_url = wizard_url
             return [
                 f"✓ YouTrack container started! (ID: {container_id[:12]})",
                 "✓ YouTrack is now ready and accessible",
-                f"You can access it at: {get_youtrack_url()}",
-                "Ready for initial setup in your browser",
+                "",
+                f"Configuration Wizard URL: {wizard_url}",
+                "",
+                "The URL above includes a one-time wizard token for initial setup.",
+                "Copy and paste this URL into your browser to begin configuration.",
             ]
         except (Exception, YouTrackStartupError) as e:
             return [
@@ -536,7 +542,7 @@ class DockerTutorial(TutorialModule):
 
     def _get_web_setup_instructions(self) -> List[str]:
         """Get web setup instructions."""
-        return get_setup_instructions()
+        return get_setup_instructions(wizard_url=self._wizard_url)
 
     def _get_cli_config_instructions(self) -> List[str]:
         """Get CLI configuration instructions."""
@@ -581,7 +587,9 @@ class DockerTutorial(TutorialModule):
 
     async def _execute_container_start(self) -> None:
         """Execute YouTrack container start."""
-        start_youtrack_container()
+        # Get the container ID and wizard URL
+        _, wizard_url = start_youtrack_container()
+        self._wizard_url = wizard_url
         wait_for_youtrack_ready()
 
     # Validation methods for Docker tutorial steps

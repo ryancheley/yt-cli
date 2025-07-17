@@ -13,7 +13,10 @@ from youtrack_cli.tutorial.docker_utils import (
     check_docker_available,
     check_port_available,
     cleanup_youtrack_resources,
+    extract_wizard_token,
+    get_container_logs,
     get_setup_instructions,
+    get_wizard_url,
     get_youtrack_url,
     pull_youtrack_image,
     remove_youtrack_container,
@@ -87,9 +90,11 @@ class TestDockerUtils:
         with pytest.raises(DockerError):
             pull_youtrack_image()
 
+    @patch("youtrack_cli.tutorial.docker_utils.get_wizard_url")
+    @patch("youtrack_cli.tutorial.docker_utils.time.sleep")
     @patch("youtrack_cli.tutorial.docker_utils.docker.from_env")
     @patch("youtrack_cli.tutorial.docker_utils.console")
-    def test_start_youtrack_container_success(self, mock_console, mock_docker):
+    def test_start_youtrack_container_success(self, mock_console, mock_docker, mock_sleep, mock_get_wizard_url):
         """Test successful YouTrack container startup."""
         mock_client = Mock()
         mock_container = Mock()
@@ -104,10 +109,12 @@ class TestDockerUtils:
         mock_client.volumes.get.side_effect = NotFound("Volume not found")
 
         mock_docker.return_value = mock_client
+        mock_get_wizard_url.return_value = "http://localhost:8080/?wizard_token=test123"
 
-        container_id = start_youtrack_container(8080)
+        container_id, wizard_url = start_youtrack_container(8080)
 
         assert container_id == "container123"
+        assert wizard_url == "http://localhost:8080/?wizard_token=test123"
         mock_client.volumes.create.assert_called_once()
         mock_client.containers.run.assert_called_once()
 
@@ -242,6 +249,71 @@ class TestDockerUtils:
         assert len(instructions) > 0
         assert "http://localhost:8080" in instructions[0]
         assert any("administrator" in instr for instr in instructions)
+        assert any("5-10 minutes" in instr for instr in instructions)
+
+    def test_get_setup_instructions_with_wizard_url(self):
+        """Test setup instructions with wizard URL."""
+        wizard_url = "http://localhost:8080/?wizard_token=test123"
+        instructions = get_setup_instructions(8080, wizard_url=wizard_url)
+
+        assert len(instructions) > 0
+        assert wizard_url in instructions[0]
+        assert any("Configuration Wizard" in instr for instr in instructions)
+
+    @patch("youtrack_cli.tutorial.docker_utils.docker.from_env")
+    def test_get_container_logs_success(self, mock_docker):
+        """Test successful container log retrieval."""
+        mock_client = Mock()
+        mock_container = Mock()
+        mock_container.logs.return_value = b"Some log output with wizard_token=abc123"
+        mock_client.containers.get.return_value = mock_container
+        mock_docker.return_value = mock_client
+
+        logs = get_container_logs("test-container")
+
+        assert logs == "Some log output with wizard_token=abc123"
+        mock_container.logs.assert_called_once_with(tail=100)
+
+    @patch("youtrack_cli.tutorial.docker_utils.docker.from_env")
+    def test_get_container_logs_not_found(self, mock_docker):
+        """Test container logs when container not found."""
+        mock_client = Mock()
+        mock_client.containers.get.side_effect = NotFound("Container not found")
+        mock_docker.return_value = mock_client
+
+        logs = get_container_logs("test-container")
+
+        assert logs is None
+
+    def test_extract_wizard_token(self):
+        """Test wizard token extraction from logs."""
+        logs = "JetBrains YouTrack will listen on URL [http://example.com/?wizard_token=abc123-XYZ_456]"
+        token = extract_wizard_token(logs)
+        assert token == "abc123-XYZ_456"
+
+        logs = "No wizard token in this log"
+        token = extract_wizard_token(logs)
+        assert token is None
+
+    @patch("youtrack_cli.tutorial.docker_utils.get_container_logs")
+    @patch("youtrack_cli.tutorial.docker_utils.extract_wizard_token")
+    def test_get_wizard_url_with_token(self, mock_extract, mock_get_logs):
+        """Test getting wizard URL with token from logs."""
+        mock_get_logs.return_value = "Some logs with token"
+        mock_extract.return_value = "test-token-123"
+
+        url = get_wizard_url(8080, "test-container")
+
+        assert url == "http://localhost:8080/?wizard_token=test-token-123"
+
+    @patch("youtrack_cli.tutorial.docker_utils.get_container_logs")
+    def test_get_wizard_url_no_token(self, mock_get_logs):
+        """Test getting wizard URL when no token found."""
+        mock_get_logs.return_value = "Some logs without token"
+
+        url = get_wizard_url(8080, "test-container")
+
+        assert url == "http://localhost:8080"
 
 
 class TestDockerTutorial:
@@ -319,12 +391,14 @@ class TestDockerTutorial:
     @patch("youtrack_cli.tutorial.modules.wait_for_youtrack_ready")
     def test_container_start_instructions_success(self, mock_wait, mock_start):
         """Test container start instructions on success."""
-        mock_start.return_value = "container123"
+        mock_start.return_value = ("container123", "http://localhost:8080/?wizard_token=test123")
         tutorial = DockerTutorial()
         instructions = tutorial._get_container_start_instructions()
 
         assert "✓ YouTrack container started!" in instructions[0]
         assert "container123"[:12] in instructions[0]
+        assert "Configuration Wizard URL:" in instructions[3]
+        assert "http://localhost:8080/?wizard_token=test123" in instructions[3]
 
     @patch("youtrack_cli.tutorial.modules.start_youtrack_container")
     def test_container_start_instructions_failure(self, mock_start):
