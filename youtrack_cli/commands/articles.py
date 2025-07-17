@@ -857,9 +857,26 @@ def attach() -> None:
 @click.pass_context
 def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     """Upload a file to an article."""
+    from ..articles import ArticleManager
+
     console = get_console()
-    console.print("⚠️  File upload functionality not yet implemented", style="yellow")
-    console.print("This feature requires multipart form upload implementation", style="blue")
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
+
+    console.print(f"📎 Uploading file '{file_path}' to article '{article_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(article_manager.upload_attachment(article_id, file_path))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to upload file")
+
+    except Exception as e:
+        console.print(f"❌ Error uploading file: {e}", style="red")
+        raise click.ClickException("Failed to upload file") from e
 
 
 @attach.command(name="download")

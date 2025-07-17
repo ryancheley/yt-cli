@@ -154,14 +154,14 @@ class ArticleManager:
         if not fields:
             fields = (
                 "id,idReadable,summary,content,created,updated,"
-                "reporter(fullName),visibility(type),project(name,shortName)"
+                "reporter(fullName),visibility(type),project(name,shortName),"
+                "parentArticle(id,summary)"
             )
 
         params = {"fields": fields}
         if top:
             params["$top"] = str(top)
-        if parent_id:
-            params["parentArticle"] = parent_id
+        # Remove the query-based parent filtering for now - we'll filter post-processing
         if query:
             params["query"] = query
 
@@ -182,6 +182,17 @@ class ArticleManager:
             # Handle case where API returns None or null
             if data is None:
                 data = []
+
+            # If parent_id is specified, filter results to ensure we only get actual children
+            if parent_id and isinstance(data, list):
+                filtered_data = []
+                for article in data:
+                    parent_article = article.get("parentArticle", {})
+                    # Check if the article has the specified parent
+                    if parent_article and parent_article.get("id") == parent_id:
+                        filtered_data.append(article)
+                data = filtered_data
+
             return {
                 "status": "success",
                 "data": data,
@@ -252,7 +263,13 @@ class ArticleManager:
         if content:
             article_data["content"] = content
         if visibility:
-            article_data["visibility"] = {"type": visibility}
+            if visibility.lower() in ["public", "unlimited"]:
+                article_data["visibility"] = {"$type": "UnlimitedVisibility"}
+            elif visibility.lower() in ["private", "limited"]:
+                article_data["visibility"] = {"$type": "LimitedVisibility"}
+            else:
+                # Default to unlimited visibility if unknown value
+                article_data["visibility"] = {"$type": "UnlimitedVisibility"}
 
         if not article_data:
             return {"status": "error", "message": "No update data provided"}
@@ -306,12 +323,14 @@ class ArticleManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        article_data = {"visibility": {"type": "public"}}
+        # Use correct YouTrack visibility format
+        article_data = {"visibility": {"$type": "UnlimitedVisibility"}}
 
         url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
         try:
@@ -448,6 +467,41 @@ class ArticleManager:
             return {"status": "success", "data": data}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+
+    async def upload_attachment(self, article_id: str, file_path: str) -> dict[str, Any]:
+        """Upload an attachment to an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/attachments"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+
+        try:
+            with open(file_path, "rb") as file:
+                files = {"file": file}
+                client_manager = get_client_manager()
+                async with client_manager.get_client() as client:
+                    response = await client.post(url, files=files, headers=headers)
+                    if response.status_code == 200:
+                        return {
+                            "status": "success",
+                            "message": f"File '{file_path}' uploaded to article '{article_id}' successfully",
+                        }
+                    else:
+                        error_text = response.text
+                        return {
+                            "status": "error",
+                            "message": f"Failed to upload attachment: {error_text}",
+                        }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error uploading attachment: {str(e)}",
+            }
 
     def display_articles_table(self, articles: list[dict[str, Any]]) -> None:
         """Display articles in a table format."""
