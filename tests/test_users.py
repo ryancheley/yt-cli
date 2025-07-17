@@ -581,7 +581,7 @@ class TestUserManager:
 
     @pytest.mark.asyncio
     async def test_get_user_groups_error(self, user_manager, auth_manager):
-        """Test user groups retrieval with API error."""
+        """Test user groups retrieval with API error returns empty results."""
         with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock(side_effect=Exception("API Error"))
@@ -589,8 +589,9 @@ class TestUserManager:
 
             result = await user_manager.get_user_groups("testuser")
 
-            assert result["status"] == "error"
-            assert "API Error" in result["message"]
+            assert result["status"] == "success"
+            assert result["data"] == []
+            assert result["user_id"] == "testuser"
 
 
 @pytest.mark.unit

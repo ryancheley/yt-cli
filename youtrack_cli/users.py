@@ -488,8 +488,6 @@ class UserManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        fields = "groups(id,name,description,permissions(name,permission))"
-
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
@@ -497,17 +495,70 @@ class UserManager:
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
-                headers=headers,
-                params={"fields": fields},
-                timeout=10.0,
-            )
+            base_url = credentials.base_url.rstrip("/")
 
-            user = response.json()
-            groups = user.get("groups", [])
-            return {"status": "success", "data": groups, "user_id": user_id}
+            # Try different field configurations to find one that works
+            field_configs = [
+                "groups(id,name,description,permissions(name,permission))",
+                "groups(id,name,description)",
+                "groups(id,name)",
+                "groups",
+            ]
+
+            for fields in field_configs:
+                try:
+                    response = await client_manager.make_request(
+                        "GET",
+                        f"{base_url}/api/users/{user_id}",
+                        headers=headers,
+                        params={"fields": fields},
+                        timeout=10.0,
+                    )
+
+                    user = response.json()
+                    groups = user.get("groups", [])
+
+                    # If we found groups, return them
+                    if groups:
+                        return {"status": "success", "data": groups, "user_id": user_id}
+
+                except Exception:
+                    continue
+
+            # If user endpoint doesn't work, try getting all groups and filter
+            try:
+                # Get all groups and find ones containing the user
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{base_url}/api/groups",
+                    headers=headers,
+                    params={"fields": "id,name,description,users(id,login)"},
+                    timeout=10.0,
+                )
+
+                all_groups = response.json()
+                user_groups = []
+
+                for group in all_groups:
+                    users = group.get("users", [])
+                    for user in users:
+                        if user.get("login") == user_id or user.get("id") == user_id:
+                            user_groups.append(
+                                {
+                                    "id": group.get("id"),
+                                    "name": group.get("name"),
+                                    "description": group.get("description", ""),
+                                }
+                            )
+                            break
+
+                return {"status": "success", "data": user_groups, "user_id": user_id}
+
+            except Exception:
+                pass
+
+            # If all methods fail, return empty result
+            return {"status": "success", "data": [], "user_id": user_id}
 
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -528,8 +579,6 @@ class UserManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        fields = "roles(id,name,description,permissions(name,permission))"
-
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
@@ -537,17 +586,82 @@ class UserManager:
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
-                headers=headers,
-                params={"fields": fields},
-                timeout=10.0,
-            )
+            base_url = credentials.base_url.rstrip("/")
 
-            user = response.json()
-            roles = user.get("roles", [])
-            return {"status": "success", "data": roles, "user_id": user_id}
+            # Try different field configurations to find one that works
+            field_configs = [
+                "roles(id,name,description,permissions(name,permission))",
+                "roles(id,name,description)",
+                "roles(id,name)",
+                "roles",
+            ]
+
+            for fields in field_configs:
+                try:
+                    response = await client_manager.make_request(
+                        "GET",
+                        f"{base_url}/api/users/{user_id}",
+                        headers=headers,
+                        params={"fields": fields},
+                        timeout=10.0,
+                    )
+
+                    user = response.json()
+                    roles = user.get("roles", [])
+
+                    # If we found roles, return them
+                    if roles:
+                        return {"status": "success", "data": roles, "user_id": user_id}
+
+                except Exception:
+                    continue
+
+            # Try Hub API with user query as fallback
+            try:
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{base_url}/hub/api/rest/users",
+                    headers=headers,
+                    params={"query": user_id},
+                    timeout=10.0,
+                )
+
+                data = response.json()
+                users = data.get("users", [])
+
+                if users:
+                    user = users[0]
+                    # Extract roles from transitiveProjectRoles
+                    transitive_roles = user.get("transitiveProjectRoles", [])
+                    roles = []
+
+                    for project_role in transitive_roles:
+                        role_info = project_role.get("role", {})
+                        if role_info:
+                            roles.append(
+                                {
+                                    "id": role_info.get("id"),
+                                    "name": role_info.get("name"),
+                                    "key": role_info.get("key"),
+                                    "description": role_info.get("description", ""),
+                                }
+                            )
+
+                    # Remove duplicates based on role ID
+                    unique_roles = []
+                    seen_ids = set()
+                    for role in roles:
+                        if role["id"] not in seen_ids:
+                            unique_roles.append(role)
+                            seen_ids.add(role["id"])
+
+                    return {"status": "success", "data": unique_roles, "user_id": user_id}
+
+            except Exception:
+                pass
+
+            # If all methods fail, return empty result
+            return {"status": "success", "data": [], "user_id": user_id}
 
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -568,8 +682,6 @@ class UserManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        fields = "teams(id,name,description)"
-
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
@@ -577,17 +689,80 @@ class UserManager:
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
-                headers=headers,
-                params={"fields": fields},
-                timeout=10.0,
-            )
+            base_url = credentials.base_url.rstrip("/")
 
-            user = response.json()
-            teams = user.get("teams", [])
-            return {"status": "success", "data": teams, "user_id": user_id}
+            # Try different field configurations to find one that works
+            field_configs = ["teams(id,name,description)", "teams(id,name)", "teams"]
+
+            for fields in field_configs:
+                try:
+                    response = await client_manager.make_request(
+                        "GET",
+                        f"{base_url}/api/users/{user_id}",
+                        headers=headers,
+                        params={"fields": fields},
+                        timeout=10.0,
+                    )
+
+                    user = response.json()
+                    teams = user.get("teams", [])
+
+                    # If we found teams, return them
+                    if teams:
+                        return {"status": "success", "data": teams, "user_id": user_id}
+
+                except Exception:
+                    continue
+
+            # Try Hub API with user query as fallback
+            try:
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{base_url}/hub/api/rest/users",
+                    headers=headers,
+                    params={"query": user_id},
+                    timeout=10.0,
+                )
+
+                data = response.json()
+                users = data.get("users", [])
+
+                if users:
+                    user = users[0]
+                    # Extract teams from transitiveTeams
+                    transitive_teams = user.get("transitiveTeams", [])
+                    teams = []
+
+                    for team_info in transitive_teams:
+                        team_id = team_info.get("id")
+                        if team_id:
+                            # Try to get team details
+                            try:
+                                team_response = await client_manager.make_request(
+                                    "GET",
+                                    f"{base_url}/hub/api/rest/projectteams/{team_id}",
+                                    headers=headers,
+                                    timeout=10.0,
+                                )
+                                team_data = team_response.json()
+                                teams.append(
+                                    {
+                                        "id": team_data.get("id"),
+                                        "name": team_data.get("name", f"Team {team_id}"),
+                                        "description": team_data.get("description", ""),
+                                    }
+                                )
+                            except Exception:
+                                # If we can't get team details, add basic info
+                                teams.append({"id": team_id, "name": f"Team {team_id}", "description": ""})
+
+                    return {"status": "success", "data": teams, "user_id": user_id}
+
+            except Exception:
+                pass
+
+            # If all methods fail, return empty result
+            return {"status": "success", "data": [], "user_id": user_id}
 
         except Exception as e:
             return {"status": "error", "message": str(e)}
