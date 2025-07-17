@@ -440,16 +440,41 @@ class TestIssueManager:
     async def test_remove_tag_success(self, issue_manager):
         """Test successful tag removal."""
         with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
-            mock_resp = Mock()
-            mock_resp.status_code = 200
+            # First call for find_tag_by_name (found)
+            search_resp = Mock()
+            search_resp.status_code = 200
+            search_resp.json.return_value = [{"id": "6-4", "name": "urgent"}]
+
+            # Second call to remove tag from issue
+            remove_resp = Mock()
+            remove_resp.status_code = 200
+
             mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_client_manager.make_request = AsyncMock(side_effect=[search_resp, remove_resp])
             mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.remove_tag("PROJ-123", "urgent")
 
             assert result["status"] == "success"
             assert "urgent" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_remove_tag_not_found(self, issue_manager):
+        """Test tag removal when tag doesn't exist."""
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            # Mock response for find_tag_by_name (tag not found)
+            search_resp = Mock()
+            search_resp.status_code = 200
+            search_resp.json.return_value = []  # Empty list means tag not found
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=search_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.remove_tag("PROJ-123", "nonexistent")
+
+            assert result["status"] == "error"
+            assert "not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_list_tags_success(self, issue_manager):
