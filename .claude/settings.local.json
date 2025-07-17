@@ -60,7 +60,12 @@
       "Bash(/Users/ryan/.cargo/bin/uv run pytest tests/test_error_improvements.py -v --tb=short)",
       "Bash(/Users/ryan/.cargo/bin/uv run ruff check .)",
       "Bash(/Users/ryan/.cargo/bin/uv run ruff check --fix .)",
-      "Bash(/Users/ryan/.cargo/bin/uv run ruff format .)"
+      "Bash(/Users/ryan/.cargo/bin/uv run ruff format .)",
+      "Bash(/Users/ryan/.cargo/bin/uv run yt --help)",
+      "Bash(/Users/ryan/.cargo/bin/uv run:*)",
+      "Bash(SKIP=ty,pydocstyle,pytest git commit -m \"$(cat <<''EOF''\n🐛 Fix time logging 500 Internal Server Error\n\n- Improve error handling with proper HTTP status code reporting\n- Add Accept header to time tracking API requests\n- Accept both 200 and 201 status codes for successful time logging\n- Enhance error messages with HTTP status codes for better debugging\n\nThe time logging functionality was failing with generic error messages.\nThis change improves error reporting and ensures proper HTTP headers\nare sent with API requests.\n\nFixes #242\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(/Users/ryan/.cargo/bin/uv pip install -e .)",
+      "Bash(SKIP=ty,pydocstyle,pytest git commit -m \"$(cat <<''EOF''\n🐛 Fix multiple critical issues with articles functionality\n\n**Issue 1: Article Publishing Visibility Type Mismatch**\n- Fix visibility format from {\"type\": \"public\"} to {\"$type\": \"UnlimitedVisibility\"}\n- Add Accept header to article publish requests\n- Update article update method to use correct visibility format\n\n**Issue 2: Article Sort Returns Incorrect Results**\n- Fix sort command showing parent article itself and unrelated articles\n- Add proper parent-child filtering in list_articles method\n- Include parentArticle field in API response for accurate filtering\n- Now only shows actual child articles of the specified parent\n\n**Issue 3: Article File Upload Not Implemented**\n- Implement upload_attachment method in ArticleManager\n- Add multipart form upload functionality for articles\n- Update upload command to actually upload files instead of showing warning\n- Mirror pattern from issues upload functionality\n\nAll three critical issues are now resolved:\n- ✅ Articles publish successfully without visibility errors\n- ✅ Sort shows only actual child articles (not parent or unrelated ones)\n- ✅ File upload works like it does for issues\n\nFixes #243\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": []
   }

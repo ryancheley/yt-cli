@@ -43,3 +43,15 @@ Deployment will always be done to a feature branch. When a feature is significan
 ## Current Configuration
 
 - Claude Code permissions are configured in `.claude/settings.local.json`
+
+## Installed Tools
+
+- `uv` is installed at `/Users/ryan/.cargo/bin/uv`
+
+## Development Configuration
+
+- the base_url to use is http://0.0.0.0:8080
+
+## Tokens
+
+- Permanent token for authentication: `perm-YWRtaW4=.NDItMA==.koCA3wYLxWqMmE2nPEONGey3LOw9Ds`
