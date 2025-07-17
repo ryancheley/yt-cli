@@ -30,6 +30,7 @@ class UserManager:
         fields: Optional[str] = None,
         top: Optional[int] = None,
         query: Optional[str] = None,
+        active_only: bool = False,
     ) -> dict[str, Any]:
         """List all users.
 
@@ -37,6 +38,7 @@ class UserManager:
             fields: Comma-separated list of user fields to return
             top: Maximum number of users to return
             query: Search query to filter users
+            active_only: Show only active (non-banned) users
 
         Returns:
             Dictionary with operation result
@@ -56,6 +58,10 @@ class UserManager:
         params = {"fields": fields}
         if top:
             params["$top"] = str(top)
+
+        # Build the query filter - only add user-provided query to API call
+        # We'll handle active_only filtering client-side since YouTrack users API
+        # may not support banned field queries
         if query:
             params["query"] = query
 
@@ -75,6 +81,11 @@ class UserManager:
             )
 
             users = response.json()
+
+            # Apply client-side filtering for active_only
+            if active_only:
+                users = [user for user in users if not user.get("banned", False)]
+
             return {"status": "success", "data": users, "count": len(users)}
 
         except Exception as e:

@@ -56,6 +56,9 @@ List all users with filtering and search capabilities.
    * - ``--query, -q``
      - string
      - Search query to filter users
+   * - ``--active-only``
+     - flag
+     - Show only active (non-banned) users
    * - ``--format``
      - choice
      - Output format: table, json (default: table)
@@ -67,17 +70,26 @@ List all users with filtering and search capabilities.
    # List all users
    yt users list
 
+   # List only active (non-banned) users
+   yt users list --active-only
+
    # List users in JSON format
    yt users list --format json
 
    # Search for users by name or username
    yt users list --query "admin"
 
+   # Search for active users with specific criteria
+   yt users list --active-only --query "developer"
+
    # Limit number of users returned
    yt users list --top 20
 
-   # List with specific fields
-   yt users list --fields "id,login,fullName,email,banned"
+   # List active users with specific fields
+   yt users list --active-only --fields "id,login,fullName,email"
+
+   # Combine active filter with other options
+   yt users list --active-only --top 20 --format json
 
 create
 ~~~~~~
@@ -261,7 +273,7 @@ User Management Features
   Manage user permissions through group memberships and role assignments.
 
 **Search and Discovery**
-  Powerful search capabilities to find users by various criteria.
+  Powerful search capabilities to find users by various criteria, including filtering by user status (active vs banned).
 
 **Bulk Operations**
   Support for managing multiple users efficiently.
@@ -343,7 +355,16 @@ User Discovery and Reporting
    # Find users by department or role
    yt users list --query "developer"
 
-   # Export user list for reporting
+   # List only active users for current operations
+   yt users list --active-only
+
+   # Find active developers for team management
+   yt users list --active-only --query "developer"
+
+   # Export active user list for reporting
+   yt users list --active-only --format json --fields "login,fullName,email" > active_users.json
+
+   # Export all users with status for audit
    yt users list --format json --fields "login,fullName,email,banned" > user_report.json
 
    # List all users with detailed information

@@ -34,6 +34,12 @@ def users() -> None:
     help="Search query to filter users",
 )
 @click.option(
+    "--active-only",
+    is_flag=True,
+    default=False,
+    help="Show only active (non-banned) users",
+)
+@click.option(
     "--format",
     type=click.Choice(["table", "json"]),
     default="table",
@@ -45,6 +51,7 @@ def list_users(
     fields: Optional[str],
     top: Optional[int],
     query: Optional[str],
+    active_only: bool,
     format: str,
 ) -> None:
     """List all users."""
@@ -57,7 +64,7 @@ def list_users(
     console.print("👥 Fetching users...", style="blue")
 
     try:
-        result = asyncio.run(user_manager.list_users(fields=fields, top=top, query=query))
+        result = asyncio.run(user_manager.list_users(fields=fields, top=top, query=query, active_only=active_only))
 
         if result["status"] == "success":
             users = result["data"]
