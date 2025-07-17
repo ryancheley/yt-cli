@@ -477,12 +477,12 @@ def update(
 @issues.command()
 @click.argument("issue_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete(ctx: click.Context, issue_id: str, confirm: bool) -> None:
+def delete(ctx: click.Context, issue_id: str, force: bool) -> None:
     """Delete an issue."""
     from ..issues import IssueManager
 
@@ -490,7 +490,7 @@ def delete(ctx: click.Context, issue_id: str, confirm: bool) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    if not confirm:
+    if not force:
         if not click.confirm(f"Are you sure you want to delete issue '{issue_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
@@ -992,12 +992,12 @@ def update_comment(ctx: click.Context, issue_id: str, comment_id: str, text: str
 @click.argument("issue_id")
 @click.argument("comment_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, confirm: bool) -> None:
+def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, force: bool) -> None:
     """Delete a comment."""
     from ..issues import IssueManager
 
@@ -1005,7 +1005,7 @@ def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, confirm: 
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    if not confirm:
+    if not force:
         if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
@@ -1158,12 +1158,12 @@ def list_attachments(
 @click.argument("issue_id")
 @click.argument("attachment_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, confirm: bool) -> None:
+def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, force: bool) -> None:
     """Delete an attachment from an issue."""
     from ..issues import IssueManager
 
@@ -1171,7 +1171,7 @@ def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, con
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    if not confirm:
+    if not force:
         if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
@@ -1278,12 +1278,12 @@ def list_links(
 @click.argument("source_issue_id")
 @click.argument("link_id")
 @click.option(
-    "--confirm",
+    "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, confirm: bool) -> None:
+def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, force: bool) -> None:
     """Remove a link between issues."""
     from ..issues import IssueManager
 
@@ -1291,7 +1291,7 @@ def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, confirm:
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    if not confirm:
+    if not force:
         if not click.confirm(f"Are you sure you want to delete link '{link_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return

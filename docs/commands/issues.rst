@@ -130,13 +130,21 @@ Delete issues from YouTrack.
   * ``ISSUE_ID`` - The ID of the issue to delete
 
 **Options:**
-  * ``--confirm`` - Skip confirmation prompt
+  * ``--force`` - Skip confirmation prompt
 
-**Example:**
+**Examples:**
 
 .. code-block:: bash
 
-   yt issues delete PROJ-123 --confirm
+   # Interactive deletion (will prompt for confirmation)
+   yt issues delete PROJ-123
+
+   # Non-interactive deletion for automation
+   yt issues delete PROJ-123 --force
+
+.. note::
+   Use the ``--force`` flag for automation scripts and CI/CD pipelines to skip
+   the interactive confirmation prompt.
 
 Search Issues
 ~~~~~~~~~~~~~

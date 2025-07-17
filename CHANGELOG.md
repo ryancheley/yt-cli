@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Convert docs from Markdown to reStructuredText (#217)
+- Non-interactive options for automation and CI/CD (#245)
+  - `--force` flag for delete commands (replaces `--confirm` for consistency)
+  - `--leader` option for project creation to avoid interactive prompts
+  - `--password` option for user creation with security warnings
 
 ### Improved
 - Command syntax documentation with clearer examples and error messages (#246, #247)

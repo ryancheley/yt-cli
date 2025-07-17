@@ -572,7 +572,7 @@ class TestAdminCommands:
         }
 
         with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "maintenance", "clear-cache", "--confirm"])
+            result = self.runner.invoke(main, ["admin", "maintenance", "clear-cache", "--force"])
 
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()

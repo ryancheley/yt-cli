@@ -595,6 +595,31 @@ class TestProjectsCLI:
                 assert result.exit_code in [0, 1]  # May fail on auth but command exists
 
     @patch("youtrack_cli.projects.ProjectManager")
+    def test_projects_create_non_interactive_automation(self, mock_project_manager_class):
+        """Test projects create command with --leader for automation (non-interactive)."""
+        mock_project_manager = Mock()
+        mock_project_manager_class.return_value = mock_project_manager
+
+        mock_result = {
+            "status": "success",
+            "data": {"id": "123", "name": "Auto Project", "shortName": "AP"},
+            "message": "Project 'Auto Project' created successfully",
+        }
+
+        with patch("asyncio.run", return_value=mock_result):
+            with patch("youtrack_cli.auth.AuthManager"):
+                runner = CliRunner()
+                # Test non-interactive creation with --leader option
+                result = runner.invoke(
+                    main,
+                    ["projects", "create", "Auto Project", "AP", "--leader", "admin"],
+                )
+
+                # Should not prompt for leader when provided via --leader flag
+                assert "Project leader username" not in result.output
+                assert result.exit_code in [0, 1]  # May fail on auth but command exists
+
+    @patch("youtrack_cli.projects.ProjectManager")
     def test_projects_configure_show_details(self, mock_project_manager_class):
         """Test projects configure command with show details option."""
         mock_project_manager = Mock()
@@ -633,7 +658,7 @@ class TestProjectsCLI:
         with patch("asyncio.run", return_value=mock_result):
             with patch("youtrack_cli.auth.AuthManager"):
                 runner = CliRunner()
-                result = runner.invoke(main, ["projects", "archive", "TP", "--confirm"])
+                result = runner.invoke(main, ["projects", "archive", "TP", "--force"])
 
                 assert result.exit_code in [0, 1]
 

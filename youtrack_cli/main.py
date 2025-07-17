@@ -1262,15 +1262,15 @@ def maintenance() -> None:
 
 
 @maintenance.command(name="clear-cache")
-@click.option("--confirm", is_flag=True, help="Skip confirmation prompt")
+@click.option("--force", is_flag=True, help="Skip confirmation prompt")
 @click.pass_context
-def clear_cache(ctx: click.Context, confirm: bool) -> None:
+def clear_cache(ctx: click.Context, force: bool) -> None:
     """Clear system caches."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
     console = get_console()
 
-    if not confirm:
+    if not force:
         console.print("[yellow]Warning:[/yellow] This will clear all system caches.")
         if not click.confirm("Continue?"):
             console.print("Operation cancelled.")

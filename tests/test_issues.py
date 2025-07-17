@@ -1368,10 +1368,30 @@ class TestIssuesCLI:
                 "message": "Issue deleted successfully",
             }
 
-            result = runner.invoke(main, ["issues", "delete", "PROJ-123", "--confirm"])
+            result = runner.invoke(main, ["issues", "delete", "PROJ-123", "--force"])
 
             assert result.exit_code == 0
             assert "deleting issue" in result.output.lower()
+
+    def test_issues_delete_non_interactive_automation(self):
+        """Test that issues delete with --force skips confirmation for automation."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Issue deleted successfully",
+            }
+
+            # Test with --force flag (should not prompt)
+            result = runner.invoke(main, ["issues", "delete", "PROJ-123", "--force"])
+
+            assert result.exit_code == 0
+            assert "deleting issue" in result.output.lower()
+            # Should not contain any confirmation prompts
+            assert "are you sure" not in result.output.lower()
 
     def test_issues_search_command(self):
         """Test the issues search CLI command."""
