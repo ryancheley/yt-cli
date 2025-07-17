@@ -71,6 +71,7 @@ class TimeManager:
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
         try:
@@ -78,7 +79,7 @@ class TimeManager:
             response = await client_manager.make_request(
                 method="POST", url=url, json_data=work_item_data, headers=headers
             )
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 return {
                     "status": "success",
@@ -89,7 +90,7 @@ class TimeManager:
                 error_text = response.text
                 return {
                     "status": "error",
-                    "message": f"Failed to log time: {error_text}",
+                    "message": f"Failed to log time (HTTP {response.status_code}): {error_text}",
                 }
         except Exception as e:
             return {"status": "error", "message": f"Error logging time: {str(e)}"}
@@ -125,7 +126,10 @@ class TimeManager:
             # Get all time entries
             url = f"{credentials.base_url.rstrip('/')}/api/workItems"
 
-        headers = {"Authorization": f"Bearer {credentials.token}"}
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
 
         try:
             client_manager = get_client_manager()
