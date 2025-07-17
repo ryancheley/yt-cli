@@ -260,6 +260,132 @@ Manage user permissions and group memberships.
    yt users permissions USERNAME --action add_to_group --group-id testers
    yt users permissions USERNAME --action add_to_group --group-id reviewers
 
+groups
+~~~~~~
+
+Display groups that a user belongs to.
+
+.. code-block:: bash
+
+   yt users groups USER_ID [OPTIONS]
+
+**Arguments:**
+
+* ``USER_ID`` - The username or user ID to query (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--format``
+     - choice
+     - Output format: table, json (default: table)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # View user's groups in table format
+   yt users groups john.doe
+
+   # View user's groups in JSON format
+   yt users groups admin --format json
+
+   # Check group memberships for a specific user
+   yt users groups project.manager
+
+   # Export user group data for reporting
+   yt users groups team.lead --format json > user_groups.json
+
+roles
+~~~~~
+
+Display roles assigned to a user.
+
+.. code-block:: bash
+
+   yt users roles USER_ID [OPTIONS]
+
+**Arguments:**
+
+* ``USER_ID`` - The username or user ID to query (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--format``
+     - choice
+     - Output format: table, json (default: table)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # View user's roles in table format
+   yt users roles john.doe
+
+   # View user's roles in JSON format
+   yt users roles admin --format json
+
+   # Check role assignments for project lead
+   yt users roles project.lead
+
+   # Export role data for audit purposes
+   yt users roles security.admin --format json > user_roles.json
+
+teams
+~~~~~
+
+Display teams that a user is a member of.
+
+.. code-block:: bash
+
+   yt users teams USER_ID [OPTIONS]
+
+**Arguments:**
+
+* ``USER_ID`` - The username or user ID to query (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--format``
+     - choice
+     - Output format: table, json (default: table)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # View user's teams in table format
+   yt users teams john.doe
+
+   # View user's teams in JSON format
+   yt users teams jane.smith --format json
+
+   # Check team memberships for developer
+   yt users teams developer.user
+
+   # Export team data for organizational chart
+   yt users teams manager.user --format json > user_teams.json
+
 User Management Features
 ------------------------
 
@@ -384,6 +510,32 @@ Permission Management
 
    # Manage project-specific permissions
    yt users permissions project.lead --action add_to_group --group-id project-managers
+
+Permission Analysis
+~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Analyze user's current permissions
+   yt users groups john.doe
+   yt users roles john.doe
+   yt users teams john.doe
+
+   # Export complete permission audit for a user
+   yt users groups john.doe --format json > john_groups.json
+   yt users roles john.doe --format json > john_roles.json
+   yt users teams john.doe --format json > john_teams.json
+
+   # Quick permission check for multiple users
+   for user in alice bob charlie; do
+     echo "=== Permissions for $user ==="
+     yt users groups $user
+     echo
+   done
+
+   # Verify user has required permissions before project assignment
+   yt users roles project.candidate
+   yt users groups project.candidate
 
 Best Practices
 --------------

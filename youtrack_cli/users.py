@@ -472,6 +472,213 @@ class UserManager:
             users, build_users_table, "Users", show_all=show_all, start_page=start_page
         )
 
+    async def get_user_groups(self, user_id: str) -> dict[str, Any]:
+        """Get groups that a user belongs to.
+
+        Args:
+            user_id: User ID or login
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        fields = "groups(id,name,description,permissions(name,permission))"
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
+                headers=headers,
+                params={"fields": fields},
+                timeout=10.0,
+            )
+
+            user = response.json()
+            groups = user.get("groups", [])
+            return {"status": "success", "data": groups, "user_id": user_id}
+
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    async def get_user_roles(self, user_id: str) -> dict[str, Any]:
+        """Get roles assigned to a user.
+
+        Args:
+            user_id: User ID or login
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        fields = "roles(id,name,description,permissions(name,permission))"
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
+                headers=headers,
+                params={"fields": fields},
+                timeout=10.0,
+            )
+
+            user = response.json()
+            roles = user.get("roles", [])
+            return {"status": "success", "data": roles, "user_id": user_id}
+
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    async def get_user_teams(self, user_id: str) -> dict[str, Any]:
+        """Get teams that a user is a member of.
+
+        Args:
+            user_id: User ID or login
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        fields = "teams(id,name,description)"
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/users/{user_id}",
+                headers=headers,
+                params={"fields": fields},
+                timeout=10.0,
+            )
+
+            user = response.json()
+            teams = user.get("teams", [])
+            return {"status": "success", "data": teams, "user_id": user_id}
+
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def display_user_groups(self, groups: list[dict[str, Any]], user_id: str) -> None:
+        """Display user groups in a formatted table.
+
+        Args:
+            groups: List of group dictionaries
+            user_id: User ID for context
+        """
+        if not groups:
+            self.console.print(f"No groups found for user '{user_id}'.", style="yellow")
+            return
+
+        table = Table(title=f"Groups for User: {user_id}")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="blue")
+        table.add_column("Permissions", style="green")
+
+        for group in groups:
+            name = group.get("name", "N/A")
+            description = group.get("description", "")
+            permissions = group.get("permissions", [])
+
+            # Format permissions
+            if permissions:
+                perm_names = [p.get("name", "N/A") for p in permissions]
+                perm_text = ", ".join(perm_names)
+            else:
+                perm_text = "None"
+
+            table.add_row(name, description or "No description", perm_text)
+
+        self.console.print(table)
+
+    def display_user_roles(self, roles: list[dict[str, Any]], user_id: str) -> None:
+        """Display user roles in a formatted table.
+
+        Args:
+            roles: List of role dictionaries
+            user_id: User ID for context
+        """
+        if not roles:
+            self.console.print(f"No roles found for user '{user_id}'.", style="yellow")
+            return
+
+        table = Table(title=f"Roles for User: {user_id}")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="blue")
+        table.add_column("Permissions", style="green")
+
+        for role in roles:
+            name = role.get("name", "N/A")
+            description = role.get("description", "")
+            permissions = role.get("permissions", [])
+
+            # Format permissions
+            if permissions:
+                perm_names = [p.get("name", "N/A") for p in permissions]
+                perm_text = ", ".join(perm_names)
+            else:
+                perm_text = "None"
+
+            table.add_row(name, description or "No description", perm_text)
+
+        self.console.print(table)
+
+    def display_user_teams(self, teams: list[dict[str, Any]], user_id: str) -> None:
+        """Display user teams in a formatted table.
+
+        Args:
+            teams: List of team dictionaries
+            user_id: User ID for context
+        """
+        if not teams:
+            self.console.print(f"No teams found for user '{user_id}'.", style="yellow")
+            return
+
+        table = Table(title=f"Teams for User: {user_id}")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="blue")
+
+        for team in teams:
+            name = team.get("name", "N/A")
+            description = team.get("description", "")
+
+            table.add_row(name, description or "No description")
+
+        self.console.print(table)
+
     def display_user_details(self, user: dict[str, Any]) -> None:
         """Display detailed information about a user.
 

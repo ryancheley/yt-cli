@@ -482,6 +482,116 @@ class TestUserManager:
             assert result["status"] == "error"
             assert "not found" in result["message"]
 
+    @pytest.mark.asyncio
+    async def test_get_user_groups_success(self, user_manager, auth_manager):
+        """Test successful user groups retrieval."""
+        mock_user = {
+            "groups": [
+                {
+                    "id": "1",
+                    "name": "Developers",
+                    "description": "Development team",
+                    "permissions": [{"name": "CREATE_ISSUE", "permission": "CREATE_ISSUE"}],
+                },
+                {"id": "2", "name": "Admins", "description": "Administrators", "permissions": []},
+            ]
+        }
+
+        with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_user
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await user_manager.get_user_groups("testuser")
+
+            assert result["status"] == "success"
+            assert len(result["data"]) == 2
+            assert result["data"][0]["name"] == "Developers"
+            assert result["data"][1]["name"] == "Admins"
+            assert result["user_id"] == "testuser"
+
+    @pytest.mark.asyncio
+    async def test_get_user_groups_not_authenticated(self, auth_manager):
+        """Test user groups retrieval when not authenticated."""
+        auth_manager.load_credentials.return_value = None
+        user_manager = UserManager(auth_manager)
+
+        result = await user_manager.get_user_groups("testuser")
+
+        assert result["status"] == "error"
+        assert "Not authenticated" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_user_roles_success(self, user_manager, auth_manager):
+        """Test successful user roles retrieval."""
+        mock_user = {
+            "roles": [
+                {
+                    "id": "1",
+                    "name": "Project Admin",
+                    "description": "Project administrator role",
+                    "permissions": [{"name": "ADMIN_PROJECT", "permission": "ADMIN_PROJECT"}],
+                }
+            ]
+        }
+
+        with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_user
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await user_manager.get_user_roles("testuser")
+
+            assert result["status"] == "success"
+            assert len(result["data"]) == 1
+            assert result["data"][0]["name"] == "Project Admin"
+            assert result["user_id"] == "testuser"
+
+    @pytest.mark.asyncio
+    async def test_get_user_teams_success(self, user_manager, auth_manager):
+        """Test successful user teams retrieval."""
+        mock_user = {
+            "teams": [
+                {"id": "1", "name": "Backend Team", "description": "Backend development team"},
+                {"id": "2", "name": "Frontend Team", "description": "Frontend development team"},
+            ]
+        }
+
+        with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
+            mock_response = Mock()
+            mock_response.json.return_value = mock_user
+
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await user_manager.get_user_teams("testuser")
+
+            assert result["status"] == "success"
+            assert len(result["data"]) == 2
+            assert result["data"][0]["name"] == "Backend Team"
+            assert result["data"][1]["name"] == "Frontend Team"
+            assert result["user_id"] == "testuser"
+
+    @pytest.mark.asyncio
+    async def test_get_user_groups_error(self, user_manager, auth_manager):
+        """Test user groups retrieval with API error."""
+        with patch("youtrack_cli.users.get_client_manager") as mock_get_client_manager:
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=Exception("API Error"))
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await user_manager.get_user_groups("testuser")
+
+            assert result["status"] == "error"
+            assert "API Error" in result["message"]
+
 
 @pytest.mark.unit
 class TestUsersCLI:

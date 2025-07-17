@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--force` flag for delete commands (replaces `--confirm` for consistency)
   - `--leader` option for project creation to avoid interactive prompts
   - `--password` option for user creation with security warnings
+- User permission query commands (#253)
+  - `yt users groups <user_id>` - Display groups that a user belongs to
+  - `yt users roles <user_id>` - Display roles assigned to a user
+  - `yt users teams <user_id>` - Display teams that a user is a member of
+  - Support for both table and JSON output formats
+  - Comprehensive permission analysis workflows
 
 ### Improved
 - Command syntax documentation with clearer examples and error messages (#246, #247)
