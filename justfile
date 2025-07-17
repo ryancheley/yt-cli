@@ -89,12 +89,42 @@ test-watch:
 [group('quality')]
 check:
     #!/usr/bin/env bash
+    set -e  # Exit immediately on any command failure
+    set -o pipefail  # Fail if any command in a pipeline fails
+
     echo "Running all quality checks..."
-    just lint
-    just format-check
-    just typecheck
-    just test -q --tb=no --no-header --disable-warnings
-    just security
+
+    echo "🔍 Running linter..."
+    if ! just lint; then
+        echo "❌ Linting failed"
+        exit 1
+    fi
+
+    echo "🔍 Checking code formatting..."
+    if ! just format-check; then
+        echo "❌ Format check failed"
+        echo "💡 Run: just format"
+        exit 1
+    fi
+
+    echo "🔍 Running type checker..."
+    if ! just typecheck; then
+        echo "❌ Type checking failed"
+        exit 1
+    fi
+
+    echo "🔍 Running tests..."
+    if ! just test -q --tb=no --no-header --disable-warnings; then
+        echo "❌ Tests failed"
+        exit 1
+    fi
+
+    echo "🔍 Running security checks..."
+    if ! just security; then
+        echo "❌ Security checks failed"
+        exit 1
+    fi
+
     echo "✅ All checks passed!"
 
 [group('quality')]
@@ -204,15 +234,42 @@ version-bump version:
 [group('release')]
 tag version:
     #!/usr/bin/env bash
+    set -e  # Exit immediately on any command failure
+    set -o pipefail  # Fail if any command in a pipeline fails
+
     echo "Creating and pushing release tag v{{ version }}..."
-    git tag v{{ version }}
-    git push origin v{{ version }}
+
+    # Check if tag already exists
+    if git tag -l | grep -q "^v{{ version }}$"; then
+        echo "❌ Tag v{{ version }} already exists"
+        echo "💡 Use 'git tag -d v{{ version }}' to delete it first if needed"
+        exit 1
+    fi
+
+    # Create tag
+    if ! git tag v{{ version }}; then
+        echo "❌ Failed to create tag v{{ version }}"
+        exit 1
+    fi
+
+    # Push tag with validation
+    if ! git push origin v{{ version }}; then
+        echo "❌ Failed to push tag v{{ version }} to remote"
+        echo "💡 Check your network connection and repository permissions"
+        echo "🔙 Rolling back local tag..."
+        git tag -d v{{ version }}
+        exit 1
+    fi
+
     echo "✅ Release tag v{{ version }} created and pushed"
     echo "🚀 GitHub Actions will now build and publish to PyPI"
 
 [group('release')]
 release version:
     #!/usr/bin/env bash
+    set -e  # Exit immediately on any command failure
+    set -o pipefail  # Fail if any command in a pipeline fails
+
     echo "🚀 Creating release {{ version }}..."
 
     # Pre-flight checks
@@ -221,6 +278,7 @@ release version:
     # Check if we're on main branch
     if [ "$(git branch --show-current)" != "main" ]; then
         echo "❌ Must be on main branch for releases"
+        echo "💡 Run: git checkout main"
         exit 1
     fi
 
@@ -228,20 +286,37 @@ release version:
     if [ -n "$(git status --porcelain)" ]; then
         echo "❌ Working directory is not clean. Please commit or stash changes."
         git status --short
+        echo "💡 Run: git stash or commit your changes first"
         exit 1
     fi
 
     # Check if we're up to date with remote
-    git fetch origin main
+    echo "🔄 Fetching latest changes from remote..."
+    if ! git fetch origin main; then
+        echo "❌ Failed to fetch from remote. Check your network connection."
+        exit 1
+    fi
+
     if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
         echo "❌ Local main branch is not up to date with origin/main"
-        echo "Please run: git pull origin main"
+        echo "💡 Run: git pull origin main"
+        exit 1
+    fi
+
+    # Check GitHub authentication
+    echo "🔐 Checking GitHub authentication..."
+    if ! gh auth status > /dev/null 2>&1; then
+        echo "❌ GitHub CLI is not authenticated"
+        echo "💡 Run: gh auth login"
         exit 1
     fi
 
     # Run quality checks
     echo "🔍 Running quality checks..."
-    just check
+    if ! just check; then
+        echo "❌ Quality checks failed. Please fix issues before releasing."
+        exit 1
+    fi
 
     echo "✅ Pre-flight checks passed"
 
@@ -252,22 +327,64 @@ release version:
     # Update uv.lock if it exists
     if [ -f "uv.lock" ]; then
         echo "🔄 Updating uv.lock..."
-        uv sync
+        if ! uv sync; then
+            echo "❌ Failed to update uv.lock"
+            exit 1
+        fi
     fi
 
     # Stage all changes (pyproject.toml and uv.lock)
     git add pyproject.toml uv.lock
 
     # Create commit
-    git commit -m "🔖 Bump version to {{ version }}"
+    if ! git commit -m "🔖 Bump version to {{ version }}"; then
+        echo "❌ Failed to create version bump commit"
+        exit 1
+    fi
 
-    # Push commit
+    # Push commit with validation
     echo "⬆️  Pushing version bump commit..."
-    git push origin main
+    if ! git push origin main; then
+        echo "❌ Failed to push version bump commit to remote"
+        echo "💡 Check your network connection and repository permissions"
+        echo "🔙 Rolling back local commit..."
+        git reset --hard HEAD~1
+        exit 1
+    fi
 
-    # Create and push tag
+    # Verify the commit was actually pushed
+    echo "🔍 Verifying commit was pushed successfully..."
+    git fetch origin main
+    if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+        echo "❌ Commit verification failed - local and remote are out of sync"
+        echo "🔙 Rolling back local commit..."
+        git reset --hard HEAD~1
+        exit 1
+    fi
+
+    # Create and push tag with validation
     echo "🏷️  Creating and pushing tag..."
-    just tag {{ version }}
+    if ! git tag v{{ version }}; then
+        echo "❌ Failed to create tag v{{ version }}"
+        exit 1
+    fi
+
+    if ! git push origin v{{ version }}; then
+        echo "❌ Failed to push tag v{{ version }} to remote"
+        echo "💡 Check your network connection and repository permissions"
+        echo "🔙 Rolling back tag and commit..."
+        git tag -d v{{ version }}
+        git reset --hard HEAD~1
+        git push --force-with-lease origin main
+        exit 1
+    fi
+
+    # Final verification
+    echo "🔍 Verifying release was created successfully..."
+    if ! gh release view v{{ version }} > /dev/null 2>&1; then
+        echo "⚠️  GitHub release may not have been created yet"
+        echo "🔗 Monitor release progress: https://github.com/ryancheley/yt-cli/actions"
+    fi
 
     echo "✅ Release {{ version }} created and published!"
     echo "🔗 Monitor release progress: https://github.com/ryancheley/yt-cli/actions"
@@ -359,6 +476,9 @@ release-status:
 [group('release')]
 rollback-release version:
     #!/usr/bin/env bash
+    set -e  # Exit immediately on any command failure
+    set -o pipefail  # Fail if any command in a pipeline fails
+
     echo "⚠️  Rolling back release {{ version }}..."
     echo "This will:"
     echo "  1. Delete the git tag v{{ version }}"
@@ -368,22 +488,45 @@ rollback-release version:
     echo
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # Check if we're on main branch
+        if [ "$(git branch --show-current)" != "main" ]; then
+            echo "❌ Must be on main branch for rollback"
+            echo "💡 Run: git checkout main"
+            exit 1
+        fi
+
         # Delete remote tag
         echo "🗑️  Deleting remote tag..."
-        git push origin :refs/tags/v{{ version }} || echo "Tag may not exist on remote"
+        if git push origin :refs/tags/v{{ version }}; then
+            echo "✅ Remote tag deleted"
+        else
+            echo "⚠️  Remote tag may not exist or failed to delete"
+        fi
 
         # Delete local tag
-        git tag -d v{{ version }} 2>/dev/null || echo "Local tag may not exist"
+        if git tag -d v{{ version }} 2>/dev/null; then
+            echo "✅ Local tag deleted"
+        else
+            echo "⚠️  Local tag may not exist"
+        fi
 
         # Revert last commit if it's a version bump
         last_commit_msg=$(git log -1 --pretty=%B)
         if echo "$last_commit_msg" | grep -q "Bump version to {{ version }}"; then
             echo "⏪ Reverting version bump commit..."
             git reset --hard HEAD~1
+
             echo "⬆️  Force pushing to remote..."
-            git push --force-with-lease origin main
+            if ! git push --force-with-lease origin main; then
+                echo "❌ Failed to push rollback to remote"
+                echo "💡 Check your network connection and repository permissions"
+                echo "⚠️  Local rollback was successful, but remote needs manual intervention"
+                exit 1
+            fi
+            echo "✅ Version bump commit reverted"
         else
             echo "⚠️  Last commit doesn't appear to be the version bump for {{ version }}"
+            echo "    Last commit message: $last_commit_msg"
             echo "    Manual intervention may be required"
         fi
 
