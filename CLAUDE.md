@@ -55,3 +55,7 @@ Deployment will always be done to a feature branch. When a feature is significan
 ## Tokens
 
 - Permanent token for authentication: `perm-YWRtaW4=.NDItMA==.koCA3wYLxWqMmE2nPEONGey3LOw9Ds`
+
+## Maintenance Tasks
+
+- the yt tutorial command needs to be reviewed and updated for any changes to the cli api
