@@ -366,13 +366,13 @@ Rate Limiting
    .. code-block:: bash
 
       # Use in scripts
-      yt issues list --limit 10
+      yt issues list --top 10
       sleep 1
-      yt issues list --limit 10 --offset 10
+      yt issues list --top 10 --offset 10
 
 2. **Reduce request frequency**:
 
-   - Use ``--limit`` options to fetch smaller batches
+   - Use ``--top`` options to fetch smaller batches
    - Implement exponential backoff in scripts
 
 Data and Output Issues
@@ -397,7 +397,7 @@ Empty Results
    .. code-block:: bash
 
       # Start with broader searches
-      yt issues list --limit 5
+      yt issues list --top 5
       yt issues search "created: today"
 
 3. **Check project context**:
@@ -459,7 +459,7 @@ Issue Creation Fails
 
       # Check valid values first:
       yt projects list  # For project keys
-      yt issues list --limit 1  # To see valid field examples
+      yt issues list --top 1  # To see valid field examples
 
 3. **Special characters in summary**:
 
@@ -608,8 +608,8 @@ Verify your setup is working:
    yt auth login --test
 
    # Test basic operations
-   yt projects list --limit 1
-   yt issues list --limit 1
+   yt projects list --top 1
+   yt issues list --top 1
 
 Common Error Messages
 ---------------------
