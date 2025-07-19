@@ -131,7 +131,7 @@ class IssuesTutorial(TutorialModule):
                     "Try filtering by assignee, state, or project",
                     "Notice the different output formats available",
                 ],
-                command_example="yt issues list --limit 10",
+                command_example="yt issues list --top 10",
                 tips=[
                     "Use --assignee me to see issues assigned to you",
                     "Filter by state with --state Open or --state Resolved",
