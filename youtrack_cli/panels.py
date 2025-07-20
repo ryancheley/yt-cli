@@ -10,6 +10,35 @@ from rich.text import Text
 from .console import get_console
 
 
+def _get_assignee_from_issue_data(issue_data: Dict[str, Any]) -> str:
+    """Get assignee name from either regular field or custom field."""
+    # First try the regular assignee field
+    assignee = issue_data.get("assignee")
+    if assignee and isinstance(assignee, dict):
+        if assignee.get("fullName"):
+            return assignee["fullName"]
+        elif assignee.get("name"):
+            return assignee["name"]
+        elif assignee.get("login"):
+            return assignee["login"]
+
+    # If not found, try the Assignee custom field
+    custom_fields = issue_data.get("customFields", [])
+    if isinstance(custom_fields, list):
+        for field in custom_fields:
+            if isinstance(field, dict) and field.get("name") == "Assignee":
+                value = field.get("value")
+                if value and isinstance(value, dict):
+                    if value.get("fullName"):
+                        return value["fullName"]
+                    elif value.get("name"):
+                        return value["name"]
+                    elif value.get("login"):
+                        return value["login"]
+
+    return "Unassigned"
+
+
 class PanelFactory:
     """Factory class for creating themed panels with consistent styling."""
 
@@ -282,7 +311,7 @@ def create_issue_details_panel(issue_data: Dict[str, Any]) -> Panel:
     details_data = {
         "Description": issue_data.get("description", "No description"),
         "Reporter": issue_data.get("reporter", {}).get("name"),
-        "Assignee": issue_data.get("assignee", {}).get("name") or "Unassigned",
+        "Assignee": _get_assignee_from_issue_data(issue_data),
         "Created": issue_data.get("created"),
         "Updated": issue_data.get("updated"),
         "Resolved": issue_data.get("resolved"),

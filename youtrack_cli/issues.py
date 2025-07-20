@@ -129,6 +129,25 @@ class IssueManager:
 
         return None
 
+    def _get_assignee_name(self, issue: Dict[str, Any]) -> str:
+        """Get assignee name from either regular field or custom field."""
+        # First try the regular assignee field
+        assignee = issue.get("assignee")
+        if assignee and isinstance(assignee, dict):
+            if assignee.get("fullName"):
+                return assignee["fullName"]
+            elif assignee.get("name"):
+                return assignee["name"]
+            elif assignee.get("login"):
+                return assignee["login"]
+
+        # If not found, try the Assignee custom field
+        custom_assignee = self._get_custom_field_value(issue, "Assignee")
+        if custom_assignee:
+            return custom_assignee
+
+        return "Unassigned"
+
     async def create_issue(
         self,
         project_id: str,
@@ -368,7 +387,8 @@ class IssueManager:
             "fields": (
                 "id,summary,description,state,priority,type,"
                 "assignee(login,fullName),project(id,name),created,updated,"
-                "tags(name),links(linkType,direction,issues(id,summary))"
+                "tags(name),links(linkType,direction,issues(id,summary)),"
+                "customFields(id,name,value(login,fullName,name))"
             )
         }
 
@@ -410,10 +430,8 @@ class IssueManager:
             update_data["summary"] = summary
         if description:
             update_data["description"] = description
-        if assignee:
-            update_data["assignee"] = {"login": assignee}
 
-        # Handle state, priority and type as custom fields
+        # Handle state, priority, type and assignee as custom fields
         if state:
             custom_fields.append({"$type": "StateIssueCustomField", "name": "State", "value": {"name": state}})
         if priority:
@@ -422,6 +440,36 @@ class IssueManager:
             )
         if issue_type:
             custom_fields.append({"$type": "SingleEnumIssueCustomField", "name": "Type", "value": {"name": issue_type}})
+        if assignee:
+            # For assignee, we need to get the field ID and user ID for proper assignment
+            field_id = await self._get_custom_field_id(issue_id, "Assignee")
+            if field_id:
+                # Get user info to get the user ID
+                from .users import UserManager
+
+                user_manager = UserManager(self.auth_manager)
+                user_result = await user_manager.get_user(assignee)
+
+                if user_result["status"] == "success":
+                    user_data = user_result["data"]
+                    user_id = user_data.get("id")
+                    custom_fields.append(
+                        {
+                            "$type": "SingleUserIssueCustomField",
+                            "id": field_id,
+                            "value": {"$type": "User", "id": user_id},
+                        }
+                    )
+                else:
+                    # Fallback to login-based assignment (might not work but worth trying)
+                    custom_fields.append(
+                        {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": assignee}}
+                    )
+            else:
+                # No field ID found, use the fallback approach
+                custom_fields.append(
+                    {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": assignee}}
+                )
 
         if not update_data and not custom_fields:
             return {"status": "error", "message": "No fields to update"}
@@ -1583,8 +1631,7 @@ class IssueManager:
         type_name = issue_type.get("name", "N/A") if issue_type else "N/A"
         self.console.print(f"[bold]Type:[/bold] {type_name}")
 
-        assignee = issue.get("assignee", {})
-        assignee_name = assignee.get("fullName", "Unassigned") if assignee else "Unassigned"
+        assignee_name = self._get_assignee_name(issue)
         self.console.print(f"[bold]Assignee:[/bold] {assignee_name}")
 
         project = issue.get("project", {})
