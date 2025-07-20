@@ -101,19 +101,30 @@ class TestIssueManager:
 
     @pytest.mark.asyncio
     async def test_create_issue_success(self, issue_manager, sample_issue):
-        """Test successful issue creation."""
+        """Test successful issue creation with friendly ID."""
         with (
             patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
             patch.object(issue_manager, "_resolve_project_id") as mock_resolve_project,
         ):
             mock_resolve_project.return_value = "PROJ"
-            mock_resp = Mock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = sample_issue
-            mock_resp.text = '{"mock": "response"}'
-            mock_resp.headers = {"content-type": "application/json"}
+
+            # Mock the create response (returns internal ID)
+            create_response = Mock()
+            create_response.status_code = 200
+            create_response.json.return_value = {"id": "3-123", "$type": "Issue"}
+            create_response.text = '{"id": "3-123", "$type": "Issue"}'
+            create_response.headers = {"content-type": "application/json"}
+
+            # Mock the detail response (returns friendly ID)
+            detail_response = Mock()
+            detail_response.status_code = 200
+            detail_response.json.return_value = {"idReadable": "PROJ-123"}
+            detail_response.text = '{"idReadable": "PROJ-123"}'
+            detail_response.headers = {"content-type": "application/json"}
+
             mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            # First call is for creating, second call is for getting friendly ID
+            mock_client_manager.make_request = AsyncMock(side_effect=[create_response, detail_response])
             mock_get_client_manager.return_value = mock_client_manager
 
             result = await issue_manager.create_issue(
@@ -127,7 +138,53 @@ class TestIssueManager:
 
             assert result["status"] == "success"
             assert "Test Issue" in result["message"]
-            assert result["data"] == sample_issue
+            # Verify that the friendly ID was added to the response data
+            assert result["data"]["idReadable"] == "PROJ-123"
+            assert result["data"]["id"] == "3-123"
+
+            # Verify that make_request was called twice (create + detail)
+            assert mock_client_manager.make_request.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_create_issue_success_friendly_id_fetch_fails(self, issue_manager):
+        """Test issue creation when friendly ID fetch fails (should still succeed with internal ID)."""
+        with (
+            patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager,
+            patch.object(issue_manager, "_resolve_project_id") as mock_resolve_project,
+        ):
+            mock_resolve_project.return_value = "PROJ"
+
+            # Mock the create response (returns internal ID)
+            create_response = Mock()
+            create_response.status_code = 200
+            create_response.json.return_value = {"id": "3-123", "$type": "Issue"}
+            create_response.text = '{"id": "3-123", "$type": "Issue"}'
+            create_response.headers = {"content-type": "application/json"}
+
+            # Mock the detail response (fails)
+            detail_response = Mock()
+            detail_response.status_code = 404
+            detail_response.text = "Not found"
+
+            mock_client_manager = Mock()
+            # First call succeeds (create), second call fails (detail)
+            mock_client_manager.make_request = AsyncMock(side_effect=[create_response, detail_response])
+            mock_get_client_manager.return_value = mock_client_manager
+
+            result = await issue_manager.create_issue(
+                project_id="PROJ",
+                summary="Test Issue",
+                description="Test description",
+            )
+
+            assert result["status"] == "success"
+            assert "Test Issue" in result["message"]
+            # Should only have the internal ID since friendly ID fetch failed
+            assert result["data"]["id"] == "3-123"
+            assert "idReadable" not in result["data"]
+
+            # Verify that make_request was called twice
+            assert mock_client_manager.make_request.call_count == 2
 
     @pytest.mark.asyncio
     async def test_create_issue_auth_error(self, mock_auth_manager):

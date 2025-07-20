@@ -195,6 +195,29 @@ class IssueManager:
             response = await client_manager.make_request("POST", url, headers=headers, json_data=issue_data)
             if response.status_code in [200, 201]:
                 data = self._parse_json_response(response)
+
+                # Make follow-up call to get friendly ID (idReadable)
+                issue_id = data.get("id")
+                if issue_id:
+                    try:
+                        detail_url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
+                        detail_params = {"fields": "idReadable"}
+                        detail_response = await client_manager.make_request(
+                            "GET",
+                            detail_url,
+                            headers={"Authorization": f"Bearer {credentials.token}"},
+                            params=detail_params,
+                        )
+                        if detail_response.status_code == 200:
+                            detail_data = self._parse_json_response(detail_response)
+                            friendly_id = detail_data.get("idReadable")
+                            if friendly_id:
+                                # Update the data with friendly ID for display
+                                data["idReadable"] = friendly_id
+                    except Exception as e:
+                        logger.warning("Failed to fetch friendly ID for created issue", error=str(e), issue_id=issue_id)
+                        # Continue with internal ID if friendly ID fetch fails
+
                 return {
                     "status": "success",
                     "message": f"Issue '{summary}' created successfully",
@@ -253,6 +276,33 @@ class IssueManager:
                     )
                     if retry_response.status_code in [200, 201]:
                         data = self._parse_json_response(retry_response)
+
+                        # Make follow-up call to get friendly ID (idReadable)
+                        issue_id = data.get("id")
+                        if issue_id:
+                            try:
+                                detail_url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
+                                detail_params = {"fields": "idReadable"}
+                                detail_response = await client_manager.make_request(
+                                    "GET",
+                                    detail_url,
+                                    headers={"Authorization": f"Bearer {credentials.token}"},
+                                    params=detail_params,
+                                )
+                                if detail_response.status_code == 200:
+                                    detail_data = self._parse_json_response(detail_response)
+                                    friendly_id = detail_data.get("idReadable")
+                                    if friendly_id:
+                                        # Update the data with friendly ID for display
+                                        data["idReadable"] = friendly_id
+                            except Exception as e:
+                                logger.warning(
+                                    "Failed to fetch friendly ID for created issue",
+                                    error=str(e),
+                                    issue_id=issue_id,
+                                )
+                                # Continue with internal ID if friendly ID fetch fails
+
                         return {
                             "status": "success",
                             "message": f"Issue '{summary}' created successfully (using custom field format)",
