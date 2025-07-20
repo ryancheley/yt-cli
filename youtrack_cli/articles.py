@@ -185,12 +185,35 @@ class ArticleManager:
 
             # If parent_id is specified, filter results to ensure we only get actual children
             if parent_id and isinstance(data, list):
+                # First, try to get the parent article to determine its internal ID
+                parent_internal_id = None
+
+                # Check if parent_id is already an internal ID or if we can find it in the data
+                for article in data:
+                    if article.get("id") == parent_id or article.get("idReadable") == parent_id:
+                        parent_internal_id = article.get("id")
+                        break
+
+                # If we didn't find the parent in the current data, try to fetch it
+                if parent_internal_id is None:
+                    try:
+                        parent_result = await self.get_article(parent_id)
+                        if parent_result["status"] == "success" and parent_result["data"]:
+                            parent_internal_id = parent_result["data"].get("id")
+                    except Exception:
+                        # If we can't fetch the parent, use the provided parent_id as-is
+                        parent_internal_id = parent_id
+
                 filtered_data = []
                 for article in data:
                     parent_article = article.get("parentArticle", {})
                     # Check if the article has the specified parent
-                    if parent_article and parent_article.get("id") == parent_id:
-                        filtered_data.append(article)
+                    if parent_article:
+                        article_parent_id = parent_article.get("id")
+                        # Match against both the provided parent_id and the resolved internal ID
+                        if article_parent_id == parent_id or article_parent_id == parent_internal_id:
+                            filtered_data.append(article)
+
                 data = filtered_data
 
             return {
