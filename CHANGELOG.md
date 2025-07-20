@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `yt users teams <user_id>` - Display teams that a user is a member of
   - Support for both table and JSON output formats
   - Comprehensive permission analysis workflows
+- Project custom fields management commands (#273)
+  - `yt projects fields list PROJECT_ID` - List custom fields for a project
+  - `yt projects fields attach PROJECT_ID FIELD_ID` - Attach custom field to project
+  - `yt projects fields update PROJECT_ID FIELD_ID` - Update custom field settings
+  - `yt projects fields detach PROJECT_ID FIELD_ID` - Remove custom field from project
+  - Support for all YouTrack custom field types (enum, user, text, date, etc.)
+  - Field visibility and requirement configuration options
+  - Comprehensive custom fields workflows and documentation
 
 ### Improved
 - Command syntax documentation with clearer examples and error messages (#246, #247)

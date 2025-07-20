@@ -525,6 +525,366 @@ class ProjectManager:
             projects, build_projects_table, "Projects", show_all=show_all, start_page=start_page
         )
 
+    async def list_custom_fields(
+        self,
+        project_id: str,
+        fields: Optional[str] = None,
+        top: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """List custom fields for a specific project.
+
+        Args:
+            project_id: Project ID or short name
+            fields: Comma-separated list of fields to return
+            top: Maximum number of fields to return
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Default fields to return
+        if not fields:
+            fields = "id,canBeEmpty,emptyFieldText,isPublic,field(id,name,fieldType),bundle(id,values(id,name))"
+
+        # Build query parameters
+        params = {"fields": fields}
+        if top:
+            params["$top"] = str(top)
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/customFields",
+                headers=headers,
+                params=params,
+                timeout=10.0,
+            )
+
+            custom_fields = self._parse_json_response(response)
+
+            # Ensure we have a valid list of custom fields
+            if custom_fields is None:
+                return {"status": "error", "message": "No custom field data received from YouTrack API"}
+
+            if not isinstance(custom_fields, list):
+                data_type = type(custom_fields).__name__
+                preview = str(custom_fields)[:200] if custom_fields is not None else "None"
+                return {
+                    "status": "error",
+                    "message": (
+                        f"Unexpected data format from YouTrack API: expected list, got {data_type}. "
+                        f"Response preview: {preview}"
+                    ),
+                }
+
+            return {"status": "success", "data": custom_fields, "count": len(custom_fields)}
+
+        except ValueError as e:
+            return {"status": "error", "message": f"Failed to parse response: {e}"}
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": f"Project '{project_id}' not found.",
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to view project custom fields.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
+
+    async def attach_custom_field(
+        self,
+        project_id: str,
+        field_id: str,
+        field_type: str,
+        can_be_empty: Optional[bool] = None,
+        empty_field_text: Optional[str] = None,
+        is_public: Optional[bool] = None,
+    ) -> dict[str, Any]:
+        """Attach an existing custom field to a project.
+
+        Args:
+            project_id: Project ID or short name
+            field_id: Custom field ID to attach
+            field_type: Type of project custom field (e.g., 'EnumProjectCustomField')
+            can_be_empty: Whether the field can be empty
+            empty_field_text: Text to show when field is empty
+            is_public: Whether the field is public
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Prepare request body
+        field_data = {
+            "field": {"id": field_id},
+            "$type": field_type,
+        }
+
+        if can_be_empty is not None:
+            field_data["canBeEmpty"] = can_be_empty
+        if empty_field_text is not None:
+            field_data["emptyFieldText"] = empty_field_text
+        if is_public is not None:
+            field_data["isPublic"] = is_public
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/customFields",
+                headers=headers,
+                json_data=field_data,
+                params={"fields": "id,field(id,name),canBeEmpty,emptyFieldText,isPublic"},
+                timeout=10.0,
+            )
+
+            attached_field = self._parse_json_response(response)
+            if attached_field is None:
+                return {"status": "error", "message": "Failed to parse custom field attachment response"}
+
+            return {
+                "status": "success",
+                "data": attached_field,
+                "message": f"Custom field attached to project '{project_id}' successfully",
+            }
+
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 400:
+                    return {
+                        "status": "error",
+                        "message": "Invalid custom field data or field already attached to project.",
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to modify project custom fields.",
+                    }
+                elif e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": f"Project '{project_id}' or custom field '{field_id}' not found.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
+
+    async def update_custom_field(
+        self,
+        project_id: str,
+        field_id: str,
+        can_be_empty: Optional[bool] = None,
+        empty_field_text: Optional[str] = None,
+        is_public: Optional[bool] = None,
+    ) -> dict[str, Any]:
+        """Update settings of a custom field in a project.
+
+        Args:
+            project_id: Project ID or short name
+            field_id: Project custom field ID
+            can_be_empty: Whether the field can be empty
+            empty_field_text: Text to show when field is empty
+            is_public: Whether the field is public
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Build update data
+        update_data: dict[str, Any] = {}
+        if can_be_empty is not None:
+            update_data["canBeEmpty"] = can_be_empty
+        if empty_field_text is not None:
+            update_data["emptyFieldText"] = empty_field_text
+        if is_public is not None:
+            update_data["isPublic"] = is_public
+
+        if not update_data:
+            return {"status": "error", "message": "No updates provided."}
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "POST",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/customFields/{field_id}",
+                headers=headers,
+                json_data=update_data,
+                params={"fields": "id,field(id,name),canBeEmpty,emptyFieldText,isPublic"},
+                timeout=10.0,
+            )
+
+            updated_field = self._parse_json_response(response)
+            if updated_field is None:
+                return {"status": "error", "message": "Failed to parse custom field update response"}
+
+            return {
+                "status": "success",
+                "data": updated_field,
+                "message": f"Custom field in project '{project_id}' updated successfully",
+            }
+
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": f"Project '{project_id}' or custom field '{field_id}' not found.",
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to update project custom fields.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
+
+    async def detach_custom_field(self, project_id: str, field_id: str) -> dict[str, Any]:
+        """Remove a custom field from a project.
+
+        Args:
+            project_id: Project ID or short name
+            field_id: Project custom field ID
+
+        Returns:
+            Dictionary with operation result
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            await client_manager.make_request(
+                "DELETE",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/customFields/{field_id}",
+                headers=headers,
+                timeout=10.0,
+            )
+
+            # DELETE typically returns empty response
+            return {
+                "status": "success",
+                "message": f"Custom field removed from project '{project_id}' successfully",
+            }
+
+        except httpx.HTTPError as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 404:
+                    return {
+                        "status": "error",
+                        "message": f"Project '{project_id}' or custom field '{field_id}' not found.",
+                    }
+                elif e.response.status_code == 403:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient permissions to modify project custom fields.",
+                    }
+            return {"status": "error", "message": f"HTTP error: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Unexpected error: {e}"}
+
+    def display_custom_fields_table(self, custom_fields: list[dict[str, Any]]) -> None:
+        """Display custom fields in a formatted table.
+
+        Args:
+            custom_fields: List of custom field dictionaries
+        """
+        if not custom_fields:
+            self.console.print("No custom fields found.", style="yellow")
+            return
+
+        table = Table(title="Project Custom Fields")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Type", style="blue")
+        table.add_column("Required", style="magenta")
+        table.add_column("Default/Empty Text", style="green")
+        table.add_column("Visibility", style="yellow")
+
+        for field in custom_fields:
+            # Skip None fields
+            if field is None:
+                continue
+
+            # Get field name and type
+            field_info = field.get("field", {})
+            field_name = field_info.get("name", "N/A") if field_info else "N/A"
+            field_type = field_info.get("fieldType", {}).get("name", "Unknown") if field_info else "Unknown"
+
+            # Format required status
+            can_be_empty = field.get("canBeEmpty", True)
+            required = "No" if can_be_empty else "Yes"
+            required_style = "green" if can_be_empty else "red"
+
+            # Default/empty text
+            empty_text = field.get("emptyFieldText", "")
+            display_text = empty_text or "-"
+
+            # Visibility
+            is_public = field.get("isPublic", True)
+            visibility = "Public" if is_public else "Private"
+            visibility_style = "green" if is_public else "yellow"
+
+            table.add_row(
+                field_name,
+                field_type,
+                Text(required, style=required_style),
+                display_text,
+                Text(visibility, style=visibility_style),
+            )
+
+        self.console.print(table)
+
     def display_project_details(self, project: dict[str, Any]) -> None:
         """Display detailed information about a project.
 

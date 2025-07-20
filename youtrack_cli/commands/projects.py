@@ -300,3 +300,296 @@ def archive(
     except Exception as e:
         console.print(f"❌ Error archiving project: {e}", style="red")
         raise click.ClickException("Failed to archive project") from e
+
+
+@click.command(name="list")
+@click.argument("project_id")
+@click.option(
+    "--fields",
+    "-f",
+    help="Comma-separated list of custom field attributes to return",
+)
+@click.option(
+    "--top",
+    "-t",
+    type=int,
+    help="Maximum number of custom fields to return",
+)
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def fields_list(
+    ctx: click.Context,
+    project_id: str,
+    fields: Optional[str],
+    top: Optional[int],
+    format: str,
+) -> None:
+    """List custom fields for a project."""
+    from ..projects import ProjectManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    project_manager = ProjectManager(auth_manager)
+
+    console.print(f"📋 Fetching custom fields for project '{project_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(project_manager.list_custom_fields(project_id=project_id, fields=fields, top=top))
+
+        if result["status"] == "success":
+            custom_fields = result["data"]
+
+            if format == "table":
+                project_manager.display_custom_fields_table(custom_fields)
+                console.print(f"\n[dim]Total: {result['count']} custom fields[/dim]")
+            else:
+                import json
+
+                console.print(json.dumps(custom_fields, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to list custom fields")
+
+    except Exception as e:
+        console.print(f"❌ Error listing custom fields: {e}", style="red")
+        raise click.ClickException("Failed to list custom fields") from e
+
+
+@click.command(name="attach")
+@click.argument("project_id")
+@click.argument("field_id")
+@click.option(
+    "--type",
+    "field_type",
+    required=True,
+    type=click.Choice(
+        [
+            "EnumProjectCustomField",
+            "MultiEnumProjectCustomField",
+            "SingleUserProjectCustomField",
+            "MultiUserProjectCustomField",
+            "SimpleProjectCustomField",
+            "VersionProjectCustomField",
+            "MultiVersionProjectCustomField",
+            "DateProjectCustomField",
+            "IntegerProjectCustomField",
+            "FloatProjectCustomField",
+            "BooleanProjectCustomField",
+        ]
+    ),
+    help="Type of project custom field to create",
+)
+@click.option(
+    "--required",
+    is_flag=True,
+    help="Make the field required (cannot be empty)",
+)
+@click.option(
+    "--empty-text",
+    help="Text to display when field is empty",
+)
+@click.option(
+    "--private",
+    is_flag=True,
+    help="Make the field private (not visible to all users)",
+)
+@click.pass_context
+def fields_attach(
+    ctx: click.Context,
+    project_id: str,
+    field_id: str,
+    field_type: str,
+    required: bool,
+    empty_text: Optional[str],
+    private: bool,
+) -> None:
+    """Attach an existing custom field to a project.
+
+    PROJECT_ID: The project ID or short name
+    FIELD_ID: The global custom field ID to attach
+    """
+    from ..projects import ProjectManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    project_manager = ProjectManager(auth_manager)
+
+    console.print(f"🔗 Attaching custom field '{field_id}' to project '{project_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(
+            project_manager.attach_custom_field(
+                project_id=project_id,
+                field_id=field_id,
+                field_type=field_type,
+                can_be_empty=not required,
+                empty_field_text=empty_text,
+                is_public=not private,
+            )
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+            field_data = result["data"]
+            field_name = field_data.get("field", {}).get("name", "N/A")
+            console.print(f"Field Name: {field_name}", style="blue")
+            console.print(f"Required: {'Yes' if not field_data.get('canBeEmpty', True) else 'No'}", style="blue")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to attach custom field")
+
+    except Exception as e:
+        console.print(f"❌ Error attaching custom field: {e}", style="red")
+        raise click.ClickException("Failed to attach custom field") from e
+
+
+@click.command(name="update")
+@click.argument("project_id")
+@click.argument("field_id")
+@click.option(
+    "--required/--optional",
+    default=None,
+    help="Make the field required or optional",
+)
+@click.option(
+    "--empty-text",
+    help="Text to display when field is empty",
+)
+@click.option(
+    "--public/--private",
+    default=None,
+    help="Make the field public or private",
+)
+@click.pass_context
+def fields_update(
+    ctx: click.Context,
+    project_id: str,
+    field_id: str,
+    required: Optional[bool],
+    empty_text: Optional[str],
+    public: Optional[bool],
+) -> None:
+    """Update settings of a custom field in a project.
+
+    PROJECT_ID: The project ID or short name
+    FIELD_ID: The project custom field ID to update
+    """
+    from ..projects import ProjectManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    project_manager = ProjectManager(auth_manager)
+
+    if required is None and empty_text is None and public is None:
+        console.print("❌ No updates specified.", style="red")
+        console.print(
+            "Use --required/--optional, --empty-text, or --public/--private options.",
+            style="blue",
+        )
+        return
+
+    console.print(f"⚙️  Updating custom field '{field_id}' in project '{project_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(
+            project_manager.update_custom_field(
+                project_id=project_id,
+                field_id=field_id,
+                can_be_empty=not required if required is not None else None,
+                empty_field_text=empty_text,
+                is_public=public,
+            )
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+            field_data = result["data"]
+            field_name = field_data.get("field", {}).get("name", "N/A")
+            console.print(f"Field Name: {field_name}", style="blue")
+            console.print(f"Required: {'Yes' if not field_data.get('canBeEmpty', True) else 'No'}", style="blue")
+            console.print(f"Visibility: {'Public' if field_data.get('isPublic', True) else 'Private'}", style="blue")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to update custom field")
+
+    except Exception as e:
+        console.print(f"❌ Error updating custom field: {e}", style="red")
+        raise click.ClickException("Failed to update custom field") from e
+
+
+@click.command(name="detach")
+@click.argument("project_id")
+@click.argument("field_id")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@click.pass_context
+def fields_detach(
+    ctx: click.Context,
+    project_id: str,
+    field_id: str,
+    force: bool,
+) -> None:
+    """Remove a custom field from a project.
+
+    PROJECT_ID: The project ID or short name
+    FIELD_ID: The project custom field ID to remove
+    """
+    from ..projects import ProjectManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    project_manager = ProjectManager(auth_manager)
+
+    if not force:
+        confirmation_msg = f"Are you sure you want to remove custom field '{field_id}' from project '{project_id}'?"
+        if not click.confirm(confirmation_msg):
+            console.print("Operation cancelled.", style="yellow")
+            return
+
+    console.print(f"🗑️  Removing custom field '{field_id}' from project '{project_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(project_manager.detach_custom_field(project_id, field_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to remove custom field")
+
+    except Exception as e:
+        console.print(f"❌ Error removing custom field: {e}", style="red")
+        raise click.ClickException("Failed to remove custom field") from e
+
+
+# Create a simple fields group
+@click.group()
+def fields() -> None:
+    """Manage project custom fields.
+
+    This command group provides access to project custom field operations
+    including listing, attaching, updating, and removing custom fields.
+
+    Example:
+        yt projects fields list PROJECT-ID
+        yt projects fields attach PROJECT-ID FIELD-ID
+    """
+    pass
+
+
+# Add all the commands to the group
+fields.add_command(fields_list)
+fields.add_command(fields_attach)
+fields.add_command(fields_update)
+fields.add_command(fields_detach)
+
+# Add the fields command group to the projects group
+projects.add_command(fields)
