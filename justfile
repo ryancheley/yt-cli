@@ -114,7 +114,7 @@ check:
     fi
 
     echo "🔍 Running tests..."
-    if ! just test -q --tb=no --no-header --disable-warnings; then
+    if ! just test; then
         echo "❌ Tests failed"
         exit 1
     fi
