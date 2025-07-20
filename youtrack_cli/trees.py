@@ -302,7 +302,8 @@ def create_enhanced_articles_tree(
     child_articles: Dict[str, List[Dict[str, Any]]] = {}
 
     for article in articles:
-        parent_id = article.get("parentArticle", {}).get("id")
+        parent_article = article.get("parentArticle")
+        parent_id = parent_article.get("id") if parent_article else None
         if parent_id:
             if parent_id not in child_articles:
                 child_articles[parent_id] = []

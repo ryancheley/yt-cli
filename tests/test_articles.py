@@ -460,6 +460,33 @@ class TestArticleManager:
             mock_tree.assert_called_once()
             mock_console.return_value.print.assert_called()
 
+    def test_display_articles_tree_with_null_parent_article(self, article_manager):
+        """Test displaying articles tree with null parentArticle field (fixes #299)."""
+        articles = [
+            {
+                "id": "123",
+                "summary": "Root Article",
+                "parentArticle": None,  # This would cause NoneType error before fix
+                "visibility": {"type": "public"},
+            },
+            {
+                "id": "124",
+                "summary": "Another Root Article",
+                "visibility": {"type": "public"},
+            },
+        ]
+
+        with (
+            patch("youtrack_cli.articles.get_console") as mock_console,
+            patch("youtrack_cli.articles.Tree") as mock_tree,
+        ):
+            article_manager.console = mock_console.return_value
+            # This should not raise AttributeError: 'NoneType' object has no attribute 'get'
+            article_manager.display_articles_tree(articles)
+
+            mock_tree.assert_called_once()
+            mock_console.return_value.print.assert_called()
+
     def test_display_article_details(self, article_manager):
         """Test displaying article details."""
         article = {
