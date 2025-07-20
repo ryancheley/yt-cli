@@ -1658,44 +1658,62 @@ class IssueManager:
             self._display_issue_details_traditional(issue)
 
     def _display_issue_details_traditional(self, issue: Dict[str, Any]) -> None:
-        """Display issue details in traditional text format (original implementation)."""
+        """Display issue details in Rich table format."""
         issue_id = issue.get("id", "N/A")
-        self.console.print(f"[bold blue]Issue Details: {issue_id}[/bold blue]")
+
+        table = Table(title=f"Issue Details: {issue_id}")
+        table.add_column("Field", style="cyan", no_wrap=True)
+        table.add_column("Value", style="blue")
+
+        # Basic information
+        table.add_row("ID", issue_id)
 
         summary = issue.get("summary", "N/A")
-        self.console.print(f"[bold]Summary:[/bold] {summary}")
+        table.add_row("Summary", summary)
 
+        # Description if present
         if issue.get("description"):
             description = issue.get("description", "N/A")
-            self.console.print(f"[bold]Description:[/bold] {description}")
+            # Truncate long descriptions for table display
+            if len(description) > 100:
+                description = description[:100] + "..."
+            table.add_row("Description", description)
 
+        # State
         state = issue.get("state", {})
         state_name = state.get("name", "N/A") if state else "N/A"
-        self.console.print(f"[bold]State:[/bold] {state_name}")
+        table.add_row("State", state_name)
 
+        # Priority
         priority = issue.get("priority", {})
         priority_name = priority.get("name", "N/A") if priority else "N/A"
-        self.console.print(f"[bold]Priority:[/bold] {priority_name}")
+        table.add_row("Priority", priority_name)
 
+        # Type
         issue_type = issue.get("type", {})
         type_name = issue_type.get("name", "N/A") if issue_type else "N/A"
-        self.console.print(f"[bold]Type:[/bold] {type_name}")
+        table.add_row("Type", type_name)
 
+        # Assignee
         assignee_name = self._get_assignee_name(issue)
-        self.console.print(f"[bold]Assignee:[/bold] {assignee_name}")
+        table.add_row("Assignee", assignee_name)
 
+        # Project
         project = issue.get("project", {})
         project_name = project.get("name", "N/A") if project else "N/A"
-        self.console.print(f"[bold]Project:[/bold] {project_name}")
+        table.add_row("Project", project_name)
 
-        self.console.print(f"[bold]Created:[/bold] {issue.get('created', 'N/A')}")
-        self.console.print(f"[bold]Updated:[/bold] {issue.get('updated', 'N/A')}")
+        # Timestamps
+        table.add_row("Created", issue.get("created", "N/A"))
+        table.add_row("Updated", issue.get("updated", "N/A"))
 
-        # Display tags if any
+        # Tags if any
         tags = issue.get("tags", [])
         if tags:
             tag_names = [tag.get("name", "") for tag in tags]
-            self.console.print(f"[bold]Tags:[/bold] {', '.join(tag_names)}")
+            table.add_row("Tags", ", ".join(tag_names))
+
+        self.console.print(table)
 
     def _display_issue_details_panels(self, issue: Dict[str, Any]) -> None:
         """Display issue details using Rich panels for enhanced presentation."""

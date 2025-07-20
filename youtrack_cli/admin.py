@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 import httpx
 from rich.table import Table
+from rich.text import Text
 
 from .auth import AuthManager
 from .client import get_client_manager
@@ -815,11 +816,13 @@ class AdminManager:
         Args:
             license_info: License information dictionary
         """
-        self.console.print("\n[bold blue]License Information[/bold blue]")
+        table = Table(title="License Information")
+        table.add_column("Field", style="cyan", no_wrap=True)
+        table.add_column("Value", style="blue")
 
         # Display username (maps to "Licensed To")
         username = license_info.get("username", "N/A")
-        self.console.print(f"[cyan]Licensed To:[/cyan] {username}")
+        table.add_row("Licensed To", username)
 
         # Display license key (truncated for security)
         license_key = license_info.get("license", "N/A")
@@ -828,21 +831,58 @@ class AdminManager:
             license_display = f"{license_key[:20]}..."
         else:
             license_display = license_key
-        self.console.print(f"[cyan]License Key:[/cyan] {license_display}")
+        table.add_row("License Key", license_display)
 
-        # Display error status if present
+        # Display error status if present or determine status
         error = license_info.get("error")
         if error:
-            self.console.print(f"[cyan]Error:[/cyan] [red]{error}[/red]")
-            status_color = "red"
-            status_text = "Error"
+            error_text = Text(error, style="red")
+            table.add_row("Error", error_text)
+            status_text = Text("Error", style="red")
         else:
             # If no error and license key exists, assume active
             is_active = license_key != "N/A" and license_key is not None
             status_color = "green" if is_active else "red"
-            status_text = "Active" if is_active else "No License"
+            status_value = "Active" if is_active else "No License"
+            status_text = Text(status_value, style=status_color)
 
-        self.console.print(f"[cyan]Status:[/cyan] [{status_color}]{status_text}[/{status_color}]")
+        table.add_row("Status", status_text)
+
+        self.console.print(table)
+
+    def display_license_usage(self, license_data: dict[str, Any]) -> None:
+        """Display license usage information.
+
+        Args:
+            license_data: License usage data dictionary
+        """
+        table = Table(title="License Usage")
+        table.add_column("Field", style="cyan", no_wrap=True)
+        table.add_column("Value", style="blue")
+
+        # License ID
+        license_id = license_data.get("id", "N/A")
+        table.add_row("License ID", license_id)
+
+        # Username
+        username = license_data.get("username", "N/A")
+        table.add_row("Username", username)
+
+        # License Key
+        license_key = license_data.get("license", "N/A")
+        table.add_row("License Key", license_key)
+
+        # Status - check for error or assume valid
+        if license_data.get("error"):
+            error_text = Text(license_data["error"], style="red")
+            table.add_row("Error", error_text)
+            status_text = Text("Error", style="red")
+        else:
+            status_text = Text("Valid", style="green")
+
+        table.add_row("Status", status_text)
+
+        self.console.print(table)
 
     def display_system_health(self, health_info: dict[str, Any]) -> None:
         """Display system health information.
@@ -850,41 +890,49 @@ class AdminManager:
         Args:
             health_info: Health information dictionary
         """
-        self.console.print("\n[bold blue]System Settings[/bold blue]")
+        table = Table(title="System Health")
+        table.add_column("Setting", style="cyan", no_wrap=True)
+        table.add_column("Value", style="blue")
 
-        # Display system settings information
+        # Base URL
         base_url = health_info.get("baseUrl", "N/A")
-        self.console.print(f"[cyan]Base URL:[/cyan] {base_url}")
+        table.add_row("Base URL", base_url)
 
-        # Display read-only status
+        # Application mode (read-only status)
         is_read_only = health_info.get("isApplicationReadOnly", False)
         read_only_color = "red" if is_read_only else "green"
         read_only_text = "Read-Only" if is_read_only else "Read-Write"
-        self.console.print(f"[cyan]Application Mode:[/cyan] [{read_only_color}]{read_only_text}[/{read_only_color}]")
+        mode_text = Text(read_only_text, style=read_only_color)
+        table.add_row("Application Mode", mode_text)
 
-        # Display file upload settings
+        # File upload settings
         max_upload_size = health_info.get("maxUploadFileSize", "N/A")
         if max_upload_size != "N/A":
             # Convert bytes to MB for readability
             max_upload_mb = max_upload_size / (1024 * 1024)
-            self.console.print(f"[cyan]Max Upload Size:[/cyan] {max_upload_mb:.1f} MB")
+            upload_text = f"{max_upload_mb:.1f} MB"
         else:
-            self.console.print(f"[cyan]Max Upload Size:[/cyan] {max_upload_size}")
+            upload_text = str(max_upload_size)
+        table.add_row("Max Upload Size", upload_text)
 
-        # Display export settings
+        # Export settings
         max_export_items = health_info.get("maxExportItems", "N/A")
-        self.console.print(f"[cyan]Max Export Items:[/cyan] {max_export_items}")
+        table.add_row("Max Export Items", str(max_export_items))
 
-        # Display statistics collection status
+        # Statistics collection status
         stats_collection = health_info.get("allowStatisticsCollection", False)
         stats_color = "green" if stats_collection else "yellow"
         stats_text = "Enabled" if stats_collection else "Disabled"
-        self.console.print(f"[cyan]Statistics Collection:[/cyan] [{stats_color}]{stats_text}[/{stats_color}]")
+        stats_text_styled = Text(stats_text, style=stats_color)
+        table.add_row("Statistics Collection", stats_text_styled)
 
-        # Overall system status based on read-only mode
+        # Overall system status
         overall_status = "Healthy" if not is_read_only else "Read-Only Mode"
         status_color = "green" if not is_read_only else "yellow"
-        self.console.print(f"[cyan]Overall Status:[/cyan] [{status_color}]{overall_status}[/{status_color}]")
+        status_text_styled = Text(overall_status, style=status_color)
+        table.add_row("Overall Status", status_text_styled)
+
+        self.console.print(table)
 
     def display_user_groups(self, groups: list[dict[str, Any]]) -> None:
         """Display user groups in a formatted table.

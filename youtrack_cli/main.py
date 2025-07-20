@@ -946,7 +946,29 @@ def get(ctx: click.Context, key: str) -> None:
     try:
         value = config_manager.get_config(key)
         if value is not None:
-            console.print(f"{key} = {value}", style="blue")
+            from rich.table import Table
+
+            table = Table(title="Configuration Value")
+            table.add_column("Key", style="cyan", no_wrap=True)
+            table.add_column("Value", style="blue")
+
+            # Mask sensitive values
+            sensitive_keys = ["token", "password", "secret", "api_key"]
+            if any(sensitive in key.lower() for sensitive in sensitive_keys):
+                if value == "[Stored in keyring]":
+                    masked_value = value
+                elif len(value) > 12:
+                    masked_value = value[:8] + "..." + value[-4:]
+                else:
+                    masked_value = "***"
+                from rich.text import Text
+
+                value_text = Text(masked_value, style="yellow")
+            else:
+                value_text = value
+
+            table.add_row(key, value_text)
+            console.print(table)
         else:
             console.print(f"❌ Configuration key '{key}' not found", style="red")
             raise click.ClickException("Configuration key not found")
@@ -965,7 +987,13 @@ def list_config(ctx: click.Context) -> None:
     try:
         config_values = config_manager.list_config()
         if config_values:
-            console.print("📋 Configuration values:", style="blue bold")
+            from rich.table import Table
+            from rich.text import Text
+
+            table = Table(title="Configuration Values")
+            table.add_column("Key", style="cyan", no_wrap=True)
+            table.add_column("Value", style="blue")
+
             for key, value in sorted(config_values.items()):
                 # Mask sensitive values
                 sensitive_keys = ["token", "password", "secret", "api_key"]
@@ -977,9 +1005,13 @@ def list_config(ctx: click.Context) -> None:
                         masked_value = value[:8] + "..." + value[-4:]
                     else:
                         masked_value = "***"
-                    console.print(f"  {key} = {masked_value}", style="yellow")
+                    value_text = Text(masked_value, style="yellow")
                 else:
-                    console.print(f"  {key} = {value}", style="blue")
+                    value_text = value
+
+                table.add_row(key, value_text)
+
+            console.print(table)
         else:
             console.print("ℹ️  No configuration values found", style="yellow")
     except Exception as e:
@@ -1242,15 +1274,7 @@ def usage(ctx: click.Context) -> None:
             console.print(f"[red]Error:[/red] {result['message']}")
             return
 
-        license_data = result["data"]
-        console.print("[bold]License Information:[/bold]")
-        console.print(f"License ID: {license_data.get('id', 'N/A')}")
-        console.print(f"Username: {license_data.get('username', 'N/A')}")
-        console.print(f"License Key: {license_data.get('license', 'N/A')}")
-        if license_data.get("error"):
-            console.print(f"[red]Error:[/red] {license_data['error']}")
-        else:
-            console.print("[green]Status: Valid[/green]")
+        admin_manager.display_license_usage(result["data"])
 
     asyncio.run(run_license_usage())
 
