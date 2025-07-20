@@ -19,6 +19,7 @@ from .panels import (
     create_issue_overview_panel,
 )
 from .progress import get_progress_manager
+from .utils import format_timestamp
 
 __all__ = ["IssueManager"]
 
@@ -1704,8 +1705,8 @@ class IssueManager:
         table.add_row("Project", project_name)
 
         # Timestamps
-        table.add_row("Created", issue.get("created", "N/A"))
-        table.add_row("Updated", issue.get("updated", "N/A"))
+        table.add_row("Created", format_timestamp(issue.get("created")))
+        table.add_row("Updated", format_timestamp(issue.get("updated")))
 
         # Tags if any
         tags = issue.get("tags", [])
