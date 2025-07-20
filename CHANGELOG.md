@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backspace sequences appearing as literal text in CLI help (#219)
 - Missing Sphinx extensions for documentation build (#218)
 - Release script preventing incomplete releases due to test failures or network issues (#265)
+- Duplicate commands in projects tutorial steps 2 and 3 (#272)
+- Missing executable command in projects tutorial step 4 for custom fields (#274)
 
 ## [0.8.0] - 2025-07-13
 
