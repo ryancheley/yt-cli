@@ -351,11 +351,15 @@ List and manage draft articles (articles with private visibility).
 sort
 ~~~~
 
-View and organize child articles under a parent article.
+Display child articles under a parent article in sorted order for visualization.
 
 .. code-block:: bash
 
    yt articles sort PARENT_ID [OPTIONS]
+
+**Note:** This command displays articles in sorted order for reference only.
+Article reordering in YouTrack requires manual drag-and-drop in the web interface
+due to API limitations (the ``ordinal`` field is read-only).
 
 **Arguments:**
 
@@ -370,19 +374,34 @@ View and organize child articles under a parent article.
    * - Option
      - Type
      - Description
-   * - ``--update``
+   * - ``--sort-by``
+     - choice
+     - Sort child articles by title, creation date, or update date for display (choices: title, created, updated; default: title)
+   * - ``--reverse``
      - flag
-     - Apply changes to YouTrack after confirmation
+     - Reverse the sort order
 
 **Examples:**
 
 .. code-block:: bash
 
-   # Sort child articles under a parent (preview mode)
+   # Display child articles sorted by title (default)
    yt articles sort PARENT-ARTICLE-123
 
-   # Sort child articles and apply changes (requires manual confirmation in YouTrack web interface)
-   yt articles sort PARENT-ARTICLE-123 --update
+   # Display child articles sorted by creation date
+   yt articles sort PARENT-ARTICLE-123 --sort-by created
+
+   # Display child articles sorted by title in reverse order
+   yt articles sort PARENT-ARTICLE-123 --reverse
+
+   # Display child articles sorted by update date in reverse order
+   yt articles sort PARENT-ARTICLE-123 --sort-by updated --reverse
+
+**API Limitations:**
+
+YouTrack's REST API does not support programmatic article reordering. The ``ordinal``
+field that controls article position is read-only. To reorder articles, use YouTrack's
+web interface with drag-and-drop functionality.
 
 Tag Management
 --------------
