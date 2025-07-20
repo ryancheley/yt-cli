@@ -829,14 +829,16 @@ class UserManager:
         for group in groups:
             name = group.get("name", "N/A")
             description = group.get("description", "")
-            
+
             # Groups are organizational units in YouTrack, not permission holders
             group_type = "Organizational"
 
             table.add_row(name, description or "No description", group_type)
 
         self.console.print(table)
-        self.console.print("\n[dim]Note: Groups are organizational units. User permissions are managed through roles.[/dim]")
+        self.console.print(
+            "\n[dim]Note: Groups are organizational units. User permissions are managed through roles.[/dim]"
+        )
 
     def display_user_roles(self, roles: list[dict[str, Any]], user_id: str) -> None:
         """Display user roles in a formatted table.
