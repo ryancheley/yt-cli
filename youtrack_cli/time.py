@@ -314,13 +314,13 @@ class TimeManager:
             return
 
         table = Table(title="Time Entries")
-        table.add_column("ID", style="cyan")
         table.add_column("Issue", style="green")
         table.add_column("Duration", style="blue")
         table.add_column("Date", style="magenta")
         table.add_column("Author", style="yellow")
         table.add_column("Description", style="white")
         table.add_column("Type", style="red")
+        table.add_column("Entry ID", style="cyan")
 
         for entry in time_entries:
             # Handle duration - YouTrack API may not include minutes field
@@ -335,7 +335,19 @@ class TimeManager:
             # Handle issue information
             issue = entry.get("issue", {})
             if isinstance(issue, dict):
-                issue_str = f"{issue.get('id', 'N/A')} - {issue.get('summary', 'No summary')[:30]}"
+                # Format issue ID to show user-friendly project format
+                issue_id = issue.get("id", "N/A")
+                project = issue.get("project", {})
+                project_short_name = project.get("shortName") if project else None
+                issue_number = issue.get("numberInProject") if issue.get("numberInProject") else None
+
+                # Create user-friendly ID format (e.g., "FPU-5" instead of "3-2")
+                if project_short_name and issue_number:
+                    formatted_issue_id = f"{project_short_name}-{issue_number}"
+                else:
+                    formatted_issue_id = issue_id
+
+                issue_str = f"{formatted_issue_id} - {issue.get('summary', 'No summary')[:30]}"
             else:
                 issue_str = "N/A"
 
@@ -368,13 +380,13 @@ class TimeManager:
                 description = "N/A"
 
             table.add_row(
-                str(entry.get("id", "N/A")),
                 issue_str,
                 duration_str,
                 formatted_date,
                 author_name,
                 str(description),
                 type_name,
+                str(entry.get("id", "N/A")),
             )
 
         self.console.print(table)
