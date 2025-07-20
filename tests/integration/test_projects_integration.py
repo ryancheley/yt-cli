@@ -220,3 +220,246 @@ class TestProjectsIntegration:
 
         with pytest.raises(YouTrackError):
             project_manager.get_project(non_existent_id)
+
+
+@pytest.mark.integration
+class TestProjectCustomFieldsIntegration:
+    """Integration tests for project custom fields functionality."""
+
+    @pytest.mark.asyncio
+    async def test_list_custom_fields_real_project(self, integration_project_manager, test_project_id):
+        """Test listing custom fields from a real YouTrack project."""
+        project_manager = integration_project_manager
+
+        try:
+            # Test the new list_custom_fields method
+            result = await project_manager.list_custom_fields(test_project_id)
+
+            assert result["status"] == "success"
+            assert "data" in result
+            assert "count" in result
+            assert isinstance(result["data"], list)
+
+            # If custom fields exist, verify their structure
+            for field in result["data"]:
+                assert isinstance(field, dict)
+                assert "id" in field
+                assert "field" in field
+
+                # Check field details
+                field_info = field["field"]
+                assert "id" in field_info
+                assert "name" in field_info
+
+        except Exception as e:
+            # Skip if authentication issues or permissions
+            if "not authenticated" in str(e).lower() or "permission" in str(e).lower():
+                pytest.skip(f"Authentication or permission issue: {e}")
+            else:
+                raise
+
+    @pytest.mark.asyncio
+    async def test_list_custom_fields_with_options(self, integration_project_manager, test_project_id):
+        """Test listing custom fields with various options."""
+        project_manager = integration_project_manager
+
+        try:
+            # Test with custom fields parameter
+            result = await project_manager.list_custom_fields(
+                test_project_id, fields="id,field(name,fieldType),canBeEmpty,isPublic", top=10
+            )
+
+            assert result["status"] == "success"
+            assert isinstance(result["data"], list)
+
+            # Test that top parameter is respected if there are fields
+            if result["data"]:
+                assert len(result["data"]) <= 10
+
+        except Exception as e:
+            if "not authenticated" in str(e).lower() or "permission" in str(e).lower():
+                pytest.skip(f"Authentication or permission issue: {e}")
+            else:
+                raise
+
+    @pytest.mark.asyncio
+    async def test_list_custom_fields_json_format(self, integration_project_manager, test_project_id):
+        """Test that custom fields data can be serialized to JSON."""
+        project_manager = integration_project_manager
+
+        try:
+            result = await project_manager.list_custom_fields(test_project_id)
+
+            assert result["status"] == "success"
+
+            # Test JSON serialization
+            import json
+
+            json_data = json.dumps(result["data"])
+            assert isinstance(json_data, str)
+
+            # Test deserialization
+            parsed_data = json.loads(json_data)
+            assert parsed_data == result["data"]
+
+        except Exception as e:
+            if "not authenticated" in str(e).lower() or "permission" in str(e).lower():
+                pytest.skip(f"Authentication or permission issue: {e}")
+            else:
+                raise
+
+    @pytest.mark.asyncio
+    async def test_custom_field_operations_error_handling(self, integration_project_manager):
+        """Test error handling for custom field operations."""
+        project_manager = integration_project_manager
+
+        # Test with non-existent project
+        non_existent_project = "NON_EXISTENT_PROJECT_12345"
+
+        result = await project_manager.list_custom_fields(non_existent_project)
+        assert result["status"] == "error"
+        assert "not found" in result["message"].lower() or "error" in result["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_attach_custom_field_permission_handling(self, integration_project_manager, test_project_id):
+        """Test custom field attachment with permission considerations."""
+        project_manager = integration_project_manager
+
+        try:
+            # Attempt to attach a custom field (this may fail due to permissions)
+            result = await project_manager.attach_custom_field(
+                project_id=test_project_id,
+                field_id="nonexistent-field-id",
+                field_type="EnumProjectCustomField",
+            )
+
+            # This should result in an error (either field not found or permission denied)
+            assert result["status"] == "error"
+
+            # The error message should be informative
+            assert result["message"]
+            assert isinstance(result["message"], str)
+
+        except Exception as e:
+            if "not authenticated" in str(e).lower():
+                pytest.skip(f"Authentication issue: {e}")
+            else:
+                # Other exceptions should be handled by the method, not raised
+                pytest.fail(f"Unexpected exception raised: {e}")
+
+    @pytest.mark.asyncio
+    async def test_update_custom_field_permission_handling(self, integration_project_manager, test_project_id):
+        """Test custom field update with permission considerations."""
+        project_manager = integration_project_manager
+
+        try:
+            # Attempt to update a custom field (this may fail due to permissions or non-existence)
+            result = await project_manager.update_custom_field(
+                project_id=test_project_id,
+                field_id="nonexistent-field-id",
+                can_be_empty=True,
+            )
+
+            # This should result in an error
+            assert result["status"] == "error"
+            assert result["message"]
+
+        except Exception as e:
+            if "not authenticated" in str(e).lower():
+                pytest.skip(f"Authentication issue: {e}")
+            else:
+                pytest.fail(f"Unexpected exception raised: {e}")
+
+    @pytest.mark.asyncio
+    async def test_detach_custom_field_permission_handling(self, integration_project_manager, test_project_id):
+        """Test custom field detachment with permission considerations."""
+        project_manager = integration_project_manager
+
+        try:
+            # Attempt to detach a custom field (this may fail due to permissions or non-existence)
+            result = await project_manager.detach_custom_field(
+                project_id=test_project_id,
+                field_id="nonexistent-field-id",
+            )
+
+            # This should result in an error
+            assert result["status"] == "error"
+            assert result["message"]
+
+        except Exception as e:
+            if "not authenticated" in str(e).lower():
+                pytest.skip(f"Authentication issue: {e}")
+            else:
+                pytest.fail(f"Unexpected exception raised: {e}")
+
+    def test_display_custom_fields_table_real_data(self, integration_project_manager):
+        """Test displaying custom fields table with real data structure."""
+        project_manager = integration_project_manager
+
+        # Create sample data that mimics real YouTrack API response
+        sample_fields = [
+            {
+                "id": "project-field-1",
+                "canBeEmpty": True,
+                "emptyFieldText": "No priority",
+                "isPublic": True,
+                "field": {
+                    "id": "field-1",
+                    "name": "Priority",
+                    "fieldType": {"name": "EnumIssueCustomField"},
+                },
+            },
+            {
+                "id": "project-field-2",
+                "canBeEmpty": False,
+                "emptyFieldText": "",
+                "isPublic": False,
+                "field": {
+                    "id": "field-2",
+                    "name": "Assignee",
+                    "fieldType": {"name": "SingleUserIssueCustomField"},
+                },
+            },
+        ]
+
+        # This should not raise an exception and should display properly formatted table
+        project_manager.display_custom_fields_table(sample_fields)
+
+    def test_display_custom_fields_table_edge_cases(self, integration_project_manager):
+        """Test displaying custom fields table with edge cases."""
+        project_manager = integration_project_manager
+
+        # Test with various edge cases
+        edge_case_fields = [
+            {
+                "id": "field-no-empty-text",
+                "canBeEmpty": True,
+                "isPublic": True,
+                "field": {
+                    "id": "field-1",
+                    "name": "Field Without Empty Text",
+                    "fieldType": {"name": "SimpleIssueCustomField"},
+                },
+            },
+            {
+                "id": "field-long-name",
+                "canBeEmpty": False,
+                "emptyFieldText": "Very long empty field text that might cause display issues",
+                "isPublic": False,
+                "field": {
+                    "id": "field-2",
+                    "name": "Field With Very Long Name That Might Cause Display Issues",
+                    "fieldType": {"name": "TextIssueCustomField"},
+                },
+            },
+            {
+                "id": "field-minimal-data",
+                "field": {
+                    "id": "field-3",
+                    "name": "Minimal Field",
+                },
+            },
+        ]
+
+        # This should handle edge cases gracefully
+        project_manager.display_custom_fields_table(edge_case_fields)

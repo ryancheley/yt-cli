@@ -248,6 +248,255 @@ Project Features
 **Short Names/Keys**
   Projects have both full names and short identifiers used in issue IDs (e.g., PROJECT-123).
 
+Custom Fields Management
+------------------------
+
+The ``yt projects fields`` command group provides comprehensive management of custom fields within projects. Custom fields extend the default issue properties and allow you to track additional information specific to your project needs.
+
+fields list
+~~~~~~~~~~~
+
+List all custom fields configured for a specific project.
+
+.. code-block:: bash
+
+   yt projects fields list PROJECT_ID [OPTIONS]
+
+**Arguments:**
+
+* ``PROJECT_ID`` - The project ID or short name (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--fields, -f``
+     - text
+     - Comma-separated list of custom field attributes to return
+   * - ``--top, -t``
+     - integer
+     - Maximum number of custom fields to return
+   * - ``--format``
+     - choice
+     - Output format: table (default) or json
+
+**Examples:**
+
+.. code-block:: bash
+
+   # List all custom fields for a project
+   yt projects fields list FPU
+
+
+   # List with specific fields and JSON format
+   yt projects fields list FPU --fields "id,field(name,fieldType),canBeEmpty" --format json
+
+   # Limit results
+   yt projects fields list FPU --top 5
+
+fields attach
+~~~~~~~~~~~~~
+
+Attach an existing global custom field to a project.
+
+.. code-block:: bash
+
+   yt projects fields attach PROJECT_ID FIELD_ID [OPTIONS]
+
+**Arguments:**
+
+* ``PROJECT_ID`` - The project ID or short name (required)
+* ``FIELD_ID`` - The global custom field ID to attach (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--type``
+     - choice
+     - Type of project custom field (required)
+   * - ``--required``
+     - flag
+     - Make the field required (cannot be empty)
+   * - ``--empty-text``
+     - text
+     - Text to display when field is empty
+   * - ``--private``
+     - flag
+     - Make the field private (not visible to all users)
+
+**Field Types:**
+
+* ``EnumProjectCustomField`` - Single-select dropdown
+* ``MultiEnumProjectCustomField`` - Multi-select dropdown
+* ``SingleUserProjectCustomField`` - Single user selection
+* ``MultiUserProjectCustomField`` - Multiple user selection
+* ``SimpleProjectCustomField`` - Text/numeric fields
+* ``VersionProjectCustomField`` - Version fields
+* ``MultiVersionProjectCustomField`` - Multiple version fields
+* ``DateProjectCustomField`` - Date fields
+* ``IntegerProjectCustomField`` - Integer fields
+* ``FloatProjectCustomField`` - Float fields
+* ``BooleanProjectCustomField`` - Boolean fields
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Attach a priority field as required
+   yt projects fields attach FPU field-priority-123 \
+     --type EnumProjectCustomField \
+     --required \
+     --empty-text "No priority set"
+
+   # Attach a private assignee field
+   yt projects fields attach FPU field-assignee-456 \
+     --type SingleUserProjectCustomField \
+     --private
+
+fields update
+~~~~~~~~~~~~~
+
+Update settings of a custom field already attached to a project.
+
+.. code-block:: bash
+
+   yt projects fields update PROJECT_ID FIELD_ID [OPTIONS]
+
+**Arguments:**
+
+* ``PROJECT_ID`` - The project ID or short name (required)
+* ``FIELD_ID`` - The project custom field ID to update (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--required/--optional``
+     - boolean
+     - Make the field required or optional
+   * - ``--empty-text``
+     - text
+     - Text to display when field is empty
+   * - ``--public/--private``
+     - boolean
+     - Make the field public or private
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Make a field required
+   yt projects fields update FPU project-field-123 --required
+
+   # Update empty text and make private
+   yt projects fields update FPU project-field-123 \
+     --empty-text "Please specify" \
+     --private
+
+   # Make field optional
+   yt projects fields update FPU project-field-123 --optional
+
+fields detach
+~~~~~~~~~~~~~
+
+Remove a custom field from a project.
+
+.. code-block:: bash
+
+   yt projects fields detach PROJECT_ID FIELD_ID [OPTIONS]
+
+**Arguments:**
+
+* ``PROJECT_ID`` - The project ID or short name (required)
+* ``FIELD_ID`` - The project custom field ID to remove (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--force``
+     - flag
+     - Skip confirmation prompt
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Remove a custom field (with confirmation)
+   yt projects fields detach FPU project-field-123
+
+   # Remove without confirmation
+   yt projects fields detach FPU project-field-123 --force
+
+Custom Fields Workflows
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Project Setup with Custom Fields:**
+
+.. code-block:: bash
+
+   # 1. List current custom fields
+   yt projects fields list FPU
+
+   # 2. Attach required fields for project workflow
+   yt projects fields attach FPU priority-field-id \
+     --type EnumProjectCustomField \
+     --required \
+     --empty-text "Priority not set"
+
+   yt projects fields attach FPU assignee-field-id \
+     --type SingleUserProjectCustomField \
+     --empty-text "Unassigned"
+
+   # 3. Verify configuration
+   yt projects fields list FPU
+
+**Custom Fields Maintenance:**
+
+.. code-block:: bash
+
+   # Update field visibility
+   yt projects fields update FPU project-field-123 --private
+
+   # Change requirement status
+   yt projects fields update FPU project-field-456 --optional
+
+   # Update empty text for better UX
+   yt projects fields update FPU project-field-789 \
+     --empty-text "Please select a priority level"
+
+**Custom Fields Discovery:**
+
+.. code-block:: bash
+
+   # Export custom fields configuration
+   yt projects fields list FPU --format json > project_fields.json
+
+   # List only specific field attributes
+   yt projects fields list FPU \
+     --fields "field(name,fieldType),canBeEmpty,isPublic"
+
 Common Workflows
 ----------------
 

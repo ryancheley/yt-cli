@@ -394,3 +394,123 @@ class TestTimeManager:
             calls = [call.args for call in mock_console.print.call_calls]
             no_entries_calls = [call for call in calls if "No time entries found" in str(call)]
             assert len(no_entries_calls) == 0
+
+
+@pytest.mark.unit
+class TestTimeCommands:
+    """Test cases for time tracking CLI commands."""
+
+    @pytest.mark.asyncio
+    async def test_list_command_success(self, mock_auth_manager):
+        """Test successful time list command execution."""
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.time_tracking import list
+
+        mock_time_entries = [
+            {
+                "id": "123",
+                "duration": {"minutes": 120},
+                "date": 1704067200000,
+                "description": "Test work",
+                "author": {"id": "user1", "fullName": "Test User"},
+                "issue": {"id": "ISSUE-123", "summary": "Test Issue"},
+                "type": {"name": "Development"},
+            }
+        ]
+
+        with patch("youtrack_cli.commands.time_tracking.AuthManager") as mock_auth_class:
+            mock_auth_class.return_value = mock_auth_manager
+            with patch("youtrack_cli.commands.time_tracking.asyncio.run") as mock_run:
+                mock_run.return_value = {
+                    "status": "success",
+                    "data": mock_time_entries,
+                    "count": 1,
+                }
+
+                runner = CliRunner()
+                result = runner.invoke(list, ["--issue", "ISSUE-123"], obj={"config": None})
+
+                assert result.exit_code == 0
+                assert "📋 Listing time entries..." in result.output
+                assert "📊 Total entries: 1" in result.output
+
+    @pytest.mark.asyncio
+    async def test_list_command_with_json_format(self, mock_auth_manager):
+        """Test time list command with JSON output format."""
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.time_tracking import list
+
+        mock_time_entries = [
+            {
+                "id": "123",
+                "duration": {"minutes": 120},
+                "date": 1704067200000,
+                "description": "Test work",
+                "author": {"id": "user1", "fullName": "Test User"},
+                "issue": {"id": "ISSUE-123", "summary": "Test Issue"},
+                "type": {"name": "Development"},
+            }
+        ]
+
+        with patch("youtrack_cli.commands.time_tracking.AuthManager") as mock_auth_class:
+            mock_auth_class.return_value = mock_auth_manager
+            with patch("youtrack_cli.commands.time_tracking.asyncio.run") as mock_run:
+                mock_run.return_value = {
+                    "status": "success",
+                    "data": mock_time_entries,
+                    "count": 1,
+                }
+
+                runner = CliRunner()
+                result = runner.invoke(list, ["--issue", "ISSUE-123", "--format", "json"], obj={"config": None})
+
+                assert result.exit_code == 0
+                assert "📋 Listing time entries..." in result.output
+
+    @pytest.mark.asyncio
+    async def test_list_command_error(self, mock_auth_manager):
+        """Test time list command with error response."""
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.time_tracking import list
+
+        with patch("youtrack_cli.commands.time_tracking.AuthManager") as mock_auth_class:
+            mock_auth_class.return_value = mock_auth_manager
+            with patch("youtrack_cli.commands.time_tracking.asyncio.run") as mock_run:
+                mock_run.return_value = {
+                    "status": "error",
+                    "message": "API error occurred",
+                }
+
+                runner = CliRunner()
+                result = runner.invoke(list, ["--issue", "ISSUE-123"], obj={"config": None})
+
+                assert result.exit_code == 1
+                assert "❌ API error occurred" in result.output
+
+    @pytest.mark.asyncio
+    async def test_list_command_no_issue_filter(self, mock_auth_manager):
+        """Test time list command without issue filter."""
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.time_tracking import list
+
+        mock_time_entries = []
+
+        with patch("youtrack_cli.commands.time_tracking.AuthManager") as mock_auth_class:
+            mock_auth_class.return_value = mock_auth_manager
+            with patch("youtrack_cli.commands.time_tracking.asyncio.run") as mock_run:
+                mock_run.return_value = {
+                    "status": "success",
+                    "data": mock_time_entries,
+                    "count": 0,
+                }
+
+                runner = CliRunner()
+                result = runner.invoke(list, [], obj={"config": None})
+
+                assert result.exit_code == 0
+                assert "📋 Listing time entries..." in result.output
+                assert "📊 Total entries: 0" in result.output
