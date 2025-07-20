@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- New `yt articles reorder` command for previewing article sorting and ordering (#330)
+  - Provides comprehensive preview of how articles would be reordered by title, ID, or friendly ID
+  - Supports project and parent-based filtering for targeted reordering
+  - Includes table and JSON output formats for automation and scripting
+  - Shows position changes with clear indicators (↑, ↓, =) and current ordinal values
+  - Displays API limitation notices and step-by-step manual reordering instructions
+  - Implements case-sensitive/insensitive title sorting options
+  - Adds reverse sorting capability for all sort criteria
+  - Features comprehensive error handling and validation
+
 ### Fixed
 - Fix `yt articles sort` command to properly display child articles and remove misleading functionality (#327)
   - Fixed child article filtering bug that prevented proper parent-child relationship matching

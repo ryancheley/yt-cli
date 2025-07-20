@@ -403,6 +403,170 @@ YouTrack's REST API does not support programmatic article reordering. The ``ordi
 field that controls article position is read-only. To reorder articles, use YouTrack's
 web interface with drag-and-drop functionality.
 
+reorder
+~~~~~~~
+
+Analyze and preview how articles would be reordered based on specified sorting criteria.
+This command provides a comprehensive preview without making actual changes.
+
+.. code-block:: bash
+
+   yt articles reorder [ARTICLE_IDS...] --sort-by CRITERIA [OPTIONS]
+
+**Important:** This command provides a preview of article ordering only. Due to YouTrack API limitations, actual reordering must be done manually through the web interface.
+
+**Arguments:**
+
+* ``ARTICLE_IDS`` - Specific article IDs to reorder (optional; if omitted, uses project/parent filtering)
+
+**Required Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--sort-by``
+     - choice
+     - Sort articles by title, ID, or friendly ID (choices: title, id, friendly-id; required)
+
+**Optional Filtering:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--project-id, -p``
+     - text
+     - Limit reordering to articles within a specific project
+   * - ``--parent-id``
+     - text
+     - Reorder only child articles of a specific parent
+   * - ``--recursive``
+     - flag
+     - Apply reordering to entire article hierarchy (future enhancement)
+
+**Sorting Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--reverse``
+     - flag
+     - Reverse the sort order
+   * - ``--case-sensitive``
+     - flag
+     - Use case-sensitive title sorting (default: case-insensitive)
+
+**Output Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--format``
+     - choice
+     - Output format (choices: table, json; default: table)
+   * - ``--dry-run``
+     - flag
+     - Preview changes without execution (default behavior)
+   * - ``--force``
+     - flag
+     - Skip confirmation prompts (reserved for future use)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Preview sorting all articles in project by title
+   yt articles reorder --project-id FPU --sort-by title
+
+   # Preview sorting specific articles by ID in reverse order
+   yt articles reorder ART-1 ART-5 ART-3 --sort-by id --reverse
+
+   # Preview recursive sorting of article hierarchy by friendly ID
+   yt articles reorder --parent-id ART-ROOT --sort-by friendly-id --recursive
+
+   # JSON output for automation and scripting
+   yt articles reorder --sort-by title --format json --project-id FPU
+
+   # Case-sensitive title sorting
+   yt articles reorder --parent-id DOC-PARENT --sort-by title --case-sensitive
+
+**Output:**
+
+The command displays a comprehensive preview including:
+
+* API limitation notice and instructions
+* Proposed article order with position changes
+* Current ordinal values from YouTrack
+* Change indicators (↑, ↓, =) showing position movements
+* Instructions for applying the order manually in YouTrack
+
+**JSON Output Format:**
+
+When using ``--format json``, the output includes:
+
+.. code-block:: json
+
+   {
+     "sort_criteria": {
+       "sort_by": "title",
+       "reverse": false
+     },
+     "original_order": [
+       {
+         "id": "123",
+         "idReadable": "ART-123",
+         "title": "Article Title",
+         "ordinal": 1
+       }
+     ],
+     "new_order": [
+       {
+         "id": "124",
+         "idReadable": "ART-124",
+         "title": "Another Article",
+         "ordinal": 2
+       }
+     ]
+   }
+
+**API Limitations:**
+
+YouTrack's REST API does not support programmatic article reordering. This command:
+
+* Shows exactly how articles would be ordered
+* Provides clear position change indicators
+* Includes current ordinal values for reference
+* Gives step-by-step instructions for manual reordering
+
+To apply the proposed ordering:
+
+1. Open YouTrack in your web browser
+2. Navigate to the Knowledge Base section
+3. Find the relevant project or parent article
+4. Use drag-and-drop to reorder articles manually
+5. The ordinal field will be updated automatically
+
+**Alternative Approaches:**
+
+* Consider using custom fields for programmatic ordering
+* Use tags to indicate desired order or categories
+* Implement external documentation that references YouTrack articles
+
 Tag Management
 --------------
 
