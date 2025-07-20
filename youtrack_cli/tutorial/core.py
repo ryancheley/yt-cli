@@ -1,5 +1,7 @@
 """Core tutorial engine and base classes."""
 
+import asyncio
+import asyncio.subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
@@ -7,6 +9,7 @@ from typing import Callable, Dict, List, Optional
 from rich import box
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
+from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
@@ -100,7 +103,8 @@ class TutorialModule(ABC):
         # Command example
         if step.command_example:
             self.console.print("[bold]Example command:[/bold]")
-            self.console.print(f"  [green]{step.command_example}[/green]\n")
+            self.console.print(f"  [green]{step.command_example}[/green]")
+            self.console.print("  [dim]💡 Use 'execute' or 'e' to run this command directly![/dim]\n")
 
         # Tips
         if step.tips:
@@ -218,16 +222,34 @@ class TutorialEngine:
                         default=step.custom_prompt_choices[0] if step.custom_prompt_choices else "next",
                     )
                 else:
-                    # Use default choices
-                    action = Prompt.ask(
-                        "What would you like to do?", choices=["next", "repeat", "skip", "quit"], default="next"
-                    )
+                    # Use default choices with shortcuts
+                    choices = ["next", "n", "repeat", "r", "skip", "s", "quit", "q"]
+                    if step.command_example:
+                        choices.extend(["execute", "e"])
+
+                    prompt_text = "What would you like to do? [next/repeat/skip/quit"
+                    if step.command_example:
+                        prompt_text += "/execute"
+                    prompt_text += "] (shortcuts: n/r/s/q"
+                    if step.command_example:
+                        prompt_text += "/e"
+                    prompt_text += ", Enter=next)"
+
+                    action = Prompt.ask(prompt_text, choices=choices, default="next")
+
+                    # Map shortcuts to full actions
+                    action_map = {"n": "next", "r": "repeat", "s": "skip", "q": "quit", "e": "execute"}
+                    action = action_map.get(action.lower(), action.lower())
             else:
                 action = Prompt.ask(
-                    "Step execution failed. What would you like to do?",
-                    choices=["retry", "skip", "quit"],
+                    "Step execution failed. What would you like to do? [retry/skip/quit] "
+                    "(shortcuts: r/s/q, Enter=retry)",
+                    choices=["retry", "r", "skip", "s", "quit", "q"],
                     default="retry",
                 )
+                # Map shortcuts to full actions
+                action_map = {"r": "retry", "s": "skip", "q": "quit"}
+                action = action_map.get(action.lower(), action.lower())
 
             if action == "quit":
                 self.console.print("[yellow]Tutorial paused. You can resume later with:[/yellow]")
@@ -248,6 +270,12 @@ class TutorialEngine:
                 if progress.completed_steps and current_step not in progress.completed_steps:
                     progress.completed_steps.append(current_step)
                 current_step += 1
+
+            elif action == "execute" and step.command_example:
+                # Execute the command example
+                await self._execute_command(step.command_example)
+                # Stay on current step after execution
+                continue
 
             elif step.custom_prompt_handler and step.custom_prompt_choices and action in step.custom_prompt_choices:
                 # Handle custom action
@@ -314,6 +342,49 @@ class TutorialEngine:
         )
         self.console.print("\n")
         self.console.print(completion_panel)
+
+    async def _execute_command(self, command: str) -> None:
+        """Execute a command and display its output.
+
+        Args:
+            command: The command to execute.
+        """
+        self.console.print(f"\n[blue]⚡ Executing command:[/blue] [green]{command}[/green]")
+
+        try:
+            # Show the command in a syntax panel
+            syntax = Syntax(command, "bash", theme="monokai", line_numbers=False)
+            self.console.print(Panel(syntax, title="Command", border_style="blue"))
+
+            # Execute the command
+            process = await asyncio.create_subprocess_shell(
+                command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, shell=True
+            )
+
+            stdout, stderr = await process.communicate()
+
+            # Display output
+            if stdout:
+                output_text = stdout.decode().strip()
+                if output_text:
+                    self.console.print(
+                        Panel(output_text, title="[green]Output[/green]", border_style="green", expand=False)
+                    )
+
+            if stderr:
+                error_text = stderr.decode().strip()
+                if error_text:
+                    self.console.print(
+                        Panel(error_text, title="[red]Error Output[/red]", border_style="red", expand=False)
+                    )
+
+            if process.returncode == 0:
+                self.console.print("[green]✓ Command executed successfully![/green]\n")
+            else:
+                self.console.print(f"[red]✗ Command failed with exit code {process.returncode}[/red]\n")
+
+        except Exception as e:
+            self.console.print(f"[red]✗ Failed to execute command: {e}[/red]\n")
 
     def display_welcome(self) -> None:
         """Display welcome message for tutorial system."""

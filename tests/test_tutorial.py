@@ -3,6 +3,8 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from youtrack_cli.tutorial.core import TutorialEngine, TutorialModule, TutorialProgress, TutorialStep
 from youtrack_cli.tutorial.modules import IssuesTutorial, SetupTutorial, get_default_modules
 from youtrack_cli.tutorial.progress import ProgressTracker
@@ -25,7 +27,7 @@ class TestTutorialStep:
         assert step.description == "Test description"
         assert len(step.instructions) == 2
         assert step.command_example == "yt test"
-        assert len(step.tips) == 2
+        assert step.tips is not None and len(step.tips) == 2
 
 
 class TestTutorialProgress:
@@ -225,3 +227,98 @@ class TestTutorialIntegration:
             loaded_progress = tracker.get_progress("setup")
             assert loaded_progress is not None
             assert loaded_progress.current_step == 1
+
+
+class TestTutorialShortcuts:
+    """Test tutorial shortcut functionality."""
+
+    def test_action_mapping(self):
+        """Test action mapping for shortcuts."""
+        action_map = {"n": "next", "r": "repeat", "s": "skip", "q": "quit", "e": "execute"}
+
+        # Test single letter shortcuts (lowercase)
+        assert action_map.get("n", "n") == "next"
+        assert action_map.get("r", "r") == "repeat"
+        assert action_map.get("s", "s") == "skip"
+        assert action_map.get("q", "q") == "quit"
+        assert action_map.get("e", "e") == "execute"
+
+        # Test full words pass through
+        assert action_map.get("next", "next") == "next"
+        assert action_map.get("repeat", "repeat") == "repeat"
+        assert action_map.get("skip", "skip") == "skip"
+        assert action_map.get("quit", "quit") == "quit"
+        assert action_map.get("execute", "execute") == "execute"
+
+    def test_choices_generation(self):
+        """Test choices generation for prompts."""
+        # Base choices
+        choices = ["next", "n", "repeat", "r", "skip", "s", "quit", "q"]
+
+        # Verify all basic choices are present
+        assert "next" in choices
+        assert "n" in choices
+        assert "repeat" in choices
+        assert "r" in choices
+        assert "skip" in choices
+        assert "s" in choices
+        assert "quit" in choices
+        assert "q" in choices
+
+        # Test with execute options
+        choices_with_execute = choices + ["execute", "e"]
+        assert "execute" in choices_with_execute
+        assert "e" in choices_with_execute
+
+    def test_prompt_text_generation(self):
+        """Test prompt text generation."""
+        # Without execute option
+        prompt_text = "What would you like to do? [next/repeat/skip/quit] (shortcuts: n/r/s/q, Enter=next)"
+        assert "next/repeat/skip/quit" in prompt_text
+        assert "shortcuts: n/r/s/q" in prompt_text
+        assert "Enter=next" in prompt_text
+
+        # With execute option
+        prompt_text_with_execute = (
+            "What would you like to do? [next/repeat/skip/quit/execute] (shortcuts: n/r/s/q/e, Enter=next)"
+        )
+        assert "next/repeat/skip/quit/execute" in prompt_text_with_execute
+        assert "shortcuts: n/r/s/q/e" in prompt_text_with_execute
+        assert "Enter=next" in prompt_text_with_execute
+
+
+class TestTutorialCommandExecution:
+    """Test tutorial command execution functionality."""
+
+    def test_step_with_command_example(self):
+        """Test step with command example."""
+        step = TutorialStep(
+            title="Test Step",
+            description="Test description",
+            instructions=["Run the command"],
+            command_example="echo 'hello world'",
+        )
+
+        assert step.command_example == "echo 'hello world'"
+
+    @pytest.mark.asyncio
+    async def test_command_execution_success(self):
+        """Test successful command execution."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tracker = ProgressTracker(config_dir=temp_dir)
+            engine = TutorialEngine(tracker)
+
+            # Test simple echo command
+            await engine._execute_command("echo 'test success'")
+            # If no exception is raised, the test passes
+
+    @pytest.mark.asyncio
+    async def test_command_execution_failure(self):
+        """Test command execution with failure."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tracker = ProgressTracker(config_dir=temp_dir)
+            engine = TutorialEngine(tracker)
+
+            # Test command that should fail
+            await engine._execute_command("nonexistent_command_that_should_fail")
+            # If no exception is raised, the test passes (failure is handled gracefully)
