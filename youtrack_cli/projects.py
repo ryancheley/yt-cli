@@ -550,7 +550,11 @@ class ProjectManager:
 
         # Default fields to return
         if not fields:
-            fields = "id,canBeEmpty,emptyFieldText,isPublic,field(id,name,fieldType),bundle(id,values(id,name))"
+            fields = (
+                "id,canBeEmpty,emptyFieldText,isPublic,"
+                "field(id,name,fieldType(id,presentation)),"
+                "bundle(id,values(id,name))"
+            )
 
         # Build query parameters
         params = {"fields": fields}
@@ -859,7 +863,7 @@ class ProjectManager:
             # Get field name and type
             field_info = field.get("field", {})
             field_name = field_info.get("name", "N/A") if field_info else "N/A"
-            field_type = field_info.get("fieldType", {}).get("name", "Unknown") if field_info else "Unknown"
+            field_type = field_info.get("fieldType", {}).get("presentation", "Unknown") if field_info else "Unknown"
 
             # Format required status
             can_be_empty = field.get("canBeEmpty", True)

@@ -775,7 +775,7 @@ class TestProjectCustomFields:
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
-                    "fieldType": {"name": "EnumIssueCustomField"},
+                    "fieldType": {"id": "enum[1]", "presentation": "enum[1]"},
                 },
                 "bundle": {
                     "id": "bundle-1",
@@ -793,7 +793,7 @@ class TestProjectCustomFields:
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
-                    "fieldType": {"name": "SingleUserIssueCustomField"},
+                    "fieldType": {"id": "user[1]", "presentation": "user[1]"},
                 },
             },
         ]
@@ -996,7 +996,7 @@ class TestProjectCustomFields:
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
-                    "fieldType": {"name": "EnumIssueCustomField"},
+                    "fieldType": {"id": "enum[1]", "presentation": "enum[1]"},
                 },
             },
             {
@@ -1007,13 +1007,69 @@ class TestProjectCustomFields:
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
-                    "fieldType": {"name": "SingleUserIssueCustomField"},
+                    "fieldType": {"id": "user[1]", "presentation": "user[1]"},
                 },
             },
         ]
 
-        # This should not raise an exception
+        # This should not raise an exception and should display field types correctly
         project_manager.display_custom_fields_table(custom_fields)
+
+    def test_display_custom_fields_table_shows_correct_field_types(self, capsys):
+        """Test that field types are displayed correctly instead of 'Unknown'."""
+        auth_manager = Mock()
+        project_manager = ProjectManager(auth_manager)
+
+        custom_fields = [
+            {
+                "id": "field-1",
+                "canBeEmpty": True,
+                "emptyFieldText": "No Priority",
+                "isPublic": True,
+                "field": {
+                    "id": "global-field-1",
+                    "name": "Priority",
+                    "fieldType": {"id": "enum[1]", "presentation": "enum[1]"},
+                },
+            },
+            {
+                "id": "field-2",
+                "canBeEmpty": False,
+                "emptyFieldText": "Unassigned",
+                "isPublic": True,
+                "field": {
+                    "id": "global-field-2",
+                    "name": "Assignee",
+                    "fieldType": {"id": "user[1]", "presentation": "user[1]"},
+                },
+            },
+            {
+                "id": "field-3",
+                "canBeEmpty": True,
+                "emptyFieldText": "No stage",
+                "isPublic": True,
+                "field": {
+                    "id": "global-field-3",
+                    "name": "Stage",
+                    "fieldType": {"id": "state[1]", "presentation": "state[1]"},
+                },
+            },
+        ]
+
+        project_manager.display_custom_fields_table(custom_fields)
+
+        captured = capsys.readouterr()
+
+        # Verify that field types are shown correctly, not as 'Unknown'
+        assert "enum[1]" in captured.out
+        assert "user[1]" in captured.out
+        assert "state[1]" in captured.out
+        assert "Unknown" not in captured.out
+
+        # Verify field names are displayed
+        assert "Priority" in captured.out
+        assert "Assignee" in captured.out
+        assert "Stage" in captured.out
 
 
 class TestProjectCustomFieldsCLI:
@@ -1065,7 +1121,7 @@ class TestProjectCustomFieldsCLI:
             "data": [
                 {
                     "id": "field-1",
-                    "field": {"name": "Priority", "fieldType": {"name": "EnumIssueCustomField"}},
+                    "field": {"name": "Priority", "fieldType": {"id": "enum[1]", "presentation": "enum[1]"}},
                     "canBeEmpty": True,
                     "isPublic": True,
                 }

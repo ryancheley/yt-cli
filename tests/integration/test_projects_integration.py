@@ -406,7 +406,7 @@ class TestProjectCustomFieldsIntegration:
                 "field": {
                     "id": "field-1",
                     "name": "Priority",
-                    "fieldType": {"name": "EnumIssueCustomField"},
+                    "fieldType": {"id": "enum[1]", "presentation": "enum[1]"},
                 },
             },
             {
@@ -417,7 +417,7 @@ class TestProjectCustomFieldsIntegration:
                 "field": {
                     "id": "field-2",
                     "name": "Assignee",
-                    "fieldType": {"name": "SingleUserIssueCustomField"},
+                    "fieldType": {"id": "user[1]", "presentation": "user[1]"},
                 },
             },
         ]
@@ -438,7 +438,7 @@ class TestProjectCustomFieldsIntegration:
                 "field": {
                     "id": "field-1",
                     "name": "Field Without Empty Text",
-                    "fieldType": {"name": "SimpleIssueCustomField"},
+                    "fieldType": {"id": "text[1]", "presentation": "text[1]"},
                 },
             },
             {
@@ -449,7 +449,7 @@ class TestProjectCustomFieldsIntegration:
                 "field": {
                     "id": "field-2",
                     "name": "Field With Very Long Name That Might Cause Display Issues",
-                    "fieldType": {"name": "TextIssueCustomField"},
+                    "fieldType": {"id": "text[*]", "presentation": "text[*]"},
                 },
             },
             {
