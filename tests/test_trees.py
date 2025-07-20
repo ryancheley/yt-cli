@@ -357,6 +357,33 @@ class TestEnhancedArticlesTree:
 
         assert isinstance(tree, Tree)
 
+    def test_create_enhanced_articles_tree_with_null_parent_article(self):
+        """Test creating enhanced articles tree with null parentArticle field (fixes #299)."""
+        articles = [
+            {
+                "id": "ART-1",
+                "idReadable": "ART-1",
+                "summary": "Root Article",
+                "parentArticle": None,  # This would cause NoneType error before fix
+                "reporter": {"fullName": "Author One"},
+                "created": "2024-01-01T00:00:00Z",
+                "visibility": {"$type": "UnlimitedVisibility"},
+            },
+            {
+                "id": "ART-2",
+                "idReadable": "ART-2",
+                "summary": "Another Root Article",
+                "reporter": {"fullName": "Author Two"},
+                "created": "2024-01-02T00:00:00Z",
+                "visibility": {"$type": "LimitedVisibility"},
+            },
+        ]
+
+        # This should not raise AttributeError: 'NoneType' object has no attribute 'get'
+        tree = create_enhanced_articles_tree(articles, show_metadata=True)
+
+        assert isinstance(tree, Tree)
+
 
 @pytest.mark.unit
 class TestStatusColorFunction:
