@@ -791,11 +791,27 @@ def list_comments(
                 table.add_column("Created", style="yellow")
 
                 for comment in comments:
+                    # Handle created date formatting
+                    created_value = comment.get("created")
+                    if isinstance(created_value, int):
+                        from datetime import datetime
+
+                        formatted_created = datetime.fromtimestamp(created_value / 1000).strftime("%Y-%m-%d %H:%M")
+                    else:
+                        formatted_created = str(created_value) if created_value else "N/A"
+
+                    # Handle text formatting
+                    text = comment.get("text", "")
+                    if text and len(str(text)) > 100:
+                        formatted_text = str(text)[:100] + "..."
+                    else:
+                        formatted_text = str(text) if text else "N/A"
+
                     table.add_row(
-                        comment.get("id", "N/A"),
+                        str(comment.get("id", "N/A")),
                         comment.get("author", {}).get("fullName", "N/A"),
-                        comment.get("text", "N/A")[:100] + ("..." if len(comment.get("text", "")) > 100 else ""),
-                        comment.get("created", "N/A"),
+                        formatted_text,
+                        formatted_created,
                     )
 
                 console.print(table)

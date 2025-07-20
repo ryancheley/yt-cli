@@ -410,10 +410,11 @@ class ArticleManager:
 
         url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/comments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "id,text,created,author(id,fullName)"}
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers)
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
             data = self._safe_json_parse(response)
             return {"status": "success", "data": data}
         except Exception as e:
@@ -459,10 +460,11 @@ class ArticleManager:
 
         url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/attachments"
         headers = {"Authorization": f"Bearer {credentials.token}"}
+        params = {"fields": "id,name,size,mimeType,author(id,fullName)"}
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers)
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
             data = self._safe_json_parse(response)
             return {"status": "success", "data": data}
         except Exception as e:

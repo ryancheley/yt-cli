@@ -129,10 +129,14 @@ class BoardManager:
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
         }
+        params = {
+            "fields": "id,name,projects(id,name),owner(id,name,fullName),"
+            "columns(id,presentation(name)),sprintsSettings(disableSprints)"
+        }
 
         try:
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers)
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
             board = self._parse_json_response(response)
 
             # Display board details in a Rich table
