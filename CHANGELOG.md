@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix `yt articles tree` command throwing NoneType error when parentArticle field is null (#299)
+- Replace internal IDs with user-friendly IDs in CLI output for better UX (#313)
+  - `yt issues attach list` now shows filename as primary identifier with internal ID moved to last column
+  - `yt issues links list` now shows user-friendly issue IDs (e.g., "FPU-5" instead of "3-2")
+  - `yt time list` and `yt time report` now show user-friendly issue IDs in Issue column
+  - Time entry IDs moved to last column as "Entry ID" for reference
 
 ## [0.10.0] - 2025-07-20
 

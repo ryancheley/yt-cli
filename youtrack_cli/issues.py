@@ -1382,7 +1382,7 @@ class IssueManager:
 
         url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
         headers = {"Authorization": f"Bearer {credentials.token}"}
-        params = {"fields": "links(linkType(name),direction,issues(id,summary))"}
+        params = {"fields": "links(linkType(name),direction,issues(id,summary,numberInProject,project(shortName)))"}
 
         try:
             client_manager = get_client_manager()
@@ -1796,22 +1796,24 @@ class IssueManager:
             return
 
         table = Table(title="Attachments")
-        table.add_column("ID", style="cyan")
         table.add_column("Name", style="green")
         table.add_column("Size", style="blue")
         table.add_column("Type", style="yellow")
         table.add_column("Author", style="magenta")
+        table.add_column("ID", style="cyan")
 
         for attachment in attachments:
             author = attachment.get("author", {})
             author_name = author.get("fullName", "N/A") if author else "N/A"
 
+            # For attachments, use filename as primary identifier since it's more user-friendly
+            # Move internal ID to last column for reference when needed
             table.add_row(
-                attachment.get("id", "N/A"),
                 attachment.get("name", "N/A"),
                 str(attachment.get("size", "N/A")),
                 attachment.get("mimeType", "N/A"),
                 author_name,
+                attachment.get("id", "N/A"),
             )
 
         self.console.print(table)
@@ -1836,9 +1838,20 @@ class IssueManager:
             issues = link.get("issues", [])
             issue_summaries = []
             for issue in issues:
+                # Format issue ID to show user-friendly project format
                 issue_id = issue.get("id", "N/A")
+                project = issue.get("project", {})
+                project_short_name = project.get("shortName") if project else None
+                issue_number = issue.get("numberInProject") if issue.get("numberInProject") else None
+
+                # Create user-friendly ID format (e.g., "FPU-5" instead of "3-2")
+                if project_short_name and issue_number:
+                    formatted_id = f"{project_short_name}-{issue_number}"
+                else:
+                    formatted_id = issue_id
+
                 issue_summary = issue.get("summary", "N/A")
-                issue_summaries.append(f"{issue_id}: {issue_summary[:30]}")
+                issue_summaries.append(f"{formatted_id}: {issue_summary[:30]}")
 
             related_issues = "\n".join(issue_summaries) if issue_summaries else "N/A"
 
