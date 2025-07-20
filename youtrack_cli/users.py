@@ -518,41 +518,59 @@ class UserManager:
                     user = response.json()
                     groups = user.get("groups", [])
 
-                    # If we found groups, return them
+                    # If we found groups with permissions, return them
                     if groups:
-                        return {"status": "success", "data": groups, "user_id": user_id}
+                        # Check if any group has permissions data
+                        has_permissions = any(group.get("permissions") for group in groups)
+                        if has_permissions or fields == "groups":  # Return if has permissions or is last attempt
+                            return {"status": "success", "data": groups, "user_id": user_id}
+                        # Continue to try other field configurations if no permissions found
 
                 except Exception:
                     continue
 
             # If user endpoint doesn't work, try getting all groups and filter
             try:
-                # Get all groups and find ones containing the user
-                response = await client_manager.make_request(
-                    "GET",
-                    f"{base_url}/api/groups",
-                    headers=headers,
-                    params={"fields": "id,name,description,users(id,login)"},
-                    timeout=10.0,
-                )
+                # Try to get all groups with permissions first
+                group_field_configs = [
+                    "id,name,description,permissions(name,permission),users(id,login)",
+                    "id,name,description,users(id,login)",
+                ]
 
-                all_groups = response.json()
-                user_groups = []
+                for group_fields in group_field_configs:
+                    try:
+                        response = await client_manager.make_request(
+                            "GET",
+                            f"{base_url}/api/groups",
+                            headers=headers,
+                            params={"fields": group_fields},
+                            timeout=10.0,
+                        )
 
-                for group in all_groups:
-                    users = group.get("users", [])
-                    for user in users:
-                        if user.get("login") == user_id or user.get("id") == user_id:
-                            user_groups.append(
-                                {
-                                    "id": group.get("id"),
-                                    "name": group.get("name"),
-                                    "description": group.get("description", ""),
-                                }
-                            )
-                            break
+                        all_groups = response.json()
+                        user_groups = []
 
-                return {"status": "success", "data": user_groups, "user_id": user_id}
+                        for group in all_groups:
+                            users = group.get("users", [])
+                            for user in users:
+                                if user.get("login") == user_id or user.get("id") == user_id:
+                                    user_groups.append(
+                                        {
+                                            "id": group.get("id"),
+                                            "name": group.get("name"),
+                                            "description": group.get("description", ""),
+                                            "permissions": group.get("permissions", []),
+                                        }
+                                    )
+                                    break
+
+                        if user_groups:
+                            return {"status": "success", "data": user_groups, "user_id": user_id}
+                    except Exception:
+                        continue
+
+                # If no groups found, return empty result
+                return {"status": "success", "data": [], "user_id": user_id}
 
             except Exception:
                 pass
@@ -609,9 +627,13 @@ class UserManager:
                     user = response.json()
                     roles = user.get("roles", [])
 
-                    # If we found roles, return them
+                    # If we found roles with permissions, return them
                     if roles:
-                        return {"status": "success", "data": roles, "user_id": user_id}
+                        # Check if any role has permissions data
+                        has_permissions = any(role.get("permissions") for role in roles)
+                        if has_permissions or fields == "roles":  # Return if has permissions or is last attempt
+                            return {"status": "success", "data": roles, "user_id": user_id}
+                        # Continue to try other field configurations if no permissions found
 
                 except Exception:
                     continue
@@ -638,14 +660,33 @@ class UserManager:
                     for project_role in transitive_roles:
                         role_info = project_role.get("role", {})
                         if role_info:
-                            roles.append(
-                                {
-                                    "id": role_info.get("id"),
-                                    "name": role_info.get("name"),
-                                    "key": role_info.get("key"),
-                                    "description": role_info.get("description", ""),
-                                }
-                            )
+                            role_data = {
+                                "id": role_info.get("id"),
+                                "name": role_info.get("name"),
+                                "key": role_info.get("key"),
+                                "description": role_info.get("description", ""),
+                                "permissions": [],  # Initialize empty permissions
+                            }
+
+                            # Try to get role permissions from Hub API
+                            try:
+                                role_id = role_info.get("id")
+                                if role_id:
+                                    role_response = await client_manager.make_request(
+                                        "GET",
+                                        f"{base_url}/hub/api/rest/roles/{role_id}",
+                                        headers=headers,
+                                        timeout=10.0,
+                                    )
+                                    detailed_role = role_response.json()
+                                    role_permissions = detailed_role.get("permissions", [])
+                                    if role_permissions:
+                                        role_data["permissions"] = role_permissions
+                            except Exception:
+                                # If we can't get permissions, continue with empty list
+                                pass
+
+                            roles.append(role_data)
 
                     # Remove duplicates based on role ID
                     unique_roles = []
