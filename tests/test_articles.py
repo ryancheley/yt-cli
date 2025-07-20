@@ -1005,3 +1005,322 @@ class TestArticlesCLI:
 
             assert result.exit_code == 0
             assert "Fetching attachments" in result.output
+
+    def test_articles_reorder_command_basic(self):
+        """Test basic articles reorder command functionality."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Article ordering preview completed",
+            }
+
+            result = runner.invoke(main, ["articles", "reorder", "--sort-by", "title", "--project-id", "TEST"])
+
+            assert result.exit_code == 0
+            assert "API Limitation Notice" in result.output
+            assert "Analyzing article ordering" in result.output
+
+    def test_articles_reorder_command_with_article_ids(self):
+        """Test articles reorder command with specific article IDs."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Article ordering preview completed",
+            }
+
+            result = runner.invoke(main, ["articles", "reorder", "ART-1", "ART-2", "--sort-by", "id"])
+
+            assert result.exit_code == 0
+            assert "API Limitation Notice" in result.output
+
+    def test_articles_reorder_command_json_format(self):
+        """Test articles reorder command with JSON output format."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Article ordering preview completed",
+            }
+
+            result = runner.invoke(main, ["articles", "reorder", "--sort-by", "title", "--format", "json"])
+
+            assert result.exit_code == 0
+            assert "API Limitation Notice" in result.output
+
+    def test_articles_reorder_command_missing_sort_by(self):
+        """Test articles reorder command fails without sort-by parameter."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["articles", "reorder", "--project-id", "TEST"])
+
+        assert result.exit_code != 0
+        assert "sort-by" in result.output.lower() or "missing option" in result.output.lower()
+
+    def test_articles_reorder_command_error_handling(self):
+        """Test articles reorder command error handling."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
+            # Mock the AuthManager instance to return a username for audit logging
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
+            mock_run.return_value = {
+                "status": "error",
+                "message": "No articles found to reorder",
+            }
+
+            result = runner.invoke(main, ["articles", "reorder", "--sort-by", "title"])
+
+            assert result.exit_code != 0
+            assert "Failed to analyze article ordering" in result.output
+
+
+@pytest.mark.unit
+class TestArticleReorderFunctions:
+    """Test cases for article reordering helper functions."""
+
+    def test_sort_articles_by_title(self):
+        """Test sorting articles by title."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = [
+            {"summary": "Zebra Article", "id": "1"},
+            {"summary": "Alpha Article", "id": "2"},
+            {"summary": "Beta Article", "id": "3"},
+        ]
+
+        sorted_articles = _sort_articles(articles, "title", False, False)
+
+        assert len(sorted_articles) == 3
+        assert sorted_articles[0]["summary"] == "Alpha Article"
+        assert sorted_articles[1]["summary"] == "Beta Article"
+        assert sorted_articles[2]["summary"] == "Zebra Article"
+
+    def test_sort_articles_by_title_reverse(self):
+        """Test sorting articles by title in reverse order."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = [
+            {"summary": "Alpha Article", "id": "1"},
+            {"summary": "Beta Article", "id": "2"},
+            {"summary": "Zebra Article", "id": "3"},
+        ]
+
+        sorted_articles = _sort_articles(articles, "title", True, False)
+
+        assert len(sorted_articles) == 3
+        assert sorted_articles[0]["summary"] == "Zebra Article"
+        assert sorted_articles[1]["summary"] == "Beta Article"
+        assert sorted_articles[2]["summary"] == "Alpha Article"
+
+    def test_sort_articles_by_title_case_sensitive(self):
+        """Test case-sensitive title sorting."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = [
+            {"summary": "apple Article", "id": "1"},
+            {"summary": "Banana Article", "id": "2"},
+            {"summary": "cherry Article", "id": "3"},
+        ]
+
+        # Case-sensitive: uppercase comes before lowercase
+        sorted_articles = _sort_articles(articles, "title", False, True)
+
+        assert len(sorted_articles) == 3
+        assert sorted_articles[0]["summary"] == "Banana Article"
+
+    def test_sort_articles_by_id_numeric(self):
+        """Test sorting articles by ID with numeric extraction."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = [
+            {"id": "ART-100", "summary": "Article 100"},
+            {"id": "ART-2", "summary": "Article 2"},
+            {"id": "ART-50", "summary": "Article 50"},
+        ]
+
+        sorted_articles = _sort_articles(articles, "id", False, False)
+
+        assert len(sorted_articles) == 3
+        assert sorted_articles[0]["id"] == "ART-2"
+        assert sorted_articles[1]["id"] == "ART-50"
+        assert sorted_articles[2]["id"] == "ART-100"
+
+    def test_sort_articles_by_friendly_id(self):
+        """Test sorting articles by friendly ID."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = [
+            {"idReadable": "DOC-003", "id": "123", "summary": "Doc 3"},
+            {"idReadable": "DOC-001", "id": "124", "summary": "Doc 1"},
+            {"idReadable": "DOC-002", "id": "125", "summary": "Doc 2"},
+        ]
+
+        sorted_articles = _sort_articles(articles, "friendly-id", False, False)
+
+        assert len(sorted_articles) == 3
+        assert sorted_articles[0]["idReadable"] == "DOC-001"
+        assert sorted_articles[1]["idReadable"] == "DOC-002"
+        assert sorted_articles[2]["idReadable"] == "DOC-003"
+
+    def test_sort_articles_empty_list(self):
+        """Test sorting empty article list."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = []
+        sorted_articles = _sort_articles(articles, "title", False, False)
+
+        assert len(sorted_articles) == 0
+
+    def test_sort_articles_missing_fields(self):
+        """Test sorting articles with missing fields."""
+        from youtrack_cli.commands.articles import _sort_articles
+
+        articles = [
+            {"id": "1"},  # Missing summary
+            {"summary": "Test Article", "id": "2"},
+            {"id": "3"},  # Missing summary
+        ]
+
+        sorted_articles = _sort_articles(articles, "title", False, False)
+
+        assert len(sorted_articles) == 3
+        # Articles with empty summaries should come first when sorted
+        assert sorted_articles[0]["id"] in ["1", "3"]
+
+    def test_display_reorder_results_table_format(self):
+        """Test displaying reorder results in table format."""
+        from unittest.mock import MagicMock
+
+        from youtrack_cli.commands.articles import _display_reorder_results
+
+        console = MagicMock()
+
+        original_articles = [
+            {"id": "1", "idReadable": "ART-1", "summary": "Beta Article", "ordinal": 1},
+            {"id": "2", "idReadable": "ART-2", "summary": "Alpha Article", "ordinal": 2},
+        ]
+
+        sorted_articles = [
+            {"id": "2", "idReadable": "ART-2", "summary": "Alpha Article", "ordinal": 2},
+            {"id": "1", "idReadable": "ART-1", "summary": "Beta Article", "ordinal": 1},
+        ]
+
+        with patch("rich.table.Table") as mock_table:
+            _display_reorder_results(
+                console=console,
+                original_articles=original_articles,
+                sorted_articles=sorted_articles,
+                sort_by="title",
+                reverse=False,
+                format="table",
+            )
+
+            console.print.assert_called()
+            mock_table.assert_called_once()
+
+    def test_display_reorder_results_json_format(self):
+        """Test displaying reorder results in JSON format."""
+        from unittest.mock import MagicMock
+
+        from youtrack_cli.commands.articles import _display_reorder_results
+
+        console = MagicMock()
+
+        original_articles = [
+            {"id": "1", "idReadable": "ART-1", "summary": "Beta Article"},
+        ]
+
+        sorted_articles = [
+            {"id": "1", "idReadable": "ART-1", "summary": "Beta Article"},
+        ]
+
+        _display_reorder_results(
+            console=console,
+            original_articles=original_articles,
+            sorted_articles=sorted_articles,
+            sort_by="title",
+            reverse=False,
+            format="json",
+        )
+
+        # Should have printed summary and JSON output
+        assert console.print.call_count >= 2
+
+    def test_show_reorder_instructions_with_project(self):
+        """Test showing reorder instructions with project ID."""
+        from unittest.mock import MagicMock
+
+        from youtrack_cli.commands.articles import _show_reorder_instructions
+
+        console = MagicMock()
+
+        _show_reorder_instructions(console, "TEST-PROJECT", None)
+
+        # Should have printed multiple instruction lines
+        assert console.print.call_count >= 6
+        # Should mention the project
+        calls = [call.args[0] for call in console.print.call_args_list]
+        project_mentioned = any("TEST-PROJECT" in call for call in calls)
+        assert project_mentioned
+
+    def test_show_reorder_instructions_with_parent(self):
+        """Test showing reorder instructions with parent ID."""
+        from unittest.mock import MagicMock
+
+        from youtrack_cli.commands.articles import _show_reorder_instructions
+
+        console = MagicMock()
+
+        _show_reorder_instructions(console, None, "PARENT-ART")
+
+        # Should have printed multiple instruction lines
+        assert console.print.call_count >= 6
+        # Should mention the parent
+        calls = [call.args[0] for call in console.print.call_args_list]
+        parent_mentioned = any("PARENT-ART" in call for call in calls)
+        assert parent_mentioned

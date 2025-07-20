@@ -1,6 +1,6 @@
 # Implement GitHub Issue(s)
 
-You are helping implement one or more GitHub issues using the gh CLI and modern development practices. Follow this comprehensive workflow:
+You are helping implement one or more GitHub issues using the gh CLI and modern development practices. Think hard and follow this comprehensive workflow:
 
 ## 1. Issue Analysis & Setup
 

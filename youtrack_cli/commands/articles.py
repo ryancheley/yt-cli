@@ -1040,3 +1040,325 @@ def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, f
 
     console.print("⚠️  Attachment delete functionality not yet implemented", style="yellow")
     console.print("This feature requires additional API endpoints", style="blue")
+
+
+@articles.command()
+@click.argument("article_ids", nargs=-1)
+@click.option(
+    "--sort-by",
+    type=click.Choice(["title", "id", "friendly-id"], case_sensitive=False),
+    required=True,
+    help="Sort articles by title, ID, or friendly ID",
+)
+@click.option(
+    "--reverse",
+    is_flag=True,
+    help="Reverse the sort order",
+)
+@click.option(
+    "--project-id",
+    "-p",
+    help="Limit reordering to articles within a specific project",
+)
+@click.option(
+    "--parent-id",
+    help="Reorder only child articles of a specific parent",
+)
+@click.option(
+    "--recursive",
+    is_flag=True,
+    help="Apply reordering to entire article hierarchy",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=True,
+    help="Preview changes without execution (default behavior)",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Skip confirmation prompts",
+)
+@click.option(
+    "--case-sensitive",
+    is_flag=True,
+    help="Use case-sensitive title sorting",
+)
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def reorder(
+    ctx: click.Context,
+    article_ids: tuple[str, ...],
+    sort_by: str,
+    reverse: bool,
+    project_id: Optional[str],
+    parent_id: Optional[str],
+    recursive: bool,
+    dry_run: bool,
+    force: bool,
+    case_sensitive: bool,
+    format: str,
+) -> None:
+    """Reorder articles based on specified sorting criteria.
+
+    IMPORTANT: YouTrack API does not support direct article reordering.
+    This command provides a preview of how articles would be ordered.
+    To actually reorder articles, use YouTrack's web interface.
+
+    Examples:
+        # Preview sorting all articles in project by title
+        yt articles reorder --project-id PRJ-123 --sort-by title
+
+        # Preview sorting specific articles by ID in reverse order
+        yt articles reorder ART-1 ART-5 ART-3 --sort-by id --reverse
+
+        # Preview recursive sorting of article hierarchy by friendly ID
+        yt articles reorder --parent-id ART-ROOT --sort-by friendly-id --recursive
+
+        # JSON output for automation
+        yt articles reorder --sort-by title --format json --project-id PRJ-123
+    """
+    from ..articles import ArticleManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
+
+    # Show API limitation warning upfront
+    console.print("⚠️  [yellow]API Limitation Notice[/yellow]", style="bold yellow")
+    console.print("YouTrack's REST API does not support programmatic article reordering.", style="yellow")
+    console.print("This command shows how articles would be ordered for reference only.", style="yellow")
+    console.print("To actually reorder articles, use YouTrack's web interface drag-and-drop.", style="dim")
+    console.print()
+
+    console.print(f"🔄 Analyzing article ordering (sort by: {sort_by})...", style="blue")
+
+    try:
+        result = asyncio.run(
+            _reorder_articles(
+                article_manager=article_manager,
+                article_ids=article_ids,
+                sort_by=sort_by,
+                reverse=reverse,
+                project_id=project_id,
+                parent_id=parent_id,
+                recursive=recursive,
+                dry_run=dry_run,
+                force=force,
+                case_sensitive=case_sensitive,
+                format=format,
+                console=console,
+            )
+        )
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to analyze article ordering")
+
+    except Exception as e:
+        console.print(f"❌ Error analyzing article ordering: {e}", style="red")
+        raise click.ClickException("Failed to analyze article ordering") from e
+
+
+async def _reorder_articles(
+    article_manager,
+    article_ids: tuple[str, ...],
+    sort_by: str,
+    reverse: bool,
+    project_id: Optional[str],
+    parent_id: Optional[str],
+    recursive: bool,
+    dry_run: bool,
+    force: bool,
+    case_sensitive: bool,
+    format: str,
+    console,
+) -> dict[str, str]:
+    """Handle the article reordering logic."""
+    # Fetch articles based on parameters
+    articles_to_sort = []
+
+    if article_ids:
+        # Get specific articles
+        for article_id in article_ids:
+            result = await article_manager.get_article(article_id)
+            if result["status"] == "success":
+                articles_to_sort.append(result["data"])
+            else:
+                console.print(f"⚠️  Could not fetch article {article_id}: {result['message']}", style="yellow")
+    else:
+        # Get articles from project or parent
+        result = await article_manager.list_articles(
+            project_id=project_id,
+            parent_id=parent_id,
+        )
+
+        if result["status"] == "success":
+            articles_to_sort = result["data"]
+        else:
+            return {"status": "error", "message": f"Failed to fetch articles: {result['message']}"}
+
+    if not articles_to_sort:
+        return {"status": "error", "message": "No articles found to reorder"}
+
+    # Store original order for comparison
+    original_articles = articles_to_sort.copy()
+
+    # Sort articles based on criteria
+    sorted_articles = _sort_articles(articles_to_sort, sort_by, reverse, case_sensitive)
+
+    # Display results
+    _display_reorder_results(
+        console=console,
+        original_articles=original_articles,
+        sorted_articles=sorted_articles,
+        sort_by=sort_by,
+        reverse=reverse,
+        format=format,
+    )
+
+    # Show helpful next steps
+    _show_reorder_instructions(console, project_id, parent_id)
+
+    return {"status": "success", "message": f"Article ordering preview completed (sorted by {sort_by})"}
+
+
+def _sort_articles(
+    articles: list[dict],
+    sort_by: str,
+    reverse: bool,
+    case_sensitive: bool,
+) -> list[dict]:
+    """Sort articles based on the specified criteria."""
+
+    def get_sort_key(article: dict):
+        if sort_by == "title":
+            title = article.get("summary", "")
+            return title if case_sensitive else title.lower()
+        elif sort_by == "id":
+            # Use internal ID for numeric sorting
+            article_id = article.get("id", "")
+            try:
+                # Try to extract numeric part for proper numeric sorting
+                import re
+
+                numeric_match = re.search(r"\d+", str(article_id))
+                return int(numeric_match.group()) if numeric_match else 0
+            except (ValueError, AttributeError):
+                return str(article_id)
+        elif sort_by == "friendly-id":
+            # Use readable ID
+            return article.get("idReadable", article.get("id", ""))
+        else:
+            return ""
+
+    return sorted(articles, key=get_sort_key, reverse=reverse)
+
+
+def _display_reorder_results(
+    console,
+    original_articles: list[dict],
+    sorted_articles: list[dict],
+    sort_by: str,
+    reverse: bool,
+    format: str,
+) -> None:
+    """Display the reordering results."""
+    # Show summary
+    order_text = "descending" if reverse else "ascending"
+    console.print(f"\n📊 Reordering Preview: {len(sorted_articles)} articles sorted by {sort_by} ({order_text})")
+
+    if format == "json":
+        import json
+
+        output_data = {
+            "sort_criteria": {
+                "sort_by": sort_by,
+                "reverse": reverse,
+            },
+            "original_order": [
+                {
+                    "id": art.get("id"),
+                    "idReadable": art.get("idReadable"),
+                    "title": art.get("summary"),
+                    "ordinal": art.get("ordinal"),
+                }
+                for art in original_articles
+            ],
+            "new_order": [
+                {
+                    "id": art.get("id"),
+                    "idReadable": art.get("idReadable"),
+                    "title": art.get("summary"),
+                    "ordinal": art.get("ordinal"),
+                }
+                for art in sorted_articles
+            ],
+        }
+        console.print(json.dumps(output_data, indent=2))
+    else:
+        # Show table format
+        from rich.table import Table
+
+        table = Table(title="Proposed Article Order")
+        table.add_column("Position", style="cyan", justify="right")
+        table.add_column("ID", style="blue")
+        table.add_column("Title", style="green")
+        table.add_column("Current Ordinal", style="yellow")
+        table.add_column("Change", style="magenta")
+
+        # Create position mapping for original order
+        original_positions = {art.get("id"): idx for idx, art in enumerate(original_articles)}
+
+        for new_pos, article in enumerate(sorted_articles, 1):
+            article_id = article.get("id")
+            original_pos = original_positions.get(article_id, -1) + 1
+
+            # Determine change indicator
+            if original_pos == new_pos:
+                change_indicator = "="
+            elif original_pos < new_pos:
+                change_indicator = f"↓ ({original_pos}→{new_pos})"
+            else:
+                change_indicator = f"↑ ({original_pos}→{new_pos})"
+
+            table.add_row(
+                str(new_pos),
+                article.get("idReadable", article.get("id", "N/A")),
+                article.get("summary", "Untitled")[:50],
+                str(article.get("ordinal", "N/A")),
+                change_indicator,
+            )
+
+        console.print(table)
+
+
+def _show_reorder_instructions(
+    console,
+    project_id: Optional[str],
+    parent_id: Optional[str],
+) -> None:
+    """Show instructions for actual reordering."""
+    console.print("\n💡 [blue]To Apply This Ordering:[/blue]")
+    console.print("1. Open YouTrack in your web browser")
+    console.print("2. Navigate to the Knowledge Base section")
+
+    if project_id:
+        console.print(f"3. Find project '{project_id}' articles")
+    elif parent_id:
+        console.print(f"3. Find parent article '{parent_id}' and its children")
+    else:
+        console.print("3. Find the relevant articles")
+
+    console.print("4. Use drag-and-drop to reorder articles manually")
+    console.print("5. The ordinal field will be updated automatically")
+
+    console.print("\n🔗 [dim]Alternative: Consider using custom fields or tags for programmatic ordering[/dim]")
