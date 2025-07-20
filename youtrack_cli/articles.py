@@ -204,11 +204,12 @@ class ArticleManager:
                         # If we can't fetch the parent, use the provided parent_id as-is
                         parent_internal_id = parent_id
 
+                # Filter for articles that have the specified parent
                 filtered_data = []
                 for article in data:
-                    parent_article = article.get("parentArticle", {})
+                    parent_article = article.get("parentArticle")
                     # Check if the article has the specified parent
-                    if parent_article:
+                    if parent_article and isinstance(parent_article, dict):
                         article_parent_id = parent_article.get("id")
                         # Match against both the provided parent_id and the resolved internal ID
                         if article_parent_id == parent_id or article_parent_id == parent_internal_id:

@@ -542,21 +542,33 @@ def draft(
 @articles.command()
 @click.argument("parent_id")
 @click.option(
-    "--update",
+    "--sort-by",
+    type=click.Choice(["title", "created", "updated"], case_sensitive=False),
+    default="title",
+    help="Sort child articles by title, creation date, or update date for display",
+)
+@click.option(
+    "--reverse",
     is_flag=True,
-    help="Apply changes to YouTrack after confirmation",
+    help="Reverse the sort order",
 )
 @click.pass_context
 def sort(
     ctx: click.Context,
     parent_id: str,
-    update: bool,
+    sort_by: str,
+    reverse: bool,
 ) -> None:
-    """Sort child articles under a parent article."""
+    """Display child articles under a parent article in sorted order.
+
+    Note: This command displays articles in sorted order for visualization.
+    Article reordering in YouTrack requires manual drag-and-drop in the web interface.
+    """
     from ..articles import ArticleManager
 
     console = get_console()
-    auth_manager = AuthManager(ctx.obj.get("config"))
+    config = ctx.obj.get("config") if ctx.obj else None
+    auth_manager = AuthManager(config)
     article_manager = ArticleManager(auth_manager)
 
     console.print(f"📋 Fetching child articles for '{parent_id}'...", style="blue")
@@ -571,23 +583,46 @@ def sort(
                 console.print("No child articles found.", style="yellow")
                 return
 
-            console.print(f"Found {len(articles)} child articles:")
+            # Sort articles based on the specified criteria
+            def get_title_key(x):
+                return x.get("summary", "").lower()
+
+            def get_created_key(x):
+                return x.get("created", 0)
+
+            def get_updated_key(x):
+                return x.get("updated", 0)
+
+            sort_key = None
+            if sort_by == "title":
+                sort_key = get_title_key
+            elif sort_by == "created":
+                sort_key = get_created_key
+            elif sort_by == "updated":
+                sort_key = get_updated_key
+
+            if sort_key:
+                articles = sorted(articles, key=sort_key, reverse=reverse)
+
+            console.print(f"Found {len(articles)} child articles (sorted by {sort_by}):")
             article_manager.display_articles_table(articles)
 
-            if update:
-                console.print(
-                    "\n⚠️  Article sorting functionality requires manual reordering",
-                    style="yellow",
-                )
-                console.print(
-                    "Use the YouTrack web interface to drag and drop articles to reorder them.",
-                    style="blue",
-                )
-            else:
-                console.print(
-                    "\n[dim]Use --update flag to apply sorting changes[/dim]",
-                    style="blue",
-                )
+            # Provide helpful information about reordering
+            console.print(
+                "\n💡 [blue]Note:[/blue] This view shows articles sorted for reference only.",
+                style="blue",
+            )
+            console.print(
+                "To reorder articles in YouTrack, use the web interface's drag-and-drop functionality.",
+                style="dim",
+            )
+
+            # Get base URL for direct link
+            if ctx.obj:
+                config = ctx.obj.get("config", {})
+                base_url = config.get("base_url", "")
+                if base_url:
+                    console.print(f"[dim]Direct link: {base_url.rstrip('/')}/articles/{parent_id}[/dim]")
 
         else:
             console.print(f"❌ {result['message']}", style="red")
