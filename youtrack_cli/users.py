@@ -498,8 +498,8 @@ class UserManager:
             base_url = credentials.base_url.rstrip("/")
 
             # Try different field configurations to find one that works
+            # Note: Groups don't have permissions in YouTrack, they are organizational units
             field_configs = [
-                "groups(id,name,description,permissions(name,permission))",
                 "groups(id,name,description)",
                 "groups(id,name)",
                 "groups",
@@ -518,22 +518,22 @@ class UserManager:
                     user = response.json()
                     groups = user.get("groups", [])
 
-                    # If we found groups with permissions, return them
+                    # If we found groups, return them (groups don't have permissions in YouTrack)
                     if groups:
-                        # Check if any group has permissions data
-                        has_permissions = any(group.get("permissions") for group in groups)
-                        if has_permissions or fields == "groups":  # Return if has permissions or is last attempt
-                            return {"status": "success", "data": groups, "user_id": user_id}
-                        # Continue to try other field configurations if no permissions found
+                        # Add empty permissions array to match expected format
+                        for group in groups:
+                            if "permissions" not in group:
+                                group["permissions"] = []
+                        return {"status": "success", "data": groups, "user_id": user_id}
 
                 except Exception:
                     continue
 
             # If user endpoint doesn't work, try getting all groups and filter
             try:
-                # Try to get all groups with permissions first
+                # Try to get all groups - Note: Groups in YouTrack typically don't have permissions
+                # directly attached. They are organizational units, while permissions come from roles.
                 group_field_configs = [
-                    "id,name,description,permissions(name,permission),users(id,login)",
                     "id,name,description,users(id,login)",
                 ]
 
@@ -553,13 +553,15 @@ class UserManager:
                         for group in all_groups:
                             users = group.get("users", [])
                             for user in users:
-                                if user.get("login") == user_id or user.get("id") == user_id:
+                                user_login = user.get("login")
+                                user_id_from_api = user.get("id")
+                                if user_login == user_id or user_id_from_api == user_id:
                                     user_groups.append(
                                         {
                                             "id": group.get("id"),
                                             "name": group.get("name"),
                                             "description": group.get("description", ""),
-                                            "permissions": group.get("permissions", []),
+                                            "permissions": [],  # Groups don't have permissions in YouTrack
                                         }
                                     )
                                     break
@@ -822,23 +824,19 @@ class UserManager:
         table = Table(title=f"Groups for User: {user_id}")
         table.add_column("Name", style="cyan", no_wrap=True)
         table.add_column("Description", style="blue")
-        table.add_column("Permissions", style="green")
+        table.add_column("Type", style="green")
 
         for group in groups:
             name = group.get("name", "N/A")
             description = group.get("description", "")
-            permissions = group.get("permissions", [])
+            
+            # Groups are organizational units in YouTrack, not permission holders
+            group_type = "Organizational"
 
-            # Format permissions
-            if permissions:
-                perm_names = [p.get("name", "N/A") for p in permissions]
-                perm_text = ", ".join(perm_names)
-            else:
-                perm_text = "None"
-
-            table.add_row(name, description or "No description", perm_text)
+            table.add_row(name, description or "No description", group_type)
 
         self.console.print(table)
+        self.console.print("\n[dim]Note: Groups are organizational units. User permissions are managed through roles.[/dim]")
 
     def display_user_roles(self, roles: list[dict[str, Any]], user_id: str) -> None:
         """Display user roles in a formatted table.
