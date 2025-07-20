@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for all YouTrack custom field types (enum, user, text, date, etc.)
   - Field visibility and requirement configuration options
   - Comprehensive custom fields workflows and documentation
+- Enhanced inline command execution in tutorial mode (#278)
+  - `ClickCommandExecutor` class for secure command execution within tutorials
+  - Visual indicators for executable commands with enhanced UI
+  - Command whitelisting for security and safety
+  - Confirmation prompts for destructive operations
+  - Better integration with YouTrack CLI context and authentication
 
 ### Improved
 - Command syntax documentation with clearer examples and error messages (#246, #247)

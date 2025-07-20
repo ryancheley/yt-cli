@@ -61,13 +61,15 @@ def tutorial() -> None:
 
 @tutorial.command()
 @click.option("--show-progress", is_flag=True, help="Show completion progress for each tutorial")
-def list(show_progress: bool) -> None:
+@click.pass_context
+def list(ctx: click.Context, show_progress: bool) -> None:
     """List available tutorials and their progress."""
     console = get_console()
 
     # Initialize tutorial system
     progress_tracker = ProgressTracker()
-    engine = TutorialEngine(progress_tracker)
+    config_manager = ctx.obj.get("config") if ctx.obj else None
+    engine = TutorialEngine(progress_tracker, config_manager)
 
     # Register default modules
     for module in get_default_modules():
@@ -89,7 +91,8 @@ def list(show_progress: bool) -> None:
 @click.argument("module_id")
 @click.option("--step", type=int, help="Start from a specific step number")
 @click.option("--reset", is_flag=True, help="Reset progress and start from the beginning")
-def run(module_id: str, step: Optional[int], reset: bool) -> None:
+@click.pass_context
+def run(ctx: click.Context, module_id: str, step: Optional[int], reset: bool) -> None:
     """Run a specific tutorial module.
 
     MODULE_ID is the tutorial identifier (e.g., 'setup', 'issues', 'projects').
@@ -99,7 +102,8 @@ def run(module_id: str, step: Optional[int], reset: bool) -> None:
 
     # Initialize tutorial system
     progress_tracker = ProgressTracker()
-    engine = TutorialEngine(progress_tracker)
+    config_manager = ctx.obj.get("config") if ctx.obj else None
+    engine = TutorialEngine(progress_tracker, config_manager)
 
     # Register default modules
     for module in get_default_modules():
@@ -166,13 +170,15 @@ def reset(module_id: Optional[str], reset_all: bool) -> None:
 
 
 @tutorial.command()
-def progress() -> None:
+@click.pass_context
+def progress(ctx: click.Context) -> None:
     """Show detailed progress for all tutorials."""
     console = get_console()
     progress_tracker = ProgressTracker()
 
     # Initialize tutorial system to get module info
-    engine = TutorialEngine(progress_tracker)
+    config_manager = ctx.obj.get("config") if ctx.obj else None
+    engine = TutorialEngine(progress_tracker, config_manager)
     for module in get_default_modules():
         engine.register_module(module)
 

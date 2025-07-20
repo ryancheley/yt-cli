@@ -14,6 +14,7 @@ from rich.table import Table
 from rich.text import Text
 
 from ..console import get_console
+from .executor import ClickCommandExecutor
 
 
 @dataclass
@@ -100,11 +101,17 @@ class TutorialModule(ABC):
                 self.console.print(f"  {i}. {instruction}")
             self.console.print()
 
-        # Command example
+        # Command example with enhanced visual indicators
         if step.command_example:
             self.console.print("[bold]Example command:[/bold]")
-            self.console.print(f"  [green]{step.command_example}[/green]")
-            self.console.print("  [dim]💡 Use 'execute' or 'e' to run this command directly![/dim]\n")
+            command_panel = Panel(
+                f"[green]{step.command_example}[/green]",
+                title="[bold cyan]🚀 Executable Command[/bold cyan]",
+                border_style="cyan",
+                padding=(0, 1),
+            )
+            self.console.print(command_panel)
+            self.console.print("  [dim]💡 Press [bold]Enter[/bold] to execute this command directly![/dim]\n")
 
         # Tips
         if step.tips:
@@ -117,10 +124,11 @@ class TutorialModule(ABC):
 class TutorialEngine:
     """Main tutorial engine for running interactive tutorials."""
 
-    def __init__(self, progress_tracker):
+    def __init__(self, progress_tracker, config_manager=None):
         self.console = get_console()
         self.progress_tracker = progress_tracker
         self.modules: Dict[str, TutorialModule] = {}
+        self.command_executor = ClickCommandExecutor(config_manager)
 
     def register_module(self, module: TutorialModule) -> None:
         """Register a tutorial module."""
@@ -269,8 +277,16 @@ class TutorialEngine:
                 current_step += 1
 
             elif action == "execute" and step.command_example:
-                # Execute the command example
-                await self._execute_command(step.command_example)
+                # Execute the command example using enhanced executor
+                success = await self.command_executor.execute_command(step.command_example)
+                if success:
+                    self.console.print(
+                        "[green]✓ Command executed successfully! You can now proceed to the next step.[/green]"
+                    )
+                else:
+                    self.console.print(
+                        "[yellow]⚠️  Command execution failed. You can still continue with the tutorial.[/yellow]"
+                    )
                 # Stay on current step after execution
                 continue
 
