@@ -130,7 +130,9 @@ def create(
         if result["status"] == "success":
             display_success(f"{result['message']}")
             issue = result["data"]
-            console.print(f"[blue]Issue ID:[/blue] {issue.get('id', 'N/A')}")
+            # Display friendly ID if available, otherwise fall back to internal ID
+            issue_id = issue.get("idReadable") or issue.get("id", "N/A")
+            console.print(f"[blue]Issue ID:[/blue] {issue_id}")
         else:
             # Create enhanced error for common API failures
             if "project" in result["message"].lower() and "not found" in result["message"].lower():

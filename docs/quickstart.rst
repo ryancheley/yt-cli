@@ -77,6 +77,7 @@ Create a bug report for a login issue:
 
    🐛 Creating issue 'Login button not responding on mobile Safari' in project 'WEB-FRONTEND'...
    ✅ Issue 'Login button not responding on mobile Safari' created successfully
+   Issue ID: WEB-FRONTEND-123
 
 Create a feature request:
 
