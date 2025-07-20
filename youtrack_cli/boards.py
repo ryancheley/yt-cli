@@ -135,22 +135,39 @@ class BoardManager:
             response = await client_manager.make_request("GET", url, headers=headers)
             board = self._parse_json_response(response)
 
-            # Display board details
-            self.console.print(f"[bold cyan]Board: {board.get('name', 'N/A')}[/bold cyan]")
-            self.console.print(f"ID: {board.get('id', 'N/A')}")
-            self.console.print(f"Owner: {board.get('owner', {}).get('name', 'N/A')}")
+            # Display board details in a Rich table
+            table = Table(title=f"Board: {board.get('name', 'N/A')}")
+            table.add_column("Field", style="cyan", no_wrap=True)
+            table.add_column("Value", style="blue")
 
+            # Basic board information
+            table.add_row("ID", board.get("id", "N/A"))
+            table.add_row("Name", board.get("name", "N/A"))
+
+            # Owner information
+            owner = board.get("owner", {})
+            owner_name = owner.get("name", "N/A") if owner else "N/A"
+            table.add_row("Owner", owner_name)
+
+            # Projects
             if board.get("projects"):
                 projects = ", ".join([p.get("name", "") for p in board["projects"]])
-                self.console.print(f"Projects: {projects}")
+                table.add_row("Projects", projects)
+            else:
+                table.add_row("Projects", "None")
 
+            # Columns
             if board.get("columns"):
-                self.console.print("\n[bold]Columns:[/bold]")
-                for i, column in enumerate(board["columns"], 1):
-                    self.console.print(f"  {i}. {column.get('name', 'N/A')}")
+                columns = ", ".join([col.get("name", "N/A") for col in board["columns"]])
+                table.add_row("Columns", columns)
+            else:
+                table.add_row("Columns", "None")
 
-            if board.get("sprints"):
-                self.console.print(f"\nSprints: {len(board['sprints'])}")
+            # Sprints count
+            sprint_count = len(board.get("sprints", []))
+            table.add_row("Sprint Count", str(sprint_count))
+
+            self.console.print(table)
 
             return {"status": "success", "board": board}
 

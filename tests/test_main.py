@@ -107,7 +107,9 @@ class TestConfigCommands:
             # Get the configuration value
             result = runner.invoke(main, ["--config", str(config_path), "config", "get", "TEST_KEY"])
             assert result.exit_code == 0
-            assert "TEST_KEY = test_value" in result.output
+            # Check that both the key and value appear in the output (now as a table)
+            assert "TEST_KEY" in result.output
+            assert "test_value" in result.output
 
     def test_config_get_nonexistent(self):
         """Test getting a nonexistent configuration value."""
@@ -142,9 +144,12 @@ class TestConfigCommands:
             # List all configuration values
             result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
             assert result.exit_code == 0
-            assert "Configuration values:" in result.output
-            assert "KEY1 = value1" in result.output
-            assert "KEY2 = value2" in result.output
+            # Check that the table contains both keys and values
+            assert "Configuration" in result.output and "Values" in result.output  # Table title
+            assert "KEY1" in result.output
+            assert "value1" in result.output
+            assert "KEY2" in result.output
+            assert "value2" in result.output
 
     def test_config_list_masks_sensitive_values(self):
         """Test that sensitive values are masked in list output."""
@@ -170,7 +175,9 @@ class TestConfigCommands:
             assert result.exit_code == 0
             # Strip ANSI codes from output for comparison
             clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
-            assert "API_TOKEN = very-sec...6789" in clean_output
+            # Check that the key is shown and the value is masked in the table format
+            assert "API_TOKEN" in clean_output
+            assert "very-sec...6789" in clean_output
             assert "very-secret-token-123456789" not in clean_output
 
     def test_config_list_masks_api_key(self):
@@ -210,9 +217,12 @@ class TestConfigCommands:
             assert result.exit_code == 0
             # Strip ANSI codes from output for comparison
             clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
-            assert "YOUTRACK_API_KEY = super-se...2345" in clean_output
+            # Check that keys are shown and values are properly masked in table format
+            assert "YOUTRACK_API_KEY" in clean_output
+            assert "super-se...2345" in clean_output
             assert "super-secret-api-key-12345" not in clean_output
-            assert "ANOTHER_API_KEY = [Stored in keyring]" in clean_output
+            assert "ANOTHER_API_KEY" in clean_output
+            assert "[Stored in keyring]" in clean_output
 
 
 class TestCompletionCommands:

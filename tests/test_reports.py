@@ -177,7 +177,17 @@ class TestReportManager:
             # Verify that print was called multiple times with project info
             mock_print.assert_called()
             call_args = [call[0][0] for call in mock_print.call_args_list]
-            project_info_found = any("TEST" in str(arg) for arg in call_args)
+
+            # Check if any argument is a Rich Table with the project in the title
+            project_info_found = False
+            for arg in call_args:
+                if hasattr(arg, "title") and arg.title and "TEST" in str(arg.title):
+                    project_info_found = True
+                    break
+                elif "TEST" in str(arg):
+                    project_info_found = True
+                    break
+
             assert project_info_found
 
     def test_display_velocity_report(self, report_manager):

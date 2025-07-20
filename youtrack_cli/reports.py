@@ -229,21 +229,27 @@ class ReportManager:
         Args:
             burndown_data: Burndown report data
         """
-        self.console.print(f"\n[bold blue]Burndown Report - {burndown_data['project']}[/bold blue]")
+        # Summary data in Rich table
+        table = Table(title=f"Burndown Report - {burndown_data['project']}")
+        table.add_column("Metric", style="cyan", no_wrap=True)
+        table.add_column("Value", style="blue")
 
+        # Add project-specific data
         if burndown_data.get("sprint"):
-            self.console.print(f"[cyan]Sprint:[/cyan] {burndown_data['sprint']}")
+            table.add_row("Sprint", burndown_data["sprint"])
 
-        self.console.print(f"[cyan]Period:[/cyan] {burndown_data['period']}")
-        self.console.print(f"[cyan]Total Issues:[/cyan] {burndown_data['total_issues']}")
-        self.console.print(f"[cyan]Resolved Issues:[/cyan] {burndown_data['resolved_issues']}")
-        self.console.print(f"[cyan]Remaining Issues:[/cyan] {burndown_data['remaining_issues']}")
-        self.console.print(f"[cyan]Completion Rate:[/cyan] {burndown_data['completion_rate']}%")
+        table.add_row("Period", burndown_data["period"])
+        table.add_row("Total Issues", str(burndown_data["total_issues"]))
+        table.add_row("Resolved Issues", str(burndown_data["resolved_issues"]))
+        table.add_row("Remaining Issues", str(burndown_data["remaining_issues"]))
+        table.add_row("Completion Rate", f"{burndown_data['completion_rate']}%")
 
         if burndown_data["total_effort_hours"] > 0:
-            self.console.print(f"[cyan]Total Effort:[/cyan] {burndown_data['total_effort_hours']:.1f} hours")
+            table.add_row("Total Effort", f"{burndown_data['total_effort_hours']:.1f} hours")
 
-        # Create progress bar visualization
+        self.console.print(table)
+
+        # Keep progress bar separate as requested in the issue
         completion_rate = burndown_data["completion_rate"]
         bar_length = 20
         filled_length = int(bar_length * completion_rate / 100)

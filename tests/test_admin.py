@@ -412,8 +412,11 @@ class TestAdminManager:
         with patch("rich.console.Console.print") as mock_print:
             admin_manager.display_license_info(license_info)
 
-            # Verify that print was called multiple times
-            assert mock_print.call_count >= 3
+            # Verify that print was called with a Rich table
+            mock_print.assert_called_once()
+            # The argument should be a Rich Table object
+            table_arg = mock_print.call_args[0][0]
+            assert hasattr(table_arg, "add_row")  # Rich Table has add_row method
 
     def test_display_system_health(self, admin_manager):
         """Test system health display."""
