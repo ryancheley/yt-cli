@@ -1452,6 +1452,34 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error listing link types: {str(e)}"}
 
+    def _get_field_with_fallback(self, issue: Dict[str, Any], field_name: str, custom_field_names: List[str]) -> str:
+        """Get field value with fallback to custom fields.
+
+        Args:
+            issue: The issue dictionary
+            field_name: The built-in field name to check first (e.g., 'state', 'priority', 'type')
+            custom_field_names: List of custom field names to try as fallback
+
+        Returns:
+            The field value or "N/A" if not found
+        """
+        # Check built-in field first
+        field_value = issue.get(field_name.lower(), {})
+        if field_value and isinstance(field_value, dict):
+            name = field_value.get("name")
+            if name:
+                return name
+        elif isinstance(field_value, str) and field_value:
+            return field_value
+
+        # Fallback to custom fields
+        for custom_name in custom_field_names:
+            custom_value = self._get_custom_field_value(issue, custom_name)
+            if custom_value and custom_value != "N/A":
+                return custom_value
+
+        return "N/A"
+
     # Display methods
     def display_issues_table(self, issues: List[Dict[str, Any]]) -> None:
         """Display issues in a formatted table."""
@@ -1680,19 +1708,16 @@ class IssueManager:
                 description = description[:100] + "..."
             table.add_row("Description", description)
 
-        # State
-        state = issue.get("state", {})
-        state_name = state.get("name", "N/A") if state else "N/A"
+        # State with fallback to custom fields
+        state_name = self._get_field_with_fallback(issue, "state", ["State", "Stage"])
         table.add_row("State", state_name)
 
-        # Priority
-        priority = issue.get("priority", {})
-        priority_name = priority.get("name", "N/A") if priority else "N/A"
+        # Priority with fallback to custom fields
+        priority_name = self._get_field_with_fallback(issue, "priority", ["Priority"])
         table.add_row("Priority", priority_name)
 
-        # Type
-        issue_type = issue.get("type", {})
-        type_name = issue_type.get("name", "N/A") if issue_type else "N/A"
+        # Type with fallback to custom fields
+        type_name = self._get_field_with_fallback(issue, "type", ["Type", "Issue Type"])
         table.add_row("Type", type_name)
 
         # Assignee

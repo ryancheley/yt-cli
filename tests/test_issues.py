@@ -1748,3 +1748,45 @@ class TestIssueTablePagination:
 
             # Should format ID as PROJ-42
             mock_console.print.assert_called_once()
+
+    def test_get_field_with_fallback_built_in_dict(self, issue_manager):
+        """Test _get_field_with_fallback with built-in field as dict."""
+        issue = {"state": {"name": "Open"}, "customFields": [{"name": "State", "value": {"name": "Custom Open"}}]}
+
+        result = issue_manager._get_field_with_fallback(issue, "state", ["State"])
+        assert result == "Open"
+
+    def test_get_field_with_fallback_built_in_string(self, issue_manager):
+        """Test _get_field_with_fallback with built-in field as string."""
+        issue = {"state": "Open", "customFields": [{"name": "State", "value": {"name": "Custom Open"}}]}
+
+        result = issue_manager._get_field_with_fallback(issue, "state", ["State"])
+        assert result == "Open"
+
+    def test_get_field_with_fallback_custom_field(self, issue_manager):
+        """Test _get_field_with_fallback falls back to custom field."""
+        issue = {"customFields": [{"name": "State", "value": {"name": "Custom Open"}}]}
+
+        result = issue_manager._get_field_with_fallback(issue, "state", ["State"])
+        assert result == "Custom Open"
+
+    def test_get_field_with_fallback_multiple_custom_names(self, issue_manager):
+        """Test _get_field_with_fallback tries multiple custom field names."""
+        issue = {"customFields": [{"name": "Stage", "value": {"name": "In Progress"}}]}
+
+        result = issue_manager._get_field_with_fallback(issue, "state", ["State", "Stage"])
+        assert result == "In Progress"
+
+    def test_get_field_with_fallback_no_match(self, issue_manager):
+        """Test _get_field_with_fallback returns N/A when no field found."""
+        issue = {"customFields": []}
+
+        result = issue_manager._get_field_with_fallback(issue, "state", ["State"])
+        assert result == "N/A"
+
+    def test_get_field_with_fallback_empty_built_in(self, issue_manager):
+        """Test _get_field_with_fallback with empty built-in field."""
+        issue = {"state": {}, "customFields": [{"name": "State", "value": {"name": "Custom Open"}}]}
+
+        result = issue_manager._get_field_with_fallback(issue, "state", ["State"])
+        assert result == "Custom Open"

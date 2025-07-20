@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fix `yt issues show` command displaying "N/A" for State, Priority, and Type fields (#323)
+  - Added fallback logic to check custom fields when built-in fields are not available
+  - Implemented `_get_field_with_fallback` method to handle both built-in and custom field structures
+  - Ensures consistent field resolution between table and detail views
 - Fix `yt articles tree` command missing child articles in tree display (#320)
   - Resolved ID mismatch between parent grouping (internal IDs) and child matching (readable IDs)
   - Tree now correctly displays hierarchical article structure with all child articles
