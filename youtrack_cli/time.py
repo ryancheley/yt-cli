@@ -367,17 +367,19 @@ class TimeManager:
 
             # Handle work type - can be null/None
             work_type = entry.get("type")
-            if isinstance(work_type, dict):
-                type_name = work_type.get("name", "N/A")
+            if isinstance(work_type, dict) and work_type.get("name"):
+                type_name = work_type.get("name")
             else:
-                type_name = "N/A"
+                type_name = ""
 
             # Handle description
-            description = entry.get("description", "N/A")
-            if description and len(str(description)) > 40:
-                description = str(description)[:40]
-            elif not description:
-                description = "N/A"
+            description = entry.get("description")
+            if description is not None and str(description).strip():
+                description = str(description)
+                if len(description) > 40:
+                    description = description[:40]
+            else:
+                description = ""
 
             table.add_row(
                 issue_str,
