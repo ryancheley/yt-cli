@@ -8,6 +8,35 @@ from rich.tree import Tree
 from .console import get_console
 
 
+def _get_assignee_name_from_issue(issue: Dict[str, Any]) -> str:
+    """Get assignee name from either regular field or custom field."""
+    # First try the regular assignee field
+    assignee = issue.get("assignee")
+    if assignee and isinstance(assignee, dict):
+        if assignee.get("fullName"):
+            return assignee["fullName"]
+        elif assignee.get("name"):
+            return assignee["name"]
+        elif assignee.get("login"):
+            return assignee["login"]
+
+    # If not found, try the Assignee custom field
+    custom_fields = issue.get("customFields", [])
+    if isinstance(custom_fields, list):
+        for field in custom_fields:
+            if isinstance(field, dict) and field.get("name") == "Assignee":
+                value = field.get("value")
+                if value and isinstance(value, dict):
+                    if value.get("fullName"):
+                        return value["fullName"]
+                    elif value.get("name"):
+                        return value["name"]
+                    elif value.get("login"):
+                        return value["login"]
+
+    return "Unassigned"
+
+
 class EnhancedTreeBuilder:
     """Builder class for creating enhanced Rich tree displays."""
 
@@ -136,7 +165,7 @@ def create_issue_dependencies_tree(
 
     main_metadata = {
         "Priority": issue.get("priority", {}).get("name"),
-        "Assignee": issue.get("assignee", {}).get("fullName", "Unassigned"),
+        "Assignee": _get_assignee_name_from_issue(issue),
     }
 
     if show_status:
