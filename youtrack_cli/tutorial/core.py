@@ -227,13 +227,11 @@ class TutorialEngine:
                     if step.command_example:
                         choices.extend(["execute", "e"])
 
-                    prompt_text = "What would you like to do? [next/repeat/skip/quit"
+                    prompt_text = "What would you like to do? ["
+                    prompt_options = ["(n)ext", "(r)epeat", "(s)kip", "(q)uit"]
                     if step.command_example:
-                        prompt_text += "/execute"
-                    prompt_text += "] (shortcuts: n/r/s/q"
-                    if step.command_example:
-                        prompt_text += "/e"
-                    prompt_text += ", Enter=next)"
+                        prompt_options.append("(e)xecute")
+                    prompt_text += "/".join(prompt_options) + "] (Enter=next)"
 
                     action = Prompt.ask(prompt_text, choices=choices, default="next")
 
@@ -242,8 +240,7 @@ class TutorialEngine:
                     action = action_map.get(action.lower(), action.lower())
             else:
                 action = Prompt.ask(
-                    "Step execution failed. What would you like to do? [retry/skip/quit] "
-                    "(shortcuts: r/s/q, Enter=retry)",
+                    "Step execution failed. What would you like to do? [(r)etry/(s)kip/(q)uit] (Enter=retry)",
                     choices=["retry", "r", "skip", "s", "quit", "q"],
                     default="retry",
                 )

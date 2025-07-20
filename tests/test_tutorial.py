@@ -273,17 +273,13 @@ class TestTutorialShortcuts:
     def test_prompt_text_generation(self):
         """Test prompt text generation."""
         # Without execute option
-        prompt_text = "What would you like to do? [next/repeat/skip/quit] (shortcuts: n/r/s/q, Enter=next)"
-        assert "next/repeat/skip/quit" in prompt_text
-        assert "shortcuts: n/r/s/q" in prompt_text
+        prompt_text = "What would you like to do? [(n)ext/(r)epeat/(s)kip/(q)uit] (Enter=next)"
+        assert "(n)ext/(r)epeat/(s)kip/(q)uit" in prompt_text
         assert "Enter=next" in prompt_text
 
         # With execute option
-        prompt_text_with_execute = (
-            "What would you like to do? [next/repeat/skip/quit/execute] (shortcuts: n/r/s/q/e, Enter=next)"
-        )
-        assert "next/repeat/skip/quit/execute" in prompt_text_with_execute
-        assert "shortcuts: n/r/s/q/e" in prompt_text_with_execute
+        prompt_text_with_execute = "What would you like to do? [(n)ext/(r)epeat/(s)kip/(q)uit/(e)xecute] (Enter=next)"
+        assert "(n)ext/(r)epeat/(s)kip/(q)uit/(e)xecute" in prompt_text_with_execute
         assert "Enter=next" in prompt_text_with_execute
 
 
