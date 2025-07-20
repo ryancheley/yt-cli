@@ -26,6 +26,8 @@ class TutorialStep:
     execute_action: Optional[Callable] = None
     validation_check: Optional[Callable] = None
     cleanup_action: Optional[Callable] = None
+    custom_prompt_choices: Optional[List[str]] = None
+    custom_prompt_handler: Optional[Callable] = None
 
 
 @dataclass
@@ -208,9 +210,18 @@ class TutorialEngine:
 
             # Wait for user to proceed
             if execution_success:
-                action = Prompt.ask(
-                    "What would you like to do?", choices=["next", "repeat", "skip", "quit"], default="next"
-                )
+                if step.custom_prompt_choices:
+                    # Use custom prompt choices for this step
+                    action = Prompt.ask(
+                        "What would you like to do with your YouTrack instance?",
+                        choices=step.custom_prompt_choices,
+                        default=step.custom_prompt_choices[0] if step.custom_prompt_choices else "next",
+                    )
+                else:
+                    # Use default choices
+                    action = Prompt.ask(
+                        "What would you like to do?", choices=["next", "repeat", "skip", "quit"], default="next"
+                    )
             else:
                 action = Prompt.ask(
                     "Step execution failed. What would you like to do?",
@@ -237,6 +248,22 @@ class TutorialEngine:
                 if progress.completed_steps and current_step not in progress.completed_steps:
                     progress.completed_steps.append(current_step)
                 current_step += 1
+
+            elif step.custom_prompt_handler and step.custom_prompt_choices and action in step.custom_prompt_choices:
+                # Handle custom action
+                try:
+                    result = await step.custom_prompt_handler(action)
+                    if result:
+                        # Action completed successfully, move to next step
+                        if progress.completed_steps and current_step not in progress.completed_steps:
+                            progress.completed_steps.append(current_step)
+                        current_step += 1
+                    else:
+                        # Action failed or cancelled, stay on current step
+                        continue
+                except Exception as e:
+                    self.console.print(f"[red]Action failed: {e}[/red]")
+                    continue
 
             # Save progress
             progress.current_step = current_step
