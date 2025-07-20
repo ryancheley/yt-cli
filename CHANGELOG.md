@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fix `yt articles sort` command not finding child articles that exist in tree view (#324)
+  - Added logic to resolve parent article readable IDs to internal IDs for proper filtering
+  - Child articles are now correctly identified when using readable parent IDs (e.g., "FPU-A-1")
+  - Ensures consistent behavior between `yt articles tree` and `yt articles sort` commands
 - Fix `yt issues show` command displaying "N/A" for State, Priority, and Type fields (#323)
   - Added fallback logic to check custom fields when built-in fields are not available
   - Implemented `_get_field_with_fallback` method to handle both built-in and custom field structures

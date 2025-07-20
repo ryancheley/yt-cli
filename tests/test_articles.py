@@ -117,6 +117,94 @@ class TestArticleManager:
             assert result["count"] == 2
 
     @pytest.mark.asyncio
+    async def test_list_articles_with_parent_id_filtering(self, article_manager):
+        """Test article listing with parent_id filtering using readable ID."""
+        # Mock articles data - includes parent and child articles
+        mock_articles_response = [
+            {
+                "id": "167-6",
+                "idReadable": "FPU-A-1",
+                "summary": "Parent Article",
+                "content": "Parent content",
+                "parentArticle": None,
+            },
+            {
+                "id": "167-7",
+                "idReadable": "FPU-A-2",
+                "summary": "Child Article 1",
+                "content": "Child content 1",
+                "parentArticle": {"id": "167-6", "summary": "Parent Article", "$type": "Article"},
+            },
+            {
+                "id": "167-8",
+                "idReadable": "FPU-A-3",
+                "summary": "Child Article 2",
+                "content": "Child content 2",
+                "parentArticle": {"id": "167-6", "summary": "Parent Article", "$type": "Article"},
+            },
+            {
+                "id": "167-9",
+                "idReadable": "DEMO-A-1",
+                "summary": "Other Article",
+                "content": "Other content",
+                "parentArticle": None,
+            },
+        ]
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+
+            # Mock the list_articles API call
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = mock_articles_response
+            mock_resp.text = str(mock_articles_response)
+            mock_resp.headers = {"content-type": "application/json"}
+
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            # Test filtering by readable parent ID
+            result = await article_manager.list_articles(parent_id="FPU-A-1")
+
+            assert result["status"] == "success"
+            assert result["count"] == 2
+            # Should only return the two child articles
+            assert len(result["data"]) == 2
+            assert result["data"][0]["idReadable"] == "FPU-A-2"
+            assert result["data"][1]["idReadable"] == "FPU-A-3"
+
+    @pytest.mark.asyncio
+    async def test_list_articles_with_parent_id_no_children(self, article_manager):
+        """Test article listing with parent_id that has no children."""
+        # Mock articles data - no child articles
+        mock_articles_response = [
+            {
+                "id": "167-6",
+                "idReadable": "FPU-A-1",
+                "summary": "Article with no children",
+                "content": "Content",
+                "parentArticle": None,
+            },
+        ]
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = mock_articles_response
+            mock_resp.text = str(mock_articles_response)
+            mock_resp.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.list_articles(parent_id="FPU-A-1")
+
+            assert result["status"] == "success"
+            assert result["count"] == 0
+            assert len(result["data"]) == 0
+
+    @pytest.mark.asyncio
     async def test_get_article_success(self, article_manager):
         """Test successful article retrieval."""
         mock_response = {
