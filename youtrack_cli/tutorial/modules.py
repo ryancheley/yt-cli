@@ -13,7 +13,9 @@ from .docker_utils import (
     get_setup_instructions,
     get_youtrack_url,
     pull_youtrack_image,
+    remove_youtrack_container,
     start_youtrack_container,
+    stop_youtrack_container,
     wait_for_youtrack_ready,
 )
 
@@ -462,6 +464,8 @@ class DockerTutorial(TutorialModule):
                     "Removing saves disk space and cleans up resources",
                     "You can always create a new instance later",
                 ],
+                custom_prompt_choices=["keep", "stop", "remove", "cleanup", "skip"],
+                custom_prompt_handler=self._handle_cleanup_action,
             ),
         ]
 
@@ -643,6 +647,68 @@ class DockerTutorial(TutorialModule):
     def cleanup_resources(self, remove_data: bool = False) -> None:
         """Clean up Docker resources."""
         cleanup_youtrack_resources(remove_data=remove_data)
+
+    async def _handle_cleanup_action(self, action: str) -> bool:
+        """Handle cleanup action selected by user.
+
+        Args:
+            action: The selected cleanup action.
+
+        Returns:
+            True if action completed successfully, False otherwise.
+        """
+        from ..console import get_console
+
+        console = get_console()
+
+        if action == "keep":
+            console.print("[green]✓ Keeping YouTrack instance running[/green]")
+            console.print("Your YouTrack instance will continue running in the background.")
+            console.print(f"Access it at: {get_youtrack_url()}")
+            console.print("You can stop it later with: docker stop youtrack-tutorial")
+            return True
+
+        elif action == "stop":
+            console.print("[yellow]Stopping YouTrack container...[/yellow]")
+            try:
+                stop_youtrack_container()
+                console.print("[green]✓ YouTrack container stopped[/green]")
+                console.print("Data is preserved. Restart with: docker start youtrack-tutorial")
+                return True
+            except Exception as e:
+                console.print(f"[red]Failed to stop container: {e}[/red]")
+                return False
+
+        elif action == "remove":
+            console.print("[yellow]Removing YouTrack container (keeping data)...[/yellow]")
+            try:
+                remove_youtrack_container()
+                console.print("[green]✓ YouTrack container removed[/green]")
+                console.print("Data volume preserved. You can create a new container later.")
+                return True
+            except Exception as e:
+                console.print(f"[red]Failed to remove container: {e}[/red]")
+                return False
+
+        elif action == "cleanup":
+            console.print("[yellow]Performing full cleanup (removing container and data)...[/yellow]")
+            try:
+                cleanup_youtrack_resources(remove_data=True)
+                console.print("[green]✓ Full cleanup completed[/green]")
+                console.print("All YouTrack tutorial resources have been removed.")
+                return True
+            except Exception as e:
+                console.print(f"[red]Failed to cleanup: {e}[/red]")
+                return False
+
+        elif action == "skip":
+            console.print("[blue]Skipping cleanup - your YouTrack instance will keep running[/blue]")
+            console.print(f"Access it at: {get_youtrack_url()}")
+            return True
+
+        else:
+            console.print(f"[red]Unknown action: {action}[/red]")
+            return False
 
 
 def get_default_modules() -> List[TutorialModule]:
