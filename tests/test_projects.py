@@ -772,10 +772,11 @@ class TestProjectCustomFields:
                 "canBeEmpty": True,
                 "emptyFieldText": "No value",
                 "isPublic": True,
+                "$type": "EnumProjectCustomField",
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
-                    "fieldType": {"name": "EnumIssueCustomField"},
+                    "fieldType": {"$type": "FieldType"},
                 },
                 "bundle": {
                     "id": "bundle-1",
@@ -790,10 +791,11 @@ class TestProjectCustomFields:
                 "canBeEmpty": False,
                 "emptyFieldText": "",
                 "isPublic": False,
+                "$type": "UserProjectCustomField",
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
-                    "fieldType": {"name": "SingleUserIssueCustomField"},
+                    "fieldType": {"$type": "FieldType"},
                 },
             },
         ]
@@ -993,10 +995,11 @@ class TestProjectCustomFields:
                 "canBeEmpty": True,
                 "emptyFieldText": "No value",
                 "isPublic": True,
+                "$type": "EnumProjectCustomField",
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
-                    "fieldType": {"name": "EnumIssueCustomField"},
+                    "fieldType": {"$type": "FieldType"},
                 },
             },
             {
@@ -1004,10 +1007,11 @@ class TestProjectCustomFields:
                 "canBeEmpty": False,
                 "emptyFieldText": "",
                 "isPublic": False,
+                "$type": "UserProjectCustomField",
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
-                    "fieldType": {"name": "SingleUserIssueCustomField"},
+                    "fieldType": {"$type": "FieldType"},
                 },
             },
         ]
