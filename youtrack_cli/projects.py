@@ -863,7 +863,32 @@ class ProjectManager:
             # Get field name and type
             field_info = field.get("field", {})
             field_name = field_info.get("name", "N/A") if field_info else "N/A"
-            field_type = field_info.get("fieldType", {}).get("presentation", "Unknown") if field_info else "Unknown"
+
+            # Extract field type from the root $type field and convert to readable format
+            raw_type = field.get("$type", "Unknown")
+            if raw_type.endswith("ProjectCustomField"):
+                # Remove "ProjectCustomField" suffix and convert to readable format
+                type_prefix = raw_type.replace("ProjectCustomField", "")
+                if type_prefix == "Enum":
+                    field_type = "Enum"
+                elif type_prefix == "State":
+                    field_type = "State"
+                elif type_prefix == "User":
+                    field_type = "User"
+                elif type_prefix == "Date":
+                    field_type = "Date"
+                elif type_prefix == "String":
+                    field_type = "String"
+                elif type_prefix == "Integer":
+                    field_type = "Integer"
+                elif type_prefix == "Float":
+                    field_type = "Float"
+                elif type_prefix == "Period":
+                    field_type = "Period"
+                else:
+                    field_type = type_prefix if type_prefix else "Custom"
+            else:
+                field_type = raw_type
 
             # Format required status
             can_be_empty = field.get("canBeEmpty", True)

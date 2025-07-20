@@ -772,6 +772,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": True,
                 "emptyFieldText": "No value",
                 "isPublic": True,
+                "$type": "EnumProjectCustomField",
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
@@ -790,6 +791,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": False,
                 "emptyFieldText": "",
                 "isPublic": False,
+                "$type": "UserProjectCustomField",
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
@@ -993,6 +995,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": True,
                 "emptyFieldText": "No value",
                 "isPublic": True,
+                "$type": "EnumProjectCustomField",
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
@@ -1004,6 +1007,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": False,
                 "emptyFieldText": "",
                 "isPublic": False,
+                "$type": "UserProjectCustomField",
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
@@ -1012,7 +1016,7 @@ class TestProjectCustomFields:
             },
         ]
 
-        # This should not raise an exception and should display field types correctly
+        # This should not raise an exception
         project_manager.display_custom_fields_table(custom_fields)
 
     def test_display_custom_fields_table_shows_correct_field_types(self, capsys):
@@ -1026,6 +1030,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": True,
                 "emptyFieldText": "No Priority",
                 "isPublic": True,
+                "$type": "EnumProjectCustomField",
                 "field": {
                     "id": "global-field-1",
                     "name": "Priority",
@@ -1037,6 +1042,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": False,
                 "emptyFieldText": "Unassigned",
                 "isPublic": True,
+                "$type": "UserProjectCustomField",
                 "field": {
                     "id": "global-field-2",
                     "name": "Assignee",
@@ -1048,6 +1054,7 @@ class TestProjectCustomFields:
                 "canBeEmpty": True,
                 "emptyFieldText": "No stage",
                 "isPublic": True,
+                "$type": "StateProjectCustomField",
                 "field": {
                     "id": "global-field-3",
                     "name": "Stage",
@@ -1060,10 +1067,10 @@ class TestProjectCustomFields:
 
         captured = capsys.readouterr()
 
-        # Verify that field types are shown correctly, not as 'Unknown'
-        assert "enum[1]" in captured.out
-        assert "user[1]" in captured.out
-        assert "state[1]" in captured.out
+        # Verify that field types are shown correctly using our $type implementation
+        assert "Enum" in captured.out  # Our implementation converts EnumProjectCustomField -> Enum
+        assert "User" in captured.out  # Our implementation converts UserProjectCustomField -> User
+        assert "State" in captured.out  # Our implementation converts StateProjectCustomField -> State
         assert "Unknown" not in captured.out
 
         # Verify field names are displayed
