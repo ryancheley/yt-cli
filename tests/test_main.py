@@ -1,5 +1,6 @@
 """Tests for the main CLI module."""
 
+import re
 import tempfile
 from pathlib import Path
 
@@ -167,8 +168,10 @@ class TestConfigCommands:
             # List configuration values
             result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
             assert result.exit_code == 0
-            assert "API_TOKEN = very-sec...6789" in result.output
-            assert "very-secret-token-123456789" not in result.output
+            # Strip ANSI codes from output for comparison
+            clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+            assert "API_TOKEN = very-sec...6789" in clean_output
+            assert "very-secret-token-123456789" not in clean_output
 
     def test_config_list_masks_api_key(self):
         """Test that API_KEY values are masked in list output."""
@@ -205,9 +208,11 @@ class TestConfigCommands:
             # List configuration values
             result = runner.invoke(main, ["--config", str(config_path), "config", "list"])
             assert result.exit_code == 0
-            assert "YOUTRACK_API_KEY = super-se...2345" in result.output
-            assert "super-secret-api-key-12345" not in result.output
-            assert "ANOTHER_API_KEY = [Stored in keyring]" in result.output
+            # Strip ANSI codes from output for comparison
+            clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+            assert "YOUTRACK_API_KEY = super-se...2345" in clean_output
+            assert "super-secret-api-key-12345" not in clean_output
+            assert "ANOTHER_API_KEY = [Stored in keyring]" in clean_output
 
 
 class TestCompletionCommands:

@@ -1,5 +1,6 @@
 """Tests for time tracking functionality."""
 
+import re
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -428,12 +429,14 @@ class TestTimeCommands:
                     "count": 1,
                 }
 
-                runner = CliRunner()
+                runner = CliRunner(env={"NO_COLOR": "1"})
                 result = runner.invoke(list, ["--issue", "ISSUE-123"], obj={"config": None})
 
                 assert result.exit_code == 0
-                assert "📋 Listing time entries..." in result.output
-                assert "📊 Total entries: 1" in result.output
+                # Strip ANSI codes from output for comparison
+                clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+                assert "📋 Listing time entries..." in clean_output
+                assert "📊 Total entries: 1" in clean_output
 
     @pytest.mark.asyncio
     async def test_list_command_with_json_format(self, mock_auth_manager):
@@ -463,11 +466,13 @@ class TestTimeCommands:
                     "count": 1,
                 }
 
-                runner = CliRunner()
+                runner = CliRunner(env={"NO_COLOR": "1"})
                 result = runner.invoke(list, ["--issue", "ISSUE-123", "--format", "json"], obj={"config": None})
 
                 assert result.exit_code == 0
-                assert "📋 Listing time entries..." in result.output
+                # Strip ANSI codes from output for comparison
+                clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+                assert "📋 Listing time entries..." in clean_output
 
     @pytest.mark.asyncio
     async def test_list_command_error(self, mock_auth_manager):
@@ -508,9 +513,11 @@ class TestTimeCommands:
                     "count": 0,
                 }
 
-                runner = CliRunner()
+                runner = CliRunner(env={"NO_COLOR": "1"})
                 result = runner.invoke(list, [], obj={"config": None})
 
                 assert result.exit_code == 0
-                assert "📋 Listing time entries..." in result.output
-                assert "📊 Total entries: 0" in result.output
+                # Strip ANSI codes from output for comparison
+                clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+                assert "📋 Listing time entries..." in clean_output
+                assert "📊 Total entries: 0" in clean_output

@@ -59,6 +59,7 @@ class TestBatchModels:
         with pytest.raises(ValidationError) as exc_info:
             BatchIssueCreate(summary="Missing project_id")
 
+        assert isinstance(exc_info.value, ValidationError)
         errors = exc_info.value.errors()
         assert any(error["loc"] == ("project_id",) for error in errors)
 
@@ -80,6 +81,7 @@ class TestBatchModels:
         with pytest.raises(ValidationError) as exc_info:
             BatchIssueUpdate(summary="Missing issue_id")
 
+        assert isinstance(exc_info.value, ValidationError)
         errors = exc_info.value.errors()
         assert any(error["loc"] == ("issue_id",) for error in errors)
 
@@ -171,6 +173,7 @@ class TestBatchOperationManager:
                 batch_manager.validate_csv_file(csv_file, "create")
 
             assert "Validation failed" in str(exc_info.value)
+            assert isinstance(exc_info.value, BatchValidationError)
             assert len(exc_info.value.errors) == 2  # Both rows missing project_id
         finally:
             csv_file.unlink()
