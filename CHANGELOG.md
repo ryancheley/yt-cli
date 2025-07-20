@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fix `yt articles tree` command missing child articles in tree display (#320)
+  - Resolved ID mismatch between parent grouping (internal IDs) and child matching (readable IDs)
+  - Tree now correctly displays hierarchical article structure with all child articles
 - Fix `yt articles tree` command throwing NoneType error when parentArticle field is null (#299)
 - Replace internal IDs with user-friendly IDs in CLI output for better UX (#313)
   - `yt issues attach list` now shows filename as primary identifier with internal ID moved to last column
