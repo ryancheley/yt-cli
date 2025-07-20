@@ -18,7 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `yt users roles <user_id>` - Display roles assigned to a user
   - `yt users teams <user_id>` - Display teams that a user is a member of
   - Support for both table and JSON output formats
-  - Comprehensive permission analysis workflows
+
+### Fixed
+- Fix 'None' permissions column in `yt users groups` and `yt users roles` commands (#291)
+  - Enhanced API field configurations to properly retrieve group and role permissions
+  - Improved fallback methods to include permissions data when primary API calls fail
+  - Fixed early return logic that was preventing permission retrieval attempts
 - Project custom fields management commands (#273)
   - `yt projects fields list PROJECT_ID` - List custom fields for a project
   - `yt projects fields attach PROJECT_ID FIELD_ID` - Attach custom field to project
