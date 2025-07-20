@@ -671,7 +671,10 @@ class ArticleManager:
                 root_articles.append(article)
 
         def add_article_to_tree(parent_node: Any, article: dict[str, Any]) -> None:
-            article_id = str(article.get("idReadable", article.get("id", "unknown")))  # Use friendly ID first
+            # Use internal ID for parent-child matching (consistent with child_articles dict keys)
+            internal_id = str(article.get("id", "unknown"))
+            # Use readable ID for display purposes
+            display_id = str(article.get("idReadable", internal_id))
             title = str(article.get("summary", "Untitled"))
 
             # Map visibility type to user-friendly name
@@ -684,12 +687,12 @@ class ArticleManager:
             else:
                 visibility_display = "Unknown"
 
-            node_text = f"[green]{title}[/green] [dim]({article_id})[/dim] [yellow]({visibility_display})[/yellow]"  # noqa: E501
+            node_text = f"[green]{title}[/green] [dim]({display_id})[/dim] [yellow]({visibility_display})[/yellow]"  # noqa: E501
             child_node = parent_node.add(node_text)
 
-            # Add children if any
-            if article_id and article_id in child_articles:
-                for child in child_articles[article_id]:
+            # Add children if any (use internal ID for matching)
+            if internal_id and internal_id in child_articles:
+                for child in child_articles[internal_id]:
                     add_article_to_tree(child_node, child)
 
         # Add root articles
