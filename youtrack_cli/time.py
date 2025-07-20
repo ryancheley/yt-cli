@@ -79,6 +79,7 @@ class TimeManager:
             response = await client_manager.make_request(
                 method="POST", url=url, json_data=work_item_data, headers=headers
             )
+
             if response.status_code in [200, 201]:
                 data = response.json()
                 return {
@@ -118,13 +119,11 @@ class TimeManager:
         if end_date:
             params["endDate"] = end_date
 
+        # Get all time entries from the global endpoint
+        url = f"{credentials.base_url.rstrip('/')}/api/workItems"
         if issue_id:
-            # Get time entries for a specific issue
-            url = f"{credentials.base_url.rstrip('/')}/api/workItems"
+            # Filter by issue in parameters
             params["issue"] = issue_id
-        else:
-            # Get all time entries
-            url = f"{credentials.base_url.rstrip('/')}/api/workItems"
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
