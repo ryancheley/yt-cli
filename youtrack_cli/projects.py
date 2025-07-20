@@ -550,7 +550,11 @@ class ProjectManager:
 
         # Default fields to return
         if not fields:
-            fields = "id,canBeEmpty,emptyFieldText,isPublic,field(id,name,fieldType),bundle(id,values(id,name))"
+            fields = (
+                "id,canBeEmpty,emptyFieldText,isPublic,"
+                "field(id,name,fieldType(id,presentation)),"
+                "bundle(id,values(id,name))"
+            )
 
         # Build query parameters
         params = {"fields": fields}

@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both table and JSON output formats
 
 ### Fixed
+- Fix 'Type unknown' in `yt projects fields list` command (#292)
+  - Updated API request to include fieldType presentation for proper field type display
+  - Field types now show correctly as enum[1], user[1], state[1], etc. instead of 'Unknown'
 - Fix 'None' permissions column in `yt users groups` and `yt users roles` commands (#291)
   - Enhanced API field configurations to properly retrieve group and role permissions
   - Improved fallback methods to include permissions data when primary API calls fail
