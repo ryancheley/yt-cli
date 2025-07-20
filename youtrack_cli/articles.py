@@ -198,17 +198,22 @@ class ArticleManager:
                 if parent_internal_id is None:
                     try:
                         parent_result = await self.get_article(parent_id)
-                        if parent_result["status"] == "success" and parent_result["data"]:
+                        if (
+                            parent_result["status"] == "success"
+                            and parent_result.get("data")
+                            and isinstance(parent_result["data"], dict)
+                        ):
                             parent_internal_id = parent_result["data"].get("id")
                     except Exception:
                         # If we can't fetch the parent, use the provided parent_id as-is
                         parent_internal_id = parent_id
 
+                # Filter for articles that have the specified parent
                 filtered_data = []
                 for article in data:
-                    parent_article = article.get("parentArticle", {})
+                    parent_article = article.get("parentArticle")
                     # Check if the article has the specified parent
-                    if parent_article:
+                    if parent_article and isinstance(parent_article, dict):
                         article_parent_id = parent_article.get("id")
                         # Match against both the provided parent_id and the resolved internal ID
                         if article_parent_id == parent_id or article_parent_id == parent_internal_id:
@@ -553,11 +558,17 @@ class ArticleManager:
 
             # Get author info (using reporter field for articles)
             author_info = article.get("reporter", {})
-            author_name = author_info.get("fullName", "Unknown Author") if author_info else "Unknown Author"
+            if author_info and isinstance(author_info, dict):
+                author_name = author_info.get("fullName", "Unknown Author")
+            else:
+                author_name = "Unknown Author"
 
             # Map visibility type to user-friendly name
             visibility_info = article.get("visibility", {})
-            visibility_type = visibility_info.get("$type", "")
+            if visibility_info and isinstance(visibility_info, dict):
+                visibility_type = visibility_info.get("$type", "")
+            else:
+                visibility_type = ""
             if visibility_type == "UnlimitedVisibility":
                 visibility_display = "Visible"
             elif visibility_type == "LimitedVisibility":
@@ -627,7 +638,10 @@ class ArticleManager:
 
                 # Get author info (using reporter field for articles)
                 author_info = article.get("reporter", {})
-                author_name = author_info.get("fullName", "Unknown Author") if author_info else "Unknown Author"
+                if author_info and isinstance(author_info, dict):
+                    author_name = author_info.get("fullName", "Unknown Author")
+                else:
+                    author_name = "Unknown Author"
 
                 # Map visibility type to user-friendly name
                 visibility_info = article.get("visibility", {})
@@ -702,7 +716,10 @@ class ArticleManager:
 
             # Map visibility type to user-friendly name
             visibility_info = article.get("visibility", {})
-            visibility_type = visibility_info.get("$type", "")
+            if visibility_info and isinstance(visibility_info, dict):
+                visibility_type = visibility_info.get("$type", "")
+            else:
+                visibility_type = ""
             if visibility_type == "UnlimitedVisibility":
                 visibility_display = "Visible"
             elif visibility_type == "LimitedVisibility":

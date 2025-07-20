@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fix `yt articles sort` command to properly display child articles and remove misleading functionality (#327)
+  - Fixed child article filtering bug that prevented proper parent-child relationship matching
+  - Replaced misleading `--update` flag with `--sort-by` and `--reverse` options for display sorting
+  - Added proper sorting by title, creation date, or update date for visualization
+  - Updated documentation to clarify API limitations (article reordering requires web interface)
+  - Improved user experience with clear messaging about manual reordering requirements
 - Fix `yt articles sort` command not finding child articles that exist in tree view (#324)
   - Added logic to resolve parent article readable IDs to internal IDs for proper filtering
   - Child articles are now correctly identified when using readable parent IDs (e.g., "FPU-A-1")
