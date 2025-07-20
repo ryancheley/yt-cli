@@ -545,7 +545,7 @@ def draft(
     "--sort-by",
     type=click.Choice(["title", "created", "updated"], case_sensitive=False),
     default="title",
-    help="Sort child articles by title, creation date, or update date for display",
+    help="Sort child articles by title, creation date, or update date for display only",
 )
 @click.option(
     "--reverse",
@@ -561,8 +561,9 @@ def sort(
 ) -> None:
     """Display child articles under a parent article in sorted order.
 
-    Note: This command displays articles in sorted order for visualization.
-    Article reordering in YouTrack requires manual drag-and-drop in the web interface.
+    IMPORTANT: YouTrack does not provide an API to reorder articles automatically.
+    This command displays articles in sorted order for reference only.
+    To actually reorder articles, use YouTrack's web interface drag-and-drop functionality.
     """
     from ..articles import ArticleManager
 
@@ -613,16 +614,21 @@ def sort(
                 style="blue",
             )
             console.print(
-                "To reorder articles in YouTrack, use the web interface's drag-and-drop functionality.",
+                "⚠️ [yellow]YouTrack API does not support automatic article reordering.[/yellow]",
+                style="yellow",
+            )
+            console.print(
+                "To actually reorder articles in YouTrack, use the web interface's drag-and-drop functionality.",
                 style="dim",
             )
 
             # Get base URL for direct link
             if ctx.obj:
                 config = ctx.obj.get("config", {})
-                base_url = config.get("base_url", "")
-                if base_url:
-                    console.print(f"[dim]Direct link: {base_url.rstrip('/')}/articles/{parent_id}[/dim]")
+                if config and isinstance(config, dict):
+                    base_url = config.get("base_url", "")
+                    if base_url:
+                        console.print(f"[dim]Direct link: {base_url.rstrip('/')}/articles/{parent_id}[/dim]")
 
         else:
             console.print(f"❌ {result['message']}", style="red")
