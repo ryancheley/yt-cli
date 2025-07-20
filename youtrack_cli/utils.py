@@ -8,7 +8,8 @@ handling, and user feedback with proper error handling and logging.
 """
 
 from collections.abc import AsyncGenerator
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
@@ -34,6 +35,7 @@ __all__ = [
     "batch_get_resources",
     "optimize_fields",
     "stream_large_response",
+    "format_timestamp",
 ]
 
 logger = get_logger(__name__)
@@ -541,3 +543,41 @@ def display_warning(message: str) -> None:
         message: Warning message to display
     """
     console.print(f"[yellow]Warning:[/yellow] {message}")
+
+
+def format_timestamp(timestamp: Union[int, str, None]) -> str:
+    """Format a timestamp value for display.
+
+    Args:
+        timestamp: Unix timestamp (int), ISO string, or None
+
+    Returns:
+        Formatted timestamp string or "N/A" if None/empty
+    """
+    if timestamp is None:
+        return "N/A"
+
+    try:
+        if isinstance(timestamp, int):
+            # Unix timestamp in milliseconds (YouTrack format)
+            dt = datetime.fromtimestamp(timestamp / 1000)
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(timestamp, str) and timestamp.strip():
+            # Try to parse ISO format or other string formats
+            if timestamp.isdigit():
+                # String representation of timestamp
+                dt = datetime.fromtimestamp(int(timestamp) / 1000)
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                # Assume it's already formatted or ISO format
+                try:
+                    dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                    return dt.strftime("%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    # Return as-is if we can't parse it
+                    return str(timestamp)
+        else:
+            return "N/A"
+    except (ValueError, TypeError, OverflowError):
+        logger.warning("Failed to format timestamp", timestamp=timestamp)
+        return str(timestamp) if timestamp else "N/A"

@@ -8,6 +8,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .console import get_console
+from .utils import format_timestamp
 
 
 def _get_assignee_from_issue_data(issue_data: Dict[str, Any]) -> str:
@@ -295,7 +296,7 @@ def create_issue_overview_panel(issue_data: Dict[str, Any]) -> Panel:
     return PanelFactory.create_details_panel(
         title="Issue Overview",
         data=overview_data,
-        subtitle=f"Created: {issue_data.get('created', 'Unknown')}",
+        subtitle=f"Created: {format_timestamp(issue_data.get('created'))}",
     )
 
 
@@ -312,9 +313,9 @@ def create_issue_details_panel(issue_data: Dict[str, Any]) -> Panel:
         "Description": issue_data.get("description", "No description"),
         "Reporter": issue_data.get("reporter", {}).get("name"),
         "Assignee": _get_assignee_from_issue_data(issue_data),
-        "Created": issue_data.get("created"),
-        "Updated": issue_data.get("updated"),
-        "Resolved": issue_data.get("resolved"),
+        "Created": format_timestamp(issue_data.get("created")),
+        "Updated": format_timestamp(issue_data.get("updated")),
+        "Resolved": format_timestamp(issue_data.get("resolved")),
     }
 
     return PanelFactory.create_details_panel(
