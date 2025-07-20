@@ -13,6 +13,7 @@ Overview
 YouTrack time tracking helps teams monitor effort, generate reports, and understand project progress. The time command group allows you to:
 
 * Log work time on issues with flexible duration formats
+* List time entries with filtering options
 * Track different types of work (Development, Testing, etc.)
 * Generate detailed time reports with filtering
 * View time summaries grouped by various criteria
@@ -80,6 +81,59 @@ Log work time to a specific issue.
 
    # Log time with combined duration format
    yt time log ISSUE-456 "2h 30m" --work-type "Documentation" --description "API docs"
+
+list
+~~~~
+
+List time entries with filtering options.
+
+.. code-block:: bash
+
+   yt time list [OPTIONS]
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--issue``
+     - string
+     - Filter by specific issue ID
+   * - ``--user-id, -u``
+     - string
+     - Filter by specific user ID
+   * - ``--start-date, -s``
+     - string
+     - Start date for filtering (YYYY-MM-DD)
+   * - ``--end-date, -e``
+     - string
+     - End date for filtering (YYYY-MM-DD)
+   * - ``--format, -f``
+     - choice
+     - Output format: table, json (default: table)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # List time entries for a specific issue
+   yt time list --issue ISSUE-123
+
+   # List time entries for a user
+   yt time list --user-id USER-456
+
+   # List time entries for a date range
+   yt time list --start-date "2024-01-01" --end-date "2024-01-31"
+
+   # List all time entries
+   yt time list
+
+   # Export time entries in JSON format
+   yt time list --format json --issue ISSUE-123
 
 report
 ~~~~~~
