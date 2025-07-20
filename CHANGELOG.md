@@ -7,63 +7,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-07-20
+
 ### Added
-- Convert docs from Markdown to reStructuredText (#217)
-- Non-interactive options for automation and CI/CD (#245)
+- Missing `yt time list` command referenced in documentation (#287, #288)
+- Enhanced tutorial UX with single-letter shortcuts and inline command execution (#286)
+- Secure ClickCommandExecutor for tutorial inline command execution (#289)
+- Return friendly issue ID instead of internal ID when creating issues (#290)
+
+### Fixed
+- Fix tests output and test compatibility issues
+- Fix 'Type unknown' in `yt projects fields list` command (#294, #295)
+  - Updated API request to include fieldType presentation for proper field type display
+  - Field types now show correctly as enum[1], user[1], state[1], etc. instead of 'Unknown'
+- Fix 'None' permissions column in `yt users groups` and `yt users roles` commands (#293)
+  - Enhanced API field configurations to properly retrieve group and role permissions
+  - Improved fallback methods to include permissions data when primary API calls fail
+  - Fixed early return logic that was preventing permission retrieval attempts
+- Fix duplicate commands in projects tutorial steps 2 and 3 (#285)
+- Fix Docker tutorial step 9 cleanup options prompt mismatch (#284)
+- Fix --assignee flag not working in 'yt issues update' command (#282)
+- Fix time log command using correct YouTrack API endpoint (#281)
+- Fix incorrect command in 'yt tutorial issues' interactive guide (#280)
+
+### Improved
+- Groups display to reflect YouTrack architecture
+- Enhanced tutorial inline command execution with secure ClickCommandExecutor (#289)
+- Visual indicators for executable commands with enhanced UI
+- Command whitelisting for security and safety
+- Confirmation prompts for destructive operations
+- Better integration with YouTrack CLI context and authentication
+
+## [0.9.2] - 2025-07-17
+
+### Fixed
+- User groups, teams, and roles commands returning empty results (#268)
+
+## [0.9.1] - 2025-07-17
+
+### Fixed
+- Release script to prevent incomplete releases (#266)
+
+## [0.9.0] - 2025-07-17
+
+### Added
+- Non-interactive options for automation and CI/CD (#261)
   - `--force` flag for delete commands (replaces `--confirm` for consistency)
   - `--leader` option for project creation to avoid interactive prompts
   - `--password` option for user creation with security warnings
-- User permission query commands (#253)
+- User permission query commands (#263)
   - `yt users groups <user_id>` - Display groups that a user belongs to
   - `yt users roles <user_id>` - Display roles assigned to a user
   - `yt users teams <user_id>` - Display teams that a user is a member of
   - Support for both table and JSON output formats
+- `--active-only` flag to `yt users list` command (#262)
 
 ### Fixed
-- Fix 'Type unknown' in `yt projects fields list` command (#292)
-  - Updated API request to include fieldType presentation for proper field type display
-  - Field types now show correctly as enum[1], user[1], state[1], etc. instead of 'Unknown'
-- Fix 'None' permissions column in `yt users groups` and `yt users roles` commands (#291)
-  - Enhanced API field configurations to properly retrieve group and role permissions
-  - Improved fallback methods to include permissions data when primary API calls fail
-  - Fixed early return logic that was preventing permission retrieval attempts
-- Project custom fields management commands (#273)
-  - `yt projects fields list PROJECT_ID` - List custom fields for a project
-  - `yt projects fields attach PROJECT_ID FIELD_ID` - Attach custom field to project
-  - `yt projects fields update PROJECT_ID FIELD_ID` - Update custom field settings
-  - `yt projects fields detach PROJECT_ID FIELD_ID` - Remove custom field from project
-  - Support for all YouTrack custom field types (enum, user, text, date, etc.)
-  - Field visibility and requirement configuration options
-  - Comprehensive custom fields workflows and documentation
-- Enhanced inline command execution in tutorial mode (#278)
-  - `ClickCommandExecutor` class for secure command execution within tutorials
-  - Visual indicators for executable commands with enhanced UI
-  - Command whitelisting for security and safety
-  - Confirmation prompts for destructive operations
-  - Better integration with YouTrack CLI context and authentication
+- Docker tutorial URL placeholders in YouTrack configuration wizard output (#264)
+- Issue tag removal 404 error (#260)
+- Multiple critical issues with articles functionality (#258)
+- Time logging 500 Internal Server Error (#257)
+- Time report functionality NoneType error (#241)
+- Time report rendering error with integer values (#240)
+- Article creation by making --project-id required (#239)
+- Time logging date property type mismatch error (#237)
+- Issue creation with project short names (#235, #236)
+- State, Priority, and Type fields showing N/A in issues list (#234)
+- Docker tutorial YouTrack image pull failure (#227)
 
 ### Improved
-- Command syntax documentation with clearer examples and error messages (#246, #247)
+- Command syntax documentation with clearer examples and error messages (#250, #251)
 - Help text for common commands to prevent syntax errors
 - Interactive command behavior documentation
 - Comprehensive troubleshooting guide for command syntax errors
 - Better error messages with helpful suggestions for incorrect command usage
-- Best practices documentation with accurate --dry-run flag usage examples (#254)
-- Performance optimization documentation with comprehensive batch operation examples (#255)
-- Release script robustness with comprehensive error handling (#265)
-  - Added `set -e` and `set -o pipefail` to prevent incomplete releases
-  - Enhanced git push validation with automatic rollback on failures
-  - Improved pre-release checks including GitHub authentication validation
-  - Better error messages with actionable troubleshooting hints
-  - Comprehensive rollback capability for failed releases
+- Documentation examples for dry-run and batch operations (#256)
+
+## [0.8.1] - 2025-07-13
+
+### Added
+- Convert docs from Markdown to reStructuredText (#217)
 
 ### Fixed
 - Docker tutorial execution - container now actually starts (#222)
 - Backspace sequences appearing as literal text in CLI help (#219)
 - Missing Sphinx extensions for documentation build (#218)
-- Release script preventing incomplete releases due to test failures or network issues (#265)
-- Duplicate commands in projects tutorial steps 2 and 3 (#272)
-- Missing executable command in projects tutorial step 4 for custom fields (#274)
+
+### Improved
+- Synchronize changelog documentation and add missing releases (#223)
+- Configure ReadTheDocs to build only on version updates and PyPI releases (#225)
 
 ## [0.8.0] - 2025-07-13
 
