@@ -39,6 +39,7 @@ dependencies = [
     "cryptography>=41.0.0",
     "ty>=0.0.1a14",
     "docker>=7.0.0",
+    "selenium>=4.34.2",
 ]
 
 [project.urls]
