@@ -1082,9 +1082,20 @@ def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, f
 )
 @click.option(
     "--method",
-    type=click.Choice(["custom-field", "parent-manipulation"], case_sensitive=False),
+    type=click.Choice(
+        [
+            "custom-field",
+            "parent-manipulation",
+            "browser-automation",
+            "network-monitor",
+            "article-recreation",
+            "deep-api-exploration",
+        ],
+        case_sensitive=False,
+    ),
     default="custom-field",
-    help="Method to use for reordering (custom-field is safer, parent-manipulation is experimental)",
+    help="Method to use for reordering (custom-field=safest, browser-automation=uses web UI, "
+    "deep-api-exploration=discover hidden APIs)",
 )
 @click.option(
     "--custom-field-name",
@@ -1269,6 +1280,72 @@ async def _reorder_articles(
             reorder_result = await article_manager.reorder_articles_via_custom_field(sorted_articles, custom_field_name)
         elif method == "parent-manipulation":
             reorder_result = await article_manager.reorder_articles_via_parent_manipulation(sorted_articles)
+        elif method == "browser-automation":
+            # Use browser automation to perform drag-and-drop
+            try:
+                from ..browser_reorder import browser_reorder_articles
+
+                credentials = article_manager.auth_manager.load_credentials()
+                if not credentials:
+                    return {"status": "error", "message": "Not authenticated. Run 'yt auth login' first."}
+
+                sorted_titles = [art.get("summary", "") for art in sorted_articles]
+                if project_id is None:
+                    return {"status": "error", "message": "Project ID is required"}
+                reorder_result = await browser_reorder_articles(
+                    credentials.base_url, credentials.token, project_id, sorted_titles
+                )
+            except ImportError:
+                return {"status": "error", "message": "Browser automation requires: pip install selenium"}
+        elif method == "network-monitor":
+            # Start network monitoring session
+            try:
+                from ..network_monitor import monitor_youtrack_reordering
+
+                credentials = article_manager.auth_manager.load_credentials()
+                if not credentials:
+                    return {"status": "error", "message": "Not authenticated. Run 'yt auth login' first."}
+
+                if project_id is None:
+                    return {"status": "error", "message": "Project ID is required"}
+                reorder_result = await monitor_youtrack_reordering(credentials.base_url, project_id)
+            except ImportError:
+                return {"status": "error", "message": "Network monitoring requires: pip install selenium"}
+        elif method == "article-recreation":
+            # Nuclear option: delete and recreate articles
+            try:
+                from ..article_recreation import recreate_articles_in_sorted_order
+
+                console.print("\n🚨 [bold red]EXTREME WARNING: ARTICLE RECREATION[/bold red]", style="bold red")
+                console.print("This will DELETE and RECREATE all articles!", style="red")
+                console.print("Article IDs and URLs will change permanently!", style="red")
+
+                if not force:
+                    if not click.confirm("Are you ABSOLUTELY SURE you want to proceed with article recreation?"):
+                        return {"status": "cancelled", "message": "Article recreation cancelled by user"}
+
+                article_ids = [art.get("id") for art in sorted_articles if art.get("id")]
+                sorted_titles = [art.get("summary", "") for art in sorted_articles]
+
+                reorder_result = await recreate_articles_in_sorted_order(
+                    article_manager, article_ids, sorted_titles, confirm_deletion=True
+                )
+            except ImportError:
+                return {"status": "error", "message": "Article recreation module not available"}
+        elif method == "deep-api-exploration":
+            # Deep API exploration to find hidden endpoints
+            try:
+                from ..deep_api_explorer import deep_api_exploration
+
+                console.print("\n🔍 [bold blue]DEEP API EXPLORATION MODE[/bold blue]", style="bold blue")
+                console.print("Searching for hidden YouTrack APIs that support article reordering...", style="blue")
+
+                # Use first article ID for testing if available
+                test_article_id = sorted_articles[0].get("id") if sorted_articles else None
+
+                reorder_result = await deep_api_exploration(article_manager.auth_manager, test_article_id)
+            except ImportError:
+                return {"status": "error", "message": "Deep API exploration module not available"}
         else:
             return {"status": "error", "message": f"Unknown reordering method: {method}"}
 
