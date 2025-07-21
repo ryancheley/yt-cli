@@ -411,9 +411,9 @@ This command provides a comprehensive preview without making actual changes.
 
 .. code-block:: bash
 
-   yt articles reorder [ARTICLE_IDS...] --sort-by CRITERIA [OPTIONS]
+   yt articles reorder [ARTICLE_IDS...] --sort-by CRITERIA [--method METHOD] [OPTIONS]
 
-**Important:** This command provides a preview of article ordering only. Due to YouTrack API limitations, actual reordering must be done manually through the web interface.
+**Important:** This command provides a preview of article ordering only. Due to YouTrack API limitations, actual reordering must be done manually through the web interface. The ``--method`` option provides alternative approaches for achieving article reordering.
 
 **Arguments:**
 
@@ -450,6 +450,9 @@ This command provides a comprehensive preview without making actual changes.
    * - ``--recursive``
      - flag
      - Apply reordering to entire article hierarchy (future enhancement)
+   * - ``--method``
+     - choice
+     - Alternative reordering method to explore (choices: custom-field, parent-manipulation, browser-automation, network-monitor, article-recreation, deep-api-exploration; see Methods section below)
 
 **Sorting Options:**
 
@@ -504,6 +507,24 @@ This command provides a comprehensive preview without making actual changes.
 
    # Case-sensitive title sorting
    yt articles reorder --parent-id DOC-PARENT --sort-by title --case-sensitive
+
+   # Explore custom field method for reordering
+   yt articles reorder --sort-by title --method custom-field --project-id FPU
+
+   # Analyze parent manipulation approach
+   yt articles reorder --parent-id DOC-ROOT --sort-by title --method parent-manipulation
+
+   # Check browser automation possibilities
+   yt articles reorder --sort-by id --method browser-automation
+
+   # Monitor network requests for ordering
+   yt articles reorder --sort-by title --method network-monitor
+
+   # Test article recreation method
+   yt articles reorder ART-1 ART-2 ART-3 --sort-by title --method article-recreation
+
+   # Deep API exploration for undocumented endpoints
+   yt articles reorder --sort-by title --method deep-api-exploration --project-id FPU
 
 **Output:**
 
@@ -560,6 +581,30 @@ To apply the proposed ordering:
 3. Find the relevant project or parent article
 4. Use drag-and-drop to reorder articles manually
 5. The ordinal field will be updated automatically
+
+**Alternative Methods:**
+
+The ``--method`` parameter allows exploration of different approaches to achieve article reordering:
+
+**custom-field**
+  Explores using custom fields for programmatic ordering. This method would add a custom field to articles to store sort order values that can be updated via the API.
+
+**parent-manipulation**
+  Analyzes changing parent relationships to affect ordering. This method investigates whether temporarily changing parent articles can influence the ordinal values.
+
+**browser-automation**
+  Checks possibilities for automating the web interface using tools like Selenium or Playwright to perform drag-and-drop operations programmatically.
+
+**network-monitor**
+  Monitors network requests made by the YouTrack web interface during manual reordering to discover potential undocumented API endpoints.
+
+**article-recreation**
+  Tests whether recreating articles in the desired order affects their ordinal values. This destructive method would require backing up article content first.
+
+**deep-api-exploration**
+  Performs deep exploration of the YouTrack API to find undocumented endpoints or hidden parameters that might allow article reordering.
+
+Each method provides detailed analysis and feasibility assessment when selected. Note that some methods (like article-recreation) may have significant side effects and should be used with caution.
 
 **Alternative Approaches:**
 

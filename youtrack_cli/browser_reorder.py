@@ -8,7 +8,6 @@ try:
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.common.action_chains import ActionChains
     from selenium.webdriver.common.by import By
-    from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
 
     SELENIUM_AVAILABLE = True
@@ -57,31 +56,25 @@ class YouTrackBrowserReorder:
     def login_with_token(self) -> bool:
         """Login to YouTrack using permanent token."""
         try:
-            # Navigate to YouTrack
-            self.driver.get(f"{self.base_url}/login")
+            # For local dev instances, authentication might be different
+            # Try direct navigation first
+            print(f"🔐 Attempting to authenticate with YouTrack at {self.base_url}")
+
+            # Navigate directly to the base URL
+            self.driver.get(self.base_url)
             time.sleep(2)
 
-            # Look for token login option or direct API access
-            # YouTrack might have a direct URL that accepts token auth
-            auth_url = f"{self.base_url}/api/admin/users/me"
-            self.driver.get(auth_url)
+            # Check if we're already logged in or if login is required
+            current_url = self.driver.current_url
 
-            # Set authorization header via JavaScript
-            self.driver.execute_script(f"""
-                fetch('{auth_url}', {{
-                    headers: {{
-                        'Authorization': 'Bearer {self.token}',
-                        'Content-Type': 'application/json'
-                    }}
-                }}).then(response => {{
-                    if (response.ok) {{
-                        localStorage.setItem('yt_auth_token', '{self.token}');
-                        window.location.href = '{self.base_url}/articles';
-                    }}
-                }});
-            """)
+            if "login" in current_url.lower():
+                print("⚠️  Browser automation requires manual login or different authentication method")
+                print("📝 Note: Token-based authentication is not supported in the web interface")
+                return False
 
-            time.sleep(3)
+            # If we're not redirected to login, assume we're authenticated
+            # (This works for local dev instances without auth)
+            print("✅ Successfully accessed YouTrack")
             return True
 
         except Exception as e:
@@ -92,12 +85,38 @@ class YouTrackBrowserReorder:
         """Navigate to project articles page."""
         try:
             articles_url = f"{self.base_url}/articles/{project_id}"
+            print(f"📖 Navigating to articles: {articles_url}")
             self.driver.get(articles_url)
             time.sleep(3)
 
-            # Wait for articles to load
-            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "article")))
-            return True
+            # Check if we need to import By
+            from selenium.webdriver.common.by import By
+
+            # Try multiple selectors for articles
+            article_selectors = [
+                ".article",
+                "[data-test*='article']",
+                ".knowledge-base-tree-item",
+                ".article-node",
+                "div[class*='article']",
+            ]
+
+            # Try to find articles with different selectors
+            for selector in article_selectors:
+                try:
+                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    if elements:
+                        print(f"✅ Found {len(elements)} articles using selector: {selector}")
+                        return True
+                except Exception:
+                    continue
+
+            # If no articles found, still return True if we're on the right page
+            if project_id.lower() in self.driver.current_url.lower():
+                print("⚠️  On articles page but no articles found - page might be empty")
+                return True
+
+            return False
 
         except Exception as e:
             print(f"Failed to navigate to articles: {e}")
@@ -195,20 +214,42 @@ async def browser_reorder_articles(
     if not SELENIUM_AVAILABLE:
         return {"status": "error", "message": "Selenium not installed. Run: pip install selenium"}
 
+    # For debugging, you might want to set headless=False to see what's happening
+    if base_url.startswith("http://0.0.0.0") or base_url.startswith("http://localhost"):
+        print("📝 Note: Running in visible mode for local development")
+        headless = False
+
     try:
         with YouTrackBrowserReorder(base_url, token, headless) as browser:
             # Login
             if not browser.login_with_token():
-                return {"status": "error", "message": "Failed to login"}
+                return {
+                    "status": "error",
+                    "message": "Failed to login - browser automation may require manual authentication",
+                }
 
             # Navigate to articles
             if not browser.navigate_to_project_articles(project_id):
-                return {"status": "error", "message": "Failed to navigate to articles"}
+                # Try to diagnose the issue
+                print(f"🔍 Current URL: {browser.driver.current_url}")
+                print(f"🔍 Page title: {browser.driver.title}")
+
+                # Take a screenshot for debugging
+                try:
+                    browser.driver.save_screenshot("youtrack_debug.png")
+                    print("📸 Screenshot saved to youtrack_debug.png")
+                except Exception:
+                    pass
+
+                return {"status": "error", "message": "Failed to navigate to articles - check screenshot for details"}
 
             # Get current order
             current_order = browser.get_current_article_order()
             print(f"Current order: {[a['title'] for a in current_order]}")
             print(f"Target order: {target_order}")
+
+            if not current_order:
+                return {"status": "error", "message": "No articles found on the page"}
 
             # Perform reordering
             success = browser.reorder_articles_by_drag_drop(target_order)

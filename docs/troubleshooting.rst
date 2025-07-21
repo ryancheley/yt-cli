@@ -839,6 +839,117 @@ Several commands have interactive behavior that prompts for additional informati
 **Project Creation**:
   ``yt projects create`` will prompt for project leader if not specified with ``--leader``.
 
+Browser Automation Issues
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``--method browser-automation`` option for article reordering uses Selenium WebDriver to automate the YouTrack web interface.
+
+**ChromeDriver Security Warning on macOS**
+
+**Problem**: When running browser automation commands, macOS shows: "chromedriver cannot be opened because the developer cannot be verified"
+
+**Solutions**:
+
+1. **Allow ChromeDriver in Security Settings** (Recommended):
+
+   .. code-block:: bash
+
+      # Click "Done" on the popup (don't click "Move to Trash")
+      # Then go to System Settings → Privacy & Security
+      # Find the message about "chromedriver" being blocked
+      # Click "Allow Anyway"
+      # Run the command again and click "Open" on the new popup
+
+2. **Remove Quarantine Attribute**:
+
+   .. code-block:: bash
+
+      # Find where chromedriver is installed
+      which chromedriver
+
+      # Remove the quarantine attribute
+      xattr -d com.apple.quarantine /path/to/chromedriver
+
+3. **Install via Homebrew** (Most reliable):
+
+   .. code-block:: bash
+
+      # Install chromedriver via homebrew
+      brew install chromedriver
+
+      # If already installed, reinstall it
+      brew reinstall chromedriver
+
+**Selenium Not Installed**
+
+**Problem**: ``Selenium not installed. Run: pip install selenium``
+
+**Solution**:
+
+.. code-block:: bash
+
+   # Install selenium
+   pip install selenium
+
+   # Or with uv
+   uv pip install selenium
+
+**Browser Automation Fails to Navigate**
+
+**Problem**: ``Failed to navigate to articles`` error
+
+**Common Causes & Solutions**:
+
+1. **Authentication Required**:
+
+   - Browser automation doesn't support token-based authentication in the web UI
+   - For local development instances without authentication, it should work automatically
+   - For production instances, manual login may be required
+
+2. **Wrong Article Selectors**:
+
+   - The tool tries multiple CSS selectors to find articles
+   - If your YouTrack version uses different HTML structure, it may not find articles
+   - Check the screenshot saved as ``youtrack_debug.png`` for debugging
+
+3. **Network Issues**:
+
+   .. code-block:: bash
+
+      # Test if YouTrack is accessible
+      curl -I http://0.0.0.0:8080/articles/FPU
+
+**Running Browser Automation**
+
+**Basic Usage**:
+
+.. code-block:: bash
+
+   # Sort articles by title using browser automation
+   yt articles reorder --project-id FPU --sort-by title --live --method browser-automation
+
+   # Sort by creation date (newest first) without confirmation
+   yt articles reorder --project-id FPU --sort-by created --order desc --live --method browser-automation --force
+
+**Debugging Tips**:
+
+1. **Run in Visible Mode**: For local development, the browser runs in visible mode automatically
+2. **Check Screenshots**: If navigation fails, check ``youtrack_debug.png`` for what the browser sees
+3. **Console Output**: The tool provides detailed output about what it's doing
+
+**When to Use Browser Automation**:
+
+- When YouTrack's REST API limitations prevent direct reordering
+- When you need changes reflected immediately in the web interface
+- When other methods (custom-field, parent-manipulation) don't work
+- As a workaround for API restrictions
+
+**Prerequisites**:
+
+- Chrome or Chromium browser installed
+- ChromeDriver installed and accessible
+- Selenium Python package (``pip install selenium``)
+
 Release and Development Issues
 -------------------------------
 
