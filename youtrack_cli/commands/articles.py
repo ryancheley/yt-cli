@@ -1076,6 +1076,22 @@ def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, f
     help="Preview changes without execution (default behavior)",
 )
 @click.option(
+    "--live",
+    is_flag=True,
+    help="Actually perform the reordering (overrides --dry-run)",
+)
+@click.option(
+    "--method",
+    type=click.Choice(["custom-field", "parent-manipulation"], case_sensitive=False),
+    default="custom-field",
+    help="Method to use for reordering (custom-field is safer, parent-manipulation is experimental)",
+)
+@click.option(
+    "--custom-field-name",
+    default="DisplayOrder",
+    help="Name of custom field to use for ordering (only with custom-field method)",
+)
+@click.option(
     "--force",
     is_flag=True,
     help="Skip confirmation prompts",
@@ -1101,25 +1117,30 @@ def reorder(
     parent_id: Optional[str],
     recursive: bool,
     dry_run: bool,
+    live: bool,
+    method: str,
+    custom_field_name: str,
     force: bool,
     case_sensitive: bool,
     format: str,
 ) -> None:
     """Reorder articles based on specified sorting criteria.
 
-    IMPORTANT: YouTrack API does not support direct article reordering.
-    This command provides a preview of how articles would be ordered.
-    To actually reorder articles, use YouTrack's web interface.
+    By default, this command provides a preview of how articles would be ordered.
+    Use --live flag to actually perform the reordering using available methods.
 
     Examples:
         # Preview sorting all articles in project by title
         yt articles reorder --project-id PRJ-123 --sort-by title
 
-        # Preview sorting specific articles by ID in reverse order
-        yt articles reorder ART-1 ART-5 ART-3 --sort-by id --reverse
+        # ACTUALLY reorder specific articles by ID using custom field method
+        yt articles reorder ART-1 ART-5 ART-3 --sort-by id --live --method custom-field
 
-        # Preview recursive sorting of article hierarchy by friendly ID
-        yt articles reorder --parent-id ART-ROOT --sort-by friendly-id --recursive
+        # ACTUALLY reorder with experimental parent manipulation method
+        yt articles reorder --parent-id ART-ROOT --sort-by title --live --method parent-manipulation
+
+        # Use custom field name for ordering
+        yt articles reorder --project-id PRJ-123 --sort-by title --live --custom-field-name "SortOrder"
 
         # JSON output for automation
         yt articles reorder --sort-by title --format json --project-id PRJ-123
@@ -1130,14 +1151,33 @@ def reorder(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    # Show API limitation warning upfront
-    console.print("⚠️  [yellow]API Limitation Notice[/yellow]", style="bold yellow")
-    console.print("YouTrack's REST API does not support programmatic article reordering.", style="yellow")
-    console.print("This command shows how articles would be ordered for reference only.", style="yellow")
-    console.print("To actually reorder articles, use YouTrack's web interface drag-and-drop.", style="dim")
-    console.print()
+    # Determine if we're doing live reordering
+    is_live = live and not dry_run
 
-    console.print(f"🔄 Analyzing article ordering (sort by: {sort_by})...", style="blue")
+    if is_live:
+        console.print("🚀 [bold green]LIVE REORDERING MODE[/bold green]", style="bold green")
+        console.print(f"Method: {method}", style="blue")
+        if method == "custom-field":
+            console.print(f"Custom field: {custom_field_name}", style="blue")
+        elif method == "parent-manipulation":
+            console.print(
+                "⚠️  [yellow]WARNING: Experimental method that may disrupt article hierarchy[/yellow]", style="yellow"
+            )
+
+        if not force:
+            console.print("\n🔥 [bold red]This will ACTUALLY modify your YouTrack articles![/bold red]")
+            if not click.confirm("Are you sure you want to proceed with live reordering?"):
+                console.print("Reordering cancelled.", style="yellow")
+                return
+    else:
+        # Show API limitation warning for preview mode
+        console.print("📋 [blue]PREVIEW MODE[/blue] - No changes will be made", style="blue")
+        if not live:
+            console.print("💡 Use --live flag to actually perform reordering", style="dim")
+
+    console.print(
+        f"\n🔄 {'Executing' if is_live else 'Analyzing'} article ordering (sort by: {sort_by})...", style="blue"
+    )
 
     try:
         result = asyncio.run(
@@ -1150,6 +1190,9 @@ def reorder(
                 parent_id=parent_id,
                 recursive=recursive,
                 dry_run=dry_run,
+                is_live=is_live,
+                method=method,
+                custom_field_name=custom_field_name,
                 force=force,
                 case_sensitive=case_sensitive,
                 format=format,
@@ -1177,6 +1220,9 @@ async def _reorder_articles(
     parent_id: Optional[str],
     recursive: bool,
     dry_run: bool,
+    is_live: bool,
+    method: str,
+    custom_field_name: str,
     force: bool,
     case_sensitive: bool,
     format: str,
@@ -1215,20 +1261,41 @@ async def _reorder_articles(
     # Sort articles based on criteria
     sorted_articles = _sort_articles(articles_to_sort, sort_by, reverse, case_sensitive)
 
-    # Display results
-    _display_reorder_results(
-        console=console,
-        original_articles=original_articles,
-        sorted_articles=sorted_articles,
-        sort_by=sort_by,
-        reverse=reverse,
-        format=format,
-    )
+    if is_live:
+        # Perform actual reordering
+        console.print(f"\n🔥 Executing live reordering using {method} method...", style="bold red")
 
-    # Show helpful next steps
-    _show_reorder_instructions(console, project_id, parent_id)
+        if method == "custom-field":
+            reorder_result = await article_manager.reorder_articles_via_custom_field(sorted_articles, custom_field_name)
+        elif method == "parent-manipulation":
+            reorder_result = await article_manager.reorder_articles_via_parent_manipulation(sorted_articles)
+        else:
+            return {"status": "error", "message": f"Unknown reordering method: {method}"}
 
-    return {"status": "success", "message": f"Article ordering preview completed (sorted by {sort_by})"}
+        # Display reordering results
+        if format == "json":
+            import json
+
+            console.print(json.dumps(reorder_result, indent=2))
+        else:
+            _display_live_reorder_results(console, reorder_result, sorted_articles)
+
+        return reorder_result
+    else:
+        # Display preview results
+        _display_reorder_results(
+            console=console,
+            original_articles=original_articles,
+            sorted_articles=sorted_articles,
+            sort_by=sort_by,
+            reverse=reverse,
+            format=format,
+        )
+
+        # Show helpful next steps
+        _show_reorder_instructions(console, project_id, parent_id)
+
+        return {"status": "success", "message": f"Article ordering preview completed (sorted by {sort_by})"}
 
 
 def _sort_articles(
@@ -1339,6 +1406,79 @@ def _display_reorder_results(
             )
 
         console.print(table)
+
+
+def _display_live_reorder_results(console, reorder_result: dict, sorted_articles: list[dict]) -> None:
+    """Display the results of live reordering."""
+    from rich.table import Table
+
+    status = reorder_result.get("status", "unknown")
+    method = reorder_result.get("method", "unknown")
+    message = reorder_result.get("message", "No message")
+    data = reorder_result.get("data", [])
+
+    # Show overall status
+    if status == "success":
+        console.print(f"\n✅ [bold green]{message}[/bold green]")
+    elif status == "partial":
+        console.print(f"\n⚠️  [bold yellow]{message}[/bold yellow]")
+    else:
+        console.print(f"\n❌ [bold red]{message}[/bold red]")
+
+    if method == "custom-field":
+        field_name = reorder_result.get("field_name", "DisplayOrder")
+        console.print(f"Custom field used: [blue]{field_name}[/blue]")
+    elif method == "parent-manipulation":
+        warning = reorder_result.get("warning", "")
+        if warning:
+            console.print(f"⚠️  [yellow]{warning}[/yellow]")
+
+    # Show detailed results table
+    if data and isinstance(data, list):
+        table = Table(title="Reordering Results")
+        table.add_column("Article ID", style="cyan")
+        table.add_column("Title", style="green")
+        table.add_column("Status", style="blue")
+
+        if method == "custom-field":
+            table.add_column("New Order Value", style="yellow")
+            table.add_column("Position", style="magenta")
+        elif method == "parent-manipulation":
+            table.add_column("New Position", style="yellow")
+
+        for item in data:
+            status_text = item.get("status", "unknown")
+            status_color = "green" if status_text == "success" else "red" if status_text == "error" else "yellow"
+
+            row_data = [
+                item.get("article_id", "N/A"),
+                (item.get("article_title", "Unknown"))[:40],
+                f"[{status_color}]{status_text}[/{status_color}]",
+            ]
+
+            if method == "custom-field":
+                row_data.extend([str(item.get("new_order", "N/A")), str(item.get("position", "N/A"))])
+            elif method == "parent-manipulation":
+                row_data.append(str(item.get("new_position", "N/A")))
+
+            table.add_row(*row_data)
+
+        console.print(table)
+
+    # Show next steps
+    console.print("\n💡 [blue]Next Steps:[/blue]")
+    if method == "custom-field":
+        field_name = reorder_result.get("field_name", "DisplayOrder")
+        console.print(f"• Articles now have {field_name} custom field values for ordering")
+        console.print("• You can sort by this field in YouTrack's web interface")
+        console.print(f"• Use this field in queries: 'order by: {field_name}'")
+    elif method == "parent-manipulation":
+        console.print("• Articles have been reordered using parent-child manipulation")
+        console.print("• Check YouTrack web interface to verify the new order")
+        console.print("• Native YouTrack ordinal values should now reflect the new order")
+
+    if status == "partial":
+        console.print("⚠️  [yellow]Some articles failed to reorder - check the table above for details[/yellow]")
 
 
 def _show_reorder_instructions(

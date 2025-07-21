@@ -1029,7 +1029,7 @@ class TestArticlesCLI:
             result = runner.invoke(main, ["articles", "reorder", "--sort-by", "title", "--project-id", "TEST"])
 
             assert result.exit_code == 0
-            assert "API Limitation Notice" in result.output
+            assert "PREVIEW MODE" in result.output
             assert "Analyzing article ordering" in result.output
 
     def test_articles_reorder_command_with_article_ids(self):
@@ -1055,7 +1055,7 @@ class TestArticlesCLI:
             result = runner.invoke(main, ["articles", "reorder", "ART-1", "ART-2", "--sort-by", "id"])
 
             assert result.exit_code == 0
-            assert "API Limitation Notice" in result.output
+            assert "PREVIEW MODE" in result.output
 
     def test_articles_reorder_command_json_format(self):
         """Test articles reorder command with JSON output format."""
@@ -1080,7 +1080,7 @@ class TestArticlesCLI:
             result = runner.invoke(main, ["articles", "reorder", "--sort-by", "title", "--format", "json"])
 
             assert result.exit_code == 0
-            assert "API Limitation Notice" in result.output
+            assert "PREVIEW MODE" in result.output
 
     def test_articles_reorder_command_missing_sort_by(self):
         """Test articles reorder command fails without sort-by parameter."""
@@ -1324,3 +1324,137 @@ class TestArticleReorderFunctions:
         calls = [call.args[0] for call in console.print.call_args_list]
         parent_mentioned = any("PARENT-ART" in call for call in calls)
         assert parent_mentioned
+
+    @pytest.mark.asyncio
+    async def test_reorder_articles_via_custom_field_success(self, article_manager, mock_credentials):
+        """Test successful custom field reordering."""
+        articles = [
+            {"id": "1", "summary": "Article 1"},
+            {"id": "2", "summary": "Article 2"},
+        ]
+
+        # Mock the auth manager to return credentials
+        article_manager.auth_manager.load_credentials.return_value = mock_credentials
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = mock_get_client.return_value
+            mock_response = MagicMock()
+            mock_response.json.return_value = {"status": "success"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
+
+            result = await article_manager.reorder_articles_via_custom_field(articles, "TestOrder")
+
+            assert result["status"] == "success"
+            assert "Successfully reordered" in result["message"]
+            assert result["method"] == "custom_field"
+            assert result["field_name"] == "TestOrder"
+
+    @pytest.mark.asyncio
+    async def test_reorder_articles_via_custom_field_partial_failure(self, article_manager, mock_credentials):
+        """Test partial failure in custom field reordering."""
+        articles = [
+            {"id": "1", "summary": "Article 1"},
+            {"id": "2", "summary": "Article 2"},
+        ]
+
+        # Mock the auth manager to return credentials
+        article_manager.auth_manager.load_credentials.return_value = mock_credentials
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = mock_get_client.return_value
+
+            # First request succeeds, second fails
+            async def side_effect(*args, **kwargs):
+                mock_response = MagicMock()
+                if "articles/1" in args[1]:
+                    mock_response.json.return_value = {"status": "success"}
+                    return mock_response
+                else:
+                    raise Exception("API Error")
+
+            mock_client_manager.make_request = AsyncMock(side_effect=side_effect)
+
+            result = await article_manager.reorder_articles_via_custom_field(articles)
+
+            assert result["status"] == "partial"
+            assert "failed to reorder" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_reorder_articles_via_parent_manipulation_success(self, article_manager, mock_credentials):
+        """Test successful parent manipulation reordering."""
+        articles = [
+            {"id": "1", "summary": "Article 1", "parentArticle": {"id": "parent1"}, "project": {"id": "proj1"}},
+            {"id": "2", "summary": "Article 2", "parentArticle": {"id": "parent1"}, "project": {"id": "proj1"}},
+        ]
+
+        # Mock the auth manager to return credentials
+        article_manager.auth_manager.load_credentials.return_value = mock_credentials
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = mock_get_client.return_value
+
+            # Mock responses for temp parent creation, moves, and deletion
+            temp_parent_response = MagicMock()
+            temp_parent_response.json.return_value = {"id": "temp123"}
+            article_manager._safe_json_parse = MagicMock(return_value={"id": "temp123"})
+
+            mock_client_manager.make_request = AsyncMock(return_value=temp_parent_response)
+
+            result = await article_manager.reorder_articles_via_parent_manipulation(articles)
+
+            assert result["status"] == "success"
+            assert "parent manipulation" in result["message"]
+            assert result["method"] == "parent-manipulation"
+
+    def test_display_live_reorder_results_custom_field(self):
+        """Test displaying live reorder results for custom field method."""
+        from unittest.mock import MagicMock
+
+        from youtrack_cli.commands.articles import _display_live_reorder_results
+
+        console = MagicMock()
+        reorder_result = {
+            "status": "success",
+            "method": "custom_field",
+            "field_name": "TestOrder",
+            "message": "Successfully reordered 2 articles",
+            "data": [
+                {"article_id": "1", "article_title": "Article 1", "status": "success", "new_order": 10, "position": 1},
+                {"article_id": "2", "article_title": "Article 2", "status": "success", "new_order": 20, "position": 2},
+            ],
+        }
+        sorted_articles = []
+
+        with patch("rich.table.Table") as mock_table:
+            _display_live_reorder_results(console, reorder_result, sorted_articles)
+
+            console.print.assert_called()
+            mock_table.assert_called_once()
+
+    def test_display_live_reorder_results_parent_manipulation(self):
+        """Test displaying live reorder results for parent manipulation method."""
+        from unittest.mock import MagicMock
+
+        from youtrack_cli.commands.articles import _display_live_reorder_results
+
+        console = MagicMock()
+        reorder_result = {
+            "status": "success",
+            "method": "parent-manipulation",
+            "message": "Successfully reordered 2 articles",
+            "warning": "This method is experimental",
+            "data": [
+                {"article_id": "1", "article_title": "Article 1", "status": "success", "new_position": 1},
+                {"article_id": "2", "article_title": "Article 2", "status": "success", "new_position": 2},
+            ],
+        }
+        sorted_articles = []
+
+        with patch("rich.table.Table") as mock_table:
+            _display_live_reorder_results(console, reorder_result, sorted_articles)
+
+            console.print.assert_called()
+            mock_table.assert_called_once()
+            # Should display warning
+            warning_calls = [call for call in console.print.call_args_list if "experimental" in str(call)]
+            assert len(warning_calls) > 0
