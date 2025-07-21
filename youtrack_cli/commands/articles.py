@@ -1152,7 +1152,7 @@ def reorder(
     article_manager = ArticleManager(auth_manager)
 
     # Determine if we're doing live reordering
-    is_live = live and not dry_run
+    is_live = live
 
     if is_live:
         console.print("🚀 [bold green]LIVE REORDERING MODE[/bold green]", style="bold green")
