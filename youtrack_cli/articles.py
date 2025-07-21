@@ -927,3 +927,207 @@ class ArticleManager:
                 "message": f"Removed {success_count} tags, failed to remove {error_count} tags from article {article_id}",  # noqa: E501
                 "data": results,
             }
+
+    async def reorder_articles_via_custom_field(
+        self, articles: list[dict], custom_field_name: str = "DisplayOrder"
+    ) -> dict[str, Any]:
+        """Reorder articles using a custom field for ordering.
+
+        This method creates/updates a custom integer field to control article ordering.
+        This provides programmatic ordering control while preserving native YouTrack order.
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        results = []
+        for index, article in enumerate(articles, 1):
+            article_id = article.get("id")
+            if not article_id:
+                results.append({"article_id": "unknown", "status": "error", "message": "Missing article ID"})
+                continue
+
+            # Update the custom field with the new position
+            order_value = index * 10  # Use increments of 10 for easy insertion
+
+            try:
+                # Update article with custom field
+                article_data = {"customFields": [{"name": custom_field_name, "value": order_value}]}
+
+                url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
+                headers = {
+                    "Authorization": f"Bearer {credentials.token}",
+                    "Content-Type": "application/json",
+                }
+
+                client_manager = get_client_manager()
+                await client_manager.make_request("POST", url, headers=headers, json_data=article_data)
+                # For POST operations that don't return content, just check the request didn't raise an exception
+
+                results.append(
+                    {
+                        "article_id": article_id,
+                        "article_title": article.get("summary", "Unknown"),
+                        "new_order": order_value,
+                        "position": index,
+                        "status": "success",
+                    }
+                )
+
+            except Exception as e:
+                results.append({"article_id": article_id, "status": "error", "message": str(e)})
+
+        # Calculate success/failure counts
+        success_count = sum(1 for r in results if r["status"] == "success")
+        error_count = len(results) - success_count
+
+        if success_count == len(results):
+            return {
+                "status": "success",
+                "message": f"Successfully reordered {success_count} articles using custom field '{custom_field_name}'",
+                "method": "custom_field",
+                "field_name": custom_field_name,
+                "data": results,
+            }
+        elif success_count > 0:
+            return {
+                "status": "partial",
+                "message": f"Reordered {success_count} articles, failed to reorder {error_count} articles",
+                "method": "custom_field",
+                "field_name": custom_field_name,
+                "data": results,
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to reorder any articles using custom field approach",
+                "data": results,
+            }
+
+    async def reorder_articles_via_parent_manipulation(self, articles: list[dict]) -> dict[str, Any]:
+        """Reorder articles by temporarily manipulating parent-child relationships.
+
+        WARNING: This method is experimental and may disrupt existing article hierarchy.
+        Use with caution and ensure you have backups.
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Group articles by parent to avoid conflicts
+        parent_groups = {}
+        for article in articles:
+            parent_id = article.get("parentArticle", {}).get("id") if article.get("parentArticle") else None
+            if parent_id not in parent_groups:
+                parent_groups[parent_id] = []
+            parent_groups[parent_id].append(article)
+
+        results = []
+
+        for parent_id, child_articles in parent_groups.items():
+            if len(child_articles) < 2:
+                # No reordering needed for single articles
+                for article in child_articles:
+                    results.append(
+                        {
+                            "article_id": article.get("id"),
+                            "status": "skipped",
+                            "message": "Single article in group - no reordering needed",
+                        }
+                    )
+                continue
+
+            # Create a temporary parent for reordering
+            try:
+                # Step 1: Create temporary holding parent
+                temp_parent_data = {
+                    "summary": f"TEMP_REORDER_PARENT_{parent_id or 'ROOT'}_{datetime.now().timestamp()}",
+                    "content": "Temporary article for reordering operation. Will be deleted.",
+                    "project": child_articles[0].get("project", {}) if child_articles else {},
+                    "parentArticle": {"id": parent_id} if parent_id else None,
+                }
+
+                url = f"{credentials.base_url.rstrip('/')}/api/articles"
+                headers = {
+                    "Authorization": f"Bearer {credentials.token}",
+                    "Content-Type": "application/json",
+                }
+
+                client_manager = get_client_manager()
+                temp_response = await client_manager.make_request(
+                    "POST", url, headers=headers, json_data=temp_parent_data
+                )
+                temp_parent = self._safe_json_parse(temp_response)
+                temp_parent_id = temp_parent.get("id")
+
+                # Step 2: Move all articles to temp parent (this breaks original order)
+                for article in child_articles:
+                    article_id = article.get("id")
+                    move_data = {"parentArticle": {"id": temp_parent_id}}
+
+                    article_url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
+                    await client_manager.make_request("POST", article_url, headers=headers, json_data=move_data)
+
+                # Step 3: Move articles back to original parent in desired order
+                for index, article in enumerate(child_articles):
+                    article_id = article.get("id")
+                    restore_data = {"parentArticle": {"id": parent_id} if parent_id else None}
+
+                    article_url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}"
+                    await client_manager.make_request("POST", article_url, headers=headers, json_data=restore_data)
+
+                    results.append(
+                        {
+                            "article_id": article_id,
+                            "article_title": article.get("summary", "Unknown"),
+                            "new_position": index + 1,
+                            "status": "success",
+                        }
+                    )
+
+                # Step 4: Delete temporary parent
+                temp_url = f"{credentials.base_url.rstrip('/')}/api/articles/{temp_parent_id}"
+                await client_manager.make_request("DELETE", temp_url, headers=headers)
+
+            except Exception as e:
+                # If anything fails, record the error for this group
+                for article in child_articles:
+                    results.append(
+                        {
+                            "article_id": article.get("id"),
+                            "status": "error",
+                            "message": f"Parent manipulation failed: {str(e)}",
+                        }
+                    )
+
+        success_count = sum(1 for r in results if r["status"] == "success")
+        error_count = sum(1 for r in results if r["status"] == "error")
+
+        if success_count > 0 and error_count == 0:
+            return {
+                "status": "success",
+                "message": f"Successfully reordered {success_count} articles using parent manipulation",
+                "method": "parent-manipulation",
+                "warning": "This method is experimental and may have side effects",
+                "data": results,
+            }
+        elif success_count > 0:
+            return {
+                "status": "partial",
+                "message": f"Reordered {success_count} articles, failed {error_count} articles",
+                "method": "parent-manipulation",
+                "warning": "This method is experimental and may have side effects",
+                "data": results,
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to reorder articles using parent manipulation",
+                "data": results,
+            }
