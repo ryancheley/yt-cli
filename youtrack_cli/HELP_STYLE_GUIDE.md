@@ -23,10 +23,10 @@ This should help users understand when to use commands in this group.
 Common Examples:
     # Most common use case with brief comment
     yt command example1
-    
+
     # Second most common use case
     yt command example2 --option value
-    
+
     # Third most common pattern
     yt command example3 --option1 value1 --option2 value2
 
@@ -47,10 +47,10 @@ Include guidance on when to use this command and any important context.
 Common Examples:
     # Most common use case
     yt command basic-example
-    
+
     # Common use case with options
     yt command example --option value
-    
+
     # Advanced use case
     yt command complex-example --option1 value1 --option2 value2
 
@@ -68,7 +68,7 @@ Tip: Brief guidance on key options or common gotchas.
 - Always start with `# Comment explaining the example`
 - Use realistic, actionable examples that users can copy-paste
 - Show progression from simple to complex usage
-- Use consistent project IDs (WEB-123, API-456, INFRA-789) 
+- Use consistent project IDs (WEB-123, API-456, INFRA-789)
 - Use realistic names (john.doe, admin) and values
 
 ### Comments
@@ -117,7 +117,7 @@ Choose examples that are:
 - **Links** to related commands or documentation
 
 ### Utility Commands (config, completion)
-- **Brief descriptions** 
+- **Brief descriptions**
 - **One clear example** per major use case
 - **Focus** on practical application
 
@@ -137,7 +137,7 @@ Options:
 # DON'T: Mix different comment styles
 Examples:
     yt command example1  # This style
-    // yt command example2  - And this style  
+    // yt command example2  - And this style
     /* yt command example3 */  -- And this one
 ```
 
@@ -160,7 +160,7 @@ yt issues create <PROJECT> "<SUMMARY>" --type <TYPE>
 # Start with most common use case
 yt issues list --assignee me
 
-# Then show common variations  
+# Then show common variations
 yt issues list --project-id WEB --state Open
 
 # Finally show advanced usage
@@ -186,7 +186,7 @@ Issue types and priorities are project-specific in YouTrack.
 Common Examples:
     # Simple bug report
     yt issues create WEB-123 "Fix login error"
-    
+
     # Feature with assignment
     yt issues create API-456 "Add OAuth" --type Feature --assignee john.doe
 
@@ -214,7 +214,7 @@ When adding or updating help text, verify:
 
 - [ ] Brief description is clear and action-oriented
 - [ ] Examples progress from simple to complex
-- [ ] All examples are realistic and copy-pasteable  
+- [ ] All examples are realistic and copy-pasteable
 - [ ] Comments explain the "why" not just the "what"
 - [ ] Tip section addresses common gotchas
 - [ ] Consistent formatting with other commands

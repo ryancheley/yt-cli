@@ -44,7 +44,7 @@ def issues() -> None:
 
     Command Categories:
         Core Operations: create, list, update, delete, show
-        Search & Filter: search, list  
+        Search & Filter: search, list
         Collaboration: comments, assign
         Organization: tag, links, move
         Bulk Operations: batch
