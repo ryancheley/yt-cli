@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Features comprehensive error handling and validation
 
 ### Fixed
+- Fix README and CONTRIBUTING placeholder URLs to use correct repository URL (#340)
+  - Replaced `YOUR_USERNAME` placeholders with `ryancheley` in README.md and CONTRIBUTING.md
+  - Updated GitHub links for issues, discussions, and repository cloning
+  - Ensures professional documentation appearance and working links
 - Fix `yt articles sort` command to properly display child articles and remove misleading functionality (#327)
   - Fixed child article filtering bug that prevented proper parent-child relationship matching
   - Replaced misleading `--update` flag with `--sort-by` and `--reverse` options for display sorting

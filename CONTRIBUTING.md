@@ -27,7 +27,7 @@ Thank you for your interest in contributing to YouTrack CLI! This document provi
 
 1. **Fork and Clone the Repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/yt-cli.git
+   git clone https://github.com/ryancheley/yt-cli.git
    cd yt-cli
    ```
 
