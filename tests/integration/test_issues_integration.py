@@ -9,14 +9,15 @@ from youtrack_cli.exceptions import YouTrackError
 class TestIssuesIntegration:
     """Integration tests for issue management with real YouTrack API."""
 
-    def test_create_and_delete_issue_workflow(
+    @pytest.mark.asyncio
+    async def test_create_and_delete_issue_workflow(
         self, integration_issue_manager, test_issue_data, cleanup_test_issues, integration_test_data
     ):
         """Test complete create and delete issue workflow."""
         issue_manager = integration_issue_manager
 
         # Create issue
-        created_issue = issue_manager.create_issue(
+        created_issue = await issue_manager.create_issue(
             project_id=test_issue_data["project"]["id"],
             summary=test_issue_data["summary"],
             description=test_issue_data["description"],
@@ -30,12 +31,13 @@ class TestIssuesIntegration:
         cleanup_test_issues(issue_id)
 
         # Verify issue was created by reading it back
-        retrieved_issue = issue_manager.get_issue(issue_id)
+        retrieved_issue = await issue_manager.get_issue(issue_id)
         assert retrieved_issue is not None
         assert retrieved_issue["id"] == issue_id
         assert retrieved_issue["summary"] == test_issue_data["summary"]
 
-    def test_create_read_update_delete_workflow(
+    @pytest.mark.asyncio
+    async def test_create_read_update_delete_workflow(
         self, integration_issue_manager, test_issue_data, cleanup_test_issues, integration_test_data
     ):
         """Test complete CRUD workflow for issues."""
@@ -43,7 +45,7 @@ class TestIssuesIntegration:
         unique_id = integration_test_data["unique_id"]
 
         # 1. CREATE
-        created_issue = issue_manager.create_issue(
+        created_issue = await issue_manager.create_issue(
             project_id=test_issue_data["project"]["id"],
             summary=f"CRUD Test Issue {unique_id}",
             description=f"Integration test issue for CRUD workflow {unique_id}",
@@ -53,21 +55,22 @@ class TestIssuesIntegration:
         cleanup_test_issues(issue_id)
 
         # 2. READ
-        read_issue = issue_manager.get_issue(issue_id)
+        read_issue = await issue_manager.get_issue(issue_id)
         assert read_issue["id"] == issue_id
         assert f"CRUD Test Issue {unique_id}" in read_issue["summary"]
 
         # 3. UPDATE
         updated_summary = f"Updated CRUD Test Issue {unique_id}"
-        issue_manager.update_issue(issue_id=issue_id, updates={"summary": updated_summary})
+        await issue_manager.update_issue(issue_id=issue_id, updates={"summary": updated_summary})
 
         # Verify update
-        read_updated_issue = issue_manager.get_issue(issue_id)
+        read_updated_issue = await issue_manager.get_issue(issue_id)
         assert read_updated_issue["summary"] == updated_summary
 
         # 4. DELETE is handled by cleanup_test_issues fixture
 
-    def test_issue_state_transitions(
+    @pytest.mark.asyncio
+    async def test_issue_state_transitions(
         self, integration_issue_manager, test_issue_data, cleanup_test_issues, integration_test_data
     ):
         """Test issue state transitions."""
@@ -75,7 +78,7 @@ class TestIssuesIntegration:
         unique_id = integration_test_data["unique_id"]
 
         # Create issue
-        created_issue = issue_manager.create_issue(
+        created_issue = await issue_manager.create_issue(
             project_id=test_issue_data["project"]["id"],
             summary=f"State Transition Test {unique_id}",
             description="Testing state transitions",
@@ -85,7 +88,7 @@ class TestIssuesIntegration:
         cleanup_test_issues(issue_id)
 
         # Get current state (verify issue exists before testing transitions)
-        issue_manager.get_issue(issue_id)
+        await issue_manager.get_issue(issue_id)
 
         # Note: State transitions depend on project workflow configuration
         # This test verifies the mechanism works, but specific transitions
@@ -95,10 +98,10 @@ class TestIssuesIntegration:
         try:
             # Update with a common state if possible
             # Most YouTrack projects have "In Progress" state
-            issue_manager.update_issue(issue_id=issue_id, updates={"state": {"name": "In Progress"}})
+            await issue_manager.update_issue(issue_id=issue_id, updates={"state": {"name": "In Progress"}})
 
             # Verify state change
-            updated_issue = issue_manager.get_issue(issue_id)
+            updated_issue = await issue_manager.get_issue(issue_id)
             # Don't assert specific state as it depends on project workflow
             assert updated_issue.get("state") is not None
 
@@ -107,7 +110,8 @@ class TestIssuesIntegration:
             # This is acceptable for integration test
             pass
 
-    def test_issue_assignment(
+    @pytest.mark.asyncio
+    async def test_issue_assignment(
         self,
         integration_issue_manager,
         test_issue_data,
@@ -120,7 +124,7 @@ class TestIssuesIntegration:
         unique_id = integration_test_data["unique_id"]
 
         # Create issue
-        created_issue = issue_manager.create_issue(
+        created_issue = await issue_manager.create_issue(
             project_id=test_issue_data["project"]["id"],
             summary=f"Assignment Test {unique_id}",
             description="Testing issue assignment",
@@ -132,12 +136,12 @@ class TestIssuesIntegration:
         # Try to assign to test user (if username is available)
         if integration_auth_config.username:
             try:
-                issue_manager.update_issue(
+                await issue_manager.update_issue(
                     issue_id=issue_id, updates={"assignee": {"login": integration_auth_config.username}}
                 )
 
                 # Verify assignment
-                updated_issue = issue_manager.get_issue(issue_id)
+                updated_issue = await issue_manager.get_issue(issue_id)
                 assignee = updated_issue.get("assignee", {})
                 if assignee:
                     assert assignee.get("login") == integration_auth_config.username
@@ -147,7 +151,8 @@ class TestIssuesIntegration:
                 # This is acceptable for integration test
                 pass
 
-    def test_issue_custom_fields(
+    @pytest.mark.asyncio
+    async def test_issue_custom_fields(
         self, integration_issue_manager, test_issue_data, cleanup_test_issues, integration_test_data
     ):
         """Test custom field updates on issues."""
@@ -155,7 +160,7 @@ class TestIssuesIntegration:
         unique_id = integration_test_data["unique_id"]
 
         # Create issue
-        created_issue = issue_manager.create_issue(
+        created_issue = await issue_manager.create_issue(
             project_id=test_issue_data["project"]["id"],
             summary=f"Custom Field Test {unique_id}",
             description="Testing custom field updates",
@@ -165,7 +170,7 @@ class TestIssuesIntegration:
         cleanup_test_issues(issue_id)
 
         # Get issue to see available custom fields
-        current_issue = issue_manager.get_issue(issue_id)
+        current_issue = await issue_manager.get_issue(issue_id)
 
         # Note: Custom field testing depends on project configuration
         # This test verifies the mechanism works but doesn't assert specific fields
@@ -188,25 +193,27 @@ class TestIssuesIntegration:
                         # Custom field updates might fail due to constraints
                         pass
 
-    def test_issue_search_and_filtering(self, integration_issue_manager, test_project_id, integration_test_data):
+    @pytest.mark.asyncio
+    async def test_issue_search_and_filtering(self, integration_issue_manager, test_project_id, integration_test_data):
         """Test issue search and filtering functionality."""
         issue_manager = integration_issue_manager
 
         # Search for issues in test project
         try:
             # Basic search by project
-            issues = issue_manager.search_issues(f"project: {test_project_id}")
+            issues = await issue_manager.search_issues(f"project: {test_project_id}")
             assert isinstance(issues, list)
 
             # Search with specific criteria
-            recent_issues = issue_manager.search_issues(f"project: {test_project_id} created: today")
+            recent_issues = await issue_manager.search_issues(f"project: {test_project_id} created: today")
             assert isinstance(recent_issues, list)
 
         except YouTrackError as e:
             # Search might fail due to permissions or query syntax
             pytest.skip(f"Search functionality not available: {e}")
 
-    def test_issue_comments(
+    @pytest.mark.asyncio
+    async def test_issue_comments(
         self, integration_issue_manager, test_issue_data, cleanup_test_issues, integration_test_data
     ):
         """Test issue comments functionality."""
@@ -214,7 +221,7 @@ class TestIssuesIntegration:
         unique_id = integration_test_data["unique_id"]
 
         # Create issue
-        created_issue = issue_manager.create_issue(
+        created_issue = await issue_manager.create_issue(
             project_id=test_issue_data["project"]["id"],
             summary=f"Comments Test {unique_id}",
             description="Testing issue comments",
@@ -226,11 +233,11 @@ class TestIssuesIntegration:
         # Add comment
         comment_text = f"Integration test comment {unique_id}"
         try:
-            comment = issue_manager.add_comment(issue_id, comment_text)
+            comment = await issue_manager.add_comment(issue_id, comment_text)
             assert comment is not None
 
             # Get issue with comments
-            issue_with_comments = issue_manager.get_issue(issue_id, include_comments=True)
+            issue_with_comments = await issue_manager.get_issue(issue_id, include_comments=True)
             comments = issue_with_comments.get("comments", [])
 
             # Verify comment was added
