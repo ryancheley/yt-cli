@@ -87,7 +87,7 @@ def test_issue_data(test_project_id):
 
 
 @pytest.fixture(scope="function")
-def cleanup_test_issues(integration_issue_manager, test_project_id):
+async def cleanup_test_issues(integration_issue_manager, test_project_id):
     """Track and cleanup test issues created during integration tests."""
     created_issues: List[str] = []
 
@@ -101,8 +101,8 @@ def cleanup_test_issues(integration_issue_manager, test_project_id):
     # Cleanup after test
     for issue_id in created_issues:
         try:
-            # Delete the test issue
-            integration_issue_manager.delete_issue(issue_id)
+            # Delete the test issue (properly await the async method)
+            await integration_issue_manager.delete_issue(issue_id)
         except Exception as e:
             # Log but don't fail the test if cleanup fails
             print(f"Warning: Failed to cleanup test issue {issue_id}: {e}")

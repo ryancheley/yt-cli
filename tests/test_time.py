@@ -438,8 +438,7 @@ class TestTimeCommands:
                 assert "📋 Listing time entries..." in clean_output
                 assert "📊 Total entries: 1" in clean_output
 
-    @pytest.mark.asyncio
-    async def test_list_command_with_json_format(self, mock_auth_manager):
+    def test_list_command_with_json_format(self, mock_auth_manager):
         """Test time list command with JSON output format."""
         from click.testing import CliRunner
 
@@ -459,12 +458,20 @@ class TestTimeCommands:
 
         with patch("youtrack_cli.commands.time_tracking.AuthManager") as mock_auth_class:
             mock_auth_class.return_value = mock_auth_manager
-            with patch("youtrack_cli.commands.time_tracking.asyncio.run") as mock_run:
-                mock_run.return_value = {
-                    "status": "success",
-                    "data": mock_time_entries,
-                    "count": 1,
-                }
+            with patch("youtrack_cli.time.TimeManager") as mock_time_manager_class:
+                mock_time_manager = Mock()
+                mock_time_manager.display_time_entries = Mock()
+
+                # Make get_time_entries return a coroutine that resolves to the mock data
+                async def mock_get_time_entries(*args, **kwargs):
+                    return {
+                        "status": "success",
+                        "data": mock_time_entries,
+                        "count": 1,
+                    }
+
+                mock_time_manager.get_time_entries = mock_get_time_entries
+                mock_time_manager_class.return_value = mock_time_manager
 
                 runner = CliRunner(env={"NO_COLOR": "1"})
                 result = runner.invoke(list, ["--issue", "ISSUE-123", "--format", "json"], obj={"config": None})

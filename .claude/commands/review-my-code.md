@@ -1,6 +1,8 @@
-You have been tasked with reviewing a Python CLI for YouTrack. This CLI is written with the rich library, which has documentation here https://rich.readthedocs.io/en/stable/introduction.html.
+You have been tasked with reviewing a Python CLI for YouTrack. This CLI is written with the rich library, which has documentation [here](https://rich.readthedocs.io/en/stable/introduction.html).
 
-Please perform a comprehensive code review of this YouTrack Python CLI project, focusing on:
+The documentation for this CLI is [here](https://yt-cli.readthedocs.io/en/latest/).
+
+Think hard and perform a comprehensive code review of this YouTrack Python CLI project, focusing on:
 
 1. **Code Structure & Organization**
    - Project layout and module organization
@@ -48,4 +50,4 @@ For each area, provide:
 - Code examples where helpful
 - Priority level (High/Medium/Low) for each recommendation
 
-Please examine all Python files, configuration files, tests, and documentation in the project.
+Please examine all Python files, configuration files, tests, and documentation in the project. Write your findings to the file scratch/review-20250721.md
