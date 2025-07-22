@@ -102,28 +102,35 @@ def main(
     time tracking, and more. Designed for developers and teams who want to integrate
     YouTrack into their daily workflows and automation.
 
-    Quick Start:
-
-        # Set up authentication
-        yt auth login  (or: yt login)
-
-        # List your projects
-        yt projects list  (or: yt p list)
+    Common Tasks:
+        # Get started (first time setup)
+        yt auth login
 
         # Create an issue
-        yt issues create PROJECT-123 "Fix the bug"  (or: yt i create ...)
+        yt issues create PROJECT-123 "Fix the bug" --type Bug --priority High
+
+        # List your assigned issues
+        yt issues list --assignee me
 
         # Log work time
         yt time log ISSUE-456 "2h 30m" --description "Fixed the issue"
-        # (or: yt t log ...)
 
-    Command Aliases:
-        i = issues, a = articles, p = projects, u = users, t = time, b = boards
-        c/cfg = config, login = auth
+        # View project details
+        yt projects show PROJECT-123
 
-    For more help on specific commands, use:
+        # Search for issues
+        yt issues search "API error priority:Critical"
 
+    Quick Reference:
+        # Command aliases (use short forms)
+        yt i = yt issues    |  yt p = yt projects  |  yt t = yt time
+        yt u = yt users     |  yt a = yt articles  |  yt b = yt boards
+
+        # Get help for any command
         yt COMMAND --help
+
+        # Check authentication status
+        yt auth status
 
     Documentation: https://yt-cli.readthedocs.io/
     """
@@ -750,8 +757,8 @@ def auth(ctx: click.Context) -> None:
     Manage authentication credentials for YouTrack CLI.
     The auth commands are interactive and will prompt for required information.
 
-    Examples:
-        # Interactive login (will prompt for URL and token)
+    Common Examples:
+        # Interactive login (recommended for first-time setup)
         yt auth login
 
         # Check authentication status
@@ -759,6 +766,11 @@ def auth(ctx: click.Context) -> None:
 
         # Update token interactively
         yt auth token update
+
+        # Logout (clear credentials)
+        yt auth logout
+
+    Tip: Use 'yt auth login' for initial setup - it will guide you through the process.
     """
     pass
 

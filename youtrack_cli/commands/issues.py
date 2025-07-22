@@ -26,11 +26,9 @@ def issues() -> None:
     You can create new issues, update existing ones, search and filter issues,
     manage comments and attachments, and handle issue relationships.
 
-    Common workflows:
-
+    Common Examples:
         # Create and assign a bug report
-        yt issues create PROJECT-123 "Login fails on mobile" \\
-            --type Bug --priority High --assignee john.doe
+        yt issues create PROJECT-123 "Login fails on mobile" --type Bug --priority High --assignee john.doe
 
         # List open issues assigned to you
         yt issues list --assignee me --state Open
@@ -43,6 +41,14 @@ def issues() -> None:
 
         # Add a comment
         yt issues comments add ISSUE-456 "Fixed in build 1.2.3"
+
+    Command Categories:
+        Core Operations: create, list, update, delete, show
+        Search & Filter: search, list  
+        Collaboration: comments, assign
+        Organization: tag, links, move
+        Bulk Operations: batch
+        Attachments: attach
     """
     pass
 
@@ -86,21 +92,20 @@ def create(
     You can optionally specify additional fields like description, type,
     priority, and assignee.
 
-    Examples:
+    Common Examples:
         # Create a simple bug report
         yt issues create WEB-123 "Fix login error on mobile"
 
-        # Create a feature request with full details
-        yt issues create API-456 "Add user authentication endpoint" \\
-            --description "Need OAuth2 support for mobile app" \\
-            --type Feature \\
-            --priority High \\
-            --assignee john.doe
+        # Create a feature request with details
+        yt issues create API-456 "Add user authentication endpoint" \
+            --description "Need OAuth2 support for mobile app" \
+            --type Feature --priority High --assignee john.doe
 
-        # Create a task assigned to yourself
-        yt issues create INFRA-789 "Update server certificates" \\
-            --type Task \\
-            --priority Medium
+        # Create a task with priority
+        yt issues create INFRA-789 "Update server certificates" \
+            --type Task --priority Medium
+
+    Tip: Issue types and priorities are project-specific. Use values that exist in your YouTrack project.
     """
     from ..exceptions import UsageError, ValidationError
     from ..issues import IssueManager
@@ -284,7 +289,27 @@ def list_issues(
     show_all: bool,
     start_page: int,
 ) -> None:
-    """List issues with filtering."""
+    """List issues with filtering and pagination options.
+
+    Display issues from your YouTrack instance with various filtering options.
+    Use basic filters for common cases, or combine options for advanced queries.
+
+    Common Examples:
+        # List all your assigned issues
+        yt issues list --assignee me
+
+        # List open issues in a specific project
+        yt issues list --project-id WEB --state Open
+
+        # List issues with custom query
+        yt issues list --query "priority:Critical state:Open"
+
+        # List issues with JSON output for automation
+        yt issues list --format json --page-size 50
+
+    Tip: For complex filtering, use --query with YouTrack's search syntax.
+    Most users only need --project-id, --assignee, and --state options.
+    """
     from ..issues import IssueManager
 
     console = get_console()

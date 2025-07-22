@@ -387,9 +387,8 @@ class TestCommandAliases:
         runner = CliRunner()
         result = runner.invoke(main, ["--help"])
         assert result.exit_code == 0
-        assert "Command Aliases:" in result.output
-        assert "i = issues" in result.output
-        assert "c/cfg = config" in result.output
+        assert "Quick Reference:" in result.output
+        assert "yt i = yt issues" in result.output
 
     @pytest.mark.parametrize(
         "alias,subcommand",
