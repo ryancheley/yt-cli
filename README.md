@@ -56,7 +56,7 @@ pip install yt-cli
 
 ```bash
 # Clone and set up for development
-git clone https://github.com/YOUR_USERNAME/yt-cli.git
+git clone https://github.com/ryancheley/yt-cli.git
 cd yt-cli
 
 # Using uv (recommended)
@@ -205,8 +205,8 @@ yt reports velocity PROJECT-123 --sprints 10
 ## Help and Support
 
 - 📖 **[Documentation](https://yt-cli.readthedocs.io/en/latest/)** - Comprehensive guides and examples
-- 🐛 **[Issue Tracker](https://github.com/YOUR_USERNAME/yt-cli/issues)** - Report bugs and request features
-- 💬 **[Discussions](https://github.com/YOUR_USERNAME/yt-cli/discussions)** - Ask questions and share ideas
+- 🐛 **[Issue Tracker](https://github.com/ryancheley/yt-cli/issues)** - Report bugs and request features
+- 💬 **[Discussions](https://github.com/ryancheley/yt-cli/discussions)** - Ask questions and share ideas
 
 ## Development
 
@@ -216,7 +216,7 @@ This project uses `uv` for dependency management.
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/yt-cli.git
+git clone https://github.com/ryancheley/yt-cli.git
 cd yt-cli
 
 # Install dependencies
