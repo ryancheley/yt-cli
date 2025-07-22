@@ -2,8 +2,6 @@
 
 from .aliases import AliasedGroup
 from .validation import (
-    EnhancedOption,
-    enhanced_option,
     mutually_exclusive,
     require_one_of,
     validate_choices_with_suggestions,
@@ -13,11 +11,9 @@ from .validation import (
 
 __all__ = [
     "AliasedGroup",
-    "enhanced_option",
     "mutually_exclusive",
     "require_one_of",
     "validate_choices_with_suggestions",
     "validate_issue_id_format",
     "validate_project_id_format",
-    "EnhancedOption",
 ]
