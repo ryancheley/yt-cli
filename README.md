@@ -56,7 +56,7 @@ pip install yt-cli
 
 ```bash
 # Clone and set up for development
-git clone https://github.com/ryancheley/yt-cli.git
+git clone https://github.com/YOUR_USERNAME/yt-cli.git
 cd yt-cli
 
 # Using uv (recommended)
@@ -216,7 +216,7 @@ This project uses `uv` for dependency management.
 
 ```bash
 # Clone the repository
-git clone https://github.com/ryancheley/yt-cli.git
+git clone https://github.com/YOUR_USERNAME/yt-cli.git
 cd yt-cli
 
 # Install dependencies
