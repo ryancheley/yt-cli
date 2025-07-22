@@ -14,7 +14,7 @@ from typing import Optional
 import click
 
 from ..auth import AuthManager
-from ..cli_utils import AliasedGroup, enhanced_option, validate_issue_id_format, validate_project_id_format
+from ..cli_utils import AliasedGroup, validate_issue_id_format, validate_project_id_format
 from ..console import get_console
 
 
@@ -50,28 +50,25 @@ def issues() -> None:
 @issues.command()
 @click.argument("project_id", callback=validate_project_id_format)
 @click.argument("summary")
-@enhanced_option(
+@click.option(
     "--description",
     "-d",
     help="Issue description",
-    usage_examples=["--description 'Detailed description of the issue'"],
 )
-@enhanced_option(
+@click.option(
     "--type",
     "-t",
-    help="Issue type (e.g., Bug, Feature, Task)",
-    suggestions=["Bug", "Feature", "Task", "Epic", "Story"],
-    usage_examples=["--type Bug", "--type Feature"],
+    help="Issue type",
 )
-@enhanced_option(
+@click.option(
     "--priority",
     "-p",
-    help="Issue priority (e.g., Critical, High, Medium, Low)",
-    suggestions=["Critical", "High", "Medium", "Low"],
-    usage_examples=["--priority High", "--priority Critical"],
+    help="Issue priority",
 )
-@enhanced_option(
-    "--assignee", "-a", help="Assignee username", usage_examples=["--assignee john.doe", "--assignee admin"]
+@click.option(
+    "--assignee",
+    "-a",
+    help="Assignee username",
 )
 @click.pass_context
 def create(
@@ -834,6 +831,7 @@ class CommentsGroup(AliasedGroup):
     """Enhanced comments group with specific error handling for create vs add."""
 
     def get_command(self, ctx: click.Context, cmd_name: str):
+        """Get command with enhanced error handling for create vs add suggestion."""
         # Handle the specific case of 'create' -> 'add' suggestion
         if cmd_name == "create":
             from ..exceptions import CommandValidationError
