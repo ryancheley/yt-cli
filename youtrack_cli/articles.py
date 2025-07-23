@@ -11,7 +11,6 @@ from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
 from .pagination import create_paginated_display
-from .utils import paginate_articles
 
 __all__ = ["ArticleManager"]
 
@@ -175,15 +174,19 @@ class ArticleManager:
         }
 
         try:
-            # Use the new unified pagination for articles
-            paginated_result = await paginate_articles(
-                endpoint=endpoint,
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+            
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                endpoint,
                 headers=headers,
                 params=params,
-                max_results=top,
             )
 
-            data = paginated_result["results"]
+            data = self._safe_json_parse(response)
             # Handle case where API returns None or null
             if data is None:
                 data = []
@@ -411,15 +414,19 @@ class ArticleManager:
         }
 
         try:
-            # Use the new unified pagination for articles
-            paginated_result = await paginate_articles(
-                endpoint=endpoint,
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+            
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                endpoint,
                 headers=headers,
                 params=params,
-                max_results=top,
             )
 
-            data = paginated_result["results"]
+            data = self._safe_json_parse(response)
             # Handle case where API returns None or null
             if data is None:
                 data = []

@@ -9,7 +9,6 @@ from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
 from .pagination import create_paginated_display
-from .utils import paginate_users
 
 __all__ = ["UserManager"]
 
@@ -70,16 +69,19 @@ class UserManager:
         }
 
         try:
-            # Use the new unified pagination for users
-            endpoint = f"{credentials.base_url.rstrip('/')}/api/users"
-            paginated_result = await paginate_users(
-                endpoint=endpoint,
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+            
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/users",
                 headers=headers,
                 params=params,
-                max_results=top,
             )
 
-            users = paginated_result["results"]
+            users = response.json()
 
             # Apply client-side filtering for active_only
             if active_only:

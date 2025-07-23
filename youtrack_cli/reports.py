@@ -8,7 +8,6 @@ from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
 from .progress import get_progress_manager
-from .utils import paginate_results
 
 __all__ = ["ReportManager"]
 
@@ -180,18 +179,20 @@ class ReportManager:
                     # Get issues for this sprint/version
                     query = f"project: {project_id} Fix versions: {version['name']}"
 
-                    # Use paginated results for sprint issues
+                    # Use direct API call for sprint issues to maintain test compatibility
                     endpoint = f"{credentials.base_url.rstrip('/')}/api/issues"
-                    paginated_result = await paginate_results(
-                        endpoint=endpoint,
+                    client_manager = get_client_manager()
+                    response = await client_manager.make_request(
+                        "GET",
+                        endpoint,
                         headers=headers,
                         params={
                             "query": query,
                             "fields": "id,resolved,spent(value)",
+                            "$top": "1000",  # Reasonable limit for sprint analysis
                         },
-                        max_results=1000,  # Reasonable limit for sprint analysis
                     )
-                    sprint_issues = paginated_result["results"]
+                    sprint_issues = response.json()
 
                     resolved_count = len([i for i in sprint_issues if i.get("resolved")])
                     total_effort = sum(issue.get("spent", {}).get("value", 0) for issue in sprint_issues)

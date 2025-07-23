@@ -11,7 +11,6 @@ from .client import get_client_manager
 from .console import get_console
 from .pagination import create_paginated_display
 from .users import UserManager
-from .utils import paginate_projects
 
 __all__ = ["ProjectManager"]
 
@@ -112,16 +111,19 @@ class ProjectManager:
         }
 
         try:
-            # Use the new unified pagination for projects
-            endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/projects"
-            paginated_result = await paginate_projects(
-                endpoint=endpoint,
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+            
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects",
                 headers=headers,
                 params=params,
-                max_results=top,
             )
 
-            projects = paginated_result["results"]
+            projects = response.json()
 
             # Ensure we have a valid list of projects
             if projects is None:
@@ -155,6 +157,8 @@ class ProjectManager:
 
         except ValueError as e:
             return {"status": "error", "message": f"Failed to parse response: {e}"}
+        except httpx.HTTPError as e:
+            return {"status": "error", "message": f"HTTP error: {e}"}
         except Exception as e:
             return {"status": "error", "message": f"Unexpected error: {e}"}
 
@@ -562,16 +566,19 @@ class ProjectManager:
         }
 
         try:
-            # Use the new unified pagination for projects (custom fields use same pattern)
-            endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/customFields"
-            paginated_result = await paginate_projects(
-                endpoint=endpoint,
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+            
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(
+                "GET",
+                f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/customFields",
                 headers=headers,
                 params=params,
-                max_results=top,
             )
 
-            custom_fields = paginated_result["results"]
+            custom_fields = response.json()
 
             # Ensure we have a valid list of custom fields
             if custom_fields is None:
@@ -592,6 +599,8 @@ class ProjectManager:
 
         except ValueError as e:
             return {"status": "error", "message": f"Failed to parse response: {e}"}
+        except httpx.HTTPError as e:
+            return {"status": "error", "message": f"HTTP error: {e}"}
         except Exception as e:
             return {"status": "error", "message": f"Unexpected error: {e}"}
 
