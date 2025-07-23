@@ -177,7 +177,7 @@ class ArticleManager:
             # Add $top parameter for API call
             if top:
                 params["$top"] = str(top)
-            
+
             client_manager = get_client_manager()
             response = await client_manager.make_request(
                 "GET",
@@ -417,7 +417,7 @@ class ArticleManager:
             # Add $top parameter for API call
             if top:
                 params["$top"] = str(top)
-            
+
             client_manager = get_client_manager()
             response = await client_manager.make_request(
                 "GET",
