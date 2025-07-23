@@ -3,10 +3,13 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+from click.testing import CliRunner
 
 from youtrack_cli.auth import AuthConfig, AuthManager
+from youtrack_cli.main import main
 
 
 @pytest.mark.integration
@@ -108,3 +111,323 @@ class TestAuthIntegration:
 
         assert config.base_url == base_url
         assert config.token == token
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+class TestAuthFlowIntegration:
+    """Test comprehensive authentication flows and session management."""
+
+    async def test_complete_auth_login_workflow(self, integration_auth_manager):
+        """Test complete authentication login workflow via CLI."""
+        runner = CliRunner()
+
+        # Create temporary config for test
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as temp_file:
+            temp_config_path = temp_file.name
+
+        try:
+            # Test auth login command
+            result = runner.invoke(
+                main,
+                [
+                    "auth",
+                    "login",
+                    "--token",
+                    integration_auth_manager.config.token,
+                    "--base-url",
+                    integration_auth_manager.config.base_url,
+                    "--config-file",
+                    temp_config_path,
+                ],
+            )
+
+            assert result.exit_code == 0
+            assert "successfully" in result.output.lower() or "authenticated" in result.output.lower()
+
+            # Verify config file was created
+            assert Path(temp_config_path).exists()
+
+            # Test that subsequent commands work with saved config
+            with patch.dict(os.environ, {"YOUTRACK_CONFIG_FILE": temp_config_path}):
+                result = runner.invoke(main, ["projects", "list", "--top", "1"])
+                assert result.exit_code == 0
+
+        finally:
+            if Path(temp_config_path).exists():
+                os.unlink(temp_config_path)
+
+    async def test_auth_logout_workflow(self, integration_auth_manager):
+        """Test authentication logout workflow."""
+        runner = CliRunner()
+
+        # Create temporary config with credentials
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as temp_file:
+            temp_config_path = temp_file.name
+
+        try:
+            # First login
+            result = runner.invoke(
+                main,
+                [
+                    "auth",
+                    "login",
+                    "--token",
+                    integration_auth_manager.config.token,
+                    "--base-url",
+                    integration_auth_manager.config.base_url,
+                    "--config-file",
+                    temp_config_path,
+                ],
+            )
+            assert result.exit_code == 0
+
+            # Then logout
+            result = runner.invoke(main, ["auth", "logout", "--config-file", temp_config_path])
+            assert result.exit_code == 0
+
+            # Verify config file is cleared or credentials removed
+            with patch.dict(os.environ, {"YOUTRACK_CONFIG_FILE": temp_config_path}):
+                result = runner.invoke(main, ["projects", "list", "--top", "1"])
+                # Should fail due to missing authentication
+                assert result.exit_code != 0
+                assert "authentication" in result.output.lower() or "credentials" in result.output.lower()
+
+        finally:
+            if Path(temp_config_path).exists():
+                os.unlink(temp_config_path)
+
+    async def test_auth_status_workflow(self, integration_auth_manager):
+        """Test authentication status checking workflow."""
+        runner = CliRunner()
+
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            # Test auth status command
+            result = runner.invoke(main, ["auth", "status"])
+            assert result.exit_code == 0
+            assert "authenticated" in result.output.lower() or "connected" in result.output.lower()
+            assert integration_auth_manager.config.base_url in result.output
+
+    async def test_session_persistence_workflow(self, integration_auth_manager):
+        """Test authentication session persistence across commands."""
+        runner = CliRunner()
+
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            # Execute multiple commands to test session persistence
+            commands = [
+                ["projects", "list", "--top", "1"],
+                ["auth", "status"],
+                ["projects", "list", "--top", "1", "--format", "json"],
+            ]
+
+            for command in commands:
+                result = runner.invoke(main, command)
+                assert result.exit_code == 0, f"Command {' '.join(command)} failed"
+
+    async def test_invalid_credentials_handling(self):
+        """Test handling of invalid authentication credentials."""
+        runner = CliRunner()
+
+        # Test with invalid token
+        with patch.dict(
+            os.environ, {"YOUTRACK_BASE_URL": "http://0.0.0.0:8080", "YOUTRACK_API_KEY": "invalid_token_12345"}
+        ):
+            result = runner.invoke(main, ["projects", "list", "--top", "1"])
+            assert result.exit_code != 0
+            assert "authentication" in result.output.lower() or "unauthorized" in result.output.lower()
+
+    async def test_missing_credentials_handling(self):
+        """Test handling of missing authentication credentials."""
+        runner = CliRunner()
+
+        # Remove auth environment variables
+        env_without_auth = {k: v for k, v in os.environ.items() if not k.startswith("YOUTRACK_")}
+
+        with patch.dict(os.environ, env_without_auth, clear=True):
+            result = runner.invoke(main, ["projects", "list", "--top", "1"])
+            assert result.exit_code != 0
+            assert (
+                "credentials" in result.output.lower()
+                or "authentication" in result.output.lower()
+                or "configuration" in result.output.lower()
+            )
+
+    async def test_environment_vs_config_file_precedence(self, integration_auth_manager):
+        """Test precedence between environment variables and config file."""
+        runner = CliRunner()
+
+        # Create config file with different (invalid) credentials
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as temp_file:
+            temp_config_path = temp_file.name
+            temp_file.write("YOUTRACK_BASE_URL=http://invalid.example.com\n")
+            temp_file.write("YOUTRACK_API_KEY=invalid_token\n")
+
+        try:
+            # Environment variables should take precedence
+            with patch.dict(
+                os.environ,
+                {
+                    "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                    "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+                    "YOUTRACK_CONFIG_FILE": temp_config_path,
+                },
+            ):
+                result = runner.invoke(main, ["auth", "status"])
+                assert result.exit_code == 0
+                assert integration_auth_manager.config.base_url in result.output
+
+        finally:
+            if Path(temp_config_path).exists():
+                os.unlink(temp_config_path)
+
+    async def test_token_refresh_simulation(self, integration_auth_manager):
+        """Test token refresh-like behavior by re-authenticating."""
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as temp_file:
+            temp_config_path = temp_file.name
+
+        try:
+            # Initial authentication
+            result = runner.invoke(
+                main,
+                [
+                    "auth",
+                    "login",
+                    "--token",
+                    integration_auth_manager.config.token,
+                    "--base-url",
+                    integration_auth_manager.config.base_url,
+                    "--config-file",
+                    temp_config_path,
+                ],
+            )
+            assert result.exit_code == 0
+
+            # Simulate token refresh by logging in again with same credentials
+            result = runner.invoke(
+                main,
+                [
+                    "auth",
+                    "login",
+                    "--token",
+                    integration_auth_manager.config.token,
+                    "--base-url",
+                    integration_auth_manager.config.base_url,
+                    "--config-file",
+                    temp_config_path,
+                ],
+            )
+            assert result.exit_code == 0
+
+            # Verify authentication still works
+            with patch.dict(os.environ, {"YOUTRACK_CONFIG_FILE": temp_config_path}):
+                result = runner.invoke(main, ["auth", "status"])
+                assert result.exit_code == 0
+
+        finally:
+            if Path(temp_config_path).exists():
+                os.unlink(temp_config_path)
+
+    async def test_multi_instance_authentication(self, integration_auth_manager):
+        """Test authentication with multiple YouTrack instances."""
+        runner = CliRunner()
+
+        # Create configs for different instances
+        configs = []
+
+        for i in range(2):
+            temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=f"_{i}.env", delete=False)
+            config_path = temp_file.name
+            temp_file.close()
+            configs.append(config_path)
+
+        try:
+            # Set up authentication for "different" instances
+            # (using same instance but different config files)
+            for _i, config_path in enumerate(configs):
+                result = runner.invoke(
+                    main,
+                    [
+                        "auth",
+                        "login",
+                        "--token",
+                        integration_auth_manager.config.token,
+                        "--base-url",
+                        integration_auth_manager.config.base_url,
+                        "--config-file",
+                        config_path,
+                    ],
+                )
+                assert result.exit_code == 0
+
+            # Test that each config works independently
+            for config_path in configs:
+                with patch.dict(os.environ, {"YOUTRACK_CONFIG_FILE": config_path}):
+                    result = runner.invoke(main, ["auth", "status"])
+                    assert result.exit_code == 0
+
+        finally:
+            for config_path in configs:
+                if Path(config_path).exists():
+                    os.unlink(config_path)
+
+    async def test_authentication_error_recovery(self, integration_auth_manager):
+        """Test recovery from authentication errors."""
+        runner = CliRunner()
+
+        # First, test with invalid credentials to trigger error
+        with patch.dict(os.environ, {"YOUTRACK_BASE_URL": "http://0.0.0.0:8080", "YOUTRACK_API_KEY": "invalid_token"}):
+            result = runner.invoke(main, ["projects", "list", "--top", "1"])
+            assert result.exit_code != 0
+
+        # Then recover with valid credentials
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            result = runner.invoke(main, ["projects", "list", "--top", "1"])
+            assert result.exit_code == 0
+
+    async def test_concurrent_authentication_sessions(self, integration_auth_manager):
+        """Test handling of concurrent authentication sessions."""
+        runner = CliRunner()
+
+        # Simulate concurrent sessions by running multiple commands
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            # Run multiple commands that would simulate concurrent access
+            results = []
+            commands = [
+                ["auth", "status"],
+                ["projects", "list", "--top", "1"],
+                ["auth", "status"],
+            ]
+
+            for command in commands:
+                result = runner.invoke(main, command)
+                results.append(result)
+
+            # All should succeed
+            for i, result in enumerate(results):
+                assert result.exit_code == 0, f"Command {i} failed: {result.output}"
