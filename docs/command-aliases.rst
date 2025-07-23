@@ -46,6 +46,89 @@ The following aliases are available for the main command groups:
      - ``auth``
      - Authentication commands
 
+Global Shortcuts
+================
+
+YouTrack CLI provides global shortcuts for the most common operations (Issue #345):
+
+.. list-table:: Global Shortcuts
+   :header-rows: 1
+   :widths: 20 30 50
+
+   * - Shortcut
+     - Equivalent Command
+     - Description
+   * - ``ls``
+     - ``issues list``
+     - List issues (most common operation)
+   * - ``new``
+     - ``issues create``
+     - Create a new issue (most common creation)
+
+**Usage Examples:**
+
+.. code-block:: bash
+
+   # List all issues
+   yt ls
+
+   # List your assigned issues
+   yt ls --assignee me
+
+   # List issues in a specific project
+   yt ls --project DEMO
+
+   # Create a new issue
+   yt new DEMO "Fix login bug"
+
+   # Create a bug with details
+   yt new DEMO "Login fails" --type Bug --assignee john.doe
+
+User-Defined Aliases
+====================
+
+In addition to built-in aliases, you can create your own custom aliases for frequently used commands (Issue #345).
+
+Managing Custom Aliases
+------------------------
+
+Use the ``yt alias`` command group to manage your custom aliases:
+
+.. code-block:: bash
+
+   # List all aliases (built-in and custom)
+   yt alias list
+
+   # Add a custom alias
+   yt alias add myissues "issues list --assignee me"
+
+   # Show what an alias does
+   yt alias show myissues
+
+   # Remove a custom alias
+   yt alias remove myissues
+
+**Custom Alias Examples:**
+
+.. code-block:: bash
+
+   # Create shortcuts for common workflows
+   yt alias add bugs "issues list --type Bug --state Open"
+   yt alias add mybugs "issues list --type Bug --assignee me"
+   yt alias add quickbug "issues create --type Bug"
+
+   # Use your custom aliases
+   yt bugs                    # List all open bugs
+   yt mybugs                  # List bugs assigned to you
+   yt quickbug DEMO "Title"   # Create a bug quickly
+
+**Alias Rules:**
+
+- Custom aliases take precedence over built-in aliases
+- Aliases cannot conflict with existing command names
+- Aliases are stored in your configuration file
+- Complex commands with arguments and options are supported
+
 Flatter Command Alternatives
 ============================
 
@@ -117,7 +200,10 @@ Create a new issue:
    # Using full commands
    yt issues create PROJECT-123 "Fix login bug"
 
-   # Using aliases
+   # Using global shortcut (new in Issue #345)
+   yt new PROJECT-123 "Fix login bug"
+
+   # Using command group aliases
    yt i c PROJECT-123 "Fix login bug"
    yt i new PROJECT-123 "Fix login bug"
 
@@ -128,7 +214,10 @@ List issues:
    # Using full commands
    yt issues list --assignee me
 
-   # Using aliases
+   # Using global shortcut (new in Issue #345)
+   yt ls --assignee me
+
+   # Using command group aliases
    yt i l --assignee me
    yt i ls --assignee me
 
@@ -228,10 +317,16 @@ Daily Issue Management:
 
 .. code-block:: bash
 
-   # Check your assigned issues
+   # Check your assigned issues (using global shortcut)
+   yt ls --assignee me --state Open
+
+   # Or using command group alias
    yt i l --assignee me --state Open
 
-   # Create a new bug report
+   # Create a new bug report (using global shortcut)
+   yt new WEB-123 "Mobile login issue" --type Bug --priority High
+
+   # Or using command group alias
    yt i c WEB-123 "Mobile login issue" --type Bug --priority High
 
    # Update issue status
@@ -239,6 +334,20 @@ Daily Issue Management:
 
    # Log work time
    yt t log ISSUE-456 "1h 30m" --description "Initial investigation"
+
+Custom Alias Workflows:
+
+.. code-block:: bash
+
+   # Set up custom aliases for your workflow
+   yt alias add mywork "issues list --assignee me --state Open"
+   yt alias add sprint "issues list --project DEMO --sprint current"
+   yt alias add bug "issues create --type Bug"
+
+   # Use your custom aliases
+   yt mywork                           # Check your work
+   yt sprint                           # Check current sprint
+   yt bug PROJECT-123 "Title"          # Create a bug quickly
 
 Configuration and Setup:
 
@@ -355,12 +464,21 @@ Troubleshooting
 
 If aliases don't work as expected:
 
-1. **Check Version**: Ensure you're using a version that supports aliases (v0.3.0+)
+1. **Check Version**: Ensure you're using a version that supports aliases (v0.3.0+) and user-defined aliases (v0.10.0+)
 
 2. **Verify Installation**: Run ``yt --help`` to see if aliases are listed
 
 3. **Clear Cache**: If using shell completion, you may need to restart your shell or reload completion
 
 4. **Conflict Resolution**: If an alias conflicts with another command, the original command takes precedence
+
+5. **Custom Alias Issues**:
+
+   - Run ``yt alias list`` to see all available aliases
+   - Check if your custom alias conflicts with existing commands
+   - Verify alias syntax with ``yt alias show <alias-name>``
+   - Custom aliases are stored in ``~/.config/youtrack-cli/.env`` as ``ALIAS_<name>=<command>``
+
+6. **Alias Not Found**: If a custom alias isn't working, it may have been removed or the configuration file may be corrupted. Use ``yt alias add`` to recreate it.
 
 For additional help, see the :doc:`troubleshooting` guide or file an issue on GitHub.
