@@ -9,6 +9,7 @@ from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
 from .pagination import create_paginated_display
+from .utils import paginate_users
 
 __all__ = ["UserManager"]
 
@@ -56,8 +57,6 @@ class UserManager:
 
         # Build query parameters
         params = {"fields": fields}
-        if top:
-            params["$top"] = str(top)
 
         # Build the query filter - only add user-provided query to API call
         # We'll handle active_only filtering client-side since YouTrack users API
@@ -71,16 +70,16 @@ class UserManager:
         }
 
         try:
-            client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}/api/users",
+            # Use the new unified pagination for users
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/users"
+            paginated_result = await paginate_users(
+                endpoint=endpoint,
                 headers=headers,
                 params=params,
-                timeout=10.0,
+                max_results=top,
             )
 
-            users = response.json()
+            users = paginated_result["results"]
 
             # Apply client-side filtering for active_only
             if active_only:

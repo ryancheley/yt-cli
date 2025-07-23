@@ -69,7 +69,13 @@ List and filter issues with advanced options.
   * ``-s, --state TEXT`` - Filter by issue state
   * ``-a, --assignee TEXT`` - Filter by assignee
   * ``-f, --fields TEXT`` - Comma-separated list of fields to return
-  * ``-t, --top INTEGER`` - Maximum number of issues to return
+  * ``-t, --top INTEGER`` - Maximum number of issues to return (legacy)
+  * ``--max-results INTEGER`` - Maximum number of results to fetch (default: 10,000)
+  * ``--after-cursor TEXT`` - Start listing after this cursor position
+  * ``--before-cursor TEXT`` - Start listing before this cursor position
+  * ``--paginated`` - Display results with interactive pagination
+  * ``--display-page-size INTEGER`` - Items per page for interactive display (default: 50)
+  * ``--all`` - Fetch all results automatically (respects max-results limit)
   * ``-q, --query TEXT`` - Advanced query filter using YouTrack syntax
   * ``--format [table|json]`` - Output format (default: table)
 
@@ -77,14 +83,20 @@ List and filter issues with advanced options.
 
 .. code-block:: bash
 
-   # List all issues in a project
-   yt issues list -p PROJ-1
+   # List all issues in a project with interactive pagination
+   yt issues list -p PROJ-1 --paginated
 
    # List high priority bugs assigned to a user
    yt issues list -p PROJ-1 -a john.doe --query "priority:High type:Bug"
 
-   # List issues in JSON format
-   yt issues list --format json -t 10
+   # List issues in JSON format with cursor pagination
+   yt issues list --format json --max-results 50
+
+   # Navigate through pages using cursors
+   yt issues list -p PROJ-1 --after-cursor "cursor_token_here"
+
+   # Fetch all issues automatically (up to 10,000)
+   yt issues list -p PROJ-1 --all
 
 Update Issues
 ~~~~~~~~~~~~~
@@ -160,7 +172,13 @@ Advanced issue search with YouTrack query language.
 
 **Options:**
   * ``-p, --project-id TEXT`` - Filter by project ID
-  * ``-t, --top INTEGER`` - Maximum number of results
+  * ``-t, --top INTEGER`` - Maximum number of results (legacy)
+  * ``--max-results INTEGER`` - Maximum number of results to fetch (default: 10,000)
+  * ``--after-cursor TEXT`` - Start searching after this cursor position
+  * ``--before-cursor TEXT`` - Start searching before this cursor position
+  * ``--paginated`` - Display results with interactive pagination
+  * ``--display-page-size INTEGER`` - Items per page for interactive display (default: 50)
+  * ``--all`` - Fetch all results automatically (respects max-results limit)
   * ``--format [table|json]`` - Output format
 
 **Examples:**
@@ -170,8 +188,14 @@ Advanced issue search with YouTrack query language.
    # Search for bugs with specific text
    yt issues search "login error" -p PROJ-1
 
-   # Complex query with multiple conditions
-   yt issues search "priority:Critical state:Open assignee:me"
+   # Complex query with multiple conditions and pagination
+   yt issues search "priority:Critical state:Open assignee:me" --paginated
+
+   # Search with cursor navigation
+   yt issues search "bug" --after-cursor "search_cursor_token"
+
+   # Get all search results automatically
+   yt issues search "type:Bug state:Open" --all
 
 Assign Issues
 ~~~~~~~~~~~~~

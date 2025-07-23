@@ -91,28 +91,158 @@ Cache Management
 Pagination Helpers
 ------------------
 
-The pagination helpers automatically fetch all results from paginated endpoints:
+**NEW in v0.8.1**: Unified pagination system automatically detects and uses the optimal pagination strategy for each YouTrack API endpoint.
+
+The yt-cli now provides a comprehensive pagination system that automatically handles the differences between YouTrack's cursor-based and offset-based pagination:
+
+Automatic Pagination Type Detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The system automatically detects which pagination type to use based on the endpoint:
+
+- **Issues API** (``/api/issues``): Uses cursor-based pagination for optimal performance with large datasets
+- **Projects API** (``/api/admin/projects``): Uses offset-based pagination
+- **Users API** (``/api/users``): Uses offset-based pagination
+- **Articles API** (``/api/articles``): Uses offset-based pagination
 
 .. code-block:: python
 
    from youtrack_cli.utils import paginate_results
 
-   # Fetch all issues with automatic pagination
-   all_issues = await paginate_results(
+   # Auto-detects cursor pagination for issues endpoint
+   result = await paginate_results(
        endpoint="https://youtrack.example.com/api/issues",
        headers=auth_headers,
-       page_size=100,  # Items per page
-       max_results=1000,  # Optional limit
+       page_size=100,
+       max_results=1000,
    )
+
+   # Returns structured result with pagination metadata
+   print(f"Fetched {result['total_results']} results")
+   print(f"Pagination type used: {result['pagination_type']}")
+   print(f"Has more results: {result['has_after']}")
+
+Entity-Specific Pagination Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, use entity-specific pagination functions that automatically apply the correct configuration:
+
+.. code-block:: python
+
+   from youtrack_cli.utils import (
+       paginate_issues,
+       paginate_projects,
+       paginate_users,
+       paginate_articles
+   )
+
+   # Issues with cursor-based pagination
+   issues_result = await paginate_issues(
+       endpoint=f"{base_url}/api/issues",
+       headers=headers,
+       after_cursor="cursor_token",  # Navigate to next page
+       max_results=5000,  # Automatically limited to safe defaults
+   )
+
+   # Projects with offset-based pagination
+   projects_result = await paginate_projects(
+       endpoint=f"{base_url}/api/admin/projects",
+       headers=headers,
+       max_results=1000,  # Automatically limited
+   )
+
+Centralized Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pagination behavior is centrally configured for consistency:
+
+.. code-block:: python
+
+   from youtrack_cli.utils import PaginationConfig
+
+   # Default page sizes
+   print(f"API page size: {PaginationConfig.DEFAULT_API_PAGE_SIZE}")  # 100
+   print(f"Display page size: {PaginationConfig.DEFAULT_DISPLAY_PAGE_SIZE}")  # 50
+
+   # Entity-specific limits
+   print(f"Max issues: {PaginationConfig.get_max_results('issues')}")  # 10,000
+   print(f"Max projects: {PaginationConfig.get_max_results('projects')}")  # 1,000
+
+   # Check pagination type for endpoint
+   pagination_type = PaginationConfig.get_pagination_type("/api/issues")
+   print(f"Issues use: {pagination_type.value}")  # "cursor"
+
+Advanced Pagination Features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The unified system provides advanced features for optimal performance:
+
+**Cursor Navigation** (Issues only):
+
+.. code-block:: python
+
+   # Navigate forward through pages
+   result = await paginate_issues(
+       endpoint=f"{base_url}/api/issues",
+       headers=headers,
+       after_cursor="next_page_token",
+       page_size=50
+   )
+
+   # Navigate backward through pages
+   result = await paginate_issues(
+       endpoint=f"{base_url}/api/issues",
+       headers=headers,
+       before_cursor="prev_page_token",
+       page_size=50
+   )
+
+**Automatic Safety Limits**:
+
+.. code-block:: python
+
+   # Each entity type has safe default limits
+   # Issues: 10,000 max results
+   # Projects: 1,000 max results
+   # Users: 5,000 max results
+   # Articles: 2,000 max results
 
 Parameters
 ~~~~~~~~~~
+
+**paginate_results()** - Universal pagination with auto-detection:
 
 - ``endpoint``: API endpoint URL
 - ``headers``: Optional request headers
 - ``params``: Optional query parameters
 - ``page_size``: Number of items per page (default: 100)
-- ``max_results``: Maximum number of results to fetch (None for all)
+- ``max_results``: Maximum number of results to fetch (None for entity defaults)
+- ``after_cursor``: Start pagination after this cursor (cursor pagination only)
+- ``before_cursor``: Start pagination before this cursor (cursor pagination only)
+- ``use_cursor_pagination``: Override auto-detection (None for auto-detect)
+
+**Entity-specific functions** (``paginate_issues``, ``paginate_projects``, etc.):
+
+- Same parameters as ``paginate_results()`` but with entity-optimized defaults
+- ``paginate_issues()`` also supports ``after_cursor`` and ``before_cursor``
+- Other entity functions use offset-based pagination automatically
+
+Return Format
+~~~~~~~~~~~~~
+
+All pagination functions return a consistent format:
+
+.. code-block:: python
+
+   {
+       "results": [...],                    # List of items
+       "total_results": 150,                # Total items fetched
+       "has_after": True,                   # More results available after
+       "has_before": False,                 # Results available before
+       "after_cursor": "next_token",        # Cursor for next page (cursor only)
+       "before_cursor": None,               # Cursor for previous page (cursor only)
+       "pagination_type": "cursor"          # Type used ("cursor" or "offset")
+   }
 
 Batch Operations
 ----------------

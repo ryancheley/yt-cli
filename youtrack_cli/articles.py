@@ -11,6 +11,7 @@ from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
 from .pagination import create_paginated_display
+from .utils import paginate_articles
 
 __all__ = ["ArticleManager"]
 
@@ -159,26 +160,30 @@ class ArticleManager:
             )
 
         params = {"fields": fields}
-        if top:
-            params["$top"] = str(top)
         # Remove the query-based parent filtering for now - we'll filter post-processing
         if query:
             params["query"] = query
 
         # Use project-specific endpoint when project_id is provided
         if project_id:
-            url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
         else:
-            url = f"{credentials.base_url.rstrip('/')}/api/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
         }
 
         try:
-            client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
-            data = self._safe_json_parse(response)
+            # Use the new unified pagination for articles
+            paginated_result = await paginate_articles(
+                endpoint=endpoint,
+                headers=headers,
+                params=params,
+                max_results=top,
+            )
+
+            data = paginated_result["results"]
             # Handle case where API returns None or null
             if data is None:
                 data = []
@@ -394,23 +399,27 @@ class ArticleManager:
                 "reporter(fullName),visibility(type),project(name,shortName)"
             ),
         }
-        if top:
-            params["$top"] = str(top)
 
         # Use project-specific endpoint when project_id is provided
         if project_id:
-            url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
         else:
-            url = f"{credentials.base_url.rstrip('/')}/api/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
         }
 
         try:
-            client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
-            data = self._safe_json_parse(response)
+            # Use the new unified pagination for articles
+            paginated_result = await paginate_articles(
+                endpoint=endpoint,
+                headers=headers,
+                params=params,
+                max_results=top,
+            )
+
+            data = paginated_result["results"]
             # Handle case where API returns None or null
             if data is None:
                 data = []
