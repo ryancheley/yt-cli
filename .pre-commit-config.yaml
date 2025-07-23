@@ -59,3 +59,9 @@ repos:
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: true
+      - id: docs-config-check
+        name: docs-config-check
+        entry: bash -c 'cd docs && uv run python -c "import sys, os; sys.path.insert(0, \".\"); import conf; print(\"Sphinx config is valid\")"'
+        language: system
+        files: ^docs/conf\.py$
+        pass_filenames: false

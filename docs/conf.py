@@ -45,7 +45,7 @@ pygments_style = "sphinx"
 
 # HTML output options
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+html_static_path = []
 
 # Theme options
 html_theme_options = {
