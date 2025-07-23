@@ -36,6 +36,7 @@ Deployment will always be done to a feature branch. When a feature is significan
 2. Think through the change that needs to be implemented
 3. Write the plan to scratch/issue-id.md where id is the issue number from GitHub. For example issue 42 would be written to scratch/issue-42.md
 4. Implement the changes from the plan written in scratch/issue-id.md
+5. Run the command `pre-commit run --all-files` after each file change
 5. Create a PR. never bypass the pre-commit checks
 6. Once the PR has been squashed and merged, switch back to main. You'll need to check the PR status every 60 seconds
 7. Pull the changes from main to local development
