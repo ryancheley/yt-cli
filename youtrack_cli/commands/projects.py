@@ -16,6 +16,7 @@ from ..console import get_console
 def show_projects_verbose_help(ctx):
     """Show comprehensive help for the projects command group."""
     from rich.console import Console
+
     console = Console()
 
     # Main title
@@ -68,6 +69,7 @@ def show_projects_verbose_help(ctx):
 
 def add_help_verbose_option(func):
     """Decorator to add --help-verbose option to projects commands."""
+
     def callback(ctx, param, value):
         if value:
             show_projects_verbose_help(ctx)

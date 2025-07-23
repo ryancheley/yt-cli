@@ -21,6 +21,7 @@ from ..console import get_console
 def show_issues_verbose_help(ctx):
     """Show comprehensive help for the issues command group."""
     from rich.console import Console
+
     console = Console()
 
     # Main title
@@ -103,6 +104,7 @@ def show_issues_verbose_help(ctx):
 
 def add_help_verbose_option(func):
     """Decorator to add --help-verbose option to issues commands."""
+
     def callback(ctx, param, value):
         if value:
             show_issues_verbose_help(ctx)
