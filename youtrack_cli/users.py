@@ -56,8 +56,6 @@ class UserManager:
 
         # Build query parameters
         params = {"fields": fields}
-        if top:
-            params["$top"] = str(top)
 
         # Build the query filter - only add user-provided query to API call
         # We'll handle active_only filtering client-side since YouTrack users API
@@ -71,13 +69,16 @@ class UserManager:
         }
 
         try:
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+
             client_manager = get_client_manager()
             response = await client_manager.make_request(
                 "GET",
                 f"{credentials.base_url.rstrip('/')}/api/users",
                 headers=headers,
                 params=params,
-                timeout=10.0,
             )
 
             users = response.json()

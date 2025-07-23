@@ -159,25 +159,33 @@ class ArticleManager:
             )
 
         params = {"fields": fields}
-        if top:
-            params["$top"] = str(top)
         # Remove the query-based parent filtering for now - we'll filter post-processing
         if query:
             params["query"] = query
 
         # Use project-specific endpoint when project_id is provided
         if project_id:
-            url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
         else:
-            url = f"{credentials.base_url.rstrip('/')}/api/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
         }
 
         try:
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
+            response = await client_manager.make_request(
+                "GET",
+                endpoint,
+                headers=headers,
+                params=params,
+            )
+
             data = self._safe_json_parse(response)
             # Handle case where API returns None or null
             if data is None:
@@ -394,22 +402,30 @@ class ArticleManager:
                 "reporter(fullName),visibility(type),project(name,shortName)"
             ),
         }
-        if top:
-            params["$top"] = str(top)
 
         # Use project-specific endpoint when project_id is provided
         if project_id:
-            url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/articles"
         else:
-            url = f"{credentials.base_url.rstrip('/')}/api/articles"
+            endpoint = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Accept": "application/json",
         }
 
         try:
+            # Add $top parameter for API call
+            if top:
+                params["$top"] = str(top)
+
             client_manager = get_client_manager()
-            response = await client_manager.make_request("GET", url, headers=headers, params=params, timeout=10.0)
+            response = await client_manager.make_request(
+                "GET",
+                endpoint,
+                headers=headers,
+                params=params,
+            )
+
             data = self._safe_json_parse(response)
             # Handle case where API returns None or null
             if data is None:

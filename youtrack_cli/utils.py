@@ -9,6 +9,7 @@ handling, and user feedback with proper error handling and logging.
 
 from collections.abc import AsyncGenerator
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import httpx
@@ -31,15 +32,82 @@ __all__ = [
     "display_info",
     "display_warning",
     "paginate_results",
+    "paginate_issues",
+    "paginate_projects",
+    "paginate_users",
+    "paginate_articles",
     "batch_requests",
     "batch_get_resources",
     "optimize_fields",
     "stream_large_response",
     "format_timestamp",
+    "PaginationType",
+    "PaginationConfig",
 ]
 
 logger = get_logger(__name__)
 console = get_console()
+
+
+class PaginationType(Enum):
+    """Supported pagination types in YouTrack API."""
+
+    CURSOR = "cursor"
+    OFFSET = "offset"
+
+
+class PaginationConfig:
+    """Centralized pagination configuration for different YouTrack API endpoints."""
+
+    # Default page sizes for different operations
+    DEFAULT_API_PAGE_SIZE = 100
+    DEFAULT_DISPLAY_PAGE_SIZE = 50
+    MAX_RESULTS_PER_ENTITY = {
+        "issues": 10000,
+        "projects": 1000,
+        "users": 5000,
+        "articles": 2000,
+        "reports": 1000,
+    }
+
+    # Endpoint-specific pagination support
+    PAGINATION_SUPPORT = {
+        "/api/issues": PaginationType.CURSOR,
+        "/api/admin/projects": PaginationType.OFFSET,
+        "/api/users": PaginationType.OFFSET,
+        "/api/articles": PaginationType.OFFSET,
+    }
+
+    @classmethod
+    def get_pagination_type(cls, endpoint: str) -> PaginationType:
+        """Determine the pagination type for a given endpoint.
+
+        Args:
+            endpoint: API endpoint path
+
+        Returns:
+            PaginationType enum indicating cursor or offset pagination
+        """
+        # Check direct matches first
+        for pattern, pagination_type in cls.PAGINATION_SUPPORT.items():
+            if pattern in endpoint:
+                return pagination_type
+
+        # Default to offset-based pagination for unknown endpoints
+        logger.debug(f"Unknown endpoint pagination, defaulting to offset: {endpoint}")
+        return PaginationType.OFFSET
+
+    @classmethod
+    def get_max_results(cls, entity_type: str) -> int:
+        """Get maximum results limit for an entity type.
+
+        Args:
+            entity_type: Type of entity (issues, projects, users, etc.)
+
+        Returns:
+            Maximum number of results to fetch
+        """
+        return cls.MAX_RESULTS_PER_ENTITY.get(entity_type, 1000)
 
 
 async def make_request(
@@ -88,30 +156,58 @@ async def paginate_results(
     endpoint: str,
     headers: Optional[Dict[str, str]] = None,
     params: Optional[Dict[str, Any]] = None,
-    page_size: int = 100,
+    page_size: Optional[int] = None,
     max_results: Optional[int] = None,
     after_cursor: Optional[str] = None,
     before_cursor: Optional[str] = None,
-    use_cursor_pagination: bool = False,
+    use_cursor_pagination: Optional[bool] = None,
 ) -> Dict[str, Any]:
-    """Efficiently paginate through large result sets with support for cursor-based pagination.
+    """Efficiently paginate through large result sets with automatic pagination type detection.
+
+    This function automatically detects whether to use cursor-based or offset-based
+    pagination based on the endpoint, providing a unified interface for all YouTrack
+    API pagination patterns.
 
     Args:
         endpoint: API endpoint URL
         headers: Optional request headers
         params: Optional query parameters
-        page_size: Number of items per page (default: 100)
+        page_size: Number of items per page (defaults to PaginationConfig.DEFAULT_API_PAGE_SIZE)
         max_results: Maximum number of results to fetch (None for all)
         after_cursor: Start pagination after this cursor (for cursor-based pagination)
         before_cursor: Start pagination before this cursor (for cursor-based pagination)
-        use_cursor_pagination: Whether to use cursor-based pagination or offset-based
+        use_cursor_pagination: Override automatic detection of pagination type (None for auto-detect)
 
     Returns:
-        Dictionary with 'results' list and pagination metadata
+        Dictionary with 'results' list and pagination metadata including:
+        - results: List of paginated items
+        - total_results: Total number of results fetched
+        - has_after: Whether more results are available after current position
+        - has_before: Whether results are available before current position
+        - after_cursor: Cursor for next page (cursor pagination only)
+        - before_cursor: Cursor for previous page (cursor pagination only)
+        - pagination_type: Type of pagination used ("cursor" or "offset")
 
     Raises:
         YouTrackError: If any request fails
+        ValueError: If invalid pagination parameters are provided
     """
+    # Auto-detect pagination type if not specified
+    if use_cursor_pagination is None:
+        detected_type = PaginationConfig.get_pagination_type(endpoint)
+        use_cursor_pagination = detected_type == PaginationType.CURSOR
+
+    # Set default page size if not provided
+    if page_size is None:
+        page_size = PaginationConfig.DEFAULT_API_PAGE_SIZE
+
+    # Validate pagination parameters
+    if use_cursor_pagination and (after_cursor is not None or before_cursor is not None):
+        # Cursor pagination with explicit cursors - validate
+        if after_cursor and before_cursor:
+            raise ValueError("Cannot specify both after_cursor and before_cursor simultaneously")
+
+    # Initialize pagination state
     all_results = []
     skip = 0
     params = params or {}
@@ -121,6 +217,7 @@ async def paginate_results(
     has_before = False
     final_after_cursor = None
     final_before_cursor = None
+    pagination_type = "cursor" if use_cursor_pagination else "offset"
 
     logger.debug(
         "Starting pagination",
@@ -128,6 +225,7 @@ async def paginate_results(
         page_size=page_size,
         max_results=max_results,
         use_cursor_pagination=use_cursor_pagination,
+        pagination_type=pagination_type,
         after_cursor=after_cursor,
         before_cursor=before_cursor,
     )
@@ -236,7 +334,150 @@ async def paginate_results(
         "has_before": has_before if use_cursor_pagination else skip > 0,
         "after_cursor": final_after_cursor if use_cursor_pagination else None,
         "before_cursor": final_before_cursor if use_cursor_pagination else None,
+        "pagination_type": pagination_type,
     }
+
+
+async def paginate_issues(
+    endpoint: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    page_size: Optional[int] = None,
+    max_results: Optional[int] = None,
+    after_cursor: Optional[str] = None,
+    before_cursor: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Paginate through issues using cursor-based pagination.
+
+    This is a convenience wrapper around paginate_results specifically for issues,
+    which always use cursor-based pagination.
+
+    Args:
+        endpoint: Issues API endpoint URL
+        headers: Optional request headers
+        params: Optional query parameters
+        page_size: Number of items per page
+        max_results: Maximum number of results to fetch
+        after_cursor: Start pagination after this cursor
+        before_cursor: Start pagination before this cursor
+
+    Returns:
+        Dictionary with 'results' list and cursor pagination metadata
+    """
+    effective_max_results = max_results or PaginationConfig.get_max_results("issues")
+
+    return await paginate_results(
+        endpoint=endpoint,
+        headers=headers,
+        params=params,
+        page_size=page_size,
+        max_results=effective_max_results,
+        after_cursor=after_cursor,
+        before_cursor=before_cursor,
+        use_cursor_pagination=True,
+    )
+
+
+async def paginate_projects(
+    endpoint: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    page_size: Optional[int] = None,
+    max_results: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Paginate through projects using offset-based pagination.
+
+    This is a convenience wrapper around paginate_results specifically for projects,
+    which use offset-based pagination.
+
+    Args:
+        endpoint: Projects API endpoint URL
+        headers: Optional request headers
+        params: Optional query parameters
+        page_size: Number of items per page
+        max_results: Maximum number of results to fetch
+
+    Returns:
+        Dictionary with 'results' list and offset pagination metadata
+    """
+    effective_max_results = max_results or PaginationConfig.get_max_results("projects")
+
+    return await paginate_results(
+        endpoint=endpoint,
+        headers=headers,
+        params=params,
+        page_size=page_size,
+        max_results=effective_max_results,
+        use_cursor_pagination=False,
+    )
+
+
+async def paginate_users(
+    endpoint: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    page_size: Optional[int] = None,
+    max_results: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Paginate through users using offset-based pagination.
+
+    This is a convenience wrapper around paginate_results specifically for users,
+    which use offset-based pagination.
+
+    Args:
+        endpoint: Users API endpoint URL
+        headers: Optional request headers
+        params: Optional query parameters
+        page_size: Number of items per page
+        max_results: Maximum number of results to fetch
+
+    Returns:
+        Dictionary with 'results' list and offset pagination metadata
+    """
+    effective_max_results = max_results or PaginationConfig.get_max_results("users")
+
+    return await paginate_results(
+        endpoint=endpoint,
+        headers=headers,
+        params=params,
+        page_size=page_size,
+        max_results=effective_max_results,
+        use_cursor_pagination=False,
+    )
+
+
+async def paginate_articles(
+    endpoint: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    page_size: Optional[int] = None,
+    max_results: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Paginate through articles using offset-based pagination.
+
+    This is a convenience wrapper around paginate_results specifically for articles,
+    which use offset-based pagination.
+
+    Args:
+        endpoint: Articles API endpoint URL
+        headers: Optional request headers
+        params: Optional query parameters
+        page_size: Number of items per page
+        max_results: Maximum number of results to fetch
+
+    Returns:
+        Dictionary with 'results' list and offset pagination metadata
+    """
+    effective_max_results = max_results or PaginationConfig.get_max_results("articles")
+
+    return await paginate_results(
+        endpoint=endpoint,
+        headers=headers,
+        params=params,
+        page_size=page_size,
+        max_results=effective_max_results,
+        use_cursor_pagination=False,
+    )
 
 
 async def batch_requests(
