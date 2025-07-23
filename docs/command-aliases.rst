@@ -46,6 +46,34 @@ The following aliases are available for the main command groups:
      - ``auth``
      - Authentication commands
 
+Flatter Command Alternatives
+============================
+
+YouTrack CLI provides flatter alternatives to deeply nested commands for improved usability. These commands reduce the number of levels you need to type while maintaining full backward compatibility.
+
+.. list-table:: Flatter Command Alternatives
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Flatter Command
+     - Original Nested Command
+     - Description
+   * - ``burndown``
+     - ``reports burndown``
+     - Generate burndown reports
+   * - ``velocity``
+     - ``reports velocity``
+     - Generate velocity reports
+   * - ``groups``
+     - ``admin user-groups``
+     - Manage user groups and permissions
+   * - ``settings``
+     - ``admin global-settings``
+     - Manage global YouTrack settings
+   * - ``audit``
+     - ``security audit``
+     - View command audit log
+
 Subcommand Aliases
 ==================
 
@@ -161,6 +189,36 @@ Time Tracking
    # Using aliases
    yt t log ISSUE-123 "2h 30m" --description "Fixed the bug"
 
+Flatter Commands
+----------------
+
+.. code-block:: bash
+
+   # Reports - Traditional vs Flatter
+   yt reports burndown PROJECT-123 --sprint "Sprint 1"
+   yt burndown PROJECT-123 --sprint "Sprint 1"
+
+   yt reports velocity PROJECT-123 --sprints 5
+   yt velocity PROJECT-123 --sprints 5
+
+   # User Groups - Traditional vs Flatter
+   yt admin user-groups create "Team Lead" --description "Team leadership role"
+   yt groups create "Team Lead" --description "Team leadership role"
+
+   yt admin user-groups list
+   yt groups list
+
+   # Settings - Traditional vs Flatter
+   yt admin global-settings get --name system.timeZone
+   yt settings get --name system.timeZone
+
+   yt admin global-settings set timeout 30
+   yt settings set timeout 30
+
+   # Audit Log - Traditional vs Flatter
+   yt security audit --limit 25 --format json
+   yt audit --limit 25 --format json
+
 Complex Workflows
 =================
 
@@ -194,6 +252,19 @@ Configuration and Setup:
 
    # List current configuration
    yt c list
+
+Flatter Command Workflows:
+
+.. code-block:: bash
+
+   # Daily reporting workflow
+   yt burndown PROJECT-123                    # Quick burndown check
+   yt velocity PROJECT-123 --sprints 3        # Check team velocity
+
+   # Administrative tasks
+   yt groups create "QA Team"                 # Create user group
+   yt settings get --name system.timeZone     # Check timezone setting
+   yt audit --limit 10                       # Review recent actions
 
 Help and Discovery
 ==================
@@ -261,13 +332,23 @@ You can use tab completion with aliases just like with full commands:
 Migration Guide
 ===============
 
-If you're upgrading from a version without aliases, your existing commands will continue to work unchanged. Aliases are additive and don't replace existing functionality.
+If you're upgrading from a version without aliases or flatter commands, your existing commands will continue to work unchanged. All enhancements are additive and don't replace existing functionality.
 
-You can gradually adopt aliases at your own pace:
+You can gradually adopt new command patterns at your own pace:
 
 1. Continue using full commands in scripts and documentation
 2. Start using aliases for interactive command-line work
-3. Update your muscle memory over time
+3. Try flatter commands for frequently used nested operations
+4. Update your muscle memory over time
+
+**Flatter Command Migration Examples:**
+
+.. code-block:: bash
+
+   # Old (still works)              # New flatter alternative
+   yt reports burndown PROJECT      yt burndown PROJECT
+   yt admin user-groups create      yt groups create
+   yt security audit               yt audit
 
 Troubleshooting
 ===============
