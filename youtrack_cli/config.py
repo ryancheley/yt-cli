@@ -202,3 +202,50 @@ class ConfigManager:
             errors.append(f"Invalid configuration file format: {e}")
 
         return errors
+
+    # Alias management methods (Issue #345)
+
+    def set_alias(self, alias: str, command: str) -> None:
+        """Set a user-defined alias.
+
+        Args:
+            alias: The alias name (e.g., 'myissues')
+            command: The full command to run (e.g., 'issues list --assignee me')
+        """
+        self.set_config(f"ALIAS_{alias}", command)
+
+    def get_alias(self, alias: str) -> Optional[str]:
+        """Get a user-defined alias command.
+
+        Args:
+            alias: The alias name
+
+        Returns:
+            The command for the alias, or None if not found
+        """
+        return self.get_config(f"ALIAS_{alias}")
+
+    def list_aliases(self) -> dict[str, str]:
+        """List all user-defined aliases.
+
+        Returns:
+            Dictionary mapping alias names to their commands
+        """
+        config = self.list_config()
+        aliases = {}
+        for key, value in config.items():
+            if key.startswith("ALIAS_"):
+                alias_name = key[6:]  # Remove "ALIAS_" prefix
+                aliases[alias_name] = value
+        return aliases
+
+    def remove_alias(self, alias: str) -> bool:
+        """Remove a user-defined alias.
+
+        Args:
+            alias: The alias name to remove
+
+        Returns:
+            True if alias was removed, False if it didn't exist
+        """
+        return self.unset_config(f"ALIAS_{alias}")

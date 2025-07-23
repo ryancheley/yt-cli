@@ -1,7 +1,7 @@
 """Main entry point for the YouTrack CLI."""
 
 import asyncio
-from typing import Optional
+from typing import Optional, cast
 
 import click
 from rich.prompt import Prompt
@@ -958,6 +958,120 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
         raise click.ClickException(f"Setup failed: {e}") from e
 
 
+# Global shortcuts (Issue #345)
+# These provide intuitive shortcuts for common operations
+
+
+@main.command()
+@click.option("--assignee", "-a", help="Filter by assignee (use 'me' for current user)")
+@click.option("--project", "-p", help="Filter by project")
+@click.option("--state", "-s", help="Filter by state")
+@click.option("--type", "-t", help="Filter by issue type")
+@click.option("--priority", help="Filter by priority")
+@click.option("--tag", help="Filter by tag")
+@click.option("--limit", "-l", type=int, default=50, help="Maximum number of issues to display")
+@click.option("--format", "-f", type=click.Choice(["table", "json", "csv"]), default="table", help="Output format")
+@click.pass_context
+def ls(
+    ctx: click.Context,
+    assignee: Optional[str],
+    project: Optional[str],
+    state: Optional[str],
+    type: Optional[str],
+    priority: Optional[str],
+    tag: Optional[str],
+    limit: int,
+    format: str,
+) -> None:
+    """List issues (shortcut for 'yt issues list').
+
+    This is a global shortcut for the most common list operation.
+    Lists YouTrack issues with optional filtering.
+
+    Examples:
+        # List all issues
+        yt ls
+
+        # List your assigned issues
+        yt ls --assignee me
+
+        # List issues in a specific project
+        yt ls --project DEMO
+
+        # List open bugs
+        yt ls --type Bug --state Open
+
+    Note: You can also use 'yt issues list' for the same functionality.
+    """
+    # Import here to avoid circular imports
+    from .commands.issues import list_issues
+
+    # Call the underlying issues list command
+    ctx.invoke(
+        list_issues,
+        assignee=assignee,
+        project=project,
+        state=state,
+        type=type,
+        priority=priority,
+        tag=tag,
+        limit=limit,
+        format=format,
+    )
+
+
+@main.command()
+@click.argument("project")
+@click.argument("title")
+@click.option("--description", "-d", help="Issue description")
+@click.option("--type", "-t", help="Issue type (Bug, Feature, Task, etc.)")
+@click.option("--priority", "-p", help="Issue priority")
+@click.option("--assignee", "-a", help="Assign to user")
+@click.option("--tag", help="Add tags (comma-separated)")
+@click.pass_context
+def new(
+    ctx: click.Context,
+    project: str,
+    title: str,
+    description: Optional[str],
+    type: Optional[str],
+    priority: Optional[str],
+    assignee: Optional[str],
+    tag: Optional[str],
+) -> None:
+    """Create a new issue (shortcut for 'yt issues create').
+
+    This is a global shortcut for the most common create operation.
+    Creates a new YouTrack issue in the specified project.
+
+    Examples:
+        # Create a simple issue
+        yt new DEMO "Fix login bug"
+
+        # Create a bug with description and assignee
+        yt new DEMO "Login fails" --type Bug --assignee john.doe
+
+        # Create a feature with tags
+        yt new API "Add user search" --type Feature --tag "enhancement,api"
+
+    Note: You can also use 'yt issues create' for the same functionality.
+    """
+    # Import here to avoid circular imports
+    from .commands.issues import create
+
+    # Call the underlying issues create command
+    ctx.invoke(
+        create,
+        project=project,
+        title=title,
+        description=description,
+        type=type,
+        priority=priority,
+        assignee=assignee,
+        tag=tag,
+    )
+
+
 @main.group()
 def reports() -> None:
     """Generate cross-entity reports."""
@@ -1330,6 +1444,155 @@ def list_config(ctx: click.Context) -> None:
     except Exception as e:
         console.print(f"❌ Error listing configuration: {e}", style="red")
         raise click.ClickException("Configuration list failed") from e
+
+
+@main.group()
+def alias() -> None:
+    """Manage command aliases (Issue #345)."""
+    pass
+
+
+@alias.command("list")
+@click.pass_context
+def list_aliases(ctx: click.Context) -> None:
+    """List all command aliases (built-in and user-defined)."""
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        from rich.table import Table
+
+        table = Table(title="Command Aliases")
+        table.add_column("Alias", style="cyan", no_wrap=True)
+        table.add_column("Command", style="blue")
+        table.add_column("Type", style="green")
+
+        # Get built-in aliases from the main command group
+        main_group = ctx.find_root().command
+        if hasattr(main_group, "aliases"):
+            aliases = cast(dict, main_group.aliases)
+            for alias_name, command in sorted(aliases.items()):
+                table.add_row(alias_name, command, "built-in")
+
+        # Get user-defined aliases
+        user_aliases = config_manager.list_aliases()
+        for alias_name, command in sorted(user_aliases.items()):
+            table.add_row(alias_name, command, "user-defined")
+
+        if table.row_count > 0:
+            console.print(table)
+        else:
+            console.print("ℹ️  No aliases found", style="yellow")
+            console.print("💡 Create an alias with: yt alias add <name> <command>", style="dim")
+
+    except Exception as e:
+        console.print(f"❌ Error listing aliases: {e}", style="red")
+        raise click.ClickException("Alias list failed") from e
+
+
+@alias.command("add")
+@click.argument("name")
+@click.argument("command")
+@click.pass_context
+def add_alias(ctx: click.Context, name: str, command: str) -> None:
+    """Add a user-defined alias.
+
+    Examples:
+        yt alias add myissues "issues list --assignee me"
+        yt alias add bug "issues create --type Bug"
+        yt alias add il "issues list"
+    """
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        # Check if alias conflicts with existing command
+        main_group = ctx.find_root().command
+        if hasattr(main_group, "list_commands") and name in main_group.list_commands(ctx):
+            console.print(f"❌ Cannot create alias '{name}': conflicts with existing command", style="red")
+            return
+
+        # Check if alias conflicts with built-in alias
+        if hasattr(main_group, "aliases"):
+            aliases = cast(dict, main_group.aliases)
+            if name in aliases:
+                console.print(f"❌ Cannot create alias '{name}': conflicts with built-in alias", style="red")
+                return
+
+        # Add the alias
+        config_manager.set_alias(name, command)
+
+        # Reload aliases in the main group
+        if hasattr(main_group, "reload_user_aliases"):
+            main_group.reload_user_aliases()
+
+        console.print(f"✅ Alias '{name}' → '{command}' created successfully", style="green")
+        console.print("💡 Use 'yt alias list' to see all aliases", style="dim")
+
+    except Exception as e:
+        console.print(f"❌ Error creating alias: {e}", style="red")
+        raise click.ClickException("Alias creation failed") from e
+
+
+@alias.command("remove")
+@click.argument("name")
+@click.pass_context
+def remove_alias(ctx: click.Context, name: str) -> None:
+    """Remove a user-defined alias."""
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        # Check if alias exists
+        if config_manager.get_alias(name) is None:
+            console.print(f"❌ Alias '{name}' not found", style="red")
+            return
+
+        # Remove the alias
+        config_manager.remove_alias(name)
+
+        # Reload aliases in the main group
+        main_group = ctx.find_root().command
+        if hasattr(main_group, "reload_user_aliases"):
+            main_group.reload_user_aliases()
+
+        console.print(f"✅ Alias '{name}' removed successfully", style="green")
+
+    except Exception as e:
+        console.print(f"❌ Error removing alias: {e}", style="red")
+        raise click.ClickException("Alias removal failed") from e
+
+
+@alias.command("show")
+@click.argument("name")
+@click.pass_context
+def show_alias(ctx: click.Context, name: str) -> None:
+    """Show what command an alias maps to."""
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        # Check user-defined aliases first
+        user_command = config_manager.get_alias(name)
+        if user_command:
+            console.print(f"[cyan]{name}[/cyan] → [blue]{user_command}[/blue] [green](user-defined)[/green]")
+            return
+
+        # Check built-in aliases
+        main_group = ctx.find_root().command
+        if hasattr(main_group, "aliases"):
+            aliases = cast(dict, main_group.aliases)
+            if name in aliases:
+                command = aliases[name]
+                console.print(f"[cyan]{name}[/cyan] → [blue]{command}[/blue] [green](built-in)[/green]")
+                return
+
+        console.print(f"❌ Alias '{name}' not found", style="red")
+        console.print("💡 Use 'yt alias list' to see all available aliases", style="dim")
+
+    except Exception as e:
+        console.print(f"❌ Error showing alias: {e}", style="red")
+        raise click.ClickException("Alias show failed") from e
 
 
 @main.group()
