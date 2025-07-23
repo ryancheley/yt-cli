@@ -152,19 +152,9 @@ jobs:
                 sys.exit(1)
         "
 
-    - name: Run doctest
+    - name: Run doctest via pytest
       run: |
-        cd docs
-        uv run python -c "
-        import sys
-        from sphinx.application import Sphinx
-        from sphinx.util.docutils import docutils_namespace
-        with docutils_namespace():
-            app = Sphinx('.', '.', '_build/doctest', '_build/doctrees', 'doctest', confoverrides={'html_static_path': []})
-            app.build()
-            if app.statuscode != 0:
-                sys.exit(1)
-        "
+        uv run pytest --doctest-modules --doctest-glob='*.rst' -v
 
     - name: Run linkcheck
       run: |

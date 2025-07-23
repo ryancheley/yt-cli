@@ -110,9 +110,17 @@ typehints_use_signature_return = True
 doctest_global_setup = """
 import os
 import sys
+import asyncio
 sys.path.insert(0, os.path.abspath('..'))
 from youtrack_cli import main
+from youtrack_cli.client import get_client_manager
 """
+
+# Skip doctest for auto-generated API files and files with complex examples
+doctest_ignore = [
+    "api/_autosummary/*",
+    "api/index.rst",
+]
 
 # Linkcheck settings
 linkcheck_ignore = [

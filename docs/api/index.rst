@@ -4,14 +4,6 @@ API Reference
 This section documents the Python API for YouTrack CLI. While the primary interface
 is the command-line tool, the underlying Python modules can be used programmatically.
 
-.. toctree::
-   :maxdepth: 2
-
-   client
-   models
-   exceptions
-   utils
-
 Core Modules
 ------------
 
@@ -126,7 +118,7 @@ Helper functions and utilities:
    is_valid = validate_project_key("PROJ")
 
 Integration Examples
--------------------
+--------------------
 
 Custom Scripts
 ~~~~~~~~~~~~~~

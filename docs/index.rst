@@ -20,10 +20,14 @@ users, and more.
    learning-path
    workflows
    troubleshooting
+   developer-guidelines
+   error-handling
+   performance
+   progress-indicators
+   tutorial
    commands/index
    api/index
    development
-   changelog
 
 Features
 --------
