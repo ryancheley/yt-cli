@@ -12,7 +12,8 @@ from .auth import AuthManager
 from .cli_utils import AliasedGroup
 from .commands import articles, boards, issues, projects, time, tutorial, users
 from .config import ConfigManager
-from .console import get_console
+from .console import get_console, set_quiet_mode
+from .error_formatting import CommonErrors, format_and_print_error
 from .help_system import check_help_verbose
 from .logging import setup_logging
 from .progress import set_progress_enabled
@@ -89,6 +90,12 @@ class MainGroup(AliasedGroup):
     help="Enable enhanced security mode (prevents credential logging)",
 )
 @click.option(
+    "--quiet",
+    "-q",
+    is_flag=True,
+    help="Enable quiet mode for automation (minimal output)",
+)
+@click.option(
     "--help-verbose",
     is_flag=True,
     callback=check_help_verbose,
@@ -104,6 +111,7 @@ def main(
     debug: bool,
     no_progress: bool,
     secure: bool,
+    quiet: bool,
 ) -> None:
     r"""YouTrack CLI - Command line interface for JetBrains YouTrack.
 
@@ -136,15 +144,24 @@ def main(
 
     Documentation: https://yt-cli.readthedocs.io/
     """
+    # Validate mutually exclusive options
+    if quiet and verbose:
+        click.echo("Error: --quiet and --verbose cannot be used together", err=True)
+        ctx.exit(1)
+
     ctx.ensure_object(dict)
     ctx.obj["config"] = config
     ctx.obj["verbose"] = verbose
     ctx.obj["debug"] = debug
     ctx.obj["no_progress"] = no_progress
     ctx.obj["secure"] = secure
+    ctx.obj["quiet"] = quiet
 
     # Setup logging
     setup_logging(verbose=verbose, debug=debug)
+
+    # Configure console quiet mode
+    set_quiet_mode(quiet)
 
     # Configure progress indicators
     set_progress_enabled(not no_progress)
@@ -1255,11 +1272,11 @@ def login(
             if result.email:
                 console.print(f"Email: {result.email}", style="green")
         else:
-            console.print(f"❌ Authentication failed: {result.message}", style="red")
+            format_and_print_error(CommonErrors.authentication_failed(details=result.message))
             raise click.ClickException("Authentication failed")
 
     except Exception as e:
-        console.print(f"❌ Error during authentication: {e}", style="red")
+        format_and_print_error(CommonErrors.authentication_failed(details=str(e)))
         raise click.ClickException("Authentication failed") from e
 
 
@@ -1297,7 +1314,7 @@ def token(ctx: click.Context, show: bool, update: bool) -> None:
     if show:
         credentials = auth_manager.load_credentials()
         if not credentials:
-            console.print("❌ No authentication credentials found.", style="red")
+            format_and_print_error(CommonErrors.no_credentials())
             console.print("Run 'yt auth login' to authenticate first.", style="blue")
             return
 
@@ -1311,7 +1328,7 @@ def token(ctx: click.Context, show: bool, update: bool) -> None:
     elif update:
         credentials = auth_manager.load_credentials()
         if not credentials:
-            console.print("❌ No authentication credentials found.", style="red")
+            format_and_print_error(CommonErrors.no_credentials())
             console.print("Run 'yt auth login' to authenticate first.", style="blue")
             return
 
@@ -1702,7 +1719,7 @@ def token_status(ctx: click.Context) -> None:
     try:
         credentials = auth_manager.load_credentials()
         if not credentials:
-            console.print("❌ No authentication credentials found", style="red")
+            format_and_print_error(CommonErrors.no_credentials())
             console.print("Run 'yt auth login' to authenticate first", style="blue")
             return
 

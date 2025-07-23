@@ -173,6 +173,7 @@ class EnhancedOption(click.Option):
         self.usage_examples = usage_examples or []
 
     def full_process_value(self, ctx: click.Context, param: click.Parameter, value: Any) -> Any:
+        """Process and validate parameter value with enhanced error handling."""
         try:
             return super().full_process_value(ctx, param, value)
         except click.BadParameter as e:
