@@ -4,7 +4,9 @@ This module provides a progressive help system that supports both basic and verb
 to reduce cognitive load for new users while maintaining comprehensive help for advanced users.
 """
 
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 import click
 from rich.console import Console
@@ -18,11 +20,11 @@ class HelpContent:
     def __init__(
         self,
         basic_description: str,
-        verbose_description: Optional[str] = None,
-        basic_options: Optional[List[str]] = None,
-        verbose_options: Optional[List[str]] = None,
-        basic_examples: Optional[List[str]] = None,
-        verbose_examples: Optional[List[str]] = None,
+        verbose_description: str | None = None,
+        basic_options: list[str] | None = None,
+        verbose_options: list[str] | None = None,
+        basic_examples: list[str] | None = None,
+        verbose_examples: list[str] | None = None,
     ):
         self.basic_description = basic_description
         self.verbose_description = verbose_description or basic_description
@@ -35,7 +37,7 @@ class HelpContent:
 class ProgressiveHelpFormatter:
     """Enhanced help formatter that supports progressive help disclosure."""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Console | None = None):
         self.console = console or Console()
         self.verbose_mode = False
 
@@ -51,25 +53,13 @@ class ProgressiveHelpFormatter:
     ) -> str:
         """Format help text for a command based on verbosity level."""
         # Get the appropriate description
-        description = (
-            help_content.verbose_description
-            if self.verbose_mode
-            else help_content.basic_description
-        )
+        description = help_content.verbose_description if self.verbose_mode else help_content.basic_description
 
         # Get the appropriate options
-        options = (
-            help_content.verbose_options
-            if self.verbose_mode
-            else help_content.basic_options
-        )
+        options = help_content.verbose_options if self.verbose_mode else help_content.basic_options
 
         # Get the appropriate examples
-        examples = (
-            help_content.verbose_examples
-            if self.verbose_mode
-            else help_content.basic_examples
-        )
+        examples = help_content.verbose_examples if self.verbose_mode else help_content.basic_examples
 
         # Build help text
         help_sections = []
@@ -97,9 +87,7 @@ class ProgressiveHelpFormatter:
 
         # Add verbosity hint if in basic mode
         if not self.verbose_mode:
-            help_sections.append(
-                f"\nFor more detailed help, use: {ctx.info_name} {command_name} --help-verbose"
-            )
+            help_sections.append(f"\nFor more detailed help, use: {ctx.info_name} {command_name} --help-verbose")
 
         return "\n".join(help_sections)
 
@@ -107,15 +95,11 @@ class ProgressiveHelpFormatter:
         self,
         ctx: click.Context,
         help_content: HelpContent,
-        subcommands: Dict[str, Any],
+        subcommands: dict[str, Any],
     ) -> str:
         """Format help text for a command group based on verbosity level."""
         # Get the appropriate description
-        description = (
-            help_content.verbose_description
-            if self.verbose_mode
-            else help_content.basic_description
-        )
+        description = help_content.verbose_description if self.verbose_mode else help_content.basic_description
 
         help_sections = []
 
@@ -140,10 +124,7 @@ class ProgressiveHelpFormatter:
                     help_sections.append(help_line)
             else:
                 # Show only the most commonly used commands in basic mode
-                essential_commands = [
-                    "list", "create", "show", "update", "delete",
-                    "search", "status", "login", "help"
-                ]
+                essential_commands = ["list", "create", "show", "update", "delete", "search", "status", "login", "help"]
 
                 for cmd_name in essential_commands:
                     if cmd_name in subcommands:
@@ -152,26 +133,17 @@ class ProgressiveHelpFormatter:
                         help_sections.append(help_line)
 
                 # Add hint about more commands
-                hidden_count = len(subcommands) - len([
-                    cmd for cmd in essential_commands if cmd in subcommands
-                ])
+                hidden_count = len(subcommands) - len([cmd for cmd in essential_commands if cmd in subcommands])
                 if hidden_count > 0:
                     help_sections.append(f"\n  ... and {hidden_count} more commands")
 
         # Add verbosity hint if in basic mode
         if not self.verbose_mode:
-            help_sections.append(
-                f"\nFor complete command list and details, use: {ctx.info_name} --help-verbose"
-            )
+            help_sections.append(f"\nFor complete command list and details, use: {ctx.info_name} --help-verbose")
 
         return "\n".join(help_sections)
 
-    def create_rich_help_panel(
-        self,
-        title: str,
-        content: str,
-        style: str = "blue"
-    ) -> Panel:
+    def create_rich_help_panel(self, title: str, content: str, style: str = "blue") -> Panel:
         """Create a rich panel for help content."""
         return Panel(
             Text(content, style="white"),
@@ -185,10 +157,10 @@ class ProgressiveHelpMixin:
     """Mixin class to add progressive help capabilities to Click commands."""
 
     def __init__(self, *args, **kwargs):
-        self.help_content: Optional[HelpContent] = kwargs.pop("help_content", None)
+        self.help_content: HelpContent | None = kwargs.pop("help_content", None)
         super().__init__(*args, **kwargs)
 
-    def get_help_record(self, ctx: click.Context) -> Optional[str]:
+    def get_help_record(self, ctx: click.Context) -> str | None:
         """Get help record with progressive disclosure."""
         if not hasattr(ctx, "obj") or not ctx.obj:
             return super().get_help_record(ctx)
@@ -202,19 +174,18 @@ class ProgressiveHelpMixin:
             if isinstance(self, click.Group):
                 subcommands = {name: self.get_command(ctx, name) for name in self.list_commands(ctx)}
                 return formatter.format_group_help(ctx, self.help_content, subcommands)
-            else:
-                return formatter.format_command_help(ctx, self.help_content, self.name or "command")
+            return formatter.format_command_help(ctx, self.help_content, self.name or "command")
 
         return super().get_help_record(ctx)
 
 
 def create_help_content(
     basic_desc: str,
-    verbose_desc: Optional[str] = None,
-    basic_opts: Optional[List[str]] = None,
-    verbose_opts: Optional[List[str]] = None,
-    basic_examples: Optional[List[str]] = None,
-    verbose_examples: Optional[List[str]] = None,
+    verbose_desc: str | None = None,
+    basic_opts: list[str] | None = None,
+    verbose_opts: list[str] | None = None,
+    basic_examples: list[str] | None = None,
+    verbose_examples: list[str] | None = None,
 ) -> HelpContent:
     """Helper function to create HelpContent instances."""
     return HelpContent(
@@ -229,12 +200,14 @@ def create_help_content(
 
 def add_help_verbose_option(func):
     """Decorator to add --help-verbose option to commands."""
+
     def callback(ctx: click.Context, param: click.Parameter, value: bool):
         if value:
             ctx.ensure_object(dict)
             ctx.obj["help_verbose"] = True
             # Show help and exit
-            print(ctx.get_help())
+            console = Console()
+            console.print(ctx.get_help())
             ctx.exit()
         return value
 
@@ -320,10 +293,10 @@ def show_verbose_main_help(ctx: click.Context):
     # Commands section
     if hasattr(ctx.command, "list_commands") and callable(getattr(ctx.command, "list_commands", None)):
         console.print("[bold]Commands:[/bold]")
-        commands = getattr(ctx.command, "list_commands")(ctx)
+        commands = ctx.command.list_commands(ctx)
         for cmd_name in sorted(commands):
             if hasattr(ctx.command, "get_command"):
-                cmd = getattr(ctx.command, "get_command")(ctx, cmd_name)
+                cmd = ctx.command.get_command(ctx, cmd_name)
                 if cmd:
                     help_text = cmd.get_short_help_str(limit=60)
                     console.print(f"  {cmd_name:<15} {help_text}")
