@@ -260,18 +260,35 @@ Tests are organized into two main categories with proper pytest markers:
 * **Unit tests** (``@pytest.mark.unit``): Fast, isolated tests of individual functions and classes with no external dependencies
 * **Integration tests** (``@pytest.mark.integration``): End-to-end tests that require real YouTrack API access
 
+Integration Test Categories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The integration tests are further organized by functionality:
+
+* **Authentication Tests** (``test_auth_integration.py``): Complete authentication workflows including login, logout, session management, and error recovery
+* **User Management Tests** (``test_users_integration.py``): User creation, updates, permissions management, and lifecycle workflows
+* **Issue Management Tests** (``test_issues_integration.py``): Basic issue CRUD operations, state transitions, and field management
+* **Issue Workflow Tests** (``test_issues_workflows.py``): Multi-step issue workflows including collaboration, batch operations, and cross-issue relationships
+* **Project Management Tests** (``test_projects_integration.py``): Basic project operations and custom field management
+* **Project End-to-End Tests** (``test_projects_e2e.py``): Complex project operations including lifecycle management, templates, and bulk operations
+* **Time Tracking Tests** (``test_time_tracking_integration.py``): Complete time tracking workflows including logging, reporting, and analysis
+
 Test Organization:
 
 .. code-block:: text
 
    tests/
-   ├── conftest.py                     # Global test fixtures
-   ├── test_*.py                       # Unit tests (marked with @pytest.mark.unit)
-   └── integration/                    # Integration tests directory
-       ├── conftest.py                 # Integration-specific fixtures
-       ├── test_auth_integration.py    # Authentication integration tests
-       ├── test_issues_integration.py  # Issue management integration tests
-       └── test_projects_integration.py # Project management integration tests
+   ├── conftest.py                      # Global test fixtures
+   ├── test_*.py                        # Unit tests (marked with @pytest.mark.unit)
+   └── integration/                     # Integration tests directory
+       ├── conftest.py                  # Integration-specific fixtures
+       ├── test_auth_integration.py     # Authentication integration tests
+       ├── test_issues_integration.py   # Issue management integration tests
+       ├── test_projects_integration.py # Project management integration tests
+       ├── test_users_integration.py    # User management workflow tests
+       ├── test_projects_e2e.py         # Complex project operations end-to-end tests
+       ├── test_issues_workflows.py     # Multi-step issue workflow tests
+       └── test_time_tracking_integration.py # Time tracking workflow tests
 
 Running Tests
 ~~~~~~~~~~~~~
@@ -307,6 +324,12 @@ Use the included test runner script for easy test execution:
    # Run all integration tests (requires YouTrack API access)
    uv run pytest -m integration
 
+   # Run specific integration test categories
+   uv run pytest tests/integration/test_auth_integration.py
+   uv run pytest tests/integration/test_users_integration.py
+   uv run pytest tests/integration/test_issues_workflows.py
+   uv run pytest tests/integration/test_time_tracking_integration.py
+
    # Run all tests
    uv run pytest
 
@@ -326,6 +349,18 @@ Integration tests require real YouTrack API access. Set these environment variab
    # Optional
    export YOUTRACK_TEST_PROJECT="FPU"  # Default project for testing
    export YOUTRACK_USERNAME="your-username"  # For assignment tests
+
+**Integration Test Coverage:**
+
+The integration test suite provides comprehensive end-to-end coverage of YouTrack CLI functionality:
+
+* **Enhanced Authentication Testing**: Login/logout workflows, session persistence, error recovery, and multi-instance support
+* **User Management Workflows**: Complete user lifecycle testing from creation to deactivation, including permissions and group management
+* **Complex Issue Workflows**: Multi-step operations including batch processing, collaboration workflows, and cross-issue relationships
+* **Project Operations**: End-to-end project management including templates, custom fields, and cross-project operations
+* **Time Tracking**: Comprehensive time logging, reporting, and analysis workflows with various duration formats and date handling
+
+The test suite now includes over 40 integration test scenarios covering key user workflows that were previously limited to basic CRUD operations.
 
 **Randomized Testing Options:**
 
