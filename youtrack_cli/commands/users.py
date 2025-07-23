@@ -10,9 +10,96 @@ from ..auth import AuthManager
 from ..console import get_console
 
 
+def show_users_verbose_help(ctx):
+    """Show comprehensive help for the users command group."""
+    from rich.console import Console
+    console = Console()
+
+    # Main title
+    console.print("\n[bold blue]yt users[/bold blue] - User Management\n")
+
+    # Description
+    console.print("Manage YouTrack users - list, search, and view user information.")
+    console.print("The users command group provides access to user-related operations")
+    console.print("including listing users, searching by various criteria, and viewing")
+    console.print("detailed user profiles.\n")
+
+    # Usage
+    console.print("[bold]Usage:[/bold] yt users [OPTIONS] COMMAND [ARGS]...\n")
+
+    # Commands
+    console.print("[bold]Commands:[/bold]")
+    console.print("  list          List all users with optional filtering")
+    console.print("  show          Show detailed user information")
+    console.print("")
+
+    # Common Examples
+    console.print("[bold]Common Examples:[/bold]")
+    console.print("  # List all active users")
+    console.print("  yt users list --active-only")
+    console.print("")
+    console.print("  # Search users by name")
+    console.print('  yt users list --query "john"')
+    console.print("")
+    console.print("  # List users with specific fields in JSON format")
+    console.print("  yt users list --fields name,login,email --format json")
+    console.print("")
+    console.print("  # Limit results to top 10 users")
+    console.print("  yt users list --top 10")
+    console.print("")
+
+    # Options
+    console.print("[bold]Options:[/bold]")
+    console.print("  --help-verbose    Show this detailed help")
+    console.print("  -h, --help        Show basic help and exit")
+    console.print("")
+
+    # Tips
+    console.print("[bold]Tips:[/bold]")
+    console.print("  • Use --active-only to exclude banned or inactive users")
+    console.print("  • Query supports partial name and login matching")
+    console.print("  • Use --fields to control which user information is returned")
+    console.print("  • JSON format is useful for integrating with other tools")
+    console.print("")
+
+
+def add_help_verbose_option(func):
+    """Decorator to add --help-verbose option to users commands."""
+    def callback(ctx, param, value):
+        if value:
+            show_users_verbose_help(ctx)
+            ctx.exit()
+        return value
+
+    return click.option(
+        "--help-verbose",
+        is_flag=True,
+        callback=callback,
+        expose_value=False,
+        is_eager=True,
+        help="Show detailed help information with all commands and examples",
+    )(func)
+
+
 @click.group()
+@add_help_verbose_option
 def users() -> None:
-    """User management."""
+    """Manage YouTrack users - list, search, and view user information.
+
+    Core Commands:
+        list    List users with optional filtering
+        show    Show detailed user information (coming soon)
+
+    Quick Start:
+        # List all active users
+        yt users list --active-only
+
+        # Search users by name
+        yt users list --query "john"
+
+    For complete help with all commands and examples, use:
+        yt users --help-verbose
+    """
     pass
 
 

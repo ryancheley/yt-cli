@@ -18,37 +18,127 @@ from ..cli_utils import AliasedGroup, validate_issue_id_format, validate_project
 from ..console import get_console
 
 
+def show_issues_verbose_help(ctx):
+    """Show comprehensive help for the issues command group."""
+    from rich.console import Console
+    console = Console()
+
+    # Main title
+    console.print("\n[bold blue]yt issues[/bold blue] - Comprehensive Issue Management\n")
+
+    # Description
+    console.print("Manage YouTrack issues - create, update, search, and organize your work.")
+    console.print("The issues command group provides comprehensive issue management capabilities.")
+    console.print("You can create new issues, update existing ones, search and filter issues,")
+    console.print("manage comments and attachments, and handle issue relationships.\n")
+
+    # Usage
+    console.print("[bold]Usage:[/bold] yt issues [OPTIONS] COMMAND [ARGS]...\n")
+
+    # Core Commands
+    console.print("[bold]Core Commands:[/bold]")
+    console.print("  create        Create a new issue")
+    console.print("  update        Update issue properties")
+    console.print("  delete        Delete an issue")
+    console.print("  show          Display issue details")
+    console.print("  search        Search issues by keywords")
+    console.print("  assign        Assign issue to user")
+    console.print("  state         Change issue state")
+    console.print("  links         Manage issue links")
+    console.print("  comments      Manage issue comments")
+    console.print("")
+
+    # Common Examples
+    console.print("[bold]Common Examples:[/bold]")
+    console.print("  # Create and assign a bug report")
+    console.print(
+        '  yt issues create PROJECT-123 "Login fails on mobile" --type Bug --priority High --assignee john.doe'
+    )
+    console.print("")
+    console.print("  # Search for issues by keywords")
+    console.print('  yt issues search "API error priority:Critical"')
+    console.print("")
+    console.print("  # Update issue status")
+    console.print('  yt issues update ISSUE-456 --state "In Progress"')
+    console.print("")
+    console.print("  # Add a comment")
+    console.print('  yt issues comments add ISSUE-456 "Fixed in build 1.2.3"')
+    console.print("")
+    console.print("  # Show issue details")
+    console.print("  yt issues show ISSUE-789 --format panel")
+    console.print("")
+
+    # Advanced Usage
+    console.print("[bold]Advanced Usage:[/bold]")
+    console.print("  # Create issue with custom fields")
+    console.print('  yt issues create PROJECT-123 "Complex bug" --type Bug --priority High \\')
+    console.print('    --description "Detailed description" --assignee john.doe')
+    console.print("")
+    console.print("  # Link related issues")
+    console.print('  yt issues links add ISSUE-123 ISSUE-456 --relation "relates to"')
+    console.print("")
+
+    # Command Categories
+    console.print("[bold]Command Categories:[/bold]")
+    console.print("  Core Operations:  create, update, delete, show")
+    console.print("  Search & Filter:  search")
+    console.print("  Collaboration:    comments, assign")
+    console.print("  Organization:     links, state")
+    console.print("")
+
+    # Options
+    console.print("[bold]Options:[/bold]")
+    console.print("  --help-verbose    Show this detailed help")
+    console.print("  -h, --help        Show basic help and exit")
+    console.print("")
+
+    # Tips
+    console.print("[bold]Tips:[/bold]")
+    console.print("  • Issue types and priorities are project-specific")
+    console.print("  • Use 'me' as assignee to assign to yourself")
+    console.print("  • Most commands accept both short (-t) and long (--type) options")
+    console.print("  • Use --format option to change output format (table, json, etc.)")
+    console.print("")
+
+
+def add_help_verbose_option(func):
+    """Decorator to add --help-verbose option to issues commands."""
+    def callback(ctx, param, value):
+        if value:
+            show_issues_verbose_help(ctx)
+            ctx.exit()
+        return value
+
+    return click.option(
+        "--help-verbose",
+        is_flag=True,
+        callback=callback,
+        expose_value=False,
+        is_eager=True,
+        help="Show detailed help information with all commands and examples",
+    )(func)
+
+
 @click.group(cls=AliasedGroup)
+@add_help_verbose_option
 def issues() -> None:
-    r"""Manage issues - create, update, search, and organize your work.
+    r"""Manage YouTrack issues - create, update, and organize your work.
 
-    The issues command group provides comprehensive issue management capabilities.
-    You can create new issues, update existing ones, search and filter issues,
-    manage comments and attachments, and handle issue relationships.
+    Core Commands:
+        create    Create a new issue
+        list      List issues (coming soon)
+        search    Search issues by keywords
+        update    Update issue properties
 
-    Common Examples:
-        # Create and assign a bug report
-        yt issues create PROJECT-123 "Login fails on mobile" --type Bug --priority High --assignee john.doe
+    Quick Start:
+        # Create a new issue
+        yt issues create PROJECT-123 "Issue title" --type Bug
 
-        # List open issues assigned to you
-        yt issues list --assignee me --state Open
+        # Search for issues
+        yt issues search "priority:Critical"
 
-        # Search for issues by keywords
-        yt issues search "API error priority:Critical"
-
-        # Update issue status
-        yt issues update ISSUE-456 --state "In Progress"
-
-        # Add a comment
-        yt issues comments add ISSUE-456 "Fixed in build 1.2.3"
-
-    Command Categories:
-        Core Operations: create, list, update, delete, show
-        Search & Filter: search, list
-        Collaboration: comments, assign
-        Organization: tag, links, move
-        Bulk Operations: batch
-        Attachments: attach
+    For complete help with all commands and examples, use:
+        yt issues --help-verbose
     """
     pass
 
