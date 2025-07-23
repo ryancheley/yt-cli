@@ -564,13 +564,17 @@ For local development, manually run documentation tests:
 
     # Test documentation build
     cd docs/
-    uv run python -m sphinx -W -b html . _build/html
+    uv run python -c "from sphinx.cmd.build import main; main(['-W', '-b', 'html', '.', '_build/html'])"
 
     # Run doctests
     uv run pytest --doctest-modules
 
     # Run documentation tests
     uv run pytest tests/test_documentation.py
+
+    # Run linkcheck
+    cd docs/
+    uv run python -c "from sphinx.cmd.build import main; main(['-W', '-b', 'linkcheck', '.', '_build/linkcheck'])"
 
 Writing Testable Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

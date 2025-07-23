@@ -1,7 +1,6 @@
 """Tests for documentation examples and code snippets."""
 
 import re
-import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -134,7 +133,7 @@ class TestDocumentationBuild:
         conf_py = docs_path / "conf.py"
         content = conf_py.read_text()
 
-        required_extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.linkcheck"]
+        required_extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest"]
 
         for ext in required_extensions:
             assert ext in content, f"Extension {ext} not found in conf.py"
@@ -149,10 +148,11 @@ class TestDocumentationBuild:
         """Test that documentation builds successfully as HTML."""
         import shutil
 
-        # Skip if sphinx-build is not available
-        sphinx_build_result = subprocess.run(["which", "sphinx-build"], capture_output=True, text=True)
-        if sphinx_build_result.returncode != 0:
-            pytest.skip("sphinx-build command not available")
+        # Skip if sphinx is not available
+        try:
+            import sphinx.cmd.build
+        except ImportError:
+            pytest.skip("sphinx not available")
 
         build_dir = docs_path / "_build" / "html"
 
@@ -160,13 +160,25 @@ class TestDocumentationBuild:
         if build_dir.exists():
             shutil.rmtree(build_dir)
 
-        # Attempt to build documentation
-        result = subprocess.run(
-            ["sphinx-build", "-W", "-b", "html", str(docs_path), str(build_dir)], capture_output=True, text=True
-        )
+        # Attempt to build documentation using sphinx module
+        import sys
+        from io import StringIO
 
-        if result.returncode != 0:
-            pytest.fail(f"Documentation build failed:\n{result.stdout}\n{result.stderr}")
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+
+        try:
+            sys.stdout = StringIO()
+            sys.stderr = StringIO()
+            result_code = sphinx.cmd.build.main(["-W", "-b", "html", str(docs_path), str(build_dir)])
+            stdout_content = sys.stdout.getvalue()
+            stderr_content = sys.stderr.getvalue()
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+        if result_code != 0:
+            pytest.fail(f"Documentation build failed:\n{stdout_content}\n{stderr_content}")
 
         # Verify index.html was created
         index_html = build_dir / "index.html"

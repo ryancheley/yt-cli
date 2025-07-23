@@ -141,17 +141,17 @@ jobs:
     - name: Build documentation
       run: |
         cd docs
-        uv run sphinx-build -W -b html . _build/html
+        uv run python -c "import sys; from sphinx.cmd.build import main; sys.exit(main(['-W', '-b', 'html', '.', '_build/html']))"
 
     - name: Run doctest
       run: |
         cd docs
-        uv run sphinx-build -W -b doctest . _build/doctest
+        uv run python -c "import sys; from sphinx.cmd.build import main; sys.exit(main(['-W', '-b', 'doctest', '.', '_build/doctest']))"
 
     - name: Run linkcheck
       run: |
         cd docs
-        uv run sphinx-build -W -b linkcheck . _build/linkcheck
+        uv run python -c "import sys; from sphinx.cmd.build import main; sys.exit(main(['-W', '-b', 'linkcheck', '.', '_build/linkcheck']))"
       continue-on-error: true  # Don't fail CI on broken external links
 
   # Summary job for branch protection
