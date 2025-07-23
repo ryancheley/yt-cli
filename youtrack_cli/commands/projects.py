@@ -13,17 +13,97 @@ from ..auth import AuthManager
 from ..console import get_console
 
 
+def show_projects_verbose_help(ctx):
+    """Show comprehensive help for the projects command group."""
+    from rich.console import Console
+
+    console = Console()
+
+    # Main title
+    console.print("\n[bold blue]yt projects[/bold blue] - Project Management\n")
+
+    # Description
+    console.print("Manage projects - list, view, and configure project settings.")
+    console.print("The projects command group provides access to project-level operations")
+    console.print("including listing available projects, viewing project details, and")
+    console.print("managing project configuration.\n")
+
+    # Usage
+    console.print("[bold]Usage:[/bold] yt projects [OPTIONS] COMMAND [ARGS]...\n")
+
+    # Commands
+    console.print("[bold]Commands:[/bold]")
+    console.print("  list          List all accessible projects")
+    console.print("  show          Show detailed project information")
+    console.print("")
+
+    # Common Examples
+    console.print("[bold]Common Examples:[/bold]")
+    console.print("  # List all projects")
+    console.print("  yt projects list")
+    console.print("")
+    console.print("  # List projects with specific fields")
+    console.print("  yt projects list --fields name,shortName,archived --format json")
+    console.print("")
+    console.print("  # Show project details")
+    console.print("  yt projects show PROJECT-ID")
+    console.print("")
+    console.print("  # List projects including archived ones")
+    console.print("  yt projects list --show-archived")
+    console.print("")
+
+    # Options
+    console.print("[bold]Options:[/bold]")
+    console.print("  --help-verbose    Show this detailed help")
+    console.print("  -h, --help        Show basic help and exit")
+    console.print("")
+
+    # Tips
+    console.print("[bold]Tips:[/bold]")
+    console.print("  • Use --fields to control which project information is returned")
+    console.print("  • Projects are identified by their short name or ID")
+    console.print("  • Use --format json for programmatic access to project data")
+    console.print("  • Archive status affects project visibility in most operations")
+    console.print("")
+
+
+def add_help_verbose_option(func):
+    """Decorator to add --help-verbose option to projects commands."""
+
+    def callback(ctx, param, value):
+        if value:
+            show_projects_verbose_help(ctx)
+            ctx.exit()
+        return value
+
+    return click.option(
+        "--help-verbose",
+        is_flag=True,
+        callback=callback,
+        expose_value=False,
+        is_eager=True,
+        help="Show detailed help information with all commands and examples",
+    )(func)
+
+
 @click.group()
+@add_help_verbose_option
 def projects() -> None:
-    """Manage projects - list, view, and configure project settings.
+    """Manage YouTrack projects - list, view, and configure settings.
 
-    The projects command group provides access to project-level operations
-    including listing available projects, viewing project details, and
-    managing project configuration.
+    Core Commands:
+        list    List all accessible projects
+        show    Show detailed project information
 
-    Example:
+    Quick Start:
+        # List all projects
         yt projects list
+
+        # Show project details
         yt projects show PROJECT-ID
+
+    For complete help with all commands and examples, use:
+        yt projects --help-verbose
     """
     pass
 

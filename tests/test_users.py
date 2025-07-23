@@ -603,7 +603,7 @@ class TestUsersCLI:
         runner = CliRunner()
         result = runner.invoke(main, ["users", "--help"])
         assert result.exit_code == 0
-        assert "User management" in result.output
+        assert "Manage YouTrack users" in result.output
 
     def test_users_list_help(self):
         """Test users list command help."""

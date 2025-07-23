@@ -508,7 +508,7 @@ class TestProjectsCLI:
         runner = CliRunner()
         result = runner.invoke(main, ["projects", "--help"])
         assert result.exit_code == 0
-        assert "Manage projects" in result.output
+        assert "Manage YouTrack projects" in result.output
 
     def test_projects_list_help(self):
         """Test projects list command help."""

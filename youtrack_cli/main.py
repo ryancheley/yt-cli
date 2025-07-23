@@ -13,6 +13,7 @@ from .cli_utils import AliasedGroup
 from .commands import articles, boards, issues, projects, time, tutorial, users
 from .config import ConfigManager
 from .console import get_console
+from .help_system import check_help_verbose
 from .logging import setup_logging
 from .progress import set_progress_enabled
 from .reports import ReportManager
@@ -87,6 +88,14 @@ class MainGroup(AliasedGroup):
     is_flag=True,
     help="Enable enhanced security mode (prevents credential logging)",
 )
+@click.option(
+    "--help-verbose",
+    is_flag=True,
+    callback=check_help_verbose,
+    expose_value=False,
+    is_eager=True,
+    help="Show detailed help information with all options and examples",
+)
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -102,35 +111,28 @@ def main(
     time tracking, and more. Designed for developers and teams who want to integrate
     YouTrack into their daily workflows and automation.
 
-    Common Tasks:
-        # Get started (first time setup)
+    Getting Started:
+        # First time setup
         yt auth login
-
-        # Create an issue
-        yt issues create PROJECT-123 "Fix the bug" --type Bug --priority High
 
         # List your assigned issues
         yt issues list --assignee me
 
-        # Log work time
-        yt time log ISSUE-456 "2h 30m" --description "Fixed the issue"
+        # Create a new issue
+        yt issues create PROJECT-123 "Issue title" --type Bug
 
-        # View project details
-        yt projects show PROJECT-123
-
-        # Search for issues
-        yt issues search "API error priority:Critical"
+    Most Common Commands:
+        issues    Manage YouTrack issues
+        projects  Manage projects and settings
+        time      Track and manage work time
+        auth      Authentication and login
 
     Quick Reference:
-        # Command aliases (use short forms)
         yt i = yt issues    |  yt p = yt projects  |  yt t = yt time
         yt u = yt users     |  yt a = yt articles  |  yt b = yt boards
 
-        # Get help for any command
-        yt COMMAND --help
-
-        # Check authentication status
-        yt auth status
+    For complete help with all options and examples, use:
+        yt --help-verbose
 
     Documentation: https://yt-cli.readthedocs.io/
     """
