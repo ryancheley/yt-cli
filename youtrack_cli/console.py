@@ -119,6 +119,7 @@ class ConsoleManager:
     _instance: Optional["ConsoleManager"] = None
     _console: Optional[Console] = None
     _theme: Optional[Theme] = None
+    _quiet_mode: bool = False
 
     def __new__(cls) -> "ConsoleManager":
         """Create a singleton instance of ConsoleManager."""
@@ -177,6 +178,22 @@ class ConsoleManager:
             Optional[Theme]: The current theme or None if not set
         """
         return self._theme
+
+    def set_quiet_mode(self, quiet: bool) -> None:
+        """Set quiet mode for the console.
+
+        Args:
+            quiet: Whether to enable quiet mode
+        """
+        self._quiet_mode = quiet
+
+    def is_quiet_mode(self) -> bool:
+        """Check if quiet mode is enabled.
+
+        Returns:
+            bool: True if quiet mode is enabled
+        """
+        return self._quiet_mode
 
 
 # Global console manager instance
@@ -238,3 +255,21 @@ def set_theme_by_name(name: str) -> bool:
         set_console_theme(theme)
         return True
     return False
+
+
+def set_quiet_mode(quiet: bool) -> None:
+    """Set quiet mode for the global console.
+
+    Args:
+        quiet: Whether to enable quiet mode
+    """
+    _console_manager.set_quiet_mode(quiet)
+
+
+def is_quiet_mode() -> bool:
+    """Check if quiet mode is enabled for the global console.
+
+    Returns:
+        bool: True if quiet mode is enabled
+    """
+    return _console_manager.is_quiet_mode()
