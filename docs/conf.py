@@ -22,6 +22,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
+    "sphinx.ext.linkcheck",
     "sphinx_autodoc_typehints",
     "sphinx_click",
 ]
@@ -104,3 +106,23 @@ typehints_fully_qualified = False
 typehints_document_rtype = True
 typehints_use_signature = True
 typehints_use_signature_return = True
+
+# Doctest settings
+doctest_global_setup = """
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
+from youtrack_cli import main
+"""
+
+# Linkcheck settings
+linkcheck_ignore = [
+    r"http://localhost.*",
+    r"http://127\.0\.0\.1.*",
+    r"http://0\.0\.0\.0.*",
+    r"https://yourcompany\.youtrack\.cloud.*",
+    r".*youtrack\.cloud.*",  # Example URLs in documentation
+]
+linkcheck_anchors = False  # Don't check anchors, just that pages exist
+linkcheck_timeout = 10  # 10 second timeout for link checks
+linkcheck_retries = 2  # Retry failed links twice

@@ -416,4 +416,258 @@ Configure your IDE for Google-style docstrings:
 - **VS Code**: Python Docstring Generator extension with Google style
 - **Vim**: Use vim-pydocstring with Google template
 
+Documentation Testing
+----------------------
+
+Automated Testing Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This project implements comprehensive documentation testing to ensure code examples stay current and documentation remains accurate. Testing includes:
+
+- **Doctest**: Code examples in docstrings and RST files
+- **Build Verification**: Sphinx documentation builds without errors
+- **Link Checking**: External links remain valid
+- **CLI Example Validation**: Command examples in documentation work correctly
+
+Doctest Integration
+~~~~~~~~~~~~~~~~~~~
+
+Doctest automatically tests code examples in docstrings and documentation:
+
+**In Python Docstrings:**
+
+.. code-block:: python
+
+    def calculate_time_spent(hours: int, minutes: int) -> str:
+        """Calculate time spent in YouTrack format.
+
+        Args:
+            hours: Number of hours.
+            minutes: Number of minutes.
+
+        Returns:
+            Time in YouTrack format (e.g., "2h 30m").
+
+        Example:
+            >>> calculate_time_spent(2, 30)
+            '2h 30m'
+            >>> calculate_time_spent(0, 45)
+            '45m'
+        """
+
+**In RST Documentation:**
+
+.. code-block:: rst
+
+    Basic time calculation example:
+
+    .. doctest::
+
+        >>> from youtrack_cli.utils import calculate_time_spent
+        >>> calculate_time_spent(1, 15)
+        '1h 15m'
+
+**Running Doctests:**
+
+.. code-block:: bash
+
+    # Run doctests via pytest (includes both docstrings and RST)
+    uv run pytest --doctest-modules --doctest-glob='*.rst'
+
+    # Run doctests via Sphinx
+    cd docs/
+    uv run sphinx-build -b doctest . _build/doctest
+
+Documentation Build Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Documentation build is tested automatically:
+
+**Local Testing:**
+
+.. code-block:: bash
+
+    # Build HTML documentation
+    cd docs/
+    uv run sphinx-build -W -b html . _build/html
+
+    # The -W flag treats warnings as errors
+
+**CI Integration:**
+
+Build testing runs on every pull request and includes:
+
+- HTML documentation generation
+- Doctest execution
+- Link checking (with graceful failure for external links)
+
+Link Checking
+~~~~~~~~~~~~~
+
+External link validation helps maintain documentation quality:
+
+**Configuration in docs/conf.py:**
+
+.. code-block:: python
+
+    linkcheck_ignore = [
+        r'http://localhost.*',
+        r'.*youtrack\.cloud.*',  # Example URLs
+    ]
+    linkcheck_timeout = 10
+    linkcheck_retries = 2
+
+**Running Link Checks:**
+
+.. code-block:: bash
+
+    cd docs/
+    uv run sphinx-build -b linkcheck . _build/linkcheck
+
+CLI Example Testing
+~~~~~~~~~~~~~~~~~~~
+
+Command examples in documentation are validated through automated tests:
+
+**Example Test Structure:**
+
+.. code-block:: python
+
+    def test_quickstart_commands_are_valid():
+        """Test that commands in quickstart guide are syntactically valid."""
+        # Extract CLI examples from documentation
+        examples = extract_cli_examples(docs_path / "quickstart.rst")
+
+        # Validate each command structure
+        for cmd in examples:
+            assert cmd.startswith("yt "), f"Invalid command: {cmd}"
+
+Pre-commit Integration
+~~~~~~~~~~~~~~~~~~~~~~
+
+Documentation testing runs primarily in CI/CD pipeline for reliability.
+
+**CI Documentation Jobs:**
+
+The CI pipeline includes a comprehensive `docs` job that runs:
+
+- HTML documentation build verification
+- Doctest execution for code examples
+- Link checking for external URLs
+- Documentation quality validation
+
+**Local Testing:**
+
+For local development, manually run documentation tests:
+
+.. code-block:: bash
+
+    # Test documentation build
+    cd docs/
+    uv run python -m sphinx -W -b html . _build/html
+
+    # Run doctests
+    uv run pytest --doctest-modules
+
+    # Run documentation tests
+    uv run pytest tests/test_documentation.py
+
+Writing Testable Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Best Practices:**
+
+1. **Use Realistic Examples**: Examples should reflect actual usage patterns
+
+   .. code-block:: python
+
+       # Good: Realistic example
+       >>> issues = search_issues("assignee: me state: open")
+       >>> len(issues) >= 0
+       True
+
+2. **Handle Variable Output**: Use techniques to handle non-deterministic output
+
+   .. code-block:: python
+
+       # Good: Test behavior, not exact values
+       >>> result = create_issue("TEST", "Bug report")
+       >>> result.startswith("TEST-")
+       True
+
+3. **Mock External Dependencies**: Use doctest setup for mocking
+
+   .. code-block:: python
+
+       # In doctest_global_setup (docs/conf.py)
+       from unittest.mock import Mock
+       mock_api = Mock()
+
+4. **Group Related Examples**: Organize examples logically
+
+   .. code-block:: python
+
+       """
+       Example:
+           Basic usage:
+
+           >>> manager = AuthManager()
+           >>> config = AuthConfig("https://youtrack.example.com")
+
+           Error handling:
+
+           >>> try:
+           ...     manager.authenticate("invalid-token")
+           ... except AuthenticationError:
+           ...     print("Authentication failed")
+           Authentication failed
+       """
+
+Troubleshooting Documentation Tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Common Issues:**
+
+1. **Doctest Failures**:
+
+   .. code-block:: bash
+
+       # Check specific doctest
+       uv run python -m doctest youtrack_cli/module.py -v
+
+2. **Build Failures**:
+
+   .. code-block:: bash
+
+       # Detailed build output
+       cd docs/
+       uv run sphinx-build -v -b html . _build/html
+
+3. **Link Check Failures**:
+
+   .. code-block:: bash
+
+       # Review broken links
+       cat docs/_build/linkcheck/output.txt
+
+**Testing Workflow:**
+
+1. Write code with docstring examples
+2. Test examples locally: ``python -m doctest module.py``
+3. Update documentation with CLI examples
+4. Run pre-commit hooks: ``pre-commit run --all-files``
+5. Verify CI passes all documentation tests
+
+Quality Gates
+~~~~~~~~~~~~~
+
+Documentation quality is enforced through:
+
+- **CI Pipeline**: All documentation tests must pass
+- **Pre-commit Hooks**: Catch issues before commit
+- **Branch Protection**: Requires passing documentation tests
+- **Regular Link Checks**: Weekly validation of external links
+
+The documentation testing system ensures that our documentation remains accurate, helpful, and current with the codebase. When adding new features or modifying existing functionality, always update the corresponding documentation and verify that all examples continue to work correctly.
+
 Remember: Good documentation is a gift to your future self and your teammates. Take the time to write clear, helpful docstrings that explain not just what the code does, but why and how to use it effectively.

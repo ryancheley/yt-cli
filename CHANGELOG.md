@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implements case-sensitive/insensitive title sorting options
   - Adds reverse sorting capability for all sort criteria
   - Features comprehensive error handling and validation
+- Comprehensive documentation testing system (#347)
+  - Added doctest integration to pytest for testing code examples in docstrings and RST files
+  - Implemented automated documentation build verification in CI pipeline
+  - Added Sphinx linkcheck automation with external link validation
+  - Created extensive CLI example testing to ensure documentation accuracy
+  - Integrated documentation testing into pre-commit hooks for immediate feedback
+  - Added documentation quality gates enforced through CI/CD pipeline
+  - Created comprehensive developer guidelines for documentation testing workflow
+  - Configured graceful handling of external link failures to prevent CI disruption
+  - Added test coverage for documentation build process and example validation
 
 ### Fixed
 - Fix README and CONTRIBUTING placeholder URLs to use correct repository URL (#340)

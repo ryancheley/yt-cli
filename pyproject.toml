@@ -103,10 +103,12 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short --strict-markers"
+addopts = "-v --tb=short --strict-markers --doctest-modules --doctest-glob='*.rst'"
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL"]
 markers = [
     "integration: marks tests as integration tests (require real YouTrack API access)",
     "unit: marks tests as unit tests (fast, isolated, no external dependencies)",
+    "doctest: marks tests as doctest tests (test code examples in docstrings and RST files)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
