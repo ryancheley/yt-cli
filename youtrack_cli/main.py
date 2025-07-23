@@ -201,6 +201,305 @@ main.add_alias("c", "config")
 main.add_alias("cfg", "config")
 main.add_alias("login", "auth")
 
+# Flatter command alternatives (Issue #341)
+# These provide easier-to-use alternatives to deeply nested commands
+
+
+@main.command()
+@click.argument("project_id")
+@click.option("--sprint", "-s", help="Sprint ID or name to filter by")
+@click.option("--start-date", help="Start date in YYYY-MM-DD format")
+@click.option("--end-date", help="End date in YYYY-MM-DD format")
+@click.pass_context
+def burndown(
+    ctx: click.Context,
+    project_id: str,
+    sprint: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+) -> None:
+    """Generate a burndown report for a project or sprint.
+
+    This is a flatter alternative to 'yt reports burndown'.
+    Generates a burndown report for the specified project.
+
+    Examples:
+        # Generate burndown report for a project
+        yt burndown DEMO
+
+        # Generate report for specific sprint
+        yt burndown WEB-PROJECT --sprint "Sprint 1"
+
+        # Generate report for date range
+        yt burndown API --start-date 2024-01-01 --end-date 2024-01-31
+
+    Note: You can also use 'yt reports burndown' for the same functionality.
+    """
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    report_manager = ReportManager(auth_manager)
+    console = get_console()
+
+    async def run_burndown() -> None:
+        result = await report_manager.generate_burndown_report(
+            project_id=project_id,
+            sprint_id=sprint,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        report_manager.display_burndown_report(result["data"])
+
+    asyncio.run(run_burndown())
+
+
+@main.command()
+@click.argument("project_id")
+@click.option(
+    "--sprints",
+    "-n",
+    type=int,
+    default=5,
+    help="Number of recent sprints to analyze (default: 5)",
+)
+@click.pass_context
+def velocity(
+    ctx: click.Context,
+    project_id: str,
+    sprints: int,
+) -> None:
+    """Generate a velocity report for recent sprints.
+
+    This is a flatter alternative to 'yt reports velocity'.
+
+    Examples:
+        # Generate velocity report for last 5 sprints
+        yt velocity PROJECT-123
+
+        # Generate velocity report for last 10 sprints
+        yt velocity PROJECT-123 --sprints 10
+
+    Note: You can also use 'yt reports velocity' for the same functionality.
+    """
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    report_manager = ReportManager(auth_manager)
+    console = get_console()
+
+    async def run_velocity() -> None:
+        result = await report_manager.generate_velocity_report(
+            project_id=project_id,
+            sprints=sprints,
+        )
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        report_manager.display_velocity_report(result["data"])
+
+    asyncio.run(run_velocity())
+
+
+@main.group()
+def groups() -> None:
+    """Manage user groups and permissions.
+
+    This is a flatter alternative to 'yt admin user-groups'.
+    You can also use 'yt admin user-groups' for the same functionality.
+    """
+    pass
+
+
+@groups.command(name="list")
+@click.pass_context
+def groups_list(ctx: click.Context) -> None:
+    """List all user groups."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_list_groups() -> None:
+        result = await admin_manager.list_user_groups()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_user_groups(result["data"])
+
+    asyncio.run(run_list_groups())
+
+
+@groups.command(name="create")
+@click.argument("name")
+@click.option("--description", "-d", help="Group description")
+@click.pass_context
+def groups_create(ctx: click.Context, name: str, description: Optional[str]) -> None:
+    """Create a new user group."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_create_group() -> None:
+        result = await admin_manager.create_user_group(name, description)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        console.print(f"[green]Success:[/green] {result['message']}")
+        if "data" in result:
+            console.print(f"Group ID: {result['data'].get('id', 'N/A')}")
+
+    asyncio.run(run_create_group())
+
+
+@main.group()
+def settings() -> None:
+    """Manage global YouTrack settings.
+
+    This is a flatter alternative to 'yt admin global-settings'.
+    You can also use 'yt admin global-settings' for the same functionality.
+    """
+    pass
+
+
+@settings.command(name="get")
+@click.option("--name", "-n", help="Specific setting name to retrieve")
+@click.pass_context
+def settings_get(ctx: click.Context, name: Optional[str]) -> None:
+    """Get global settings."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_get_settings() -> None:
+        result = await admin_manager.get_global_settings(name)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        settings = result["data"]
+        if name:
+            admin_manager.display_global_settings(settings)
+        else:
+            admin_manager.display_global_settings(settings)
+
+    asyncio.run(run_get_settings())
+
+
+@settings.command(name="set")
+@click.argument("name")
+@click.argument("value")
+@click.pass_context
+def settings_set(ctx: click.Context, name: str, value: str) -> None:
+    """Set a global setting."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_set_setting() -> None:
+        result = await admin_manager.set_global_setting(name, value)
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        console.print(f"[green]Success:[/green] {result['message']}")
+
+    asyncio.run(run_set_setting())
+
+
+@settings.command(name="list")
+@click.pass_context
+def settings_list(ctx: click.Context) -> None:
+    """List all global settings."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_list_settings() -> None:
+        result = await admin_manager.get_global_settings()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_global_settings(result["data"])
+
+    asyncio.run(run_list_settings())
+
+
+@main.command(name="audit")
+@click.option(
+    "--limit",
+    "-l",
+    type=int,
+    default=50,
+    help="Number of recent entries to show",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def audit_main(ctx: click.Context, limit: int, output_format: str) -> None:
+    """View command audit log.
+
+    This is a flatter alternative to 'yt security audit'.
+    You can also use 'yt security audit' for the same functionality.
+    """
+    console = get_console()
+    audit_logger = ctx.obj.get("audit_logger") or AuditLogger()
+
+    try:
+        entries = audit_logger.get_audit_log(limit=limit)
+
+        if not entries:
+            console.print("📋 No audit entries found", style="yellow")
+            return
+
+        if output_format == "json":
+            import json
+
+            audit_data = [entry.model_dump(mode="json") for entry in entries]
+            console.print(json.dumps(audit_data, indent=2, default=str))
+        else:
+            from rich.table import Table
+
+            table = Table(title=f"Command Audit Log (Last {len(entries)} entries)")
+            table.add_column("Timestamp", style="cyan")
+            table.add_column("Command", style="yellow")
+            table.add_column("Arguments", style="blue")
+            table.add_column("User", style="green")
+            table.add_column("Status", style="red")
+
+            for entry in entries[-limit:]:
+                status = "✅" if entry.success else "❌"
+                user = entry.user or "Unknown"
+                args_str = " ".join(entry.arguments) if entry.arguments else ""
+
+                table.add_row(
+                    entry.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    entry.command,
+                    args_str,
+                    user,
+                    status,
+                )
+
+            console.print(table)
+
+    except Exception as e:
+        console.print(f"❌ Error retrieving audit log: {e}", style="red")
+        raise click.ClickException("Failed to retrieve audit log") from e
+
 
 @main.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish", "powershell"]))

@@ -106,11 +106,12 @@ yt articles create "API Documentation" --file api-docs.md
 # Log work time
 yt time log ISSUE-123 "2h" --description "Feature development"
 
-# Generate reports with progress indicators
-yt reports burndown PROJECT-123
+# Generate reports (flatter syntax)
+yt burndown PROJECT-123
+yt velocity PROJECT-123
 
-# Disable progress indicators for automation
-yt --no-progress reports velocity PROJECT-123
+# Or use traditional nested commands
+yt reports burndown PROJECT-123
 
 # Enable debug logging for troubleshooting
 yt --debug issues list
@@ -138,6 +139,11 @@ For comprehensive guides, examples, and API reference, visit our documentation:
 | `yt time` | Time tracking with flexible duration formats |
 | `yt boards` | Agile board operations and management |
 | `yt reports` | Generate burndown and velocity reports |
+| `yt burndown` | Generate burndown reports (flatter alternative) |
+| `yt velocity` | Generate velocity reports (flatter alternative) |
+| `yt groups` | Manage user groups (flatter alternative to `admin user-groups`) |
+| `yt settings` | Manage global settings (flatter alternative to `admin global-settings`) |
+| `yt audit` | View audit logs (flatter alternative to `security audit`) |
 | `yt auth` | Authentication and credential management |
 | `yt config` | CLI configuration and preferences |
 | `yt admin` | Administrative operations (requires admin privileges) |
@@ -197,9 +203,32 @@ yt time summary --group-by user
 
 ### Reporting
 ```bash
-# Project insights
+# Project insights (flatter syntax)
+yt burndown PROJECT-123 --sprint "Sprint 1"
+yt velocity PROJECT-123 --sprints 10
+
+# Or use traditional nested commands
 yt reports burndown PROJECT-123 --sprint "Sprint 1"
 yt reports velocity PROJECT-123 --sprints 10
+```
+
+### Administration
+```bash
+# User group management (flatter syntax)
+yt groups create "Team Lead" --description "Team leadership role"
+yt groups list
+
+# Global settings (flatter syntax)
+yt settings get --name system.timeZone
+yt settings set timeout 30
+
+# Audit logging (flatter syntax)
+yt audit --limit 25 --format json
+
+# Traditional nested commands also work
+yt admin user-groups create "Team Lead"
+yt admin global-settings get
+yt security audit
 ```
 
 ## Help and Support
