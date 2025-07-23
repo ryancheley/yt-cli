@@ -151,3 +151,6 @@ node_modules/
 
 # Custom scripts
 test_runner.py
+
+# Claude configuration
+.claude/settings.local.json
