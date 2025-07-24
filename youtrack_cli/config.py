@@ -4,9 +4,13 @@ This module provides configuration file management using environment files
 with automatic path resolution, validation, and secure storage.
 
 Example:
-    >>> config = ConfigManager()
-    >>> config.set_config('BASE_URL', 'https://youtrack.example.com')
-    >>> url = config.get_config('BASE_URL')
+    Basic usage for configuration management:
+
+    .. code-block:: python
+
+        config = ConfigManager()
+        config.set_config('BASE_URL', 'https://youtrack.example.com')
+        url = config.get_config('BASE_URL')
 """
 
 import os

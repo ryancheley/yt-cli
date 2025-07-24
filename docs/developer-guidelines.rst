@@ -417,3 +417,235 @@ Configure your IDE for Google-style docstrings:
 - **Vim**: Use vim-pydocstring with Google template
 
 Remember: Good documentation is a gift to your future self and your teammates. Take the time to write clear, helpful docstrings that explain not just what the code does, but why and how to use it effectively.
+
+Documentation Testing
+----------------------
+
+This project implements comprehensive documentation testing to ensure code examples stay current and links remain valid.
+
+Overview
+~~~~~~~~
+
+Documentation testing includes:
+
+- **Doctest verification**: Code examples in documentation are automatically tested
+- **Link checking**: External and internal links are validated
+- **Build verification**: Documentation builds without warnings or errors
+- **Pre-commit integration**: Documentation quality checks run before commits
+- **CI/CD enforcement**: Documentation tests must pass for all pull requests
+
+Configuration
+~~~~~~~~~~~~~
+
+Doctest configuration in ``pyproject.toml``:
+
+.. code-block:: toml
+
+    [tool.pytest.ini_options]
+    addopts = "-v --tb=short --strict-markers --doctest-glob='*.rst'"
+    doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS", "IGNORE_EXCEPTION_DETAIL"]
+    markers = [
+        "doctest: marks tests as doctests (documentation code examples)",
+    ]
+
+Sphinx configuration in ``docs/conf.py``:
+
+.. code-block:: python
+
+    extensions = [
+        "sphinx.ext.doctest",      # Enable doctest support
+        "sphinx.ext.linkcheck",    # Enable link checking
+        # ... other extensions
+    ]
+
+    # Doctest global setup for consistent testing environment
+    doctest_global_setup = """
+    import asyncio
+    import os
+    from unittest.mock import AsyncMock, MagicMock
+
+    # Mock environment for consistent testing
+    os.environ.setdefault('YOUTRACK_BASE_URL', 'https://youtrack.example.com')
+    os.environ.setdefault('YOUTRACK_TOKEN', 'test-token')
+    """
+
+    # Link checking configuration
+    linkcheck_ignore = [
+        r'http://localhost.*',
+        r'https://youtrack\.example\.com.*',
+    ]
+    linkcheck_timeout = 30
+    linkcheck_retries = 2
+
+Running Documentation Tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Local testing commands:
+
+.. code-block:: bash
+
+    # Test RST-based doctests
+    uv run pytest --doctest-glob='*.rst' docs/ -v
+
+    # Build documentation with error checking
+    uv run sphinx-build -b html docs docs/_build/html -W
+
+    # Run Sphinx doctests
+    uv run sphinx-build -b doctest docs docs/_build/doctest
+
+    # Check documentation links
+    uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
+
+    # Run pre-commit documentation hooks
+    pre-commit run doctests
+    pre-commit run sphinx-build
+
+CI/CD Integration
+~~~~~~~~~~~~~~~~~
+
+Documentation testing is integrated into the CI pipeline with a dedicated job:
+
+.. code-block:: yaml
+
+    documentation:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install dependencies
+          run: uv sync --dev --group docs
+        - name: Build documentation
+          run: uv run sphinx-build -b html docs docs/_build/html -W --keep-going
+        - name: Run doctests
+          run: uv run sphinx-build -b doctest docs docs/_build/doctest
+        - name: Check documentation links
+          run: uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
+        - name: Run pytest doctests
+          run: uv run pytest --doctest-glob='*.rst' docs/ -v
+
+The documentation job is required for all pull requests and must pass before merging.
+
+Pre-commit Hooks
+~~~~~~~~~~~~~~~~
+
+Documentation testing is integrated into pre-commit workflow:
+
+.. code-block:: yaml
+
+    - id: doctests
+      name: doctests
+      entry: uv run pytest --doctest-glob='*.rst' docs/
+      language: system
+      files: ^docs/.*\.rst$
+
+    - id: sphinx-build
+      name: sphinx-build
+      entry: uv run sphinx-build -b html docs docs/_build/html -W
+      language: system
+      files: ^docs/.*\.rst$
+
+These hooks run automatically when documentation files are modified.
+
+Writing Testable Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Best practices for documentation examples:
+
+**Use realistic but simple examples:**
+
+.. code-block:: rst
+
+    Basic usage example:
+
+    .. code-block:: python
+
+        # Create a configuration manager
+        config = ConfigManager()
+        config.set_config('BASE_URL', 'https://youtrack.example.com')
+
+        # Retrieve configuration
+        url = config.get_config('BASE_URL')
+        print(f"Using YouTrack at: {url}")
+
+**Avoid examples that require external dependencies:**
+
+.. code-block:: rst
+
+    Good - uses mocked responses:
+
+    .. code-block:: python
+
+        # Example with predictable output
+        result = process_data(['item1', 'item2'])
+        print(len(result))  # Output: 2
+
+    Avoid - requires real API:
+
+    .. code-block:: python
+
+        # This would fail in testing
+        api = YouTrackAPI('https://real-server.com')
+        issues = api.get_issues()  # Unpredictable/fails
+
+**Use doctest directives when needed:**
+
+.. code-block:: rst
+
+    Example with output normalization:
+
+    .. code-block:: python
+
+        >>> result = {'key': 'value', 'items': [1, 2, 3]}
+        >>> print(result)  # doctest: +SKIP
+        {'key': 'value', 'items': [1, 2, 3]}
+
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+**Common doctest failures:**
+
+1. **Inconsistent whitespace**: Use ``NORMALIZE_WHITESPACE`` flag
+2. **Unpredictable output**: Use ``ELLIPSIS`` or ``+SKIP`` directive
+3. **Async code**: Ensure proper async/await handling in examples
+4. **Environment differences**: Use consistent mock data
+
+**Link checking issues:**
+
+1. **Temporary failures**: Links may be temporarily unavailable
+2. **Rate limiting**: External sites may rate-limit requests
+3. **Authentication required**: Some links require login
+4. **Local development**: localhost URLs should be excluded
+
+**Build failures:**
+
+1. **Missing dependencies**: Ensure all Sphinx extensions are installed
+2. **Circular imports**: Check for import issues in documented modules
+3. **Malformed RST**: Validate RST syntax with sphinx-build warnings
+
+Maintenance
+~~~~~~~~~~~
+
+Regular maintenance tasks:
+
+1. **Weekly link checking**: Review and update broken links
+2. **Quarterly example review**: Ensure examples reflect current API
+3. **Version updates**: Update examples when API changes
+4. **Performance monitoring**: Track documentation build times
+
+Quality Gates
+~~~~~~~~~~~~~
+
+Documentation quality requirements:
+
+- All documentation builds without warnings
+- All doctests pass in CI
+- External links are validated (with exceptions for known issues)
+- Pre-commit hooks pass for all documentation changes
+- RST syntax is valid and consistent
+
+The documentation testing system ensures that:
+
+- Code examples in documentation remain accurate
+- Links to external resources stay valid
+- Documentation builds successfully in all environments
+- Contributors receive immediate feedback on documentation quality
+- Documentation stays synchronized with code changes
