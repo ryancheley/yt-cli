@@ -8,6 +8,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .console import get_console
+from .custom_field_manager import CustomFieldManager
 from .utils import format_timestamp
 
 
@@ -23,19 +24,11 @@ def _get_assignee_from_issue_data(issue_data: Dict[str, Any]) -> str:
         elif assignee.get("login"):
             return assignee["login"]
 
-    # If not found, try the Assignee custom field
+    # If not found, try the Assignee custom field using CustomFieldManager
     custom_fields = issue_data.get("customFields", [])
-    if isinstance(custom_fields, list):
-        for field in custom_fields:
-            if isinstance(field, dict) and field.get("name") == "Assignee":
-                value = field.get("value")
-                if value and isinstance(value, dict):
-                    if value.get("fullName"):
-                        return value["fullName"]
-                    elif value.get("name"):
-                        return value["name"]
-                    elif value.get("login"):
-                        return value["login"]
+    assignee_value = CustomFieldManager.extract_field_value(custom_fields, "Assignee")
+    if assignee_value:
+        return str(assignee_value)
 
     return "Unassigned"
 
@@ -345,16 +338,10 @@ def create_custom_fields_panel(custom_fields: List[Dict[str, Any]]) -> Panel:
         field_value = field.get("value")
 
         if field_value is not None:
-            if isinstance(field_value, dict):
-                # Handle complex field values (e.g., user fields, enum fields)
-                display_value = field_value.get("name") or field_value.get("login") or str(field_value)
-            elif isinstance(field_value, list):
-                # Handle multi-value fields
-                display_value = ", ".join(str(v.get("name", v)) if isinstance(v, dict) else str(v) for v in field_value)
-            else:
-                display_value = str(field_value)
-
-            fields_data[field_name] = display_value
+            # Use CustomFieldManager to extract the field value properly
+            extracted_value = CustomFieldManager._extract_dict_value(field_value)
+            if extracted_value is not None:
+                fields_data[field_name] = str(extracted_value)
 
     return PanelFactory.create_details_panel(
         title="Custom Fields",

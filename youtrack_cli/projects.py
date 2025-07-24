@@ -9,6 +9,7 @@ from rich.text import Text
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .custom_field_manager import CustomFieldManager
 from .pagination import create_paginated_display
 from .users import UserManager
 
@@ -633,18 +634,14 @@ class ProjectManager:
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
 
-        # Prepare request body
-        field_data = {
-            "field": {"id": field_id},
-            "$type": field_type,
-        }
-
-        if can_be_empty is not None:
-            field_data["canBeEmpty"] = can_be_empty
-        if empty_field_text is not None:
-            field_data["emptyFieldText"] = empty_field_text
-        if is_public is not None:
-            field_data["isPublic"] = is_public
+        # Prepare request body using CustomFieldManager
+        field_data = CustomFieldManager.create_project_enum_field_config(
+            field_type=field_type,
+            can_be_empty=can_be_empty if can_be_empty is not None else True,
+            empty_field_text=empty_field_text if empty_field_text is not None else "No value",
+            is_public=is_public if is_public is not None else True,
+        )
+        field_data["field"] = {"id": field_id}
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
@@ -855,31 +852,9 @@ class ProjectManager:
             field_info = field.get("field", {})
             field_name = field_info.get("name", "N/A") if field_info else "N/A"
 
-            # Extract field type from the root $type field and convert to readable format
+            # Extract field type from the root $type field and convert to readable format using CustomFieldManager
             raw_type = field.get("$type", "Unknown")
-            if raw_type.endswith("ProjectCustomField"):
-                # Remove "ProjectCustomField" suffix and convert to readable format
-                type_prefix = raw_type.replace("ProjectCustomField", "")
-                if type_prefix == "Enum":
-                    field_type = "Enum"
-                elif type_prefix == "State":
-                    field_type = "State"
-                elif type_prefix == "User":
-                    field_type = "User"
-                elif type_prefix == "Date":
-                    field_type = "Date"
-                elif type_prefix == "String":
-                    field_type = "String"
-                elif type_prefix == "Integer":
-                    field_type = "Integer"
-                elif type_prefix == "Float":
-                    field_type = "Float"
-                elif type_prefix == "Period":
-                    field_type = "Period"
-                else:
-                    field_type = type_prefix if type_prefix else "Custom"
-            else:
-                field_type = raw_type
+            field_type = CustomFieldManager.format_field_type_for_display(raw_type)
 
             # Format required status
             can_be_empty = field.get("canBeEmpty", True)
