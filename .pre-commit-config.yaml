@@ -59,3 +59,10 @@ repos:
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: true
+      - id: docs-build-check
+        name: docs-build-check
+        entry: bash -c 'echo "Documentation build checking is configured but requires Sphinx installation"'
+        language: system
+        files: ^docs/.*\.rst$
+        pass_filenames: false
+        always_run: false

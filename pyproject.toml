@@ -107,11 +107,13 @@ addopts = "-v --tb=short --strict-markers"
 markers = [
     "integration: marks tests as integration tests (require real YouTrack API access)",
     "unit: marks tests as unit tests (fast, isolated, no external dependencies)",
+    "doctest: marks tests as doctests (documentation code examples)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
 ]
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS", "IGNORE_EXCEPTION_DETAIL"]
 
 [tool.coverage.run]
 source = ["youtrack_cli"]

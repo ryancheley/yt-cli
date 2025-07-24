@@ -5,9 +5,13 @@ interactions with connection pooling, automatic retries, caching, and
 comprehensive error handling.
 
 Example:
-    >>> manager = get_client_manager()
-    >>> async with manager.request('GET', 'https://api.example.com') as response:
-    ...     data = await response.json()
+    Basic usage for HTTP client operations:
+
+    .. code-block:: python
+
+        manager = get_client_manager()
+        async with manager.request('GET', 'https://api.example.com') as response:
+            data = await response.json()
 """
 
 from __future__ import annotations

@@ -22,6 +22,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
+    "sphinx.ext.linkcheck",
     "sphinx_autodoc_typehints",
     "sphinx_click",
 ]
@@ -104,3 +106,37 @@ typehints_fully_qualified = False
 typehints_document_rtype = True
 typehints_use_signature = True
 typehints_use_signature_return = True
+
+# Doctest settings
+doctest_global_setup = """
+import asyncio
+import os
+import tempfile
+from unittest.mock import AsyncMock, MagicMock, patch
+
+# Mock YouTrack API responses for doctests
+async def mock_api_response(*args, **kwargs):
+    return {"status": "success", "data": []}
+
+# Set up mock environment for doctests
+os.environ.setdefault('YOUTRACK_BASE_URL', 'https://youtrack.example.com')
+os.environ.setdefault('YOUTRACK_TOKEN', 'test-token')
+"""
+
+doctest_global_cleanup = """
+# Clean up any test artifacts
+pass
+"""
+
+# Linkcheck settings
+linkcheck_ignore = [
+    r"http://localhost.*",
+    r"http://127\.0\.0\.1.*",
+    r"http://0\.0\.0\.0.*",
+    r"https://youtrack\.example\.com.*",
+    r"https://yourcompany\.youtrack\.cloud.*",
+]
+
+linkcheck_timeout = 30
+linkcheck_retries = 2
+linkcheck_workers = 5
