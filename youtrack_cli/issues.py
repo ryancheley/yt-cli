@@ -9,6 +9,7 @@ from rich.table import Table
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .custom_field_manager import CustomFieldManager
 from .field_selection import get_field_selector
 from .logging import get_logger
 from .pagination import create_paginated_display
@@ -53,7 +54,7 @@ class IssueManager:
             ) from e
 
     def _get_custom_field_value(self, issue: Dict[str, Any], field_name: str) -> Optional[str]:
-        """Extract value from custom fields by field name.
+        """Extract value from custom fields by field name using CustomFieldManager.
 
         Supports all YouTrack custom field types including:
         - avatarUrl, buildLink, color(id), fullName, isResolved
@@ -61,74 +62,8 @@ class IssueManager:
         - Complex nested field structures
         """
         custom_fields = issue.get("customFields", [])
-        if not isinstance(custom_fields, list):
-            return None
-
-        for field in custom_fields:
-            if isinstance(field, dict) and field.get("name") == field_name:
-                value = field.get("value")
-                if value is None:
-                    return None
-                elif isinstance(value, dict):
-                    # Enhanced extraction for complex field structures
-                    return self._extract_dict_value(value)
-                elif isinstance(value, list):
-                    # Handle multi-value fields
-                    if value and isinstance(value[0], dict):
-                        extracted_values = [
-                            self._extract_dict_value(v) for v in value if v and self._extract_dict_value(v)
-                        ]
-                        return ", ".join(extracted_values)
-                    else:
-                        return ", ".join(str(v) for v in value if v)
-                elif value is not None:
-                    return str(value)
-        return None
-
-    def _extract_dict_value(self, value_dict: Dict[str, Any]) -> Optional[str]:
-        """Extract the most appropriate value from a complex field value dictionary.
-
-        Prioritizes extraction in the following order:
-        1. presentation (formatted display value)
-        2. fullName (complete user name)
-        3. localizedName (translated field name)
-        4. text (rich text content)
-        5. name (standard name)
-        6. buildLink (build/deployment links)
-        7. avatarUrl (user avatar images)
-        8. minutes (time duration)
-        9. isResolved (boolean resolution status)
-        10. color(id) (color field ID)
-        11. id (fallback identifier)
-        """
-        if not isinstance(value_dict, dict):
-            return None
-
-        # Priority-based extraction
-        extraction_keys = [
-            "presentation",
-            "fullName",
-            "localizedName",
-            "text",
-            "name",
-            "buildLink",
-            "avatarUrl",
-            "minutes",
-            "isResolved",
-            "color",
-            "id",
-        ]
-
-        for key in extraction_keys:
-            if key in value_dict and value_dict[key] is not None:
-                value = value_dict[key]
-                # Handle nested structures for color(id)
-                if key == "color" and isinstance(value, dict):
-                    return value.get("id") or str(value)
-                # Convert boolean and numeric values to strings
-                return str(value)
-
-        return None
+        result = CustomFieldManager.extract_field_value(custom_fields, field_name)
+        return str(result) if result is not None else None
 
     def _get_assignee_name(self, issue: Dict[str, Any]) -> str:
         """Get assignee name from either regular field or custom field."""
@@ -242,33 +177,15 @@ class IssueManager:
                     if "type" in issue_data_no_priority:
                         del issue_data_no_priority["type"]
 
-                    # Try with custom fields format including $type for both Priority and Type
-                    custom_fields = [
-                        {
-                            "$type": "SingleEnumIssueCustomField",
-                            "name": "Priority",
-                            "value": {"$type": "EnumBundleElement", "name": priority},
-                        }
-                    ]
+                    # Try with custom fields format using CustomFieldManager
+                    custom_fields = [CustomFieldManager.create_single_enum_field("Priority", priority)]
 
                     # Also add Type field if it was specified
                     if issue_type:
-                        custom_fields.append(
-                            {
-                                "$type": "SingleEnumIssueCustomField",
-                                "name": "Type",
-                                "value": {"$type": "EnumBundleElement", "name": issue_type},
-                            }
-                        )
+                        custom_fields.append(CustomFieldManager.create_single_enum_field("Type", issue_type))
                     else:
                         # Default to "Task" if no type specified
-                        custom_fields.append(
-                            {
-                                "$type": "SingleEnumIssueCustomField",
-                                "name": "Type",
-                                "value": {"$type": "EnumBundleElement", "name": "Task"},
-                            }
-                        )
+                        custom_fields.append(CustomFieldManager.create_single_enum_field("Type", "Task"))
 
                     issue_data_no_priority["customFields"] = custom_fields
 
@@ -482,15 +399,13 @@ class IssueManager:
         if description:
             update_data["description"] = description
 
-        # Handle state, priority, type and assignee as custom fields
+        # Handle state, priority, type and assignee as custom fields using CustomFieldManager
         if state:
-            custom_fields.append({"$type": "StateIssueCustomField", "name": "State", "value": {"name": state}})
+            custom_fields.append(CustomFieldManager.create_state_field("State", state))
         if priority:
-            custom_fields.append(
-                {"$type": "SingleEnumIssueCustomField", "name": "Priority", "value": {"name": priority}}
-            )
+            custom_fields.append(CustomFieldManager.create_single_enum_field("Priority", priority))
         if issue_type:
-            custom_fields.append({"$type": "SingleEnumIssueCustomField", "name": "Type", "value": {"name": issue_type}})
+            custom_fields.append(CustomFieldManager.create_single_enum_field("Type", issue_type))
         if assignee:
             # For assignee, we need to get the field ID and user ID for proper assignment
             field_id = await self._get_custom_field_id(issue_id, "Assignee")
@@ -504,23 +419,19 @@ class IssueManager:
                 if user_result["status"] == "success":
                     user_data = user_result["data"]
                     user_id = user_data.get("id")
-                    custom_fields.append(
-                        {
-                            "$type": "SingleUserIssueCustomField",
-                            "id": field_id,
-                            "value": {"$type": "User", "id": user_id},
-                        }
-                    )
+                    # Create custom field with ID for proper assignment
+                    user_field = CustomFieldManager.create_single_user_field("Assignee", assignee)
+                    user_field["id"] = field_id
+                    user_field["value"]["$type"] = "User"
+                    user_field["value"]["id"] = user_id
+                    del user_field["value"]["login"]  # Remove login when using ID
+                    custom_fields.append(user_field)
                 else:
-                    # Fallback to login-based assignment (might not work but worth trying)
-                    custom_fields.append(
-                        {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": assignee}}
-                    )
+                    # Fallback to login-based assignment
+                    custom_fields.append(CustomFieldManager.create_single_user_field("Assignee", assignee))
             else:
                 # No field ID found, use the fallback approach
-                custom_fields.append(
-                    {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": assignee}}
-                )
+                custom_fields.append(CustomFieldManager.create_single_user_field("Assignee", assignee))
 
         if not update_data and not custom_fields:
             return {"status": "error", "message": "No fields to update"}
@@ -681,7 +592,7 @@ class IssueManager:
             return {"status": "error", "message": f"Error searching issues: {str(e)}"}
 
     async def _get_custom_field_id(self, issue_id: str, field_name: str) -> Optional[str]:
-        """Get the custom field ID for a given field name."""
+        """Get the custom field ID for a given field name using CustomFieldManager."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return None
@@ -695,9 +606,8 @@ class IssueManager:
             response = await client_manager.make_request("GET", url, headers=headers, params=params)
             if response.status_code == 200:
                 data = self._parse_json_response(response)
-                for field in data.get("customFields", []):
-                    if field.get("name") == field_name:
-                        return field.get("id")
+                custom_fields = data.get("customFields", [])
+                return CustomFieldManager.get_field_id(custom_fields, field_name)
         except Exception:
             pass
         return None
@@ -1453,7 +1363,7 @@ class IssueManager:
             return {"status": "error", "message": f"Error listing link types: {str(e)}"}
 
     def _get_field_with_fallback(self, issue: Dict[str, Any], field_name: str, custom_field_names: List[str]) -> str:
-        """Get field value with fallback to custom fields.
+        """Get field value with fallback to custom fields using CustomFieldManager.
 
         Args:
             issue: The issue dictionary
@@ -1472,11 +1382,12 @@ class IssueManager:
         elif isinstance(field_value, str) and field_value:
             return field_value
 
-        # Fallback to custom fields
+        # Fallback to custom fields using CustomFieldManager
+        custom_fields = issue.get("customFields", [])
         for custom_name in custom_field_names:
-            custom_value = self._get_custom_field_value(issue, custom_name)
-            if custom_value and custom_value != "N/A":
-                return custom_value
+            result = CustomFieldManager.extract_field_value(custom_fields, custom_name)
+            if result is not None and str(result) != "N/A":
+                return str(result)
 
         return "N/A"
 

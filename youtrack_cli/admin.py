@@ -9,6 +9,7 @@ from rich.text import Text
 from .auth import AuthManager
 from .client import get_client_manager
 from .console import get_console
+from .custom_field_manager import CustomFieldManager
 
 __all__ = ["AdminManager"]
 
@@ -794,13 +795,15 @@ class AdminManager:
         return formatted.title()
 
     def _format_setting_value(self, value: Any) -> str:
-        """Format setting value for display."""
+        """Format setting value for display using CustomFieldManager."""
         if isinstance(value, bool):
             return "✓" if value else "✗"
         elif isinstance(value, dict):
             # For nested objects, show a summary or key fields
             if "$type" in value:
-                return f"[{value['$type']}]"
+                field_type = value["$type"]
+                display_name = CustomFieldManager.format_field_type_for_display(field_type)
+                return f"[{display_name}]"
             else:
                 return str(value)
         elif isinstance(value, (int, float)):

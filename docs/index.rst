@@ -15,6 +15,7 @@ users, and more.
    quickstart
    configuration
    command-aliases
+   custom-fields
    security
    logging
    learning-path

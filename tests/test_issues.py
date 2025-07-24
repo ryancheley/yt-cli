@@ -1315,20 +1315,6 @@ class TestIssueManager:
         value = issue_manager._get_custom_field_value(issue_with_empty_dict, "Empty")
         assert value is None
 
-    def test_extract_dict_value_color_nested(self, issue_manager):
-        """Test _extract_dict_value method with nested color structure."""
-        color_dict = {"name": "High Priority", "color": {"id": "red-1", "value": "#FF0000"}, "id": "priority-high"}
-        value = issue_manager._extract_dict_value(color_dict)
-        assert value == "High Priority"
-
-    def test_extract_dict_value_invalid_input(self, issue_manager):
-        """Test _extract_dict_value method with invalid input."""
-        value = issue_manager._extract_dict_value("not a dict")
-        assert value is None
-
-        value = issue_manager._extract_dict_value(None)
-        assert value is None
-
 
 @pytest.mark.unit
 class TestIssuesCLI:
