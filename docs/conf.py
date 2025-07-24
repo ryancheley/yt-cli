@@ -23,7 +23,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.doctest",
-    "sphinx.ext.linkcheck",
     "sphinx_autodoc_typehints",
     "sphinx_click",
 ]

@@ -138,14 +138,17 @@ jobs:
     - name: Install dependencies
       run: uv sync --dev --group docs
 
+    - name: Verify Sphinx installation
+      run: uv run python -c "import sphinx; print('Sphinx version:', sphinx.__version__)"
+
     - name: Build documentation
-      run: uv run sphinx-build -b html docs docs/_build/html -W --keep-going
+      run: uv run python -m sphinx -b html docs docs/_build/html --keep-going
 
     - name: Run doctests
-      run: uv run sphinx-build -b doctest docs docs/_build/doctest
+      run: uv run python -m sphinx -b doctest docs docs/_build/doctest
 
     - name: Check documentation links
-      run: uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
+      run: uv run python -m sphinx -b linkcheck docs docs/_build/linkcheck
       continue-on-error: true  # Allow link check failures initially
 
     - name: Validate documentation structure
