@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2025-07-24
+
+### Fixed
+- Fix TypeError in 'yt new' command (#370)
+- Fix TypeError in 'yt ls' command - incorrect parameter name (#367, #369)
+  - Changed parameter name from project to project_id when invoking list_issues
+  - Built query string from type, priority, and tag parameters
+  - Added all required parameters with appropriate defaults
+
+## [0.11.0] - 2025-07-24
+
 ### Added
+- CLI testing agent for automated command validation (#368)
+  - Create comprehensive CLI testing agent at .claude/agents/cli-tester.md
+  - Integrate agent into implement command workflow
+  - Add automatic CLI testing to pre-commit validation
+  - Ensure all CLI changes are tested before PR creation
 - Comprehensive documentation testing system (#347)
   - Automated testing of code examples in documentation to ensure they stay current
   - Link checking automation in CI/CD pipeline to validate external and internal links
