@@ -1023,17 +1023,38 @@ def ls(
     # Import here to avoid circular imports
     from .commands.issues import list_issues
 
+    # Build query string from additional filters
+    query_parts = []
+    if type:
+        query_parts.append(f"type:{type}")
+    if priority:
+        query_parts.append(f"priority:{priority}")
+    if tag:
+        query_parts.append(f"tag:{tag}")
+
+    query = " AND ".join(query_parts) if query_parts else None
+
     # Call the underlying issues list command
     ctx.invoke(
         list_issues,
         assignee=assignee,
-        project=project,
+        project_id=project,
         state=state,
-        type=type,
-        priority=priority,
-        tag=tag,
-        limit=limit,
+        query=query,
+        top=limit,
         format=format,
+        # Set defaults for required parameters
+        fields=None,
+        profile=None,
+        page_size=100,
+        after_cursor=None,
+        before_cursor=None,
+        all=False,
+        max_results=None,
+        paginated=False,
+        display_page_size=20,
+        show_all=False,
+        start_page=1,
     )
 
 
