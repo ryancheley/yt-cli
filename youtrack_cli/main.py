@@ -1100,13 +1100,12 @@ def new(
     # Call the underlying issues create command
     ctx.invoke(
         create,
-        project=project,
-        title=title,
+        project_id=project,
+        summary=title,
         description=description,
         type=type,
         priority=priority,
         assignee=assignee,
-        tag=tag,
     )
 
 
