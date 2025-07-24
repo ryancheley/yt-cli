@@ -70,6 +70,18 @@ Implement the solution following best practices:
 - use the `FPU` project for all testing
 - When working on a custom field, the documentation is available [here](https://www.jetbrains.com/help/youtrack/devportal/api-how-to-update-custom-fields-values.html)
 
+**CLI Testing with Agent:**
+After implementing any CLI command changes, use the CLI testing agent:
+```bash
+# Invoke the CLI testing agent to verify all commands work correctly
+/cli-tester
+```
+The agent will:
+- Automatically detect modified CLI commands
+- Run comprehensive tests on affected commands
+- Create GitHub issues for any failures found
+- Ensure commands work before PR creation
+
 ## 5. Pre-commit Validation
 
 Before committing, validate your changes:
@@ -77,6 +89,12 @@ Before committing, validate your changes:
 ```bash
 # Check the pre-commit status
 pre-commit run
+
+# If CLI commands were modified, run the testing agent
+if git diff --name-only | grep -E "(youtrack_cli/commands/|youtrack_cli/main.py)"; then
+    echo "CLI changes detected - running automated tests..."
+    /cli-tester
+fi
 ```
 
 ## 6. Commit Strategy
@@ -217,6 +235,7 @@ done
 **Before PR Creation:**
 - [ ] Code follows project conventions
 - [ ] All tests pass locally using tox
+- [ ] CLI testing agent ran successfully (for command changes)
 - [ ] Documentation updated (docs/ files in .rst format only)
 - [ ] CHANGELOG.md updated with changes
 - [ ] No sensitive data committed
