@@ -210,46 +210,144 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.1] - 2024-12-01
 
 ### Fixed
-- Minor bug fixes and stability improvements
+- Table display data inconsistencies in issues list (#136)
+- Error generating projects list (#137)
+- Security Audit list not showing user (#138)
+- Articles HTML response parsing and add authentication validation (#135)
+- Boards HTML response parsing and add authentication validation (#134)
+- Time summary JSON parsing for empty responses (#133)
+- Auth login not persisting config data and API key masking (#132)
+
+### Improved
+- Test performance optimizations (#139)
 
 ## [0.4.0] - 2024-11-15
 
 ### Added
-- Enhanced CLI functionality
-- Improved error handling
-- Better user experience features
+- Configuration Management: Replace Manual File Parsing with Proper dotenv Usage (#118, #124)
+- Type Safety: Improve Type Annotations and Create Pydantic Response Models (#117, #123)
+- Resource Management: Add Proper Client Manager Cleanup (#116, #122)
+- Security: Add SSL Verification Override Warnings (#114, #120)
+
+### Fixed
+- Exception handling: Replace bare exception catch with specific handlers (#121)
+- Security: Fix Client Manager Type Checker Bypass (#119)
+- SSL verification not being respected in API calls (#112)
+- ReadTheDocs build configuration (#110)
 
 ### Changed
-- Performance optimizations
-- Code refactoring for better maintainability
+- Convert markdown docs to RST and remove MyST-Parser dependency
+- Improved Sphinx configuration
 
 ## [0.3.9] - 2024-10-01
 
-### Added
-- Additional CLI commands
-- Enhanced configuration options
-
 ### Fixed
-- Various bug fixes and improvements
+- Version determination for CLI --version command
+- ArticleManager SSL verification - Update to use centralized HTTPClientManager (#109)
+- BoardManager SSL verification - Update to use centralized HTTPClientManager (#108)
+- AdminManager SSL verification - Use centralized HTTPClientManager (#105)
+- ProjectManager SSL verification - Complete implementation (#101)
+
+### Added
+- Formatting fixes from pre-commit hooks (#106, #107)
+- IssueManager tests for HTTPClientManager migration (#100)
+- GitHub issue resolution process (#103)
 
 ## [0.3.8] - 2024-09-15
 
-### Added
-- New features for issue management
-- Improved API integration
+### Fixed
+- Type checker errors in client and logging tests (#91)
 
 ## [0.3.7] - 2024-09-01
 
-### Fixed
-- Critical bug fixes
-- Performance improvements
+### Added
+- SSL certificate verification options to auth command (#90)
 
 ## [0.3.6] - 2024-08-15
+
+### Fixed
+- Field mapping mismatch in admin license and health commands (#88)
+
+## [0.3.5] - 2024-08-01
+
+### Fixed
+- Version bump consistency
+
+## [0.3.4] - 2024-07-15
+
+### Fixed
+- Admin license show command 404 error (#83, #85)
+
+### Improved
+- Apply ruff formatting to admin.py (#84)
+
+## [0.3.3] - 2024-07-01
+
+### Added
+- Markdown file input support to `yt articles create` command (#81)
+
+## [0.3.2] - 2024-06-15
+
+### Fixed
+- Admin user-groups 404 error by using Hub REST API (#79)
+- Admin license usage API endpoint to resolve 404 error (#78)
+- Admin license show command 404 error (#77)
+- Admin health check endpoint 404 error (#76)
+
+### Changed
+- Updated justfile to use ty type checker
+
+## [0.3.1] - 2024-06-01
+
+### Fixed
+- Duplicate commands in CLI help output (#71)
+
+## [0.3.0] - 2024-05-15
+
+### Added
+- Comprehensive performance optimizations (#56, #69)
+- Command aliases for common operations (#67)
+- Security enhancements (#53, #66)
+- Progress indicators for long-running operations (#52, #65)
+- Shell completion support (#51, #64)
+- py.typed marker for type checking support (#62, #63)
+- __all__ declarations to control module exports (#61)
+- Comprehensive logging system (#30, #59)
+
+### Fixed
+- Type checker mismatch in tox.ini (#58)
+
+### Changed
+- Standardized dependency groups in pyproject.toml (#68)
+- Enhanced release process with comprehensive justfile recipes and documentation
+
+## [0.2.2] - 2024-04-15
+
+### Fixed
+- Type checker mismatch in tox.ini (#58)
+- Version mismatch between __init__.py and pyproject.toml (#57)
+
+## [0.2.1] - 2024-04-01
+
+### Fixed
+- Users API endpoint from /api/admin/users to /api/users (#45)
+- Admin_manager initialization in admin commands (#40, #42)
+- API endpoint construction issues (#39)
+- JSON parsing errors in issues, articles, and boards commands (#38)
+- Authentication endpoint 404 error (#33)
+
+### Added
+- pytest-randomly for randomized test execution (#44)
+
+## [0.2.0] - 2024-03-15
 
 ### Added
 - Initial CLI functionality
 - Basic YouTrack integration
 - Core command structure
+- Authentication system
+- Basic issue management commands
+- Admin command structure
 
 ---
 
