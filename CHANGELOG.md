@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- ⚡ Improve caching with advanced TTL and invalidation strategies (#392)
+  - Enhanced Cache class with size-based LRU eviction to prevent unlimited memory growth
+  - Tag-based cache invalidation for grouping and bulk invalidation of related entries
+  - Pattern-based cache invalidation using glob patterns (e.g., 'projects:*', 'users:admin:*')
+  - Bulk cache operations: `set_many()` and `delete_many()` for efficient batch processing
+  - Comprehensive cache statistics including hit/miss ratios, eviction counts, and memory estimation
+  - Enhanced CacheEntry with access tracking for LRU algorithms and tag support
+  - Improved predefined cache decorators with appropriate tags for better organization
+  - Backward compatibility maintained - all existing caching functionality continues to work unchanged
+  - Full test coverage for all new caching features including concurrency scenarios
 - Implement pagination for handling large result sets efficiently (#388)
   - Enhanced API client with unified pagination support for cursor-based and offset-based APIs
   - Automatic pagination type detection based on endpoint patterns
