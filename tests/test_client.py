@@ -286,9 +286,11 @@ class TestSSLVerificationWarnings:
                     get_client_manager()
 
                     # Verify info logging was called
-                    mock_logger.info.assert_called_once_with(
-                        "HTTP client manager initialized", verify_ssl=False, env_var="false"
-                    )
+                    mock_logger.info.assert_called_once()
+                    call_args = mock_logger.info.call_args
+                    assert call_args[0][0] == "HTTP client manager initialized"
+                    assert "verify_ssl" in call_args[1]
+                    assert call_args[1]["verify_ssl"] is False
 
     def test_multiple_environment_values(self):
         """Test various environment variable values for SSL verification."""
@@ -337,6 +339,165 @@ class TestSSLVerificationWarnings:
 
 
 @pytest.mark.unit
+class TestTimeoutConfiguration:
+    """Test timeout configuration functionality."""
+
+    def setup_method(self):
+        """Setup for each test method."""
+        reset_client_manager_sync()
+
+    def teardown_method(self):
+        """Cleanup after each test method."""
+        reset_client_manager_sync()
+
+    def test_default_timeout_configuration(self):
+        """Test default timeout values."""
+        with patch.dict(os.environ, {}, clear=True):
+            manager = get_client_manager()
+            # Default timeout should be 30.0 seconds
+            assert manager._default_timeout == 30.0
+            # Timeout object should use default for all timeout types
+            assert manager._timeout.connect == 30.0
+            assert manager._timeout.read == 30.0
+            assert manager._timeout.write == 30.0
+            assert manager._timeout.pool == 30.0
+
+    def test_custom_default_timeout_env_var(self):
+        """Test custom default timeout from environment variable."""
+        with patch.dict(os.environ, {"YOUTRACK_DEFAULT_TIMEOUT": "45.5"}):
+            manager = get_client_manager()
+            assert manager._default_timeout == 45.5
+            assert manager._timeout.connect == 45.5
+            assert manager._timeout.read == 45.5
+            assert manager._timeout.write == 45.5
+            assert manager._timeout.pool == 45.5
+
+    def test_specific_timeout_env_vars(self):
+        """Test specific timeout configuration from environment variables."""
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_DEFAULT_TIMEOUT": "30.0",
+                "YOUTRACK_CONNECT_TIMEOUT": "10.0",
+                "YOUTRACK_READ_TIMEOUT": "60.0",
+                "YOUTRACK_WRITE_TIMEOUT": "20.0",
+                "YOUTRACK_POOL_TIMEOUT": "5.0",
+            },
+        ):
+            manager = get_client_manager()
+            assert manager._default_timeout == 30.0
+            assert manager._timeout.connect == 10.0
+            assert manager._timeout.read == 60.0
+            assert manager._timeout.write == 20.0
+            assert manager._timeout.pool == 5.0
+
+    def test_partial_timeout_env_vars(self):
+        """Test that unspecified timeout types fall back to default."""
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_DEFAULT_TIMEOUT": "25.0",
+                "YOUTRACK_CONNECT_TIMEOUT": "10.0",
+                "YOUTRACK_READ_TIMEOUT": "40.0",
+                # write_timeout and pool_timeout not specified
+            },
+        ):
+            manager = get_client_manager()
+            assert manager._default_timeout == 25.0
+            assert manager._timeout.connect == 10.0
+            assert manager._timeout.read == 40.0
+            assert manager._timeout.write == 25.0  # Falls back to default
+            assert manager._timeout.pool == 25.0  # Falls back to default
+
+    def test_invalid_timeout_values_warning(self):
+        """Test handling of invalid timeout values with warnings."""
+        test_cases = [
+            ("invalid", 30.0),  # Non-numeric
+            ("-5.0", 30.0),  # Negative
+            ("0", 30.0),  # Zero
+            ("", 30.0),  # Empty string
+        ]
+
+        for invalid_value, expected_fallback in test_cases:
+            reset_client_manager_sync()
+            with patch.dict(os.environ, {"YOUTRACK_DEFAULT_TIMEOUT": invalid_value}):
+                with patch("youtrack_cli.client.logger") as mock_logger:
+                    manager = get_client_manager()
+
+                    # Should fall back to default value
+                    assert manager._default_timeout == expected_fallback
+
+                    # Should log a warning
+                    warning_calls = [
+                        call for call in mock_logger.warning.call_args_list if "Invalid timeout" in str(call)
+                    ]
+                    assert len(warning_calls) >= 1, f"Expected warning for invalid value: {invalid_value}"
+
+    def test_timeout_logging_in_client_manager_init(self):
+        """Test that timeout configuration is logged during initialization."""
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_DEFAULT_TIMEOUT": "35.0",
+                "YOUTRACK_CONNECT_TIMEOUT": "15.0",
+            },
+        ):
+            with patch("youtrack_cli.client.logger") as mock_logger:
+                get_client_manager()
+
+                # Verify info logging includes timeout configuration
+                mock_logger.info.assert_called_once()
+                call_args = mock_logger.info.call_args
+                assert "default_timeout" in call_args[1]
+                assert call_args[1]["default_timeout"] == 35.0
+                assert call_args[1]["connect_timeout"] == 15.0
+
+    @pytest.mark.asyncio
+    async def test_timeout_parameter_in_make_request(self):
+        """Test that timeout parameter in make_request overrides default."""
+        manager = HTTPClientManager(default_timeout=30.0)
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock successful response
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_client.request.return_value = mock_response
+
+            # Test with custom timeout
+            await manager.make_request("GET", "https://test.com", timeout=15.0)
+
+            # Verify request was called with custom timeout
+            mock_client.request.assert_called_once()
+            call_args = mock_client.request.call_args
+            assert call_args[1]["timeout"] == 15.0
+
+    @pytest.mark.asyncio
+    async def test_timeout_fallback_to_default(self):
+        """Test that make_request falls back to default timeout when no timeout specified."""
+        manager = HTTPClientManager(default_timeout=25.0)
+
+        with patch.object(manager, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value.__aenter__.return_value = mock_client
+
+            # Mock successful response
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_client.request.return_value = mock_response
+
+            # Test without custom timeout
+            await manager.make_request("GET", "https://test.com")
+
+            # Verify request was called with default timeout
+            mock_client.request.assert_called_once()
+            call_args = mock_client.request.call_args
+            assert call_args[1]["timeout"] == 25.0
+
+
+@pytest.mark.unit
 class TestHTTPClientManager:
     """Test HTTPClientManager class directly."""
 
@@ -354,6 +515,34 @@ class TestHTTPClientManager:
         """Test HTTPClientManager initialization with default SSL verification."""
         manager = HTTPClientManager()
         assert manager._verify_ssl is True  # Default should be True
+
+    def test_init_with_custom_timeouts(self):
+        """Test HTTPClientManager initialization with custom timeout values."""
+        manager = HTTPClientManager(
+            default_timeout=40.0,
+            connect_timeout=12.0,
+            read_timeout=50.0,
+            write_timeout=25.0,
+            pool_timeout=8.0,
+        )
+        assert manager._default_timeout == 40.0
+        assert manager._timeout.connect == 12.0
+        assert manager._timeout.read == 50.0
+        assert manager._timeout.write == 25.0
+        assert manager._timeout.pool == 8.0
+
+    def test_init_with_partial_custom_timeouts(self):
+        """Test HTTPClientManager initialization with some custom timeout values."""
+        manager = HTTPClientManager(
+            default_timeout=35.0,
+            connect_timeout=15.0,
+            # read_timeout, write_timeout, pool_timeout not specified (should use default)
+        )
+        assert manager._default_timeout == 35.0
+        assert manager._timeout.connect == 15.0
+        assert manager._timeout.read == 35.0  # Falls back to default
+        assert manager._timeout.write == 35.0  # Falls back to default
+        assert manager._timeout.pool == 35.0  # Falls back to default
 
     @pytest.mark.asyncio
     async def test_ensure_client_with_ssl_verification(self):
@@ -390,6 +579,32 @@ class TestHTTPClientManager:
             mock_client_class.assert_called_once()
             call_args = mock_client_class.call_args
             assert call_args[1]["verify"] is True
+
+    @pytest.mark.asyncio
+    async def test_ensure_client_timeout_configuration(self):
+        """Test that _ensure_client uses timeout configuration."""
+        manager = HTTPClientManager(
+            default_timeout=25.0,
+            connect_timeout=10.0,
+            read_timeout=40.0,
+        )
+
+        # Mock httpx.AsyncClient to verify timeout parameter
+        with patch("youtrack_cli.client.httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+            mock_client.is_closed = False
+
+            await manager._ensure_client()
+
+            # Verify httpx.AsyncClient was called with correct timeout
+            mock_client_class.assert_called_once()
+            call_args = mock_client_class.call_args
+            timeout_arg = call_args[1]["timeout"]
+            assert timeout_arg.connect == 10.0
+            assert timeout_arg.read == 40.0
+            assert timeout_arg.write == 25.0  # Falls back to default
+            assert timeout_arg.pool == 25.0  # Falls back to default
 
 
 @pytest.mark.unit
