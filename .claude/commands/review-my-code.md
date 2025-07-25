@@ -50,4 +50,4 @@ For each area, provide:
 - Code examples where helpful
 - Priority level (High/Medium/Low) for each recommendation
 
-Please examine all Python files, configuration files, tests, and documentation in the project. Write your findings to the file scratch/review-20250721.md
+Please examine all Python files, configuration files, tests, and documentation in the project. Write your findings to the file scratch/review-{{date}}.md
