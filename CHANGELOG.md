@@ -7,13 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-07-25
+
+### Added
+- Implement missing `yt projects show` command (#380)
+  - Display detailed project information including name, ID, description, and leader
+  - Support for both table and JSON output formats
+  - Enhanced project management capabilities for CLI users
+
 ### Fixed
-- Fix 404 error in `yt users permissions` command when managing group membership (#378)
+- Fix 404 error in `yt users permissions` command when managing group membership (#383)
   - Changed from incorrect YouTrack API endpoints to correct Hub API endpoints
   - Now uses `/hub/api/rest/usergroups/{group-id}/users` instead of `/api/admin/groups/{group-id}/users`
   - Fixed request format to include required user type, id, and login fields for Hub API
   - Added proper user details fetching to obtain Hub ID (ringId) for group operations
   - Updated troubleshooting documentation with solution and technical details
+- Fix NoneType error in time summary group-by type command (#382)
+  - Added proper null checking for time entry types in group-by operations
+  - Prevents crashes when time entries have missing or null type values
+  - Improved error handling for incomplete time tracking data
+- Fix settings get --name and set commands URL encoding and field mapping (#381)
+  - Fixed URL encoding issues for setting names with special characters
+  - Corrected field mapping for proper API request structure
+  - Enhanced settings management reliability and consistency
+- Fix multiple CLI command issues - groups create, CSV format, tag filter, issue move (#379)
+  - Fixed groups create command parameter handling and API endpoint usage
+  - Resolved CSV output formatting inconsistencies across commands
+  - Corrected tag filter functionality for proper issue filtering
+  - Fixed issue move command to handle project transfers correctly
 
 ## [0.11.1] - 2025-07-24
 
