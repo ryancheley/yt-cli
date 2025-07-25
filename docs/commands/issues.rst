@@ -77,7 +77,7 @@ List and filter issues with advanced options.
   * ``--display-page-size INTEGER`` - Items per page for interactive display (default: 50)
   * ``--all`` - Fetch all results automatically (respects max-results limit)
   * ``-q, --query TEXT`` - Advanced query filter using YouTrack syntax
-  * ``--format [table|json]`` - Output format (default: table)
+  * ``--format [table|json|csv]`` - Output format (default: table)
 
 **Examples:**
 
@@ -91,6 +91,9 @@ List and filter issues with advanced options.
 
    # List issues in JSON format with cursor pagination
    yt issues list --format json --max-results 50
+
+   # Export issues to CSV format for spreadsheet analysis
+   yt issues list --format csv --limit 100
 
    # Navigate through pages using cursors
    yt issues list -p PROJ-1 --after-cursor "cursor_token_here"
@@ -179,7 +182,7 @@ Advanced issue search with YouTrack query language.
   * ``--paginated`` - Display results with interactive pagination
   * ``--display-page-size INTEGER`` - Items per page for interactive display (default: 50)
   * ``--all`` - Fetch all results automatically (respects max-results limit)
-  * ``--format [table|json]`` - Output format
+  * ``--format [table|json|csv]`` - Output format
 
 **Examples:**
 
@@ -310,7 +313,7 @@ List Comments
    yt issues comments list ISSUE_ID [OPTIONS]
 
 **Options:**
-  * ``--format [table|json]`` - Output format
+  * ``--format [table|json|csv]`` - Output format
 
 Update Comments
 ~~~~~~~~~~~~~~~
@@ -365,7 +368,7 @@ List Attachments
    yt issues attach list ISSUE_ID [OPTIONS]
 
 **Options:**
-  * ``--format [table|json]`` - Output format
+  * ``--format [table|json|csv]`` - Output format
 
 Delete Attachments
 ~~~~~~~~~~~~~~~~~~
@@ -420,7 +423,7 @@ List Links
    yt issues links list ISSUE_ID [OPTIONS]
 
 **Options:**
-  * ``--format [table|json]`` - Output format
+  * ``--format [table|json|csv]`` - Output format
 
 Delete Links
 ~~~~~~~~~~~~
@@ -442,7 +445,7 @@ Display available link types in your YouTrack instance.
    yt issues links types [OPTIONS]
 
 **Options:**
-  * ``--format [table|json]`` - Output format
+  * ``--format [table|json|csv]`` - Output format
 
 Batch Operations
 ----------------

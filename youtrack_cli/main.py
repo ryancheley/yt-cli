@@ -1030,7 +1030,11 @@ def ls(
     if priority:
         query_parts.append(f"priority:{priority}")
     if tag:
-        query_parts.append(f"tag:{tag}")
+        # Use YouTrack search syntax - try shorthand # format first
+        if " " in tag:
+            query_parts.append(f"#{{{tag}}}")
+        else:
+            query_parts.append(f"#{tag}")
 
     query = " AND ".join(query_parts) if query_parts else None
 
