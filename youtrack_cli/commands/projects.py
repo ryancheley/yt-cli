@@ -170,6 +170,70 @@ def projects_list(
         raise click.ClickException("Failed to list projects") from e
 
 
+@projects.command(name="show")
+@click.argument("project_id")
+@click.option(
+    "--fields",
+    "-f",
+    help="Comma-separated list of project fields to return",
+)
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def projects_show(
+    ctx: click.Context,
+    project_id: str,
+    fields: Optional[str],
+    format: str,
+) -> None:
+    """Show detailed project information.
+
+    Display comprehensive information about a specific project including
+    its settings, metadata, and configuration.
+
+    Examples:
+        # Show basic project information
+        yt projects show PROJECT-ID
+
+        # Show specific project fields
+        yt projects show PROJECT-ID --fields name,shortName,leader
+
+        # Show project data in JSON format
+        yt projects show PROJECT-ID --format json
+    """
+    from ..projects import ProjectManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    project_manager = ProjectManager(auth_manager)
+
+    console.print(f"📋 Fetching project '{project_id}' details...", style="blue")
+
+    try:
+        result = asyncio.run(project_manager.get_project(project_id, fields=fields))
+
+        if result["status"] == "success":
+            project = result["data"]
+
+            if format == "table":
+                project_manager.display_project_details(project)
+            else:
+                import json
+
+                console.print(json.dumps(project, indent=2))
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to get project details")
+
+    except Exception as e:
+        console.print(f"❌ Error getting project details: {e}", style="red")
+        raise click.ClickException("Failed to get project details") from e
+
+
 @projects.command(name="create")
 @click.argument("name")
 @click.argument("short_name")
