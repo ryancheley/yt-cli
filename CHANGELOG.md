@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix 404 error in `yt users permissions` command when managing group membership (#378)
+  - Changed from incorrect YouTrack API endpoints to correct Hub API endpoints
+  - Now uses `/hub/api/rest/usergroups/{group-id}/users` instead of `/api/admin/groups/{group-id}/users`
+  - Fixed request format to include required user type, id, and login fields for Hub API
+  - Added proper user details fetching to obtain Hub ID (ringId) for group operations
+  - Updated troubleshooting documentation with solution and technical details
+
 ## [0.11.1] - 2025-07-24
 
 ### Fixed
