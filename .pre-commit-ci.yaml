@@ -1,0 +1,38 @@
+# Configuration for pre-commit.ci
+# https://pre-commit.ci/
+
+# Repositories to run on
+repos:
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+# CI-specific configuration
+ci:
+  # Run pre-commit.ci on these events
+  autofix_prs: true
+  autofix_commit_msg: |
+    🤖 Auto-fix pre-commit issues
+
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+
+  # Skip these hooks on pre-commit.ci (they require special setup)
+  skip:
+    - logout                    # Requires YouTrack CLI setup
+    - pytest                    # Requires full test environment
+    - check-package-build       # Requires build environment
+    - docs-build-check          # Requires docs dependencies
+    - zizmor                    # May not be available in CI environment
+
+  # Run pre-commit.ci more frequently during active development
+  autoupdate_schedule: weekly
+  autoupdate_commit_msg: |
+    🔄 Update pre-commit hooks
+
+    [pre-commit.ci] pre-commit autoupdate
+
+  # Submodules configuration
+  submodules: false

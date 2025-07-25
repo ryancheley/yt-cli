@@ -241,8 +241,7 @@ class BatchOperationManager:
         # Cast the result to the appropriate type based on operation_type
         if operation_type == "create":
             return cast(List[BatchIssueCreate], result)
-        else:
-            return cast(List[BatchIssueUpdate], result)
+        return cast(List[BatchIssueUpdate], result)
 
     async def batch_create_issues(
         self, items: List[BatchIssueCreate], dry_run: bool = False, continue_on_error: bool = True

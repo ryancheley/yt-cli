@@ -19,9 +19,9 @@ def _get_assignee_from_issue_data(issue_data: Dict[str, Any]) -> str:
     if assignee and isinstance(assignee, dict):
         if assignee.get("fullName"):
             return assignee["fullName"]
-        elif assignee.get("name"):
+        if assignee.get("name"):
             return assignee["name"]
-        elif assignee.get("login"):
+        if assignee.get("login"):
             return assignee["login"]
 
     # If not found, try the Assignee custom field using CustomFieldManager

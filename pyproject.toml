@@ -66,31 +66,93 @@ packages = ["youtrack_cli"]
 [tool.ruff]
 target-version = "py39"
 line-length = 120
+extend-exclude = [
+    "migrations",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".git",
+]
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "UP",  # pyupgrade
-    "Q",   # flake8-quotes
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "UP",    # pyupgrade
+    "Q",     # flake8-quotes
+    "N",     # pep8-naming
+    "S",     # flake8-bandit (security)
+    "T20",   # flake8-print
+    "PT",    # flake8-pytest-style
+    "RET",   # flake8-return
+    "SIM",   # flake8-simplify
+    "TID",   # flake8-tidy-imports
+    "ARG",   # flake8-unused-arguments
+    "ERA",   # eradicate (commented-out code)
+    "PL",    # pylint
+    "TRY",   # tryceratops
+    "FURB",  # refurb
 ]
 ignore = [
-    "UP045",  # Use `X | None` for type annotations (Python 3.9 compatibility)
-    "UP007",  # Use `X | Y` for type annotations (Python 3.9 compatibility)
-    "UP006",  # Use `dict` instead of `Dict` (Python 3.9 compatibility)
-    "UP035",  # `typing.Dict` is deprecated (Python 3.9 compatibility)
+    # Python 3.9 compatibility
+    "UP045",  # Use `X | None` for type annotations
+    "UP007",  # Use `X | Y` for type annotations
+    "UP006",  # Use `dict` instead of `Dict`
+    "UP035",  # `typing.Dict` is deprecated
+
+    # Security exceptions for CLI tools
+    "S101",   # Use of assert (common in tests)
+    "S603",   # subprocess call without shell=True
+    "S607",   # Starting a process with a partial executable path
+
+    # Style preferences
+    "E501",   # Line too long (handled by formatter)
+    "T201",   # print statements (allowed in CLI)
+    "PLR0913", # Too many arguments (can be necessary)
+    "PLR2004", # Magic value comparison
+
+    # Temporary ignores (can be removed gradually)
+    "N806",   # Variable in function should be lowercase
+    "SIM108", # Use ternary operator
+    "TRY003", # Avoid specifying long messages outside exception class
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",    # Use of assert (required in tests)
+    "PLR2004", # Magic value comparison (common in tests)
+    "ARG001",  # Unused function argument (fixtures)
+    "S105",    # Hardcoded password (test data)
+    "S106",    # Hardcoded password (test data)
+]
+"docs/*" = [
+    "INP001",  # Missing __init__.py (not needed for docs)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["youtrack_cli"]
+force-single-line = false
+combine-as-imports = true
+split-on-trailing-comma = true
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+docstring-quotes = "double"
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+line-ending = "auto"
 
 [tool.ty]
-# ty configuration can be added here if needed in the future
+# Type checking configuration for ty - using minimal config for now
 
 [tool.pydocstyle]
 convention = "google"
@@ -103,29 +165,75 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short --strict-markers"
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings",
+    "--cov=youtrack_cli",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+    "--maxfail=5",
+    "--durations=10",
+]
 markers = [
     "integration: marks tests as integration tests (require real YouTrack API access)",
     "unit: marks tests as unit tests (fast, isolated, no external dependencies)",
     "doctest: marks tests as doctests (documentation code examples)",
+    "slow: marks tests as slow (may take more than 1 second)",
+    "network: marks tests that require network access",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    "ignore::UserWarning",
 ]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS", "IGNORE_EXCEPTION_DETAIL"]
+timeout = 300
+timeout_method = "thread"
 
 [tool.coverage.run]
 source = ["youtrack_cli"]
-omit = ["tests/*", "*/test_*"]
+omit = [
+    "tests/*",
+    "*/test_*",
+    "youtrack_cli/__main__.py",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/migrations/*",
+]
+branch = true
+parallel = true
 
 [tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+sort = "Cover"
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
+    "def __str__",
     "raise AssertionError",
     "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "except ImportError:",
 ]
+fail_under = 80
+
+[tool.coverage.html]
+directory = "htmlcov"
+show_contexts = true
+
+[tool.coverage.xml]
+output = "coverage.xml"
 
 [dependency-groups]
 dev = [

@@ -537,12 +537,11 @@ class ArticleManager:
                             "status": "success",
                             "message": f"File '{file_path}' uploaded to article '{article_id}' successfully",
                         }
-                    else:
-                        error_text = response.text
-                        return {
-                            "status": "error",
-                            "message": f"Failed to upload attachment: {error_text}",
-                        }
+                    error_text = response.text
+                    return {
+                        "status": "error",
+                        "message": f"Failed to upload attachment: {error_text}",
+                    }
         except Exception as e:
             return {
                 "status": "error",
@@ -898,13 +897,12 @@ class ArticleManager:
                 "message": f"Successfully added {success_count} tags to article {article_id}",
                 "data": results,
             }
-        else:
-            error_count = len(tag_ids) - success_count
-            return {
-                "status": "partial",
-                "message": f"Added {success_count} tags, failed to add {error_count} tags to article {article_id}",
-                "data": results,
-            }
+        error_count = len(tag_ids) - success_count
+        return {
+            "status": "partial",
+            "message": f"Added {success_count} tags, failed to add {error_count} tags to article {article_id}",
+            "data": results,
+        }
 
     async def remove_tags_from_article(self, article_id: str, tag_ids: list[str]) -> dict[str, Any]:
         """Remove one or more tags from an article."""
@@ -936,10 +934,9 @@ class ArticleManager:
                 "message": f"Successfully removed {success_count} tags from article {article_id}",
                 "data": results,
             }
-        else:
-            error_count = len(tag_ids) - success_count
-            return {
-                "status": "partial",
-                "message": f"Removed {success_count} tags, failed to remove {error_count} tags from article {article_id}",  # noqa: E501
-                "data": results,
-            }
+        error_count = len(tag_ids) - success_count
+        return {
+            "status": "partial",
+            "message": f"Removed {success_count} tags, failed to remove {error_count} tags from article {article_id}",  # noqa: E501
+            "data": results,
+        }

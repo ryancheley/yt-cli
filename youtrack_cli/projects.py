@@ -69,10 +69,8 @@ class ProjectManager:
                 user_id = user_data.get("id")
                 if user_id:
                     return user_id, None
-                else:
-                    return username_or_id, f"User '{username_or_id}' found but missing ID"
-            else:
-                return username_or_id, f"User '{username_or_id}' not found"
+                return username_or_id, f"User '{username_or_id}' found but missing ID"
+            return username_or_id, f"User '{username_or_id}' not found"
         except Exception as e:
             return username_or_id, f"Error resolving username '{username_or_id}': {e}"
 
@@ -243,7 +241,7 @@ class ProjectManager:
                         "status": "error",
                         "message": ("Invalid project data. Check name and short name."),
                     }
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions to create projects.",
@@ -302,7 +300,7 @@ class ProjectManager:
                         "status": "error",
                         "message": f"Project '{project_id}' not found.",
                     }
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions to view project.",
@@ -392,7 +390,7 @@ class ProjectManager:
                         "status": "error",
                         "message": f"Project '{project_id}' not found.",
                     }
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions to update project.",
@@ -677,12 +675,12 @@ class ProjectManager:
                         "status": "error",
                         "message": "Invalid custom field data or field already attached to project.",
                     }
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions to modify project custom fields.",
                     }
-                elif e.response.status_code == 404:
+                if e.response.status_code == 404:
                     return {
                         "status": "error",
                         "message": f"Project '{project_id}' or custom field '{field_id}' not found.",
@@ -764,7 +762,7 @@ class ProjectManager:
                         "status": "error",
                         "message": f"Project '{project_id}' or custom field '{field_id}' not found.",
                     }
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions to update project custom fields.",
@@ -817,7 +815,7 @@ class ProjectManager:
                         "status": "error",
                         "message": f"Project '{project_id}' or custom field '{field_id}' not found.",
                     }
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions to modify project custom fields.",

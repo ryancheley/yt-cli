@@ -181,10 +181,7 @@ class TestReportManager:
             # Check if any argument is a Rich Table with the project in the title
             project_info_found = False
             for arg in call_args:
-                if hasattr(arg, "title") and arg.title and "TEST" in str(arg.title):
-                    project_info_found = True
-                    break
-                elif "TEST" in str(arg):
+                if hasattr(arg, "title") and arg.title and "TEST" in str(arg.title) or "TEST" in str(arg):
                     project_info_found = True
                     break
 

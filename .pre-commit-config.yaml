@@ -1,68 +1,126 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        name: Remove trailing whitespace
+        description: Fixes trailing whitespace issues
       - id: end-of-file-fixer
+        name: Fix end of file
+        description: Ensures files end with a newline
       - id: check-yaml
+        name: Check YAML syntax
+        description: Validates YAML file syntax
+        args: [--allow-multiple-documents]
       - id: check-added-large-files
+        name: Check for large files
+        description: Prevents accidentally committing large files
+        args: ['--maxkb=1000']
       - id: check-merge-conflict
+        name: Check for merge conflicts
+        description: Detects merge conflict markers
       - id: check-toml
+        name: Check TOML syntax
+        description: Validates TOML file syntax
       - id: debug-statements
+        name: Check for debug statements
+        description: Detects debug statements in Python code
       - id: check-docstring-first
+        name: Check docstring first
+        description: Ensures docstrings come before code
       - id: check-json
+        name: Check JSON syntax
+        description: Validates JSON file syntax
+        args: [--autofix]
       - id: check-xml
+        name: Check XML syntax
+        description: Validates XML file syntax
       - id: check-case-conflict
+        name: Check case conflicts
+        description: Detects files with case conflicts
       - id: check-executables-have-shebangs
+        name: Check executable shebangs
+        description: Ensures executables have shebangs
       - id: check-shebang-scripts-are-executable
+        name: Check shebang executables
+        description: Ensures scripts with shebangs are executable
       - id: mixed-line-ending
+        name: Check line endings
+        description: Fixes mixed line endings
+        args: [--fix=lf]
       - id: fix-byte-order-marker
+        name: Fix byte order marker
+        description: Removes or fixes byte order markers
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.1
+    rev: v0.12.4
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        name: Ruff linter
+        description: Fast Python linter
+        args: [--fix, --exit-non-zero-on-fix, --show-fixes]
       - id: ruff-format
+        name: Ruff formatter
+        description: Fast Python formatter
 
   - repo: local
     hooks:
       - id: logout
-        name: logout
+        name: YouTrack logout
+        description: Ensures clean YouTrack auth state for testing
         entry: uv run yt auth logout
         language: system
         pass_filenames: false
         always_run: true
+        verbose: true
       - id: ty
-        name: ty
-        entry: uv run ty check --ignore call-non-callable
+        name: Type checking with ty
+        description: Static type checking for Python code
+        entry: uv run ty check --ignore call-non-callable --project youtrack_cli
         language: system
         types: [python]
         exclude: ^tests/
+        verbose: true
+        fail_fast: true
       - id: pydocstyle
-        name: pydocstyle
-        entry: uv run pydocstyle
+        name: Docstring style checking
+        description: Ensures Google-style docstrings are followed
+        entry: uv run pydocstyle youtrack_cli/
         language: system
         types: [python]
         exclude: ^tests/
+        verbose: true
       - id: pytest
-        name: pytest
+        name: Unit and integration tests
+        description: Runs test suite with coverage checking
         entry: uv run pytest
         language: system
         types: [python]
         pass_filenames: false
         always_run: true
-        args: [--tb=short, --maxfail=1, -q]
+        args: [--tb=short, --maxfail=3, -q, --cov=youtrack_cli, --cov-fail-under=80]
+        verbose: true
       - id: zizmor
-        name: zizmor
+        name: GitHub Actions security check
+        description: Security analysis for GitHub Actions workflows
         entry: uv run zizmor
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: true
-      - id: docs-build-check
-        name: docs-build-check
-        entry: bash -c 'echo "Documentation testing infrastructure ready"'
+        verbose: true
+      - id: check-package-build
+        name: Check package build
+        description: Validates package can be built successfully
+        entry: bash -c 'uv build --no-sources && echo "✅ Package build successful"'
         language: system
-        files: ^docs/.*\.rst$
+        files: ^(pyproject\.toml|youtrack_cli/.*)$
         pass_filenames: false
-        always_run: false
+        verbose: true
+      - id: docs-build-check
+        name: Documentation build check
+        description: Validates documentation can be built
+        entry: bash -c 'cd docs && uv run make html && echo "✅ Documentation build successful"'
+        language: system
+        files: ^docs/.*\.(rst|py)$
+        pass_filenames: false
+        verbose: true

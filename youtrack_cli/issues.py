@@ -72,9 +72,9 @@ class IssueManager:
         if assignee and isinstance(assignee, dict):
             if assignee.get("fullName"):
                 return assignee["fullName"]
-            elif assignee.get("name"):
+            if assignee.get("name"):
                 return assignee["name"]
-            elif assignee.get("login"):
+            if assignee.get("login"):
                 return assignee["login"]
 
         # If not found, try the Assignee custom field
@@ -159,12 +159,11 @@ class IssueManager:
                     "message": f"Issue '{summary}' created successfully",
                     "data": data,
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to create issue: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to create issue: {error_text}",
+            }
         except Exception as e:
             error_message = str(e)
             # Check if this is a priority field requirement issue
@@ -318,28 +317,26 @@ class IssueManager:
                             "before_cursor": result["before_cursor"],
                         },
                     }
-                else:
-                    # Single request (legacy behavior)
-                    if top:
-                        params["$top"] = str(top)
-                    elif page_size != 100:  # Only set if different from default
-                        params["$top"] = str(page_size)
+                # Single request (legacy behavior)
+                if top:
+                    params["$top"] = str(top)
+                elif page_size != 100:  # Only set if different from default
+                    params["$top"] = str(page_size)
 
-                    client_manager = get_client_manager()
-                    response = await client_manager.make_request("GET", url, headers=headers, params=params)
-                    if response.status_code == 200:
-                        data = self._parse_json_response(response)
-                        return {
-                            "status": "success",
-                            "data": data,
-                            "count": len(data),
-                        }
-                    else:
-                        error_text = response.text
-                        return {
-                            "status": "error",
-                            "message": f"Failed to list issues: {error_text}",
-                        }
+                client_manager = get_client_manager()
+                response = await client_manager.make_request("GET", url, headers=headers, params=params)
+                if response.status_code == 200:
+                    data = self._parse_json_response(response)
+                    return {
+                        "status": "success",
+                        "data": data,
+                        "count": len(data),
+                    }
+                error_text = response.text
+                return {
+                    "status": "error",
+                    "message": f"Failed to list issues: {error_text}",
+                }
             except Exception as e:
                 return {"status": "error", "message": f"Error listing issues: {str(e)}"}
 
@@ -366,12 +363,11 @@ class IssueManager:
             if response.status_code == 200:
                 data = self._parse_json_response(response)
                 return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to get issue: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to get issue: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error getting issue: {str(e)}"}
 
@@ -473,12 +469,11 @@ class IssueManager:
                     "message": f"Issue '{issue_id}' updated successfully",
                     "data": data,
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to update issue: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to update issue: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error updating issue: {str(e)}"}
 
@@ -499,12 +494,11 @@ class IssueManager:
                     "status": "success",
                     "message": f"Issue '{issue_id}' deleted successfully",
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to delete issue: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to delete issue: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting issue: {str(e)}"}
 
@@ -583,28 +577,26 @@ class IssueManager:
                         "before_cursor": result["before_cursor"],
                     },
                 }
-            else:
-                # Single request (legacy behavior)
-                if top:
-                    params["$top"] = str(top)
-                elif page_size != 100:  # Only set if different from default
-                    params["$top"] = str(page_size)
+            # Single request (legacy behavior)
+            if top:
+                params["$top"] = str(top)
+            elif page_size != 100:  # Only set if different from default
+                params["$top"] = str(page_size)
 
-                client_manager = get_client_manager()
-                response = await client_manager.make_request("GET", url, headers=headers, params=params)
-                if response.status_code == 200:
-                    data = self._parse_json_response(response)
-                    return {
-                        "status": "success",
-                        "data": data,
-                        "count": len(data),
-                    }
-                else:
-                    error_text = response.text
-                    return {
-                        "status": "error",
-                        "message": f"Failed to search issues: {error_text}",
-                    }
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("GET", url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = self._parse_json_response(response)
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data),
+                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to search issues: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error searching issues: {str(e)}"}
 
@@ -753,12 +745,11 @@ class IssueManager:
                     "status": "success",
                     "message": (f"Issue '{issue_id}' moved to project '{project_id}' successfully"),
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to move issue: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to move issue: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error moving issue: {str(e)}"}
 
@@ -785,8 +776,7 @@ class IssueManager:
                     if tag.get("name") == tag_name:
                         return {"status": "success", "tag": tag, "message": f"Found existing tag '{tag_name}'"}
                 return {"status": "not_found", "message": f"Tag '{tag_name}' not found"}
-            else:
-                return {"status": "error", "message": f"Failed to search tags: {response.text}"}
+            return {"status": "error", "message": f"Failed to search tags: {response.text}"}
         except Exception as e:
             return {"status": "error", "message": f"Error searching for tag: {str(e)}"}
 
@@ -812,8 +802,7 @@ class IssueManager:
             if response.status_code == 200:
                 tag = response.json()
                 return {"status": "success", "tag": tag, "message": f"Created new tag '{tag_name}'"}
-            else:
-                return {"status": "error", "message": f"Failed to create tag: {response.text}"}
+            return {"status": "error", "message": f"Failed to create tag: {response.text}"}
         except Exception as e:
             return {"status": "error", "message": f"Error creating tag: {str(e)}"}
 
@@ -823,12 +812,11 @@ class IssueManager:
         find_result = await self.find_tag_by_name(tag_name)
         if find_result["status"] == "success":
             return find_result
-        elif find_result["status"] == "not_found":
+        if find_result["status"] == "not_found":
             # Tag doesn't exist, try to create it
             return await self.create_tag(tag_name)
-        else:
-            # Error occurred during search
-            return find_result
+        # Error occurred during search
+        return find_result
 
     async def add_tag(self, issue_id: str, tag: str) -> Dict[str, Any]:
         """Add a tag to an issue."""
@@ -860,12 +848,11 @@ class IssueManager:
                     "status": "success",
                     "message": (f"Tag '{tag}' added to issue '{issue_id}' successfully{creation_note}"),
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to add tag to issue: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to add tag to issue: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error adding tag to issue: {str(e)}"}
 
@@ -879,7 +866,7 @@ class IssueManager:
         tag_result = await self.find_tag_by_name(tag)
         if tag_result["status"] == "not_found":
             return {"status": "error", "message": f"Tag '{tag}' not found"}
-        elif tag_result["status"] != "success":
+        if tag_result["status"] != "success":
             return tag_result
 
         tag_id = tag_result["tag"]["id"]
@@ -895,12 +882,11 @@ class IssueManager:
                     "status": "success",
                     "message": (f"Tag '{tag}' removed from issue '{issue_id}' successfully"),
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to remove tag: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to remove tag: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error removing tag: {str(e)}"}
 
@@ -921,12 +907,11 @@ class IssueManager:
                 data = self._parse_json_response(response)
                 tags = data.get("tags", [])
                 return {"status": "success", "data": tags}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to list tags: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to list tags: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error listing tags: {str(e)}"}
 
@@ -952,12 +937,11 @@ class IssueManager:
                     "status": "success",
                     "message": (f"Comment added to issue '{issue_id}' successfully"),
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to add comment: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to add comment: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error adding comment: {str(e)}"}
 
@@ -977,12 +961,11 @@ class IssueManager:
             if response.status_code == 200:
                 data = self._parse_json_response(response)
                 return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to list comments: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to list comments: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error listing comments: {str(e)}"}
 
@@ -1007,12 +990,11 @@ class IssueManager:
                     "status": "success",
                     "message": f"Comment '{comment_id}' updated successfully",
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to update comment: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to update comment: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error updating comment: {str(e)}"}
 
@@ -1033,12 +1015,11 @@ class IssueManager:
                     "status": "success",
                     "message": f"Comment '{comment_id}' deleted successfully",
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to delete comment: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to delete comment: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting comment: {str(e)}"}
 
@@ -1063,12 +1044,11 @@ class IssueManager:
                             "status": "success",
                             "message": (f"File '{file_path}' uploaded to issue '{issue_id}' successfully"),
                         }
-                    else:
-                        error_text = response.text
-                        return {
-                            "status": "error",
-                            "message": f"Failed to upload attachment: {error_text}",
-                        }
+                    error_text = response.text
+                    return {
+                        "status": "error",
+                        "message": f"Failed to upload attachment: {error_text}",
+                    }
         except Exception as e:
             return {
                 "status": "error",
@@ -1091,12 +1071,11 @@ class IssueManager:
             if response.status_code == 200:
                 data = self._parse_json_response(response)
                 return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to list attachments: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to list attachments: {error_text}",
+            }
         except Exception as e:
             return {
                 "status": "error",
@@ -1147,12 +1126,11 @@ class IssueManager:
                     "status": "success",
                     "message": (f"Attachment downloaded to '{output_path}' successfully"),
                 }
-            else:
-                error_text = download_response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to download attachment: {error_text}",
-                }
+            error_text = download_response.text
+            return {
+                "status": "error",
+                "message": f"Failed to download attachment: {error_text}",
+            }
         except Exception as e:
             return {
                 "status": "error",
@@ -1176,12 +1154,11 @@ class IssueManager:
                     "status": "success",
                     "message": f"Attachment '{attachment_id}' deleted successfully",
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to delete attachment: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to delete attachment: {error_text}",
+            }
         except Exception as e:
             return {
                 "status": "error",
@@ -1216,9 +1193,8 @@ class IssueManager:
                         return {**link_type, "direction": "inward"}
 
                 return None
-            else:
-                logger.error("Failed to fetch link types", status_code=response.status_code)
-                return None
+            logger.error("Failed to fetch link types", status_code=response.status_code)
+            return None
         except Exception as e:
             logger.error("Error fetching link types", error=str(e))
             return None
@@ -1239,9 +1215,8 @@ class IssueManager:
             if response.status_code == 200:
                 data = self._parse_json_response(response)
                 return data.get("id")
-            else:
-                logger.error("Failed to fetch issue ID", issue_id=issue_id, status_code=response.status_code)
-                return None
+            logger.error("Failed to fetch issue ID", issue_id=issue_id, status_code=response.status_code)
+            return None
         except Exception as e:
             logger.error("Error fetching issue ID", issue_id=issue_id, error=str(e))
             return None
@@ -1293,12 +1268,11 @@ class IssueManager:
                     "status": "success",
                     "message": (f"Link created between '{source_issue_id}' and '{target_issue_id}' successfully"),
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to create link: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to create link: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error creating link: {str(e)}"}
 
@@ -1319,12 +1293,11 @@ class IssueManager:
                 data = self._parse_json_response(response)
                 links = data.get("links", [])
                 return {"status": "success", "data": links}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to list links: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to list links: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error listing links: {str(e)}"}
 
@@ -1345,12 +1318,11 @@ class IssueManager:
                     "status": "success",
                     "message": f"Link '{link_id}' deleted successfully",
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to delete link: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to delete link: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting link: {str(e)}"}
 
@@ -1370,12 +1342,11 @@ class IssueManager:
             if response.status_code == 200:
                 data = self._parse_json_response(response)
                 return {"status": "success", "data": data}
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to list link types: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to list link types: {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error listing link types: {str(e)}"}
 

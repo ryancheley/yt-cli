@@ -87,12 +87,11 @@ class TimeManager:
                     "message": f"Logged {duration} to issue {issue_id}",
                     "data": data,
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to log time (HTTP {response.status_code}): {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to log time (HTTP {response.status_code}): {error_text}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"Error logging time: {str(e)}"}
 
@@ -145,12 +144,11 @@ class TimeManager:
                     "data": data,
                     "count": len(data),
                 }
-            else:
-                error_text = response.text
-                return {
-                    "status": "error",
-                    "message": f"Failed to get time entries: {error_text}",
-                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to get time entries: {error_text}",
+            }
         except ValueError as e:
             # Handle JSON parsing errors specifically
             return {
@@ -250,7 +248,7 @@ class TimeManager:
             # If no format matches, try relative dates
             if date_str.lower() == "today":
                 return int(datetime.now().timestamp() * 1000)
-            elif date_str.lower() == "yesterday":
+            if date_str.lower() == "yesterday":
                 return int((datetime.now() - timedelta(days=1)).timestamp() * 1000)
 
             # If all else fails, try to parse as ISO format

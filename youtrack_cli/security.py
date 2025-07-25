@@ -365,13 +365,12 @@ class TokenManager:
             self.logger.error("Token expired", expiry_date=token_expiry)
             return {"status": "expired", "message": message, "days": days_until_expiry}
 
-        elif days_until_expiry <= self.config.token_warning_days:
+        if days_until_expiry <= self.config.token_warning_days:
             message = f"Token expires in {days_until_expiry} days"
             self.logger.warning("Token expiring soon", days_until_expiry=days_until_expiry)
             return {"status": "expiring", "message": message, "days": days_until_expiry}
 
-        else:
-            return {"status": "valid", "message": None, "days": days_until_expiry}
+        return {"status": "valid", "message": None, "days": days_until_expiry}
 
     def estimate_token_expiry(self, token: str) -> Optional[datetime]:
         """Estimate token expiry from token format (if possible).
