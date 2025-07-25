@@ -335,21 +335,63 @@ class UserManager:
 
         try:
             client_manager = get_client_manager()
+            base_url = credentials.base_url.rstrip("/")
 
             if action == "add_to_group":
-                # Add user to group
+                # Get user details first to obtain Hub ID and login for the request
+                user_details_result = await self.get_user(user_id, fields="id,login,ringId")
+                if user_details_result["status"] != "success":
+                    return {
+                        "status": "error",
+                        "message": f"Failed to get user details: {user_details_result['message']}",
+                    }
+
+                user_data = user_details_result["data"]
+                hub_user_id = user_data.get("ringId") or user_data.get("id")
+                user_login = user_data.get("login")
+
+                if not hub_user_id or not user_login:
+                    return {
+                        "status": "error",
+                        "message": f"Could not get Hub ID or login for user '{user_id}'",
+                    }
+
+                # Add user to group using Hub API
+                request_data = {
+                    "type": "user",
+                    "id": hub_user_id,
+                    "login": user_login,
+                }
+
                 await client_manager.make_request(
                     "POST",
-                    f"{credentials.base_url.rstrip('/')}/api/admin/groups/{group_id}/users",
+                    f"{base_url}/hub/api/rest/usergroups/{group_id}/users",
                     headers=headers,
-                    json_data={"id": user_id},
+                    json_data=request_data,
                     timeout=10.0,
                 )
             elif action == "remove_from_group":
-                # Remove user from group
+                # Get user details to obtain Hub ID for removal
+                user_details_result = await self.get_user(user_id, fields="id,login,ringId")
+                if user_details_result["status"] != "success":
+                    return {
+                        "status": "error",
+                        "message": f"Failed to get user details: {user_details_result['message']}",
+                    }
+
+                user_data = user_details_result["data"]
+                hub_user_id = user_data.get("ringId") or user_data.get("id")
+
+                if not hub_user_id:
+                    return {
+                        "status": "error",
+                        "message": f"Could not get Hub ID for user '{user_id}'",
+                    }
+
+                # Remove user from group using Hub API
                 await client_manager.make_request(
                     "DELETE",
-                    f"{credentials.base_url.rstrip('/')}/api/admin/groups/{group_id}/users/{user_id}",
+                    f"{base_url}/hub/api/rest/usergroups/{group_id}/users/{hub_user_id}",
                     headers=headers,
                     timeout=10.0,
                 )

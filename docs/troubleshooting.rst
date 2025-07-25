@@ -803,6 +803,30 @@ Users Command Issues
    # ❌ Wrong:
    yt users permissions admin
 
+**Problem**: ``yt users permissions`` fails with 404 error when managing group membership.
+
+**Solution**: This issue was resolved in version 0.11.1. The command now uses the correct Hub API endpoints for group management. If you're still experiencing this issue:
+
+1. **Update to latest version**:
+
+   .. code-block:: bash
+
+      pip install --upgrade youtrack-cli
+
+2. **Verify group ID format**: Ensure you're using the correct group ID from ``yt groups list``
+
+3. **Check user and group existence**:
+
+   .. code-block:: bash
+
+      # Verify user exists
+      yt users list --query "username"
+
+      # Verify group exists
+      yt groups list
+
+**Technical Details**: YouTrack uses a Hub service for user and group management. The CLI now correctly uses Hub API endpoints (``/hub/api/rest/usergroups/``) instead of YouTrack API endpoints (``/api/admin/groups/``) for permission management operations.
+
 Version Command Issues
 ~~~~~~~~~~~~~~~~~~~~~~
 
