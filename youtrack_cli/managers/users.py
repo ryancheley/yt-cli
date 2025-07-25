@@ -15,7 +15,7 @@ __all__ = ["UserManager"]
 
 class UserManager:
     """Manages YouTrack user business logic and presentation.
-    
+
     This manager orchestrates user operations using the UserService
     for API communication and adds business logic, validation, and
     presentation formatting.
@@ -441,6 +441,35 @@ class UserManager:
         """
         return await self.user_service.get_user_permissions(user_id, project_id)
 
+    async def manage_user_permissions(
+        self,
+        user_id: str,
+        action: str,
+        group_id: Optional[str] = None,
+        role_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Manage user permissions by adding/removing from groups or roles.
+
+        Args:
+            user_id: User ID or login
+            action: Action to perform (add_to_group, remove_from_group, assign_role, remove_role)
+            group_id: Group ID for group operations
+            role_id: Role ID for role operations
+
+        Returns:
+            Dictionary with operation result
+        """
+        if action == "add_to_group" and group_id:
+            return await self.add_user_to_group(user_id, group_id)
+        elif action == "remove_from_group" and group_id:
+            return await self.remove_user_from_group(user_id, group_id)
+        elif action == "assign_role" and role_id:
+            return await self.assign_user_role(user_id, role_id)
+        elif action == "remove_role" and role_id:
+            return await self.remove_user_role(user_id, role_id)
+        else:
+            return {"status": "error", "message": f"Invalid action '{action}' or missing required parameters"}
+
     def display_users_table(self, users: List[Dict[str, Any]]) -> None:
         """Display users in a simple table format.
 
@@ -548,7 +577,7 @@ class UserManager:
 
     def display_user_details(self, user: Dict[str, Any]) -> None:
         """Display detailed user information with rich formatting.
-        
+
         Args:
             user: User dictionary
         """
@@ -604,3 +633,74 @@ class UserManager:
                         self.console.print(f"  • {group_name}")
 
         self.console.print()  # Add spacing
+
+    def display_user_groups(self, groups: List[Dict[str, Any]], user_id: str) -> None:
+        """Display user groups in a table format.
+        
+        Args:
+            groups: List of group dictionaries
+            user_id: User ID for display context
+        """
+        if not groups:
+            self.console.print(f"[yellow]User '{user_id}' is not a member of any groups.[/yellow]")
+            return
+
+        table = Table(title=f"Groups for User: {user_id}")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="green")
+        table.add_column("Auto Join", style="yellow")
+
+        for group in groups:
+            name = group.get("name", "N/A")
+            description = group.get("description", "")
+            auto_join = "Yes" if group.get("autoJoin", False) else "No"
+
+            table.add_row(name, description, auto_join)
+
+        self.console.print(table)
+
+    def display_user_roles(self, roles: List[Dict[str, Any]], user_id: str) -> None:
+        """Display user roles in a table format.
+        
+        Args:
+            roles: List of role dictionaries
+            user_id: User ID for display context
+        """
+        if not roles:
+            self.console.print(f"[yellow]User '{user_id}' has no assigned roles.[/yellow]")
+            return
+
+        table = Table(title=f"Roles for User: {user_id}")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="green")
+
+        for role in roles:
+            name = role.get("name", "N/A")
+            description = role.get("description", "")
+
+            table.add_row(name, description)
+
+        self.console.print(table)
+
+    def display_user_teams(self, teams: List[Dict[str, Any]], user_id: str) -> None:
+        """Display user teams in a table format.
+        
+        Args:
+            teams: List of team dictionaries
+            user_id: User ID for display context
+        """
+        if not teams:
+            self.console.print(f"[yellow]User '{user_id}' is not a member of any teams.[/yellow]")
+            return
+
+        table = Table(title=f"Teams for User: {user_id}")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="green")
+
+        for team in teams:
+            name = team.get("name", "N/A")
+            description = team.get("description", "")
+
+            table.add_row(name, description)
+
+        self.console.print(table)

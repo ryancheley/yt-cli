@@ -7,7 +7,7 @@ from .base import BaseService
 
 class ProjectService(BaseService):
     """Service for YouTrack project API operations.
-    
+
     Handles all HTTP communication with YouTrack's projects API endpoints.
     Pure API service with no business logic or presentation concerns.
     """
@@ -20,13 +20,13 @@ class ProjectService(BaseService):
         show_archived: bool = False,
     ) -> Dict[str, Any]:
         """List all projects via API.
-        
+
         Args:
             fields: Comma-separated list of project fields to return
             top: Maximum number of projects to return
             skip: Number of projects to skip
             show_archived: Whether to include archived projects
-            
+
         Returns:
             API response with project list
         """
@@ -36,7 +36,9 @@ class ProjectService(BaseService):
             if fields:
                 params["fields"] = fields
             else:
-                params["fields"] = "id,name,shortName,description,leader(login,fullName),archived,createdBy(login,fullName)"
+                params["fields"] = (
+                    "id,name,shortName,description,leader(login,fullName),archived,createdBy(login,fullName)"
+                )
 
             if top is not None:
                 params["$top"] = str(top)
@@ -62,11 +64,11 @@ class ProjectService(BaseService):
 
     async def get_project(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get a specific project via API.
-        
+
         Args:
             project_id: Project ID or short name
             fields: Comma-separated list of fields to return
-            
+
         Returns:
             API response with project data
         """
@@ -97,13 +99,13 @@ class ProjectService(BaseService):
         leader_login: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new project via API.
-        
+
         Args:
             short_name: Project short name (ID)
             name: Project full name
             description: Project description
             leader_login: Project leader login
-            
+
         Returns:
             API response with created project data
         """
@@ -135,14 +137,14 @@ class ProjectService(BaseService):
         archived: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Update an existing project via API.
-        
+
         Args:
             project_id: Project ID to update
             name: New project name
             description: New project description
             leader_login: New project leader login
             archived: Archive status
-            
+
         Returns:
             API response
         """
@@ -168,10 +170,10 @@ class ProjectService(BaseService):
 
     async def delete_project(self, project_id: str) -> Dict[str, Any]:
         """Delete a project via API.
-        
+
         Args:
             project_id: Project ID to delete
-            
+
         Returns:
             API response
         """
@@ -186,10 +188,10 @@ class ProjectService(BaseService):
 
     async def archive_project(self, project_id: str) -> Dict[str, Any]:
         """Archive a project via API.
-        
+
         Args:
             project_id: Project ID to archive
-            
+
         Returns:
             API response
         """
@@ -205,10 +207,10 @@ class ProjectService(BaseService):
 
     async def unarchive_project(self, project_id: str) -> Dict[str, Any]:
         """Unarchive a project via API.
-        
+
         Args:
             project_id: Project ID to unarchive
-            
+
         Returns:
             API response
         """
@@ -224,11 +226,11 @@ class ProjectService(BaseService):
 
     async def get_project_team(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get project team members via API.
-        
+
         Args:
             project_id: Project ID
             fields: Comma-separated list of user fields to return
-            
+
         Returns:
             API response with team member list
         """
@@ -249,11 +251,11 @@ class ProjectService(BaseService):
 
     async def add_team_member(self, project_id: str, user_login: str) -> Dict[str, Any]:
         """Add a user to project team via API.
-        
+
         Args:
             project_id: Project ID
             user_login: User login to add
-            
+
         Returns:
             API response
         """
@@ -269,11 +271,11 @@ class ProjectService(BaseService):
 
     async def remove_team_member(self, project_id: str, user_login: str) -> Dict[str, Any]:
         """Remove a user from project team via API.
-        
+
         Args:
             project_id: Project ID
             user_login: User login to remove
-            
+
         Returns:
             API response
         """
@@ -288,11 +290,11 @@ class ProjectService(BaseService):
 
     async def get_project_custom_fields(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get project custom fields via API.
-        
+
         Args:
             project_id: Project ID
             fields: Comma-separated list of field properties to return
-            
+
         Returns:
             API response with custom field list
         """
@@ -312,18 +314,15 @@ class ProjectService(BaseService):
             return self._create_error_response(f"Error getting project custom fields: {str(e)}")
 
     async def attach_custom_field(
-        self,
-        project_id: str,
-        field_id: str,
-        is_public: Optional[bool] = None
+        self, project_id: str, field_id: str, is_public: Optional[bool] = None
     ) -> Dict[str, Any]:
         """Attach a custom field to a project via API.
-        
+
         Args:
             project_id: Project ID
             field_id: Custom field ID
             is_public: Whether field should be public
-            
+
         Returns:
             API response
         """
@@ -345,11 +344,11 @@ class ProjectService(BaseService):
 
     async def detach_custom_field(self, project_id: str, field_id: str) -> Dict[str, Any]:
         """Detach a custom field from a project via API.
-        
+
         Args:
             project_id: Project ID
             field_id: Custom field ID to detach
-            
+
         Returns:
             API response
         """
@@ -364,11 +363,11 @@ class ProjectService(BaseService):
 
     async def get_project_versions(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get project versions via API.
-        
+
         Args:
             project_id: Project ID
             fields: Comma-separated list of version fields to return
-            
+
         Returns:
             API response with version list
         """
@@ -396,14 +395,14 @@ class ProjectService(BaseService):
         archived: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Create a project version via API.
-        
+
         Args:
             project_id: Project ID
             name: Version name
             description: Version description
             released: Whether version is released
             archived: Whether version is archived
-            
+
         Returns:
             API response with created version data
         """
@@ -417,9 +416,7 @@ class ProjectService(BaseService):
             if archived is not None:
                 version_data["archived"] = archived
 
-            response = await self._make_request(
-                "POST", f"admin/projects/{project_id}/versions", json_data=version_data
-            )
+            response = await self._make_request("POST", f"admin/projects/{project_id}/versions", json_data=version_data)
             return await self._handle_response(response, success_codes=[200, 201])
 
         except ValueError as e:

@@ -14,7 +14,7 @@ __all__ = ["ProjectManager"]
 
 class ProjectManager:
     """Manages YouTrack project business logic and presentation.
-    
+
     This manager orchestrates project operations using the ProjectService
     for API communication and adds business logic, validation, and
     presentation formatting.
@@ -157,7 +157,7 @@ class ProjectManager:
         if not short_name or not short_name.replace("-", "").replace("_", "").isalnum():
             return {
                 "status": "error",
-                "message": "Project short name must contain only alphanumeric characters, hyphens, and underscores"
+                "message": "Project short name must contain only alphanumeric characters, hyphens, and underscores",
             }
 
         # Resolve leader if provided
@@ -295,10 +295,7 @@ class ProjectManager:
         # Validate user exists
         user_result = await self.user_manager.get_user(user_login, fields="id,login")
         if user_result["status"] != "success":
-            return {
-                "status": "error",
-                "message": f"User '{user_login}' not found"
-            }
+            return {"status": "error", "message": f"User '{user_login}' not found"}
 
         result = await self.project_service.add_team_member(project_id, user_login)
 
@@ -339,10 +336,7 @@ class ProjectManager:
         return await self.project_service.get_project_custom_fields(project_id, fields)
 
     async def attach_custom_field(
-        self,
-        project_id: str,
-        field_id: str,
-        is_public: Optional[bool] = None
+        self, project_id: str, field_id: str, is_public: Optional[bool] = None
     ) -> Dict[str, Any]:
         """Attach a custom field to a project.
 
@@ -387,7 +381,7 @@ class ProjectManager:
         show_archived: bool = False,
     ) -> None:
         """Display a list of projects with rich formatting.
-        
+
         Args:
             projects: List of project dictionaries
             format_output: Output format (table, json, csv)
@@ -408,11 +402,7 @@ class ProjectManager:
                 # Extract leader info
                 leader_name = "None"
                 if project.get("leader") and isinstance(project["leader"], dict):
-                    leader_name = (
-                        project["leader"].get("fullName") or
-                        project["leader"].get("login") or
-                        "Unknown"
-                    )
+                    leader_name = project["leader"].get("fullName") or project["leader"].get("login") or "Unknown"
 
                 # Determine status
                 status = "Archived" if project.get("archived", False) else "Active"
@@ -432,7 +422,7 @@ class ProjectManager:
 
     def display_project_details(self, project: Dict[str, Any]) -> None:
         """Display detailed project information with rich formatting.
-        
+
         Args:
             project: Project dictionary
         """

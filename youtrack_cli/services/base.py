@@ -1,6 +1,5 @@
 """Base service class for YouTrack API communication."""
 
-from abc import ABC
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -12,9 +11,9 @@ from ..logging import get_logger
 logger = get_logger(__name__)
 
 
-class BaseService(ABC):
+class BaseService:
     """Base class for YouTrack API services.
-    
+
     Provides common functionality for API communication including:
     - Authentication handling
     - HTTP request/response management
@@ -24,7 +23,7 @@ class BaseService(ABC):
 
     def __init__(self, auth_manager: AuthManager):
         """Initialize the service.
-        
+
         Args:
             auth_manager: AuthManager instance for authentication
         """
@@ -32,13 +31,13 @@ class BaseService(ABC):
 
     def _parse_json_response(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or non-JSON responses.
-        
+
         Args:
             response: HTTP response to parse
-            
+
         Returns:
             Parsed JSON data
-            
+
         Raises:
             ValueError: If response cannot be parsed as JSON
         """
@@ -61,10 +60,10 @@ class BaseService(ABC):
 
     def _get_auth_headers(self) -> Dict[str, str]:
         """Get authentication headers for API requests.
-        
+
         Returns:
             Dictionary containing authorization headers
-            
+
         Raises:
             ValueError: If not authenticated
         """
@@ -76,10 +75,10 @@ class BaseService(ABC):
 
     def _get_base_url(self) -> str:
         """Get the base URL for API requests.
-        
+
         Returns:
             Base URL for YouTrack API
-            
+
         Raises:
             ValueError: If not authenticated
         """
@@ -98,17 +97,17 @@ class BaseService(ABC):
         additional_headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
         """Make an authenticated API request.
-        
+
         Args:
             method: HTTP method (GET, POST, PUT, DELETE, etc.)
             endpoint: API endpoint (without base URL)
             params: Query parameters
             json_data: JSON data for request body
             additional_headers: Additional headers to include
-            
+
         Returns:
             HTTP response
-            
+
         Raises:
             ValueError: If not authenticated
         """
@@ -133,10 +132,10 @@ class BaseService(ABC):
 
     def _create_success_response(self, data: Any) -> Dict[str, Any]:
         """Create a standardized success response.
-        
+
         Args:
             data: Response data
-            
+
         Returns:
             Standardized success response
         """
@@ -144,26 +143,24 @@ class BaseService(ABC):
 
     def _create_error_response(self, message: str) -> Dict[str, Any]:
         """Create a standardized error response.
-        
+
         Args:
             message: Error message
-            
+
         Returns:
             Standardized error response
         """
         return {"status": "error", "message": message}
 
     async def _handle_response(
-        self,
-        response: httpx.Response,
-        success_codes: Optional[List[int]] = None
+        self, response: httpx.Response, success_codes: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """Handle API response with standardized error handling.
-        
+
         Args:
             response: HTTP response to handle
             success_codes: List of HTTP status codes considered successful
-            
+
         Returns:
             Standardized response dictionary
         """

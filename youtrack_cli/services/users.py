@@ -7,7 +7,7 @@ from .base import BaseService
 
 class UserService(BaseService):
     """Service for YouTrack user API operations.
-    
+
     Handles all HTTP communication with YouTrack's users API endpoints.
     Pure API service with no business logic or presentation concerns.
     """
@@ -20,13 +20,13 @@ class UserService(BaseService):
         query: Optional[str] = None,
     ) -> Dict[str, Any]:
         """List all users via API.
-        
+
         Args:
             fields: Comma-separated list of user fields to return
             top: Maximum number of users to return
             skip: Number of users to skip
             query: Search query to filter users
-            
+
         Returns:
             API response with user list
         """
@@ -36,7 +36,9 @@ class UserService(BaseService):
             if fields:
                 params["fields"] = fields
             else:
-                params["fields"] = "id,login,fullName,email,banned,online,guest,ringId,avatarUrl,teams(name,description)"
+                params["fields"] = (
+                    "id,login,fullName,email,banned,online,guest,ringId,avatarUrl,teams(name,description)"
+                )
 
             if query:
                 params["query"] = query
@@ -55,11 +57,11 @@ class UserService(BaseService):
 
     async def get_user(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get a specific user via API.
-        
+
         Args:
             user_id: User ID or login
             fields: Comma-separated list of fields to return
-            
+
         Returns:
             API response with user data
         """
@@ -91,14 +93,14 @@ class UserService(BaseService):
         force_change_password: bool = False,
     ) -> Dict[str, Any]:
         """Create a new user via API.
-        
+
         Args:
             login: User login name
             full_name: User's full name
             email: User's email address
             password: Initial password
             force_change_password: Force password change on first login
-            
+
         Returns:
             API response with created user data
         """
@@ -131,7 +133,7 @@ class UserService(BaseService):
         force_change_password: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Update an existing user via API.
-        
+
         Args:
             user_id: User ID to update
             full_name: New full name
@@ -139,7 +141,7 @@ class UserService(BaseService):
             banned: New banned status
             password: New password
             force_change_password: Force password change on next login
-            
+
         Returns:
             API response
         """
@@ -167,10 +169,10 @@ class UserService(BaseService):
 
     async def delete_user(self, user_id: str) -> Dict[str, Any]:
         """Delete a user via API.
-        
+
         Args:
             user_id: User ID to delete
-            
+
         Returns:
             API response
         """
@@ -185,10 +187,10 @@ class UserService(BaseService):
 
     async def ban_user(self, user_id: str) -> Dict[str, Any]:
         """Ban a user via API.
-        
+
         Args:
             user_id: User ID to ban
-            
+
         Returns:
             API response
         """
@@ -204,10 +206,10 @@ class UserService(BaseService):
 
     async def unban_user(self, user_id: str) -> Dict[str, Any]:
         """Unban a user via API.
-        
+
         Args:
             user_id: User ID to unban
-            
+
         Returns:
             API response
         """
@@ -223,11 +225,11 @@ class UserService(BaseService):
 
     async def get_user_groups(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get user's groups via API.
-        
+
         Args:
             user_id: User ID or login
             fields: Comma-separated list of group fields to return
-            
+
         Returns:
             API response with group list
         """
@@ -248,11 +250,11 @@ class UserService(BaseService):
 
     async def add_user_to_group(self, user_id: str, group_id: str) -> Dict[str, Any]:
         """Add user to a group via API.
-        
+
         Args:
             user_id: User ID or login
             group_id: Group ID to add user to
-            
+
         Returns:
             API response
         """
@@ -268,11 +270,11 @@ class UserService(BaseService):
 
     async def remove_user_from_group(self, user_id: str, group_id: str) -> Dict[str, Any]:
         """Remove user from a group via API.
-        
+
         Args:
             user_id: User ID or login
             group_id: Group ID to remove user from
-            
+
         Returns:
             API response
         """
@@ -287,11 +289,11 @@ class UserService(BaseService):
 
     async def get_user_roles(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get user's roles via API.
-        
+
         Args:
             user_id: User ID or login
             fields: Comma-separated list of role fields to return
-            
+
         Returns:
             API response with role list
         """
@@ -312,11 +314,11 @@ class UserService(BaseService):
 
     async def assign_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
         """Assign a role to user via API.
-        
+
         Args:
             user_id: User ID or login
             role_id: Role ID to assign
-            
+
         Returns:
             API response
         """
@@ -332,11 +334,11 @@ class UserService(BaseService):
 
     async def remove_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
         """Remove a role from user via API.
-        
+
         Args:
             user_id: User ID or login
             role_id: Role ID to remove
-            
+
         Returns:
             API response
         """
@@ -351,11 +353,11 @@ class UserService(BaseService):
 
     async def get_user_teams(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get user's teams via API.
-        
+
         Args:
             user_id: User ID or login
             fields: Comma-separated list of team fields to return
-            
+
         Returns:
             API response with team list
         """
@@ -376,11 +378,11 @@ class UserService(BaseService):
 
     async def add_user_to_team(self, user_id: str, team_id: str) -> Dict[str, Any]:
         """Add user to a team via API.
-        
+
         Args:
             user_id: User ID or login
             team_id: Team ID to add user to
-            
+
         Returns:
             API response
         """
@@ -396,11 +398,11 @@ class UserService(BaseService):
 
     async def remove_user_from_team(self, user_id: str, team_id: str) -> Dict[str, Any]:
         """Remove user from a team via API.
-        
+
         Args:
             user_id: User ID or login
             team_id: Team ID to remove user from
-            
+
         Returns:
             API response
         """
@@ -415,12 +417,12 @@ class UserService(BaseService):
 
     async def change_user_password(self, user_id: str, new_password: str, force_change: bool = False) -> Dict[str, Any]:
         """Change user password via API.
-        
+
         Args:
             user_id: User ID or login
             new_password: New password
             force_change: Force password change on next login
-            
+
         Returns:
             API response
         """
@@ -440,11 +442,11 @@ class UserService(BaseService):
 
     async def get_user_permissions(self, user_id: str, project_id: Optional[str] = None) -> Dict[str, Any]:
         """Get user permissions via API.
-        
+
         Args:
             user_id: User ID or login
             project_id: Optional project ID to get project-specific permissions
-            
+
         Returns:
             API response with permission list
         """

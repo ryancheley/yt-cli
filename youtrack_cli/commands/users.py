@@ -296,10 +296,15 @@ def create_user(
                 full_name=full_name,
                 email=email,
                 password=password,
-                banned=banned,
                 force_change_password=force_change_password,
             )
         )
+
+        # If user creation succeeded and banned=True, ban the user separately
+        if result["status"] == "success" and banned:
+            ban_result = asyncio.run(user_manager.ban_user(login))
+            if ban_result["status"] != "success":
+                result["message"] += f" (Warning: Failed to ban user: {ban_result['message']})"
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")

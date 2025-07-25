@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 class IssueManager:
     """Manages YouTrack issues business logic and presentation.
-    
+
     This manager orchestrates issue operations using the IssueService
     for API communication and adds business logic, validation, and
     presentation formatting.
@@ -167,9 +167,7 @@ class IssueManager:
         if result["status"] == "success" and format_output != "json":
             issues = result["data"]
             if isinstance(issues, list):
-                result["formatted_output"] = self._format_issues_for_display(
-                    issues, format_output, no_pagination
-                )
+                result["formatted_output"] = self._format_issues_for_display(issues, format_output, no_pagination)
 
         return result
 
@@ -291,15 +289,17 @@ class IssueManager:
             priority = self._get_custom_field_value(issue, "Priority") or ""
             issue_type = self._get_custom_field_value(issue, "Type") or ""
 
-            writer.writerow([
-                issue.get("idReadable", issue.get("id", "")),
-                issue.get("summary", ""),
-                state,
-                priority,
-                issue_type,
-                assignee_name,
-                project_name,
-            ])
+            writer.writerow(
+                [
+                    issue.get("idReadable", issue.get("id", "")),
+                    issue.get("summary", ""),
+                    state,
+                    priority,
+                    issue_type,
+                    assignee_name,
+                    project_name,
+                ]
+            )
 
         return output.getvalue()
 
@@ -349,7 +349,10 @@ class IssueManager:
         custom_fields_panel = create_custom_fields_panel(issue.get("customFields", []))
 
         # Create panel group
-        panel_group = PanelGroup([overview_panel, details_panel, custom_fields_panel])
+        panel_group = PanelGroup("Issue Details")
+        panel_group.add_panel(overview_panel)
+        panel_group.add_panel(details_panel)
+        panel_group.add_panel(custom_fields_panel)
 
         # Display the panels
         self.console.print(panel_group)

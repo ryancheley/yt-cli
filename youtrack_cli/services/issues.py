@@ -7,7 +7,7 @@ from .base import BaseService
 
 class IssueService(BaseService):
     """Service for YouTrack issue API operations.
-    
+
     Handles all HTTP communication with YouTrack's issues API endpoints.
     Pure API service with no business logic or presentation concerns.
     """
@@ -22,7 +22,7 @@ class IssueService(BaseService):
         assignee: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new issue via API.
-        
+
         Args:
             project_id: Internal project ID (not short name)
             summary: Issue summary
@@ -30,7 +30,7 @@ class IssueService(BaseService):
             issue_type: Issue type name
             priority: Priority name
             assignee: Assignee login
-            
+
         Returns:
             API response with issue data
         """
@@ -59,11 +59,11 @@ class IssueService(BaseService):
 
     async def get_issue(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get issue details via API.
-        
+
         Args:
             issue_id: Issue ID (idReadable or internal ID)
             fields: Comma-separated list of fields to return
-            
+
         Returns:
             API response with issue data
         """
@@ -98,7 +98,7 @@ class IssueService(BaseService):
         issue_type: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Update an existing issue via API.
-        
+
         Args:
             issue_id: Issue ID to update
             summary: New summary
@@ -107,7 +107,7 @@ class IssueService(BaseService):
             priority: New priority name
             assignee: New assignee login
             issue_type: New issue type name
-            
+
         Returns:
             API response
         """
@@ -145,10 +145,10 @@ class IssueService(BaseService):
 
     async def delete_issue(self, issue_id: str) -> Dict[str, Any]:
         """Delete an issue via API.
-        
+
         Args:
             issue_id: Issue ID to delete
-            
+
         Returns:
             API response
         """
@@ -169,13 +169,13 @@ class IssueService(BaseService):
         skip: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Search issues via API.
-        
+
         Args:
             query: YouTrack query string
             fields: Comma-separated list of fields to return
             top: Maximum number of results
             skip: Number of results to skip
-            
+
         Returns:
             API response with issue list
         """
@@ -207,11 +207,11 @@ class IssueService(BaseService):
 
     async def assign_issue(self, issue_id: str, assignee: str) -> Dict[str, Any]:
         """Assign an issue to a user via API.
-        
+
         Args:
             issue_id: Issue ID to assign
             assignee: Username/login to assign to
-            
+
         Returns:
             API response
         """
@@ -227,11 +227,11 @@ class IssueService(BaseService):
 
     async def add_tag(self, issue_id: str, tag_name: str) -> Dict[str, Any]:
         """Add a tag to an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             tag_name: Tag name to add
-            
+
         Returns:
             API response
         """
@@ -247,11 +247,11 @@ class IssueService(BaseService):
 
     async def remove_tag(self, issue_id: str, tag_name: str) -> Dict[str, Any]:
         """Remove a tag from an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             tag_name: Tag name to remove
-            
+
         Returns:
             API response
         """
@@ -266,10 +266,10 @@ class IssueService(BaseService):
 
     async def list_tags(self, issue_id: str) -> Dict[str, Any]:
         """List tags for an issue via API.
-        
+
         Args:
             issue_id: Issue ID
-            
+
         Returns:
             API response with tag list
         """
@@ -284,11 +284,11 @@ class IssueService(BaseService):
 
     async def add_comment(self, issue_id: str, text: str) -> Dict[str, Any]:
         """Add a comment to an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             text: Comment text
-            
+
         Returns:
             API response with comment data
         """
@@ -304,11 +304,11 @@ class IssueService(BaseService):
 
     async def list_comments(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """List comments for an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             fields: Comma-separated list of fields to return
-            
+
         Returns:
             API response with comment list
         """
@@ -329,12 +329,12 @@ class IssueService(BaseService):
 
     async def update_comment(self, issue_id: str, comment_id: str, text: str) -> Dict[str, Any]:
         """Update a comment via API.
-        
+
         Args:
             issue_id: Issue ID
             comment_id: Comment ID to update
             text: New comment text
-            
+
         Returns:
             API response
         """
@@ -352,11 +352,11 @@ class IssueService(BaseService):
 
     async def delete_comment(self, issue_id: str, comment_id: str) -> Dict[str, Any]:
         """Delete a comment via API.
-        
+
         Args:
             issue_id: Issue ID
             comment_id: Comment ID to delete
-            
+
         Returns:
             API response
         """
@@ -371,19 +371,19 @@ class IssueService(BaseService):
 
     async def upload_attachment(self, issue_id: str, file_path: str, file_data: bytes) -> Dict[str, Any]:
         """Upload an attachment to an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             file_path: Original file path/name
             file_data: File content as bytes
-            
+
         Returns:
             API response
         """
         try:
             # Note: This is a simplified implementation
             # In reality, you'd need to handle multipart/form-data
-            files = {"file": (file_path, file_data)}
+            # files = {"file": (file_path, file_data)}
 
             # For now, return a placeholder response
             # Real implementation would require multipart upload support
@@ -394,11 +394,11 @@ class IssueService(BaseService):
 
     async def list_attachments(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """List attachments for an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             fields: Comma-separated list of fields to return
-            
+
         Returns:
             API response with attachment list
         """
@@ -419,11 +419,11 @@ class IssueService(BaseService):
 
     async def delete_attachment(self, issue_id: str, attachment_id: str) -> Dict[str, Any]:
         """Delete an attachment via API.
-        
+
         Args:
             issue_id: Issue ID
             attachment_id: Attachment ID to delete
-            
+
         Returns:
             API response
         """
@@ -438,11 +438,11 @@ class IssueService(BaseService):
 
     async def get_custom_field_value(self, issue_id: str, field_name: str) -> Dict[str, Any]:
         """Get a custom field value for an issue via API.
-        
+
         Args:
             issue_id: Issue ID
             field_name: Custom field name
-            
+
         Returns:
             API response with field data
         """
@@ -458,10 +458,10 @@ class IssueService(BaseService):
 
     async def find_tag_by_name(self, tag_name: str) -> Dict[str, Any]:
         """Find a tag by name via API.
-        
+
         Args:
             tag_name: Tag name to search for
-            
+
         Returns:
             API response with tag data
         """
@@ -477,10 +477,10 @@ class IssueService(BaseService):
 
     async def create_tag(self, tag_name: str) -> Dict[str, Any]:
         """Create a new tag via API.
-        
+
         Args:
             tag_name: Name of tag to create
-            
+
         Returns:
             API response with created tag data
         """

@@ -198,7 +198,7 @@ def projects_list(
             projects = result["data"]
 
             if format == "table":
-                project_manager.display_projects_table(projects)
+                project_manager.display_project_list(projects, format_output="table")
                 console.print(f"\n[dim]Total: {result['count']} projects[/dim]")
 
                 # Display pagination info if available
@@ -348,7 +348,7 @@ def projects_create(
             project_manager.create_project(
                 name=name,
                 short_name=short_name,
-                leader_id=leader,
+                leader_login=leader,
                 description=description,
                 template=template,
             )
@@ -438,7 +438,7 @@ def configure(
                     project_id=project_id,
                     name=name,
                     description=description,
-                    leader_id=leader,
+                    leader_login=leader,
                 )
             )
 
