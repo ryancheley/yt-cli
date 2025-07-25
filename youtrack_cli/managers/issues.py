@@ -143,13 +143,23 @@ class IssueManager:
         query: str,
         project_id: Optional[str] = None,
         fields: Optional[str] = None,
+        field_profile: Optional[str] = None,
         top: Optional[int] = None,
         skip: Optional[int] = None,
         format_output: str = "table",
         no_pagination: bool = False,
         use_cached_fields: bool = False,
+        page_size: int = 100,
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Search issues with enhanced formatting and pagination."""
+        # Handle field_profile parameter (legacy)
+        if field_profile and not fields:
+            fields = field_profile
+
         # Build the query with project filter if specified
         full_query = query
         if project_id:
@@ -337,7 +347,9 @@ class IssueManager:
         # For now, return the input as-is (this would need ProjectService integration)
         return project_id_or_short_name
 
-    def display_issue_details(self, issue: Dict[str, Any], show_comments: bool = False, format_type: str = "table") -> None:
+    def display_issue_details(
+        self, issue: Dict[str, Any], show_comments: bool = False, format_type: str = "table"
+    ) -> None:
         """Display issue details with rich formatting."""
         if not issue:
             self.console.print("[red]No issue data to display[/red]")
@@ -365,7 +377,7 @@ class IssueManager:
     async def list_issues(
         self,
         project_id: Optional[str] = None,
-        query: str = "",
+        query: Optional[str] = None,
         fields: Optional[str] = None,
         field_profile: Optional[str] = None,
         top: Optional[int] = None,
@@ -382,11 +394,25 @@ class IssueManager:
         show_all: bool = False,
         start_page: int = 1,
         display_page_size: int = 50,
+        state: Optional[str] = None,
+        assignee: Optional[str] = None,
     ) -> Dict[str, Any]:
         """List issues with enhanced filtering and pagination."""
         # Handle field_profile parameter (legacy)
         if field_profile and not fields:
             fields = field_profile
+
+        # Build query from parameters
+        if query is None:
+            query = ""
+
+        # Add state filter to query if provided
+        if state:
+            query = f"State: {state} {query}".strip()
+
+        # Add assignee filter to query if provided
+        if assignee:
+            query = f"Assignee: {assignee} {query}".strip()
 
         return await self.search_issues(
             query=query,
@@ -480,6 +506,117 @@ class IssueManager:
                 linked_issue_id = link.get("issue", {}).get("idReadable", "")
                 linked_summary = link.get("issue", {}).get("summary", "")
                 table.add_row(direction, link_type, linked_issue_id, linked_summary)
+
+        self.console.print(table)
+
+    async def move_issue(
+        self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Move an issue to a different state or project."""
+        if not state and not project_id:
+            return {"status": "error", "message": "Either state or project_id must be provided"}
+
+        if state:
+            # Move to different state
+            return await self.update_issue(issue_id, state=state)
+        elif project_id:
+            # Move to different project - would need project service integration
+            return {"status": "error", "message": "Moving issues between projects not yet implemented"}
+
+        # This should never be reached, but adding for type safety
+        return {"status": "error", "message": "Invalid parameters"}
+
+    def display_comments_table(self, comments: List[Dict[str, Any]]) -> None:
+        """Display comments in a table format."""
+        if not comments:
+            self.console.print("[yellow]No comments found.[/yellow]")
+            return
+
+        from rich.table import Table
+
+        table = Table(title="Issue Comments")
+        table.add_column("Author", style="cyan", no_wrap=True)
+        table.add_column("Date", style="blue")
+        table.add_column("Comment", style="white")
+
+        for comment in comments:
+            author = comment.get("author", {}).get("fullName", "Unknown")
+            created = comment.get("created", "")
+            text = comment.get("text", "")
+
+            # Limit comment text length for table display
+            if len(text) > 100:
+                text = text[:97] + "..."
+
+            table.add_row(author, created, text)
+
+        self.console.print(table)
+
+    async def download_attachment(
+        self, issue_id: str, attachment_id: str, output: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Download an attachment from an issue."""
+        # This would need to be implemented in the service layer
+        return {"status": "error", "message": "Attachment download not yet implemented in service layer"}
+
+    def display_attachments_table(self, attachments: List[Dict[str, Any]]) -> None:
+        """Display attachments in a table format."""
+        if not attachments:
+            self.console.print("[yellow]No attachments found.[/yellow]")
+            return
+
+        from rich.table import Table
+
+        table = Table(title="Issue Attachments")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Size", style="blue")
+        table.add_column("Author", style="green")
+        table.add_column("Created", style="yellow")
+
+        for attachment in attachments:
+            name = attachment.get("name", "N/A")
+            size = attachment.get("size", "N/A")
+            author = attachment.get("author", {}).get("fullName", "Unknown")
+            created = attachment.get("created", "")
+
+            table.add_row(name, str(size), author, created)
+
+        self.console.print(table)
+
+    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
+        """Create a link between two issues."""
+        # This would need to be implemented in the service layer
+        return {"status": "error", "message": "Issue linking not yet implemented in service layer"}
+
+    async def delete_link(self, source_issue_id: str, link_id: str) -> Dict[str, Any]:
+        """Delete a link between issues."""
+        # This would need to be implemented in the service layer
+        return {"status": "error", "message": "Issue link deletion not yet implemented in service layer"}
+
+    async def list_link_types(self) -> Dict[str, Any]:
+        """List available link types."""
+        # This would need to be implemented in the service layer
+        return {"status": "error", "message": "Link types listing not yet implemented in service layer"}
+
+    def display_link_types_table(self, link_types: List[Dict[str, Any]]) -> None:
+        """Display link types in a table format."""
+        if not link_types:
+            self.console.print("[yellow]No link types found.[/yellow]")
+            return
+
+        from rich.table import Table
+
+        table = Table(title="Issue Link Types")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="green")
+        table.add_column("Directed", style="yellow")
+
+        for link_type in link_types:
+            name = link_type.get("name", "N/A")
+            description = link_type.get("description", "")
+            directed = "Yes" if link_type.get("directed", False) else "No"
+
+            table.add_row(name, description, directed)
 
         self.console.print(table)
 
