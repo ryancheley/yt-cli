@@ -29,6 +29,29 @@ class TestCacheEntry:
         assert entry.value == "test_value"
         assert entry.timestamp == now
         assert entry.ttl == 300.0
+        assert entry.tags == set()
+        assert entry.access_count == 0
+        assert entry.last_accessed <= time.time()
+
+    def test_cache_entry_with_tags(self):
+        """Test creating a cache entry with tags."""
+        now = time.time()
+        tags = {"projects", "api"}
+        entry = CacheEntry(value="test_value", timestamp=now, ttl=300.0, tags=tags)
+
+        assert entry.tags == tags
+
+    def test_cache_entry_touch(self):
+        """Test cache entry access tracking."""
+        entry = CacheEntry(value="test_value", timestamp=time.time(), ttl=300.0)
+        initial_count = entry.access_count
+        initial_access = entry.last_accessed
+
+        time.sleep(0.001)  # Small delay to ensure time difference
+        entry.touch()
+
+        assert entry.access_count == initial_count + 1
+        assert entry.last_accessed > initial_access
 
     def test_cache_entry_not_expired(self):
         """Test cache entry that hasn't expired."""
@@ -67,6 +90,16 @@ class TestCache:
         assert cache._default_ttl == 600.0
         assert len(cache._cache) == 0
         assert cache._get_lock is not None
+        assert cache._hits == 0
+        assert cache._misses == 0
+        assert cache._evictions == 0
+        assert cache._max_size is None
+
+    @pytest.mark.asyncio
+    async def test_cache_initialization_with_max_size(self):
+        """Test cache initialization with size limit."""
+        cache = Cache(default_ttl=600.0, max_size=100)
+        assert cache._max_size == 100
 
     @pytest.mark.asyncio
     async def test_cache_set_and_get(self):
@@ -177,6 +210,12 @@ class TestCache:
             "total_entries": 0,
             "expired_entries": 0,
             "active_entries": 0,
+            "hits": 0,
+            "misses": 0,
+            "hit_ratio": 0.0,
+            "evictions": 0,
+            "max_size": None,
+            "estimated_memory_bytes": 0,
             "oldest_entry_age": 0,
             "newest_entry_age": 0,
         }
@@ -235,6 +274,140 @@ class TestCache:
         for i in range(10):
             value = await self.cache.get(f"key_{i}")
             assert value == f"value_{i}"
+
+    @pytest.mark.asyncio
+    async def test_cache_set_with_tags(self):
+        """Test setting cache entry with tags."""
+        tags = {"projects", "api"}
+        await self.cache.set("test_key", "test_value", tags=tags)
+
+        entry = self.cache._cache["test_key"]
+        assert entry.tags == tags
+        assert entry.value == "test_value"
+
+    @pytest.mark.asyncio
+    async def test_cache_lru_eviction(self):
+        """Test LRU eviction when cache reaches size limit."""
+        cache = Cache(default_ttl=300.0, max_size=2)
+
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+
+        # This should evict key1 (LRU)
+        await cache.set("key3", "value3")
+
+        assert await cache.get("key1") is None  # Evicted
+        assert await cache.get("key2") == "value2"
+        assert await cache.get("key3") == "value3"
+        assert cache._evictions == 1
+
+    @pytest.mark.asyncio
+    async def test_cache_lru_access_updates(self):
+        """Test that accessing entries updates LRU order."""
+        cache = Cache(default_ttl=300.0, max_size=2)
+
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+
+        # Access key1 to make it more recently used
+        await cache.get("key1")
+
+        # This should evict key2 (now LRU)
+        await cache.set("key3", "value3")
+
+        assert await cache.get("key1") == "value1"
+        assert await cache.get("key2") is None  # Evicted
+        assert await cache.get("key3") == "value3"
+
+    @pytest.mark.asyncio
+    async def test_invalidate_pattern(self):
+        """Test pattern-based cache invalidation."""
+        await self.cache.set("projects:123", "project1")
+        await self.cache.set("projects:456", "project2")
+        await self.cache.set("users:789", "user1")
+
+        invalidated = await self.cache.invalidate_pattern("projects:*")
+
+        assert invalidated == 2
+        assert await self.cache.get("projects:123") is None
+        assert await self.cache.get("projects:456") is None
+        assert await self.cache.get("users:789") == "user1"
+
+    @pytest.mark.asyncio
+    async def test_invalidate_by_tag(self):
+        """Test tag-based cache invalidation."""
+        await self.cache.set("key1", "value1", tags={"projects", "api"})
+        await self.cache.set("key2", "value2", tags={"users", "api"})
+        await self.cache.set("key3", "value3", tags={"boards"})
+
+        invalidated = await self.cache.invalidate_by_tag("api")
+
+        assert invalidated == 2
+        assert await self.cache.get("key1") is None
+        assert await self.cache.get("key2") is None
+        assert await self.cache.get("key3") == "value3"
+
+    @pytest.mark.asyncio
+    async def test_invalidate_by_multiple_tags(self):
+        """Test invalidation by multiple tags."""
+        await self.cache.set("key1", "value1", tags={"projects"})
+        await self.cache.set("key2", "value2", tags={"users"})
+        await self.cache.set("key3", "value3", tags={"boards"})
+
+        invalidated = await self.cache.invalidate_by_tag("projects", "users")
+
+        assert invalidated == 2
+        assert await self.cache.get("key1") is None
+        assert await self.cache.get("key2") is None
+        assert await self.cache.get("key3") == "value3"
+
+    @pytest.mark.asyncio
+    async def test_set_many(self):
+        """Test bulk setting of cache entries."""
+        items = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        tags = {"bulk", "test"}
+
+        await self.cache.set_many(items, ttl=600.0, tags=tags)
+
+        for key, expected_value in items.items():
+            value = await self.cache.get(key)
+            assert value == expected_value
+
+            entry = self.cache._cache[key]
+            assert entry.tags == tags
+            assert entry.ttl == 600.0
+
+    @pytest.mark.asyncio
+    async def test_delete_many(self):
+        """Test bulk deletion of cache entries."""
+        await self.cache.set("key1", "value1")
+        await self.cache.set("key2", "value2")
+        await self.cache.set("key3", "value3")
+
+        deleted = await self.cache.delete_many(["key1", "key3", "nonexistent"])
+
+        assert deleted == 2
+        assert await self.cache.get("key1") is None
+        assert await self.cache.get("key2") == "value2"
+        assert await self.cache.get("key3") is None
+
+    @pytest.mark.asyncio
+    async def test_cache_stats_comprehensive(self):
+        """Test comprehensive cache statistics."""
+        cache = Cache(default_ttl=300.0, max_size=100)
+        await cache.set("key1", "value1")
+        await cache.get("key1")  # Hit
+        await cache.get("nonexistent")  # Miss
+
+        stats = await cache.stats()
+
+        assert stats["total_entries"] == 1
+        assert stats["hits"] == 1
+        assert stats["misses"] == 1
+        assert stats["hit_ratio"] == 0.5
+        assert stats["evictions"] == 0
+        assert stats["max_size"] == 100
+        assert stats["estimated_memory_bytes"] > 0
 
 
 @pytest.mark.unit
