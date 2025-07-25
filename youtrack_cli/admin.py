@@ -1,6 +1,7 @@
 """Administrative operations for YouTrack CLI."""
 
 from typing import Any, Optional
+from urllib.parse import quote
 
 import httpx
 from rich.table import Table
@@ -25,6 +26,50 @@ class AdminManager:
         """
         self.auth_manager = auth_manager
         self.console = get_console()
+
+        # Mapping of user-friendly setting names to their category and field names
+        self.setting_mappings = {
+            "Max Export Items": {"category": "systemSettings", "field": "maxExportItems", "type": "int"},
+            "Max Upload File Size": {"category": "systemSettings", "field": "maxUploadFileSize", "type": "int"},
+            "Allow Statistics Collection": {
+                "category": "systemSettings",
+                "field": "allowStatisticsCollection",
+                "type": "bool",
+            },
+            "Is Application Read Only": {
+                "category": "systemSettings",
+                "field": "isApplicationReadOnly",
+                "type": "bool",
+            },
+            "Base Url": {"category": "systemSettings", "field": "baseUrl", "type": "str"},
+            "Application Name": {"category": "appearanceSettings", "field": "applicationName", "type": "str"},
+            "Title": {"category": "appearanceSettings", "field": "title", "type": "str"},
+        }
+
+    def _convert_setting_value(self, value: str, target_type: str) -> Any:
+        """Convert a string value to the appropriate type for YouTrack API.
+
+        Args:
+            value: String value to convert
+            target_type: Target type ('int', 'bool', 'str')
+
+        Returns:
+            Converted value in the appropriate type
+        """
+        if target_type == "int":
+            try:
+                return int(value)
+            except ValueError:
+                raise ValueError(f"Cannot convert '{value}' to integer") from None
+        elif target_type == "bool":
+            if value.lower() in ("true", "1", "yes", "on", "enabled"):
+                return True
+            elif value.lower() in ("false", "0", "no", "off", "disabled"):
+                return False
+            else:
+                raise ValueError(f"Cannot convert '{value}' to boolean. Use true/false, yes/no, or 1/0")
+        else:  # str
+            return value
 
     # Global Settings Management
     async def get_global_settings(self, setting_key: Optional[str] = None) -> dict[str, Any]:
@@ -51,20 +96,34 @@ class AdminManager:
         client_manager = get_client_manager()
 
         if setting_key:
-            # Single setting request - add fields parameter for meaningful data
-            endpoint = f"/api/admin/globalSettings/{setting_key}"
+            # Check if the setting_key is a user-friendly name that needs mapping
+            if setting_key in self.setting_mappings:
+                mapping = self.setting_mappings[setting_key]
+                category = mapping["category"]
+                field_name = mapping["field"]
+
+                # Fetch the entire category and extract the specific field
+                encoded_category = quote(category, safe="")
+                endpoint = f"/api/admin/globalSettings/{encoded_category}"
+            else:
+                # Direct category request - add fields parameter for meaningful data
+                # URL-encode the setting key to handle spaces and special characters
+                encoded_setting_key = quote(setting_key, safe="")
+                endpoint = f"/api/admin/globalSettings/{encoded_setting_key}"
+                category = setting_key
+                field_name = None
 
             # Add appropriate fields based on the setting category
-            if setting_key == "systemSettings":
+            if category == "systemSettings":
                 endpoint += (
                     "?fields=baseUrl,isApplicationReadOnly,maxUploadFileSize,"
                     "maxExportItems,allowStatisticsCollection,restApiUrl,maxIssuesInSinglePageExport"
                 )
-            elif setting_key == "license":
+            elif category == "license":
                 endpoint += "?fields=username,organizations,license,expirationDate"
-            elif setting_key == "appearanceSettings":
+            elif category == "appearanceSettings":
                 endpoint += "?fields=logo(url),applicationName,title"
-            elif setting_key == "notificationSettings":
+            elif category == "notificationSettings":
                 endpoint += "?fields=jabberSettings,emailSettings,mailProtocol"
 
             try:
@@ -75,8 +134,25 @@ class AdminManager:
                     timeout=10.0,
                 )
                 settings = response.json()
-                # Return single category in the nested format for consistency
-                return {"status": "success", "data": {setting_key: settings}}
+
+                # If we're looking for a specific field within a category, extract it
+                if field_name:
+                    if field_name in settings:
+                        # Return in legacy single setting format for compatibility with display logic
+                        field_value = settings[field_name]
+                        return {
+                            "status": "success",
+                            "data": {
+                                "name": setting_key,
+                                "value": field_value,
+                                "description": f"Field '{field_name}' from {category} category",
+                            },
+                        }
+                    else:
+                        return {"status": "error", "message": f"Field '{field_name}' not found in {category} settings."}
+                else:
+                    # Return single category in the nested format for consistency
+                    return {"status": "success", "data": {setting_key: settings}}
             except httpx.HTTPError as e:
                 if hasattr(e, "response") and e.response is not None:
                     if e.response.status_code == 403:
@@ -167,13 +243,44 @@ class AdminManager:
 
         client_manager = get_client_manager()
         try:
-            await client_manager.make_request(
-                "POST",
-                f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/{setting_key}",
-                headers=headers,
-                json_data=setting_data,
-                timeout=10.0,
-            )
+            # Check if the setting_key is a user-friendly name that needs mapping
+            if setting_key in self.setting_mappings:
+                mapping = self.setting_mappings[setting_key]
+                category = mapping["category"]
+                field_name = mapping["field"]
+                field_type = mapping["type"]
+
+                # Convert value to the appropriate type
+                try:
+                    converted_value = self._convert_setting_value(value, field_type)
+                except ValueError as e:
+                    return {"status": "error", "message": f"Invalid value for '{setting_key}': {str(e)}"}
+
+                # For setting individual fields, we need to use the field name directly
+                # Some YouTrack APIs may accept direct field updates within categories
+                encoded_category = quote(category, safe="")
+                endpoint = f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/{encoded_category}"
+
+                # Try to update the specific field within the category
+                field_data = {field_name: converted_value}
+                await client_manager.make_request(
+                    "POST",
+                    endpoint,
+                    headers=headers,
+                    json_data=field_data,
+                    timeout=10.0,
+                )
+            else:
+                # Direct category/setting update
+                # URL-encode the setting key to handle spaces and special characters
+                encoded_setting_key = quote(setting_key, safe="")
+                await client_manager.make_request(
+                    "POST",
+                    f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/{encoded_setting_key}",
+                    headers=headers,
+                    json_data=setting_data,
+                    timeout=10.0,
+                )
 
             return {
                 "status": "success",
