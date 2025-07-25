@@ -1,12 +1,13 @@
 """Tests for pagination functionality."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from rich.console import Console
 from rich.table import Table
 
 from youtrack_cli.pagination import PaginatedTableDisplay, create_paginated_display
+from youtrack_cli.utils import PaginationConfig, PaginationType, paginate_results
 
 
 @pytest.mark.unit
@@ -263,3 +264,221 @@ class TestCreatePaginatedDisplay:
 
         assert isinstance(paginated_display, PaginatedTableDisplay)
         assert paginated_display.page_size == 50
+
+
+@pytest.mark.unit
+class TestPaginationConfig:
+    """Test the PaginationConfig class."""
+
+    def test_default_page_sizes(self):
+        """Test default page size constants."""
+        assert PaginationConfig.DEFAULT_API_PAGE_SIZE == 100
+        assert PaginationConfig.DEFAULT_DISPLAY_PAGE_SIZE == 50
+
+    def test_max_results_per_entity(self):
+        """Test max results configuration."""
+        assert PaginationConfig.MAX_RESULTS_PER_ENTITY["issues"] == 10000
+        assert PaginationConfig.MAX_RESULTS_PER_ENTITY["projects"] == 1000
+        assert PaginationConfig.MAX_RESULTS_PER_ENTITY["users"] == 5000
+        assert PaginationConfig.MAX_RESULTS_PER_ENTITY["articles"] == 2000
+
+    def test_pagination_support(self):
+        """Test pagination type mapping."""
+        assert PaginationConfig.PAGINATION_SUPPORT["/api/issues"] == PaginationType.CURSOR
+        assert PaginationConfig.PAGINATION_SUPPORT["/api/admin/projects"] == PaginationType.OFFSET
+        assert PaginationConfig.PAGINATION_SUPPORT["/api/users"] == PaginationType.OFFSET
+        assert PaginationConfig.PAGINATION_SUPPORT["/api/articles"] == PaginationType.OFFSET
+
+    def test_get_pagination_type(self):
+        """Test pagination type detection."""
+        assert PaginationConfig.get_pagination_type("/api/issues") == PaginationType.CURSOR
+        assert PaginationConfig.get_pagination_type("/api/admin/projects") == PaginationType.OFFSET
+        assert PaginationConfig.get_pagination_type("/api/unknown") == PaginationType.OFFSET  # default
+
+
+@pytest.mark.asyncio
+class TestPaginateResults:
+    """Test the paginate_results function."""
+
+    async def test_cursor_pagination_single_page(self):
+        """Test cursor pagination with single page of results."""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "results": [{"id": 1}, {"id": 2}],
+            "hasAfter": False,
+            "hasBefore": False,
+            "afterCursor": None,
+            "beforeCursor": None,
+        }
+
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = mock_response
+
+            result = await paginate_results(
+                endpoint="/api/issues",
+                headers={"Authorization": "Bearer token"},
+                params={"fields": "id,summary"},
+                page_size=100,
+                use_cursor_pagination=True,
+            )
+
+            assert result["results"] == [{"id": 1}, {"id": 2}]
+            assert result["total_results"] == 2
+            assert result["has_after"] is False
+            assert result["pagination_type"] == "cursor"
+            mock_request.assert_called_once()
+
+    async def test_cursor_pagination_multiple_pages(self):
+        """Test cursor pagination with multiple pages."""
+        # First page response
+        first_response = Mock()
+        first_response.json.return_value = {
+            "results": [{"id": 1}, {"id": 2}],
+            "hasAfter": True,
+            "hasBefore": False,
+            "afterCursor": "cursor123",
+            "beforeCursor": None,
+        }
+
+        # Second page response
+        second_response = Mock()
+        second_response.json.return_value = {
+            "results": [{"id": 3}, {"id": 4}],
+            "hasAfter": False,
+            "hasBefore": True,
+            "afterCursor": None,
+            "beforeCursor": "cursor456",
+        }
+
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.side_effect = [first_response, second_response]
+
+            result = await paginate_results(
+                endpoint="/api/issues",
+                headers={"Authorization": "Bearer token"},
+                params={"fields": "id,summary"},
+                page_size=2,
+                use_cursor_pagination=True,
+            )
+
+            assert result["results"] == [{"id": 1}, {"id": 2}, {"id": 3}, {"id": 4}]
+            assert result["total_results"] == 4
+            assert result["has_after"] is False
+            assert result["pagination_type"] == "cursor"
+            assert mock_request.call_count == 2
+
+    async def test_offset_pagination_single_page(self):
+        """Test offset pagination with single page."""
+        mock_response = Mock()
+        mock_response.json.return_value = [{"id": 1}, {"id": 2}]
+
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = mock_response
+
+            result = await paginate_results(
+                endpoint="/api/users",
+                headers={"Authorization": "Bearer token"},
+                params={"fields": "id,login"},
+                page_size=100,
+                use_cursor_pagination=False,
+            )
+
+            assert result["results"] == [{"id": 1}, {"id": 2}]
+            assert result["total_results"] == 2
+            assert result["pagination_type"] == "offset"
+            mock_request.assert_called_once()
+
+    async def test_offset_pagination_multiple_pages(self):
+        """Test offset pagination with multiple pages."""
+        # First page response (full page)
+        first_response = Mock()
+        first_response.json.return_value = [{"id": 1}, {"id": 2}]
+
+        # Second page response (partial page, indicating end)
+        second_response = Mock()
+        second_response.json.return_value = [{"id": 3}]
+
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.side_effect = [first_response, second_response]
+
+            result = await paginate_results(
+                endpoint="/api/users",
+                headers={"Authorization": "Bearer token"},
+                params={"fields": "id,login"},
+                page_size=2,
+                use_cursor_pagination=False,
+            )
+
+            assert result["results"] == [{"id": 1}, {"id": 2}, {"id": 3}]
+            assert result["total_results"] == 3
+            assert result["pagination_type"] == "offset"
+            assert mock_request.call_count == 2
+
+    async def test_max_results_limit(self):
+        """Test that max_results is respected."""
+        mock_response = Mock()
+        mock_response.json.return_value = [{"id": i} for i in range(10)]
+
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = mock_response
+
+            result = await paginate_results(
+                endpoint="/api/users",
+                headers={"Authorization": "Bearer token"},
+                params={"fields": "id,login"},
+                page_size=10,
+                max_results=5,
+                use_cursor_pagination=False,
+            )
+
+            assert len(result["results"]) == 5
+            assert result["total_results"] == 5
+            # Should have called with $top=5 to limit the request
+            mock_request.assert_called_once()
+            call_params = mock_request.call_args[1]["params"]
+            assert call_params["$top"] == "5"
+
+    async def test_auto_detect_pagination_type(self):
+        """Test automatic pagination type detection."""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "results": [{"id": 1}],
+            "hasAfter": False,
+            "hasBefore": False,
+        }
+
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = mock_response
+
+            # Should auto-detect cursor pagination for /api/issues
+            result = await paginate_results(
+                endpoint="/api/issues",
+                headers={"Authorization": "Bearer token"},
+                params={"fields": "id,summary"},
+                use_cursor_pagination=None,  # Auto-detect
+            )
+
+            assert result["pagination_type"] == "cursor"
+
+    async def test_error_handling(self):
+        """Test error handling in pagination."""
+        with patch("youtrack_cli.utils.make_request", new_callable=AsyncMock) as mock_request:
+            mock_request.side_effect = Exception("Network error")
+
+            with pytest.raises(Exception, match="Network error"):
+                await paginate_results(
+                    endpoint="/api/users",
+                    headers={"Authorization": "Bearer token"},
+                    params={"fields": "id,login"},
+                )
+
+    async def test_invalid_cursor_params(self):
+        """Test validation of cursor parameters."""
+        with pytest.raises(ValueError, match="Cannot specify both after_cursor and before_cursor"):
+            await paginate_results(
+                endpoint="/api/issues",
+                headers={"Authorization": "Bearer token"},
+                after_cursor="cursor1",
+                before_cursor="cursor2",
+                use_cursor_pagination=True,
+            )

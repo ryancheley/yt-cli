@@ -115,7 +115,7 @@ def users() -> None:
     "--top",
     "-t",
     type=int,
-    help="Maximum number of users to return",
+    help="Maximum number of users to return (legacy, use --page-size instead)",
 )
 @click.option(
     "--query",
@@ -134,6 +134,30 @@ def users() -> None:
     default="table",
     help="Output format",
 )
+@click.option(
+    "--page-size",
+    type=int,
+    default=100,
+    help="Number of users per page (default: 100)",
+)
+@click.option(
+    "--after-cursor",
+    help="Start pagination after this cursor",
+)
+@click.option(
+    "--before-cursor",
+    help="Start pagination before this cursor",
+)
+@click.option(
+    "--all",
+    is_flag=True,
+    help="Fetch all results using pagination",
+)
+@click.option(
+    "--max-results",
+    type=int,
+    help="Maximum total number of results to fetch",
+)
 @click.pass_context
 def list_users(
     ctx: click.Context,
@@ -142,6 +166,11 @@ def list_users(
     query: Optional[str],
     active_only: bool,
     format: str,
+    page_size: int,
+    after_cursor: Optional[str],
+    before_cursor: Optional[str],
+    all: bool,
+    max_results: Optional[int],
 ) -> None:
     """List all users."""
     from ..users import UserManager
@@ -153,7 +182,22 @@ def list_users(
     console.print("👥 Fetching users...", style="blue")
 
     try:
-        result = asyncio.run(user_manager.list_users(fields=fields, top=top, query=query, active_only=active_only))
+        # Determine pagination settings
+        use_pagination = bool(all or after_cursor or before_cursor or max_results)
+
+        result = asyncio.run(
+            user_manager.list_users(
+                fields=fields,
+                top=top,
+                query=query,
+                active_only=active_only,
+                page_size=page_size,
+                after_cursor=after_cursor,
+                before_cursor=before_cursor,
+                use_pagination=use_pagination,
+                max_results=max_results,
+            )
+        )
 
         if result["status"] == "success":
             users = result["data"]
@@ -161,6 +205,17 @@ def list_users(
             if format == "table":
                 user_manager.display_users_table(users)
                 console.print(f"\n[dim]Total: {result['count']} users[/dim]")
+
+                # Display pagination info if available
+                if "pagination" in result:
+                    pagination = result["pagination"]
+                    if pagination["has_after"] or pagination["has_before"]:
+                        console.print("[dim]Pagination:[/dim]", end="")
+                        if pagination["after_cursor"]:
+                            console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
+                        if pagination["before_cursor"]:
+                            console.print(f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end="")
+                        console.print()
             else:
                 import json
 

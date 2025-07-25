@@ -79,23 +79,40 @@ class ProjectManager:
         fields: Optional[str] = None,
         top: Optional[int] = None,
         show_archived: bool = False,
+        page_size: int = 100,
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
     ) -> dict[str, Any]:
         """List all projects.
 
         Args:
             fields: Comma-separated list of project fields to return
-            top: Maximum number of projects to return
+            top: Maximum number of projects to return (legacy, use page_size instead)
             show_archived: Whether to include archived projects
+            page_size: Number of projects per page
+            after_cursor: Start pagination after this cursor
+            before_cursor: Start pagination before this cursor
+            use_pagination: Enable pagination for large result sets
+            max_results: Maximum total number of results to fetch
 
         Returns:
-            Dictionary with operation result
+            Dictionary with operation result including pagination metadata
         """
+        from .utils import paginate_results  # Import here to avoid circular imports
+
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {
                 "status": "error",
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
+
+        # Handle legacy top parameter
+        if top is not None:
+            page_size = top
+            use_pagination = False
 
         # Default fields to return
         if not fields:
@@ -110,49 +127,80 @@ class ProjectManager:
         }
 
         try:
-            # Add $top parameter for API call
-            if top:
-                params["$top"] = str(top)
+            if use_pagination:
+                # Use enhanced pagination with cursor support
+                result = await paginate_results(
+                    endpoint=f"{credentials.base_url.rstrip('/')}/api/admin/projects",
+                    headers=headers,
+                    params=params,
+                    page_size=page_size,
+                    max_results=max_results,
+                    after_cursor=after_cursor,
+                    before_cursor=before_cursor,
+                    use_cursor_pagination=False,  # Projects use offset pagination
+                )
+                projects = result["results"]
 
-            client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}/api/admin/projects",
-                headers=headers,
-                params=params,
-            )
+                # Filter archived projects if requested
+                if not show_archived:
+                    projects = [p for p in projects if p is not None and not p.get("archived", False)]
 
-            projects = response.json()
-
-            # Ensure we have a valid list of projects
-            if projects is None:
-                return {"status": "error", "message": "No project data received from YouTrack API"}
-
-            if not isinstance(projects, list):
-                data_type = type(projects).__name__
-                # Include more details about what we received for debugging
-                preview = str(projects)[:200] if projects is not None else "None"
                 return {
-                    "status": "error",
-                    "message": (
-                        f"Unexpected data format from YouTrack API: expected list, got {data_type}. "
-                        f"Response preview: {preview}"
-                    ),
+                    "status": "success",
+                    "data": projects,
+                    "count": len(projects),
+                    "pagination": {
+                        "total_results": result["total_results"],
+                        "has_after": result["has_after"],
+                        "has_before": result["has_before"],
+                        "after_cursor": result["after_cursor"],
+                        "before_cursor": result["before_cursor"],
+                        "pagination_type": result["pagination_type"],
+                    },
                 }
+            else:
+                # Legacy single request approach
+                if top:
+                    params["$top"] = str(top)
 
-            # Filter archived projects if requested
-            if not show_archived:
-                filtered_projects = []
-                for p in projects:
-                    if p is not None and not p.get("archived", False):
-                        filtered_projects.append(p)
-                projects = filtered_projects
+                client_manager = get_client_manager()
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{credentials.base_url.rstrip('/')}/api/admin/projects",
+                    headers=headers,
+                    params=params,
+                )
 
-            # Final null check before count
-            if projects is None:
-                projects = []
+                projects = response.json()
 
-            return {"status": "success", "data": projects, "count": len(projects)}
+                # Ensure we have a valid list of projects
+                if projects is None:
+                    return {"status": "error", "message": "No project data received from YouTrack API"}
+
+                if not isinstance(projects, list):
+                    data_type = type(projects).__name__
+                    preview = str(projects)[:200] if projects is not None else "None"
+                    return {
+                        "status": "error",
+                        "message": (
+                            f"Unexpected data format from YouTrack API: expected list, got {data_type}. "
+                            f"Response preview: {preview}"
+                        ),
+                    }
+
+                # Filter archived projects if requested
+                if not show_archived:
+                    filtered_projects = []
+                    for p in projects:
+                        if p is not None and not p.get("archived", False):
+                            filtered_projects.append(p)
+                    projects = filtered_projects
+
+                # Final null check before count
+                if projects is None:
+                    projects = []
+
+                return {"status": "success", "data": projects, "count": len(projects)}
 
         except ValueError as e:
             return {"status": "error", "message": f"Failed to parse response: {e}"}
