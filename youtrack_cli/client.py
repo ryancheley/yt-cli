@@ -66,6 +66,10 @@ class HTTPClientManager:
         max_connections: int = 100,
         keepalive_expiry: float = 30.0,
         default_timeout: float = 30.0,
+        connect_timeout: Optional[float] = None,
+        read_timeout: Optional[float] = None,
+        write_timeout: Optional[float] = None,
+        pool_timeout: Optional[float] = None,
         verify_ssl: bool = True,
     ):
         """Initialize the HTTP client manager.
@@ -77,8 +81,16 @@ class HTTPClientManager:
                 Defaults to 100.
             keepalive_expiry: How long to keep idle connections alive in seconds.
                 Defaults to 30.0.
-            default_timeout: Default timeout for requests in seconds.
-                Defaults to 30.0.
+            default_timeout: Default timeout for all operations in seconds.
+                Defaults to 30.0. Used as fallback when specific timeouts not set.
+            connect_timeout: Timeout for establishing connections in seconds.
+                If None, uses default_timeout.
+            read_timeout: Timeout for reading responses in seconds.
+                If None, uses default_timeout.
+            write_timeout: Timeout for writing requests in seconds.
+                If None, uses default_timeout.
+            pool_timeout: Timeout for acquiring connections from pool in seconds.
+                If None, uses default_timeout.
             verify_ssl: Whether to verify SSL certificates. Defaults to True.
                 Set to False only for development with self-signed certificates.
         """
@@ -87,7 +99,14 @@ class HTTPClientManager:
             max_connections=max_connections,
             keepalive_expiry=keepalive_expiry,
         )
-        self._timeout = httpx.Timeout(default_timeout)
+        # Configure comprehensive timeouts with fallback to default_timeout
+        self._timeout = httpx.Timeout(
+            connect=connect_timeout or default_timeout,
+            read=read_timeout or default_timeout,
+            write=write_timeout or default_timeout,
+            pool=pool_timeout or default_timeout,
+        )
+        self._default_timeout = default_timeout
         self._verify_ssl = verify_ssl
         self._client: Optional[httpx.AsyncClient] = None
         self._lock: Optional[asyncio.Lock] = None
@@ -176,7 +195,8 @@ class HTTPClientManager:
             YouTrackError: Various specific error types based on response
         """
         headers = headers or {}
-        request_timeout = timeout or self._timeout.connect
+        # Use provided timeout or fall back to configured default timeout
+        request_timeout = timeout or self._default_timeout
 
         for attempt in range(max_retries + 1):
             try:
@@ -461,7 +481,7 @@ _client_manager: Optional[HTTPClientManager] = None
 
 
 def get_client_manager() -> HTTPClientManager:
-    """Get the global HTTP client manager instance."""
+    """Get the global HTTP client manager instance with environment-based configuration."""
     global _client_manager
     if _client_manager is None:
         # Check for SSL verification setting from environment
@@ -472,6 +492,49 @@ def get_client_manager() -> HTTPClientManager:
 
         verify_ssl_str = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower()
         verify_ssl = verify_ssl_str not in ("false", "0", "no", "off")
+
+        # Get timeout configuration from environment variables
+        def _get_timeout_env(env_var: str, default: float) -> float:
+            """Get timeout value from environment variable with validation."""
+            value_str = os.getenv(env_var)
+            if value_str is None:
+                return default
+            try:
+                value = float(value_str)
+                if value <= 0:
+                    logger.warning(
+                        "Invalid timeout value in environment, using default",
+                        env_var=env_var,
+                        value=value_str,
+                        default=default,
+                    )
+                    return default
+                return value
+            except ValueError:
+                logger.warning(
+                    "Invalid timeout format in environment, using default",
+                    env_var=env_var,
+                    value=value_str,
+                    default=default,
+                )
+                return default
+
+        # Configure timeouts from environment variables
+        default_timeout = _get_timeout_env("YOUTRACK_DEFAULT_TIMEOUT", 30.0)
+        connect_timeout = os.getenv("YOUTRACK_CONNECT_TIMEOUT")
+        read_timeout = os.getenv("YOUTRACK_READ_TIMEOUT")
+        write_timeout = os.getenv("YOUTRACK_WRITE_TIMEOUT")
+        pool_timeout = os.getenv("YOUTRACK_POOL_TIMEOUT")
+
+        # Convert string values to float if provided
+        connect_timeout_val = (
+            None if connect_timeout is None else _get_timeout_env("YOUTRACK_CONNECT_TIMEOUT", default_timeout)
+        )
+        read_timeout_val = None if read_timeout is None else _get_timeout_env("YOUTRACK_READ_TIMEOUT", default_timeout)
+        write_timeout_val = (
+            None if write_timeout is None else _get_timeout_env("YOUTRACK_WRITE_TIMEOUT", default_timeout)
+        )
+        pool_timeout_val = None if pool_timeout is None else _get_timeout_env("YOUTRACK_POOL_TIMEOUT", default_timeout)
 
         # Issue security warning if SSL verification is disabled
         if not verify_ssl:
@@ -490,10 +553,26 @@ def get_client_manager() -> HTTPClientManager:
             success=True,
         )
 
-        _client_manager = HTTPClientManager(verify_ssl=verify_ssl)
+        _client_manager = HTTPClientManager(
+            verify_ssl=verify_ssl,
+            default_timeout=default_timeout,
+            connect_timeout=connect_timeout_val,
+            read_timeout=read_timeout_val,
+            write_timeout=write_timeout_val,
+            pool_timeout=pool_timeout_val,
+        )
 
-        # Log the client manager initialization
-        logger.info("HTTP client manager initialized", verify_ssl=verify_ssl, env_var=verify_ssl_str)
+        # Log the client manager initialization with timeout configuration
+        logger.info(
+            "HTTP client manager initialized",
+            verify_ssl=verify_ssl,
+            env_var=verify_ssl_str,
+            default_timeout=default_timeout,
+            connect_timeout=connect_timeout_val,
+            read_timeout=read_timeout_val,
+            write_timeout=write_timeout_val,
+            pool_timeout=pool_timeout_val,
+        )
 
     # At this point, _client_manager is guaranteed to be non-None
     client_manager = _client_manager

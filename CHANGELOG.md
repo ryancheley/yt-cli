@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add comprehensive request timeout configuration (#387)
+  - Configure timeouts for all API calls to prevent hanging requests and improve reliability
+  - Support for environment variables: YOUTRACK_DEFAULT_TIMEOUT, YOUTRACK_CONNECT_TIMEOUT, YOUTRACK_READ_TIMEOUT, YOUTRACK_WRITE_TIMEOUT, YOUTRACK_POOL_TIMEOUT
+  - Individual timeout types (connect, read, write, pool) with fallback to default timeout
+  - Enhanced HTTPClientManager with proper timeout handling and validation
+  - Comprehensive test coverage for timeout configuration scenarios
+
+### Fixed
+- Fix timeout parameter handling bug in HTTPClientManager.make_request() method
+  - Previously used incorrect timeout.connect instead of default_timeout for fallback
+  - Now properly uses configured default timeout when no specific timeout provided
+
 ## [0.12.0] - 2025-07-25
 
 ### Added
