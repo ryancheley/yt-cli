@@ -337,7 +337,7 @@ class IssueManager:
         # For now, return the input as-is (this would need ProjectService integration)
         return project_id_or_short_name
 
-    def display_issue_details(self, issue: Dict[str, Any], show_comments: bool = False) -> None:
+    def display_issue_details(self, issue: Dict[str, Any], show_comments: bool = False, format_type: str = "table") -> None:
         """Display issue details with rich formatting."""
         if not issue:
             self.console.print("[red]No issue data to display[/red]")
