@@ -335,14 +335,48 @@ class ProjectManager:
         """
         return await self.project_service.get_project_custom_fields(project_id, fields)
 
+    async def list_custom_fields(
+        self, project_id: str, fields: Optional[str] = None, top: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """List custom fields for a project.
+
+        Args:
+            project_id: Project ID
+            fields: Comma-separated list of field properties to return
+            top: Maximum number of fields to return
+
+        Returns:
+            Dictionary with operation result including count
+        """
+        result = await self.project_service.get_project_custom_fields(project_id, fields)
+
+        # Add count information for display
+        if result["status"] == "success" and isinstance(result["data"], list):
+            result["count"] = len(result["data"])
+            # Apply top limit if specified
+            if top is not None and top > 0:
+                result["data"] = result["data"][:top]
+                result["count"] = min(result["count"], top)
+
+        return result
+
     async def attach_custom_field(
-        self, project_id: str, field_id: str, is_public: Optional[bool] = None
+        self,
+        project_id: str,
+        field_id: str,
+        field_type: Optional[str] = None,
+        can_be_empty: Optional[bool] = None,
+        empty_field_text: Optional[str] = None,
+        is_public: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Attach a custom field to a project.
 
         Args:
             project_id: Project ID
             field_id: Custom field ID
+            field_type: Type of custom field
+            can_be_empty: Whether field can be empty
+            empty_field_text: Text to display when field is empty
             is_public: Whether field should be public
 
         Returns:
@@ -373,6 +407,67 @@ class ProjectManager:
             result["message"] = f"Custom field '{field_id}' detached from project '{project_id}'"
 
         return result
+
+    async def update_custom_field(
+        self,
+        project_id: str,
+        field_id: str,
+        can_be_empty: Optional[bool] = None,
+        empty_field_text: Optional[str] = None,
+        is_public: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        """Update custom field settings in a project.
+
+        Args:
+            project_id: Project ID
+            field_id: Custom field ID to update
+            can_be_empty: Whether field can be empty
+            empty_field_text: Text to display when field is empty
+            is_public: Whether field should be public
+
+        Returns:
+            Dictionary with operation result
+        """
+        # This would need to be implemented in the service layer
+        # For now, return a placeholder
+        return {
+            "status": "error",
+            "message": "Custom field update not yet implemented in service layer"
+        }
+
+    def display_custom_fields_table(self, custom_fields: List[Dict[str, Any]]) -> None:
+        """Display custom fields in a table format.
+
+        Args:
+            custom_fields: List of custom field dictionaries
+        """
+        if not custom_fields:
+            self.console.print("[yellow]No custom fields found.[/yellow]")
+            return
+
+        from rich.table import Table
+
+        table = Table(title="Project Custom Fields")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Type", style="blue")
+        table.add_column("Required", style="yellow")
+        table.add_column("Public", style="green")
+
+        for field in custom_fields:
+            field_data = field.get("field", {})
+            name = field_data.get("name", "N/A")
+            field_type = field_data.get("fieldType", {}).get("id", "N/A")
+
+            # Simplify field type display
+            if "ProjectCustomField" in field_type:
+                field_type = field_type.replace("ProjectCustomField", "")
+
+            required = "No" if field.get("canBeEmpty", True) else "Yes"
+            public = "Yes" if field.get("isPublic", True) else "No"
+
+            table.add_row(name, field_type, required, public)
+
+        self.console.print(table)
 
     def display_project_list(
         self,
