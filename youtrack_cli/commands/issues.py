@@ -18,6 +18,76 @@ from ..cli_utils import AliasedGroup, validate_issue_id_format, validate_project
 from ..console import get_console
 
 
+def _format_issues_as_csv(issues):
+    """Format issues data as CSV."""
+    import csv
+    import io
+
+    if not issues:
+        return "ID,Summary,State,Priority,Type,Assignee,Project\n"
+
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    headers = ["ID", "Summary", "State", "Priority", "Type", "Assignee", "Project"]
+    writer.writerow(headers)
+
+    # Write data rows
+    for issue in issues:
+        # Extract project info
+        project_name = ""
+        if isinstance(issue.get("project"), dict):
+            project_name = issue["project"].get("name", issue["project"].get("shortName", ""))
+
+        # Extract assignee info
+        assignee_name = "Unassigned"
+        if issue.get("assignee") and isinstance(issue["assignee"], dict):
+            assignee_name = (
+                issue["assignee"].get("fullName")
+                or issue["assignee"].get("name")
+                or issue["assignee"].get("login")
+                or "Unassigned"
+            )
+
+        # Extract custom field values
+        custom_fields = issue.get("customFields", [])
+        state = priority = issue_type = ""
+
+        for field in custom_fields:
+            field_name = field.get("name", "")
+            field_value = field.get("value")
+
+            if field_name in ["State", "Status"]:
+                if isinstance(field_value, dict):
+                    state = field_value.get("name", "")
+                elif isinstance(field_value, str):
+                    state = field_value
+            elif field_name == "Priority":
+                if isinstance(field_value, dict):
+                    priority = field_value.get("name", "")
+                elif isinstance(field_value, str):
+                    priority = field_value
+            elif field_name in ["Type", "Issue Type"]:
+                if isinstance(field_value, dict):
+                    issue_type = field_value.get("name", "")
+                elif isinstance(field_value, str):
+                    issue_type = field_value
+
+        # Create the issue ID
+        if issue.get("numberInProject"):
+            project_short = issue.get("project", {}).get("shortName", "")
+            issue_id = f"{project_short}-{issue.get('numberInProject', '')}"
+        else:
+            issue_id = issue.get("id", "")
+
+        row = [issue_id, issue.get("summary", ""), state, priority, issue_type, assignee_name, project_name]
+        writer.writerow(row)
+
+    return output.getvalue()
+
+
 def show_issues_verbose_help(ctx):
     """Show comprehensive help for the issues command group."""
     from rich.console import Console
@@ -464,6 +534,10 @@ def list_issues(
                                     f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end=""
                                 )
                             console.print()
+            elif format == "csv":
+                # Convert issues to CSV format
+                csv_output = _format_issues_as_csv(issues)
+                console.print(csv_output)
             else:
                 import json
 

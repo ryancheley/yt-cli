@@ -491,7 +491,7 @@ class AdminManager:
         try:
             response = await client_manager.make_request(
                 "POST",
-                f"{credentials.base_url.rstrip('/')}/api/rest/usergroups",
+                f"{credentials.base_url.rstrip('/')}/hub/api/rest/usergroups",
                 headers=headers,
                 json_data=group_data,
                 params={"fields": "id,name,description"},

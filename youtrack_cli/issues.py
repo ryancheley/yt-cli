@@ -401,7 +401,24 @@ class IssueManager:
 
         # Handle state, priority, type and assignee as custom fields using CustomFieldManager
         if state:
-            custom_fields.append(CustomFieldManager.create_state_field("State", state))
+            # Try to get the actual state field name/id for this issue
+            state_field_id = await self._get_custom_field_id(issue_id, "State")
+            if not state_field_id:
+                # Try common alternative state field names
+                for field_name in ["Status", "Workflow State", "state"]:
+                    state_field_id = await self._get_custom_field_id(issue_id, field_name)
+                    if state_field_id:
+                        break
+
+            if state_field_id:
+                # Create custom field with ID for proper state update - remove name when using ID
+                state_field = CustomFieldManager.create_state_field("State", state)
+                state_field["id"] = state_field_id
+                del state_field["name"]  # Remove name when using ID to avoid conflicts
+                custom_fields.append(state_field)
+            else:
+                # Fallback to name-based state field
+                custom_fields.append(CustomFieldManager.create_state_field("State", state))
         if priority:
             custom_fields.append(CustomFieldManager.create_single_enum_field("Priority", priority))
         if issue_type:
