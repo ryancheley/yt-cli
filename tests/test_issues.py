@@ -877,10 +877,9 @@ class TestIssueManager:
             async def mock_make_request(method, url, **kwargs):
                 if "issueLinkTypes" in url:
                     return mock_link_types_resp
-                elif "PROJ-124" in url and method == "GET":
+                if "PROJ-124" in url and method == "GET":
                     return mock_issue_resp
-                else:
-                    return mock_create_resp
+                return mock_create_resp
 
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock(side_effect=mock_make_request)

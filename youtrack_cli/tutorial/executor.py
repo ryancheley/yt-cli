@@ -203,9 +203,8 @@ class ClickCommandExecutor:
             if process.returncode == 0:
                 self.console.print("[green]✓ Command executed successfully![/green]\n")
                 return True
-            else:
-                self.console.print(f"[red]✗ Command failed with exit code {process.returncode}[/red]\n")
-                return False
+            self.console.print(f"[red]✗ Command failed with exit code {process.returncode}[/red]\n")
+            return False
 
         except Exception as e:
             self.console.print(f"[red]✗ Failed to execute command: {e}[/red]\n")

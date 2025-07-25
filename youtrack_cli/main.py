@@ -707,7 +707,7 @@ Register-ArgumentCompleter -Native -CommandName yt -ScriptBlock {
                     if comp_dir.exists() and os.access(comp_dir, os.W_OK):
                         target_dir = comp_dir
                         break
-                    elif comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
+                    if comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
                         comp_dir.mkdir(parents=True, exist_ok=True)
                         target_dir = comp_dir
                         break
@@ -734,7 +734,7 @@ Register-ArgumentCompleter -Native -CommandName yt -ScriptBlock {
                     if comp_dir.exists() and os.access(comp_dir, os.W_OK):
                         target_dir = comp_dir
                         break
-                    elif comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
+                    if comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
                         comp_dir.mkdir(parents=True, exist_ok=True)
                         target_dir = comp_dir
                         break
@@ -760,7 +760,7 @@ Register-ArgumentCompleter -Native -CommandName yt -ScriptBlock {
                     if comp_dir.exists() and os.access(comp_dir, os.W_OK):
                         target_dir = comp_dir
                         break
-                    elif comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
+                    if comp_dir.parent.exists() and os.access(comp_dir.parent, os.W_OK):
                         comp_dir.mkdir(parents=True, exist_ok=True)
                         target_dir = comp_dir
                         break
@@ -784,7 +784,11 @@ Register-ArgumentCompleter -Native -CommandName yt -ScriptBlock {
 
                         # Get PowerShell profile path
                         result = subprocess.run(
-                            ["powershell", "-Command", "echo $PROFILE"], capture_output=True, text=True, timeout=10
+                            ["powershell", "-Command", "echo $PROFILE"],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                            timeout=10,
                         )
                         if result.returncode == 0 and result.stdout.strip():
                             profile_path = Path(result.stdout.strip())
@@ -945,8 +949,7 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
 
         config_file = os.path.join(config_dir, ".env")
         with open(config_file, "w") as f:
-            for key, value in config_data.items():
-                f.write(f"{key}={value}\n")
+            f.writelines(f"{key}={value}\n" for key, value in config_data.items())
 
         console.print(f"✅ Configuration saved to: [green]{config_file}[/green]")
 

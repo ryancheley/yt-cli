@@ -64,10 +64,9 @@ class AdminManager:
         elif target_type == "bool":
             if value.lower() in ("true", "1", "yes", "on", "enabled"):
                 return True
-            elif value.lower() in ("false", "0", "no", "off", "disabled"):
+            if value.lower() in ("false", "0", "no", "off", "disabled"):
                 return False
-            else:
-                raise ValueError(f"Cannot convert '{value}' to boolean. Use true/false, yes/no, or 1/0")
+            raise ValueError(f"Cannot convert '{value}' to boolean. Use true/false, yes/no, or 1/0")
         else:  # str
             return value
 
@@ -148,11 +147,9 @@ class AdminManager:
                                 "description": f"Field '{field_name}' from {category} category",
                             },
                         }
-                    else:
-                        return {"status": "error", "message": f"Field '{field_name}' not found in {category} settings."}
-                else:
-                    # Return single category in the nested format for consistency
-                    return {"status": "success", "data": {setting_key: settings}}
+                    return {"status": "error", "message": f"Field '{field_name}' not found in {category} settings."}
+                # Return single category in the nested format for consistency
+                return {"status": "success", "data": {setting_key: settings}}
             except httpx.HTTPError as e:
                 if hasattr(e, "response") and e.response is not None:
                     if e.response.status_code == 403:
@@ -160,7 +157,7 @@ class AdminManager:
                             "status": "error",
                             "message": "Insufficient permissions for global settings.",
                         }
-                    elif e.response.status_code == 404:
+                    if e.response.status_code == 404:
                         return {
                             "status": "error",
                             "message": f"Setting category '{setting_key}' not found.",
@@ -208,13 +205,12 @@ class AdminManager:
 
             if all_settings:
                 return {"status": "success", "data": all_settings}
-            elif permission_errors == total_endpoints:
+            if permission_errors == total_endpoints:
                 return {
                     "status": "error",
                     "message": "Insufficient permissions for global settings.",
                 }
-            else:
-                return {"status": "error", "message": "No settings could be retrieved"}
+            return {"status": "error", "message": "No settings could be retrieved"}
 
     async def set_global_setting(self, setting_key: str, value: str) -> dict[str, Any]:
         """Set a global YouTrack setting.
@@ -294,7 +290,7 @@ class AdminManager:
                         "status": "error",
                         "message": "Insufficient permissions to modify settings.",
                     }
-                elif e.response.status_code == 400:
+                if e.response.status_code == 400:
                     return {
                         "status": "error",
                         "message": "Invalid setting key or value.",
@@ -342,7 +338,7 @@ class AdminManager:
                         "status": "error",
                         "message": "Insufficient permissions to view license.",
                     }
-                elif e.response.status_code == 404:
+                if e.response.status_code == 404:
                     return {
                         "status": "error",
                         "message": (
@@ -437,23 +433,22 @@ class AdminManager:
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 404:
                     continue  # Try next endpoint
-                elif e.response.status_code == 403:
+                if e.response.status_code == 403:
                     return {
                         "status": "error",
                         "message": "Insufficient permissions for health check. "
                         "Requires 'Low-level Admin Read' permission.",
                     }
-                elif e.response.status_code == 401:
+                if e.response.status_code == 401:
                     return {
                         "status": "error",
                         "message": "Authentication failed. Your token may have expired. Run 'yt auth login' again.",
                     }
-                else:
-                    response_text = e.response.text if hasattr(e.response, "text") else str(e)
-                    return {
-                        "status": "error",
-                        "message": f"HTTP {e.response.status_code}: {response_text}",
-                    }
+                response_text = e.response.text if hasattr(e.response, "text") else str(e)
+                return {
+                    "status": "error",
+                    "message": f"HTTP {e.response.status_code}: {response_text}",
+                }
             except httpx.RequestError as e:
                 return {
                     "status": "error",
@@ -619,7 +614,7 @@ class AdminManager:
                         "status": "error",
                         "message": "Insufficient permissions to create groups.",
                     }
-                elif e.response.status_code == 400:
+                if e.response.status_code == 400:
                     return {
                         "status": "error",
                         "message": "Invalid group data or group already exists.",
@@ -717,7 +712,7 @@ class AdminManager:
                         "status": "error",
                         "message": "Insufficient permissions to view locale settings.",
                     }
-                elif e.response.status_code == 404:
+                if e.response.status_code == 404:
                     return {
                         "status": "error",
                         "message": "Locale settings endpoint not found.",
@@ -772,7 +767,7 @@ class AdminManager:
                         "status": "error",
                         "message": "Insufficient permissions to modify locale settings.",
                     }
-                elif e.response.status_code == 400:
+                if e.response.status_code == 400:
                     return {
                         "status": "error",
                         "message": f"Invalid locale ID: '{locale_id}'",
@@ -835,7 +830,7 @@ class AdminManager:
         if not isinstance(settings, dict):
             return False
         known_categories = {"systemSettings", "license", "appearanceSettings", "notificationSettings"}
-        return any(key in known_categories for key in settings.keys())
+        return any(key in known_categories for key in settings)
 
     def _display_nested_global_settings(self, settings: dict[str, Any]) -> None:
         """Display nested global settings grouped by category."""
@@ -905,20 +900,18 @@ class AdminManager:
         """Format setting value for display using CustomFieldManager."""
         if isinstance(value, bool):
             return "✓" if value else "✗"
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             # For nested objects, show a summary or key fields
             if "$type" in value:
                 field_type = value["$type"]
                 display_name = CustomFieldManager.format_field_type_for_display(field_type)
                 return f"[{display_name}]"
-            else:
-                return str(value)
-        elif isinstance(value, (int, float)):
             return str(value)
-        elif value is None:
+        if isinstance(value, (int, float)):
+            return str(value)
+        if value is None:
             return "N/A"
-        else:
-            return str(value)
+        return str(value)
 
     def display_license_info(self, license_info: dict[str, Any]) -> None:
         """Display license information.

@@ -85,6 +85,25 @@ test-watch:
     uv run pytest-watch
     echo "✅ Test watching stopped"
 
+# Pre-commit helpers
+[group('quality')]
+pre-commit-doctor:
+    #!/usr/bin/env bash
+    echo "Running pre-commit diagnostic..."
+    ./scripts/pre-commit-doctor.sh
+
+[group('quality')]
+pre-commit-fix:
+    #!/usr/bin/env bash
+    echo "Running pre-commit quick fixes..."
+    ./scripts/pre-commit-quick-fix.sh
+
+[group('quality')]
+pre-commit-fast:
+    #!/usr/bin/env bash
+    echo "Running fast pre-commit check on staged files..."
+    ./scripts/pre-commit-fast.sh
+
 # Combined checks
 [group('quality')]
 check:

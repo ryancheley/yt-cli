@@ -703,18 +703,17 @@ def handle_error(error: Exception, operation: str = "operation") -> Dict[str, An
             result["usage_example"] = error.usage_example
 
         return result
-    else:
-        logger.error(
-            "Unexpected error during operation",
-            operation=operation,
-            error_type=type(error).__name__,
-            error=str(error),
-        )
-        return {
-            "status": "error",
-            "message": f"An unexpected error occurred during {operation}",
-            "suggestion": "Please try again or contact support if the problem persists",
-        }
+    logger.error(
+        "Unexpected error during operation",
+        operation=operation,
+        error_type=type(error).__name__,
+        error=str(error),
+    )
+    return {
+        "status": "error",
+        "message": f"An unexpected error occurred during {operation}",
+        "suggestion": "Please try again or contact support if the problem persists",
+    }
 
 
 def display_error(error_result: Dict[str, Any]) -> None:
@@ -803,20 +802,19 @@ def format_timestamp(timestamp: Union[int, str, None]) -> str:
             # Unix timestamp in milliseconds (YouTrack format)
             dt = datetime.fromtimestamp(timestamp / 1000)
             return dt.strftime("%Y-%m-%d %H:%M:%S")
-        elif isinstance(timestamp, str) and timestamp.strip():
+        if isinstance(timestamp, str) and timestamp.strip():
             # Try to parse ISO format or other string formats
             if timestamp.isdigit():
                 # String representation of timestamp
                 dt = datetime.fromtimestamp(int(timestamp) / 1000)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                # Assume it's already formatted or ISO format
-                try:
-                    dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-                    return dt.strftime("%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    # Return as-is if we can't parse it
-                    return str(timestamp)
+            # Assume it's already formatted or ISO format
+            try:
+                dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                # Return as-is if we can't parse it
+                return str(timestamp)
         else:
             return "N/A"
     except (ValueError, TypeError, OverflowError):

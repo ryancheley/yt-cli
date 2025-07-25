@@ -15,9 +15,9 @@ def _get_assignee_name_from_issue(issue: Dict[str, Any]) -> str:
     if assignee and isinstance(assignee, dict):
         if assignee.get("fullName"):
             return assignee["fullName"]
-        elif assignee.get("name"):
+        if assignee.get("name"):
             return assignee["name"]
-        elif assignee.get("login"):
+        if assignee.get("login"):
             return assignee["login"]
 
     # If not found, try the Assignee custom field
@@ -29,9 +29,9 @@ def _get_assignee_name_from_issue(issue: Dict[str, Any]) -> str:
                 if value and isinstance(value, dict):
                     if value.get("fullName"):
                         return value["fullName"]
-                    elif value.get("name"):
+                    if value.get("name"):
                         return value["name"]
-                    elif value.get("login"):
+                    if value.get("login"):
                         return value["login"]
 
     return "Unassigned"
@@ -413,11 +413,10 @@ def _get_status_color(status: str) -> str:
 
     if any(word in status_lower for word in ["open", "new", "to do", "backlog"]):
         return "blue"
-    elif any(word in status_lower for word in ["in progress", "working", "active"]):
+    if any(word in status_lower for word in ["in progress", "working", "active"]):
         return "yellow"
-    elif any(word in status_lower for word in ["done", "resolved", "closed", "fixed"]):
+    if any(word in status_lower for word in ["done", "resolved", "closed", "fixed"]):
         return "green"
-    elif any(word in status_lower for word in ["blocked", "waiting", "on hold"]):
+    if any(word in status_lower for word in ["blocked", "waiting", "on hold"]):
         return "red"
-    else:
-        return "white"
+    return "white"

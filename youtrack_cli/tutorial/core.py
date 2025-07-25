@@ -264,10 +264,10 @@ class TutorialEngine:
                 self.progress_tracker.save_progress(progress)
                 return False
 
-            elif action == "repeat" or action == "retry":
+            if action == "repeat" or action == "retry":
                 continue  # Stay on current step
 
-            elif action == "skip":
+            if action == "skip":
                 current_step += 1
 
             elif action == "next":
@@ -330,12 +330,10 @@ class TutorialEngine:
                 if step.validation_check():
                     self.console.print("[green]✓ Step executed successfully![/green]")
                     return True
-                else:
-                    self.console.print("[red]✗ Step execution validation failed![/red]")
-                    return False
-            else:
-                self.console.print("[green]✓ Step executed successfully![/green]")
-                return True
+                self.console.print("[red]✗ Step execution validation failed![/red]")
+                return False
+            self.console.print("[green]✓ Step executed successfully![/green]")
+            return True
 
         except Exception as e:
             self.console.print(f"[red]✗ Step execution failed: {e}[/red]")

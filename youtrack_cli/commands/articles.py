@@ -1066,7 +1066,7 @@ def _sort_articles(
         if sort_by == "title":
             title = article.get("summary", "")
             return title if case_sensitive else title.lower()
-        elif sort_by == "id":
+        if sort_by == "id":
             # Use internal ID for numeric sorting
             article_id = article.get("id", "")
             try:

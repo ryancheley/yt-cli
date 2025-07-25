@@ -213,31 +213,30 @@ class HTTPClientManager:
                     if response.status_code in (200, 201):
                         logger.debug("Request successful", status_code=response.status_code)
                         return response
-                    elif response.status_code == 401:
+                    if response.status_code == 401:
                         raise AuthenticationError("Invalid credentials or token expired")
-                    elif response.status_code == 403:
+                    if response.status_code == 403:
                         raise PermissionError("access this resource")
-                    elif response.status_code == 404:
+                    if response.status_code == 404:
                         raise NotFoundError("Resource", url.split("/")[-1])
-                    elif response.status_code == 429:
+                    if response.status_code == 429:
                         retry_after = response.headers.get("Retry-After")
                         retry_seconds = int(retry_after) if retry_after else 60
                         raise RateLimitError(retry_seconds)
-                    else:
-                        # Try to get error details from response
-                        try:
-                            error_data = response.json()
-                            # Try multiple possible error message formats
-                            error_message = (
-                                error_data.get("error_description")
-                                or error_data.get("error", {}).get("description")
-                                or error_data.get("message")
-                                or response.text
-                            )
-                        except Exception:
-                            error_message = response.text or f"HTTP {response.status_code}"
+                    # Try to get error details from response
+                    try:
+                        error_data = response.json()
+                        # Try multiple possible error message formats
+                        error_message = (
+                            error_data.get("error_description")
+                            or error_data.get("error", {}).get("description")
+                            or error_data.get("message")
+                            or response.text
+                        )
+                    except Exception:
+                        error_message = response.text or f"HTTP {response.status_code}"
 
-                        raise YouTrackError(f"Request failed with status {response.status_code}: {error_message}")
+                    raise YouTrackError(f"Request failed with status {response.status_code}: {error_message}")
 
             except httpx.TimeoutException:
                 if attempt < max_retries:
@@ -250,13 +249,12 @@ class HTTPClientManager:
                     )
                     await asyncio.sleep(wait_time)
                     continue
-                else:
-                    logger.error(
-                        "Request timed out after multiple attempts",
-                        url=url,
-                        max_retries=max_retries,
-                    )
-                    raise ConnectionError("Request timed out after multiple attempts") from None
+                logger.error(
+                    "Request timed out after multiple attempts",
+                    url=url,
+                    max_retries=max_retries,
+                )
+                raise ConnectionError("Request timed out after multiple attempts") from None
 
             except httpx.ConnectError:
                 if attempt < max_retries:
@@ -269,13 +267,12 @@ class HTTPClientManager:
                     )
                     await asyncio.sleep(wait_time)
                     continue
-                else:
-                    logger.error(
-                        "Unable to connect to YouTrack server",
-                        url=url,
-                        max_retries=max_retries,
-                    )
-                    raise ConnectionError("Unable to connect to YouTrack server") from None
+                logger.error(
+                    "Unable to connect to YouTrack server",
+                    url=url,
+                    max_retries=max_retries,
+                )
+                raise ConnectionError("Unable to connect to YouTrack server") from None
 
             except (
                 RateLimitError,
@@ -300,15 +297,14 @@ class HTTPClientManager:
                     )
                     await asyncio.sleep(wait_time)
                     continue
-                else:
-                    logger.error(
-                        "Network error after max retries",
-                        url=url,
-                        error=str(e),
-                        error_type=type(e).__name__,
-                        max_retries=max_retries,
-                    )
-                    raise YouTrackNetworkError(f"Network error after {max_retries} retries: {str(e)}") from e
+                logger.error(
+                    "Network error after max retries",
+                    url=url,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    max_retries=max_retries,
+                )
+                raise YouTrackNetworkError(f"Network error after {max_retries} retries: {str(e)}") from e
 
             except httpx.HTTPStatusError as e:
                 # Handle server errors (5xx status codes) with retry
@@ -325,20 +321,18 @@ class HTTPClientManager:
                         )
                         await asyncio.sleep(wait_time)
                         continue
-                    else:
-                        logger.error(
-                            "Server error after max retries",
-                            url=url,
-                            status_code=e.response.status_code,
-                            error=str(e),
-                            max_retries=max_retries,
-                        )
-                        raise YouTrackServerError(
-                            f"Server error after {max_retries} retries: {str(e)}", status_code=e.response.status_code
-                        ) from e
-                else:
-                    # For client errors (4xx), don't retry
-                    raise
+                    logger.error(
+                        "Server error after max retries",
+                        url=url,
+                        status_code=e.response.status_code,
+                        error=str(e),
+                        max_retries=max_retries,
+                    )
+                    raise YouTrackServerError(
+                        f"Server error after {max_retries} retries: {str(e)}", status_code=e.response.status_code
+                    ) from e
+                # For client errors (4xx), don't retry
+                raise
 
             except Exception as e:
                 # Handle truly unexpected errors with enhanced logging

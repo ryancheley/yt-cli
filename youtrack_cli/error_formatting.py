@@ -104,8 +104,7 @@ class ErrorFormatter:
         """Format error message according to current mode (quiet/verbose)."""
         if self.quiet:
             return self._format_quiet(error)
-        else:
-            return self._format_verbose(error)
+        return self._format_verbose(error)
 
     def _format_quiet(self, error: StandardizedError) -> str:
         """Format error for quiet mode (automation-friendly)."""

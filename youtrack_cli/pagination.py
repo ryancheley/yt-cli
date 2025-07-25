@@ -82,7 +82,7 @@ class PaginatedTableDisplay:
 
             if action == "quit":
                 break
-            elif action == "next" and self.current_page < total_pages:
+            if action == "next" and self.current_page < total_pages:
                 self.current_page += 1
             elif action == "previous" and self.current_page > 1:
                 self.current_page -= 1
@@ -134,20 +134,19 @@ class PaginatedTableDisplay:
 
                 if user_input in ["q", "quit", ""]:
                     return "quit"
-                elif user_input in ["n", "next"] and self.current_page < total_pages:
+                if user_input in ["n", "next"] and self.current_page < total_pages:
                     return "next"
-                elif user_input in ["p", "previous", "prev"] and self.current_page > 1:
+                if user_input in ["p", "previous", "prev"] and self.current_page > 1:
                     return "previous"
-                elif user_input in ["a", "all"]:
+                if user_input in ["a", "all"]:
                     return "show_all"
-                elif user_input in ["j", "jump"]:
+                if user_input in ["j", "jump"]:
                     page_input = input(f"Enter page number (1-{total_pages}): ").strip()
                     try:
                         page_num = int(page_input)
                         if 1 <= page_num <= total_pages:
                             return f"jump_{page_num}"
-                        else:
-                            self.console.print(f"[red]Please enter a number between 1 and {total_pages}.[/red]")
+                        self.console.print(f"[red]Please enter a number between 1 and {total_pages}.[/red]")
                     except ValueError:
                         self.console.print("[red]Please enter a valid number.[/red]")
                 else:
@@ -156,8 +155,7 @@ class PaginatedTableDisplay:
                         page_num = int(user_input)
                         if 1 <= page_num <= total_pages:
                             return f"jump_{page_num}"
-                        else:
-                            self.console.print(f"[red]Please enter a number between 1 and {total_pages}.[/red]")
+                        self.console.print(f"[red]Please enter a number between 1 and {total_pages}.[/red]")
                     except ValueError:
                         self.console.print("[red]Invalid option. Please try again.[/red]")
 

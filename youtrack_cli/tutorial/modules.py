@@ -668,7 +668,7 @@ class DockerTutorial(TutorialModule):
             console.print("You can stop it later with: docker stop youtrack-tutorial")
             return True
 
-        elif action == "stop":
+        if action == "stop":
             console.print("[yellow]Stopping YouTrack container...[/yellow]")
             try:
                 stop_youtrack_container()
