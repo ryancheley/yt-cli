@@ -277,7 +277,11 @@ class TimeManager:
                 issue = entry.get("issue", {})
                 key = f"{issue.get('id', 'Unknown')} - {issue.get('summary', 'No summary')}"
             elif group_by == "type":
-                key = entry.get("type", {}).get("name", "No type")
+                work_type = entry.get("type")
+                if isinstance(work_type, dict) and work_type.get("name"):
+                    key = work_type.get("name")
+                else:
+                    key = "No type"
             else:
                 key = "All"
 
