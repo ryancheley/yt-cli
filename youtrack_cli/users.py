@@ -31,24 +31,41 @@ class UserManager:
         top: Optional[int] = None,
         query: Optional[str] = None,
         active_only: bool = False,
+        page_size: int = 100,
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
     ) -> dict[str, Any]:
         """List all users.
 
         Args:
             fields: Comma-separated list of user fields to return
-            top: Maximum number of users to return
+            top: Maximum number of users to return (legacy, use page_size instead)
             query: Search query to filter users
             active_only: Show only active (non-banned) users
+            page_size: Number of users per page
+            after_cursor: Start pagination after this cursor
+            before_cursor: Start pagination before this cursor
+            use_pagination: Enable pagination for large result sets
+            max_results: Maximum total number of results to fetch
 
         Returns:
-            Dictionary with operation result
+            Dictionary with operation result including pagination metadata
         """
+        from .utils import paginate_results  # Import here to avoid circular imports
+
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {
                 "status": "error",
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
+
+        # Handle legacy top parameter
+        if top is not None:
+            page_size = top
+            use_pagination = False
 
         # Default fields to return
         if not fields:
@@ -69,25 +86,57 @@ class UserManager:
         }
 
         try:
-            # Add $top parameter for API call
-            if top:
-                params["$top"] = str(top)
+            if use_pagination:
+                # Use enhanced pagination with offset support
+                result = await paginate_results(
+                    endpoint=f"{credentials.base_url.rstrip('/')}/api/users",
+                    headers=headers,
+                    params=params,
+                    page_size=page_size,
+                    max_results=max_results,
+                    after_cursor=after_cursor,
+                    before_cursor=before_cursor,
+                    use_cursor_pagination=False,  # Users use offset pagination
+                )
+                users = result["results"]
 
-            client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                f"{credentials.base_url.rstrip('/')}/api/users",
-                headers=headers,
-                params=params,
-            )
+                # Apply client-side filtering for active_only
+                if active_only:
+                    users = [user for user in users if not user.get("banned", False)]
 
-            users = response.json()
+                return {
+                    "status": "success",
+                    "data": users,
+                    "count": len(users),
+                    "pagination": {
+                        "total_results": result["total_results"],
+                        "has_after": result["has_after"],
+                        "has_before": result["has_before"],
+                        "after_cursor": result["after_cursor"],
+                        "before_cursor": result["before_cursor"],
+                        "pagination_type": result["pagination_type"],
+                    },
+                }
+            else:
+                # Legacy single request approach
+                if top:
+                    params["$top"] = str(top)
 
-            # Apply client-side filtering for active_only
-            if active_only:
-                users = [user for user in users if not user.get("banned", False)]
+                client_manager = get_client_manager()
+                response = await client_manager.make_request(
+                    "GET",
+                    f"{credentials.base_url.rstrip('/')}/api/users",
+                    headers=headers,
+                    params=params,
+                )
 
-            return {"status": "success", "data": users, "count": len(users)}
+                users = response.json()
+
+                # Apply client-side filtering for active_only
+                if active_only:
+                    users = [user for user in users if not user.get("banned", False)]
+
+                return {"status": "success", "data": users, "count": len(users)}
 
         except Exception as e:
             # HTTPClientManager already handles specific HTTP errors

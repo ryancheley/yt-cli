@@ -281,7 +281,7 @@ def publish(ctx: click.Context, article_id: str) -> None:
     "--top",
     "-t",
     type=int,
-    help="Maximum number of articles to return",
+    help="Maximum number of articles to return (legacy, use --page-size instead)",
 )
 @click.option(
     "--query",
@@ -294,6 +294,30 @@ def publish(ctx: click.Context, article_id: str) -> None:
     default="table",
     help="Output format",
 )
+@click.option(
+    "--page-size",
+    type=int,
+    default=100,
+    help="Number of articles per page (default: 100)",
+)
+@click.option(
+    "--after-cursor",
+    help="Start pagination after this cursor",
+)
+@click.option(
+    "--before-cursor",
+    help="Start pagination before this cursor",
+)
+@click.option(
+    "--all",
+    is_flag=True,
+    help="Fetch all results using pagination",
+)
+@click.option(
+    "--max-results",
+    type=int,
+    help="Maximum total number of results to fetch",
+)
 @click.pass_context
 def list_articles(
     ctx: click.Context,
@@ -303,6 +327,11 @@ def list_articles(
     top: Optional[int],
     query: Optional[str],
     format: str,
+    page_size: int,
+    after_cursor: Optional[str],
+    before_cursor: Optional[str],
+    all: bool,
+    max_results: Optional[int],
 ) -> None:
     """List articles with filtering."""
     from ..articles import ArticleManager
@@ -314,6 +343,9 @@ def list_articles(
     console.print("📚 Fetching articles...", style="blue")
 
     try:
+        # Determine pagination settings
+        use_pagination = bool(all or after_cursor or before_cursor or max_results)
+
         result = asyncio.run(
             article_manager.list_articles(
                 project_id=project_id,
@@ -321,6 +353,11 @@ def list_articles(
                 fields=fields,
                 top=top,
                 query=query,
+                page_size=page_size,
+                after_cursor=after_cursor,
+                before_cursor=before_cursor,
+                use_pagination=use_pagination,
+                max_results=max_results,
             )
         )
 
@@ -330,6 +367,17 @@ def list_articles(
             if format == "table":
                 article_manager.display_articles_table(articles)
                 console.print(f"\n[dim]Total: {result['count']} articles[/dim]")
+
+                # Display pagination info if available
+                if "pagination" in result:
+                    pagination = result["pagination"]
+                    if pagination["has_after"] or pagination["has_before"]:
+                        console.print("[dim]Pagination:[/dim]", end="")
+                        if pagination["after_cursor"]:
+                            console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
+                        if pagination["before_cursor"]:
+                            console.print(f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end="")
+                        console.print()
             else:
                 import json
 

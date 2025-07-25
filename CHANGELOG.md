@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implement pagination for handling large result sets efficiently (#388)
+  - Enhanced API client with unified pagination support for cursor-based and offset-based APIs
+  - Automatic pagination type detection based on endpoint patterns
+  - New CLI options for all list commands: `--page-size`, `--after-cursor`, `--before-cursor`, `--all`, `--max-results`
+  - Updated `yt issues list`, `yt projects list`, `yt users list`, and `yt articles list` commands with pagination support
+  - Backward compatibility maintained with existing `--top` parameter (now legacy)
+  - Comprehensive pagination configuration with per-entity limits and performance optimization
+  - Enhanced user experience with pagination navigation hints in CLI output
+  - Full test coverage for pagination functionality including edge cases and error handling
 - Add comprehensive request timeout configuration (#387)
   - Configure timeouts for all API calls to prevent hanging requests and improve reliability
   - Support for environment variables: YOUTRACK_DEFAULT_TIMEOUT, YOUTRACK_CONNECT_TIMEOUT, YOUTRACK_READ_TIMEOUT, YOUTRACK_WRITE_TIMEOUT, YOUTRACK_POOL_TIMEOUT

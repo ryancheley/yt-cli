@@ -118,7 +118,7 @@ def projects() -> None:
     "--top",
     "-t",
     type=int,
-    help="Maximum number of projects to return",
+    help="Maximum number of projects to return (legacy, use --page-size instead)",
 )
 @click.option(
     "--show-archived",
@@ -131,6 +131,30 @@ def projects() -> None:
     default="table",
     help="Output format",
 )
+@click.option(
+    "--page-size",
+    type=int,
+    default=100,
+    help="Number of projects per page (default: 100)",
+)
+@click.option(
+    "--after-cursor",
+    help="Start pagination after this cursor",
+)
+@click.option(
+    "--before-cursor",
+    help="Start pagination before this cursor",
+)
+@click.option(
+    "--all",
+    is_flag=True,
+    help="Fetch all results using pagination",
+)
+@click.option(
+    "--max-results",
+    type=int,
+    help="Maximum total number of results to fetch",
+)
 @click.pass_context
 def projects_list(
     ctx: click.Context,
@@ -138,6 +162,11 @@ def projects_list(
     top: Optional[int],
     show_archived: bool,
     format: str,
+    page_size: int,
+    after_cursor: Optional[str],
+    before_cursor: Optional[str],
+    all: bool,
+    max_results: Optional[int],
 ) -> None:
     """List all projects."""
     from ..projects import ProjectManager
@@ -149,7 +178,21 @@ def projects_list(
     console.print("📋 Fetching projects...", style="blue")
 
     try:
-        result = asyncio.run(project_manager.list_projects(fields=fields, top=top, show_archived=show_archived))
+        # Determine pagination settings
+        use_pagination = bool(all or after_cursor or before_cursor or max_results)
+
+        result = asyncio.run(
+            project_manager.list_projects(
+                fields=fields,
+                top=top,
+                show_archived=show_archived,
+                page_size=page_size,
+                after_cursor=after_cursor,
+                before_cursor=before_cursor,
+                use_pagination=use_pagination,
+                max_results=max_results,
+            )
+        )
 
         if result["status"] == "success":
             projects = result["data"]
@@ -157,6 +200,17 @@ def projects_list(
             if format == "table":
                 project_manager.display_projects_table(projects)
                 console.print(f"\n[dim]Total: {result['count']} projects[/dim]")
+
+                # Display pagination info if available
+                if "pagination" in result:
+                    pagination = result["pagination"]
+                    if pagination["has_after"] or pagination["has_before"]:
+                        console.print("[dim]Pagination:[/dim]", end="")
+                        if pagination["after_cursor"]:
+                            console.print(f" [dim]next: --after-cursor {pagination['after_cursor']}[/dim]", end="")
+                        if pagination["before_cursor"]:
+                            console.print(f" [dim]prev: --before-cursor {pagination['before_cursor']}[/dim]", end="")
+                        console.print()
             else:
                 import json
 

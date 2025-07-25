@@ -141,14 +141,42 @@ class ArticleManager:
         fields: Optional[str] = None,
         top: Optional[int] = None,
         query: Optional[str] = None,
+        page_size: int = 100,
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
     ) -> dict[str, Any]:
-        """List articles with optional filtering."""
+        """List articles with optional filtering and pagination support.
+
+        Args:
+            project_id: Filter articles by project ID or short name
+            parent_id: Filter articles by parent article ID
+            fields: Comma-separated list of fields to return
+            top: Maximum number of articles to return (legacy, use page_size instead)
+            query: Search query to filter articles
+            page_size: Number of articles per page
+            after_cursor: Start pagination after this cursor
+            before_cursor: Start pagination before this cursor
+            use_pagination: Enable pagination for large result sets
+            max_results: Maximum total number of results to fetch
+
+        Returns:
+            Dictionary with operation result including pagination metadata
+        """
+        from .utils import paginate_results  # Import here to avoid circular imports
+
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             return {
                 "status": "error",
                 "message": "Not authenticated. Run 'yt auth login' first.",
             }
+
+        # Handle legacy top parameter
+        if top is not None:
+            page_size = top
+            use_pagination = False
 
         # Default fields to return if not specified
         if not fields:
@@ -173,67 +201,94 @@ class ArticleManager:
             "Accept": "application/json",
         }
 
+        def filter_parent_articles(articles_data, target_parent_id):
+            """Helper function to filter articles by parent ID."""
+            if not target_parent_id or not isinstance(articles_data, list):
+                return articles_data
+
+            # First, try to get the parent article to determine its internal ID
+            parent_internal_id = None
+
+            # Check if parent_id is already an internal ID or if we can find it in the data
+            for article in articles_data:
+                if article.get("id") == target_parent_id or article.get("idReadable") == target_parent_id:
+                    parent_internal_id = article.get("id")
+                    break
+
+            # Filter for articles that have the specified parent
+            filtered_data = []
+            for article in articles_data:
+                parent_article = article.get("parentArticle")
+                # Check if the article has the specified parent
+                if parent_article and isinstance(parent_article, dict):
+                    article_parent_id = parent_article.get("id")
+                    # Match against both the provided parent_id and the resolved internal ID
+                    if article_parent_id == target_parent_id or article_parent_id == parent_internal_id:
+                        filtered_data.append(article)
+
+            return filtered_data
+
         try:
-            # Add $top parameter for API call
-            if top:
-                params["$top"] = str(top)
+            if use_pagination:
+                # Use enhanced pagination with offset support
+                result = await paginate_results(
+                    endpoint=endpoint,
+                    headers=headers,
+                    params=params,
+                    page_size=page_size,
+                    max_results=max_results,
+                    after_cursor=after_cursor,
+                    before_cursor=before_cursor,
+                    use_cursor_pagination=False,  # Articles use offset pagination
+                )
+                data = result["results"]
 
-            client_manager = get_client_manager()
-            response = await client_manager.make_request(
-                "GET",
-                endpoint,
-                headers=headers,
-                params=params,
-            )
+                # Handle case where API returns None or null
+                if data is None:
+                    data = []
 
-            data = self._safe_json_parse(response)
-            # Handle case where API returns None or null
-            if data is None:
-                data = []
+                # Apply parent filtering if specified
+                data = filter_parent_articles(data, parent_id)
 
-            # If parent_id is specified, filter results to ensure we only get actual children
-            if parent_id and isinstance(data, list):
-                # First, try to get the parent article to determine its internal ID
-                parent_internal_id = None
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data),
+                    "pagination": {
+                        "total_results": result["total_results"],
+                        "has_after": result["has_after"],
+                        "has_before": result["has_before"],
+                        "after_cursor": result["after_cursor"],
+                        "before_cursor": result["before_cursor"],
+                        "pagination_type": result["pagination_type"],
+                    },
+                }
+            else:
+                # Legacy single request approach
+                if top:
+                    params["$top"] = str(top)
 
-                # Check if parent_id is already an internal ID or if we can find it in the data
-                for article in data:
-                    if article.get("id") == parent_id or article.get("idReadable") == parent_id:
-                        parent_internal_id = article.get("id")
-                        break
+                client_manager = get_client_manager()
+                response = await client_manager.make_request(
+                    "GET",
+                    endpoint,
+                    headers=headers,
+                    params=params,
+                )
 
-                # If we didn't find the parent in the current data, try to fetch it
-                if parent_internal_id is None:
-                    try:
-                        parent_result = await self.get_article(parent_id)
-                        if (
-                            parent_result["status"] == "success"
-                            and parent_result.get("data")
-                            and isinstance(parent_result["data"], dict)
-                        ):
-                            parent_internal_id = parent_result["data"].get("id")
-                    except Exception:
-                        # If we can't fetch the parent, use the provided parent_id as-is
-                        parent_internal_id = parent_id
+                data = self._safe_json_parse(response)
+                # Handle case where API returns None or null
+                if data is None:
+                    data = []
 
-                # Filter for articles that have the specified parent
-                filtered_data = []
-                for article in data:
-                    parent_article = article.get("parentArticle")
-                    # Check if the article has the specified parent
-                    if parent_article and isinstance(parent_article, dict):
-                        article_parent_id = parent_article.get("id")
-                        # Match against both the provided parent_id and the resolved internal ID
-                        if article_parent_id == parent_id or article_parent_id == parent_internal_id:
-                            filtered_data.append(article)
+                # Apply parent filtering if specified
+                data = filter_parent_articles(data, parent_id)
 
-                data = filtered_data
-
-            return {
-                "status": "success",
-                "data": data,
-                "count": len(data) if data is not None and isinstance(data, list) else 0,
-            }
+                return {
+                    "status": "success",
+                    "data": data,
+                    "count": len(data) if data is not None and isinstance(data, list) else 0,
+                }
         except ValueError as e:
             # Handle JSON parsing errors specifically
             if "HTML login page" in str(e):
