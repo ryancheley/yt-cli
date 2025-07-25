@@ -173,7 +173,7 @@ def list_users(
     max_results: Optional[int],
 ) -> None:
     """List all users."""
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -274,7 +274,7 @@ def create_user(
     Note: LOGIN, FULL_NAME, and EMAIL are all required positional arguments.
     Use quotes around full name if it contains spaces. Password will be prompted securely.
     """
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -361,7 +361,7 @@ def users_update(
     show_details: bool,
 ) -> None:
     """Update user information."""
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -457,7 +457,7 @@ def permissions(
 
     Note: USER_ID is a positional argument, and --action is required.
     """
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -507,7 +507,7 @@ def users_groups(ctx: click.Context, user_id: str, format: str) -> None:
         # View user's groups in JSON format
         yt users groups admin --format json
     """
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -559,7 +559,7 @@ def users_roles(ctx: click.Context, user_id: str, format: str) -> None:
         # View user's roles in JSON format
         yt users roles admin --format json
     """
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -611,7 +611,7 @@ def users_teams(ctx: click.Context, user_id: str, format: str) -> None:
         # View user's teams in JSON format
         yt users teams jane.smith --format json
     """
-    from ..users import UserManager
+    from ..managers.users import UserManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
