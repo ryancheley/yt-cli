@@ -141,6 +141,7 @@ class ProjectManager:
         name: str,
         description: Optional[str] = None,
         leader_login: Optional[str] = None,
+        template: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new project with business validation.
 
@@ -182,7 +183,7 @@ class ProjectManager:
         project_id: str,
         name: Optional[str] = None,
         description: Optional[str] = None,
-        leader_id: Optional[str] = None,
+        leader_login: Optional[str] = None,
         archived: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Update a project configuration with user resolution.
@@ -199,8 +200,8 @@ class ProjectManager:
         """
         # Resolve leader username to user ID if provided
         resolved_leader = None
-        if leader_id is not None:
-            resolved_leader, error_msg = await self._resolve_user_id(leader_id)
+        if leader_login is not None:
+            resolved_leader, error_msg = await self._resolve_user_id(leader_login)
             if error_msg:
                 return {
                     "status": "error",
@@ -208,7 +209,7 @@ class ProjectManager:
                 }
 
         # Check if any updates are provided
-        if all(param is None for param in [name, description, leader_id, archived]):
+        if all(param is None for param in [name, description, leader_login, archived]):
             return {"status": "error", "message": "No updates provided."}
 
         result = await self.project_service.update_project(
@@ -430,10 +431,7 @@ class ProjectManager:
         """
         # This would need to be implemented in the service layer
         # For now, return a placeholder
-        return {
-            "status": "error",
-            "message": "Custom field update not yet implemented in service layer"
-        }
+        return {"status": "error", "message": "Custom field update not yet implemented in service layer"}
 
     def display_custom_fields_table(self, custom_fields: List[Dict[str, Any]]) -> None:
         """Display custom fields in a table format.
