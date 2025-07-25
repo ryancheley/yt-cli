@@ -15,6 +15,8 @@ __all__ = [
     "CommandValidationError",
     "ParameterError",
     "UsageError",
+    "TokenRefreshError",
+    "TokenExpiredError",
 ]
 
 
@@ -181,3 +183,19 @@ class UsageError(YouTrackError):
         self.usage_syntax = usage_syntax
         self.examples = examples or []
         self.common_mistakes = common_mistakes or []
+
+
+class TokenRefreshError(AuthenticationError):
+    """Token refresh related errors."""
+
+    def __init__(self, message: str = "Token refresh failed"):
+        super().__init__(message)
+        self.suggestion = "Try 'yt auth login' to re-authenticate or check if your token supports refresh"
+
+
+class TokenExpiredError(AuthenticationError):
+    """Token expiration related errors."""
+
+    def __init__(self, message: str = "Token has expired"):
+        super().__init__(message)
+        self.suggestion = "Run 'yt auth refresh' to renew your token or 'yt auth login' to re-authenticate"

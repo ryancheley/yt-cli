@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Individual timeout types (connect, read, write, pool) with fallback to default timeout
   - Enhanced HTTPClientManager with proper timeout handling and validation
   - Comprehensive test coverage for timeout configuration scenarios
+- Implement automatic token rotation and refresh capabilities (#389)
+  - Support automatic token refresh to handle token expiration gracefully
+  - New security configuration options: enable_automatic_token_refresh, token_refresh_threshold_days, max_token_refresh_attempts
+  - Enhanced TokenManager with token renewal detection and refresh request functionality
+  - Automatic retry logic in HTTPClientManager for 401 errors with token refresh
+  - New CLI commands: `yt auth refresh` for manual token renewal and `yt auth status` for token information
+  - Intelligent token type detection (permanent vs. renewable tokens)
+  - Enhanced AuthManager with automatic refresh capabilities before API requests
+  - New exception classes: TokenRefreshError and TokenExpiredError for better error handling
+  - Backward compatibility maintained - existing authentication flows continue to work unchanged
+  - Security audit logging for token refresh operations
 
 ### Fixed
 - Fix timeout parameter handling bug in HTTPClientManager.make_request() method
