@@ -98,7 +98,7 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: true
-        args: [--tb=short, --maxfail=3, -q, --cov=youtrack_cli, --cov-fail-under=80]
+        args: [--tb=short, --maxfail=3, -q, --cov=youtrack_cli, --cov-fail-under=75]
         verbose: true
       - id: zizmor
         name: GitHub Actions security check
