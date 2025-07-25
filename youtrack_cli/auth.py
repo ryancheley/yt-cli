@@ -240,6 +240,70 @@ class AuthManager:
         elif expiration_info["status"] == "expiring":
             self.console.print(f"[yellow]⚠ {expiration_info['message']}[/yellow]")
 
+    async def refresh_token(self) -> bool:
+        """Attempt to refresh the current token.
+
+        Returns:
+            True if token was successfully refreshed, False otherwise
+        """
+        credentials = self.load_credentials()
+        if not credentials:
+            self.console.print("[red]No authentication credentials found[/red]")
+            return False
+
+        if not self.token_manager.is_token_renewable(credentials.token):
+            self.console.print("[yellow]Current token does not support refresh[/yellow]")
+            return False
+
+        try:
+            # Get SSL verification setting
+            verify_ssl_str = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower()
+            verify_ssl = verify_ssl_str not in ("false", "0", "no", "off")
+
+            new_token = await self.token_manager.request_new_token(credentials.base_url, credentials.token, verify_ssl)
+
+            if new_token:
+                # Update stored credentials with new token
+                self.save_credentials(
+                    base_url=credentials.base_url,
+                    token=new_token,
+                    username=credentials.username,
+                    token_expiry=credentials.token_expiry,  # Keep existing expiry for now
+                    use_keyring=self.security_config.enable_credential_encryption,
+                    verify_ssl=verify_ssl,
+                )
+                self.console.print("[green]✓ Token refreshed successfully[/green]")
+                return True
+            else:
+                self.console.print("[red]Token refresh failed[/red]")
+                return False
+
+        except Exception as e:
+            self.console.print(f"[red]Token refresh error: {str(e)}[/red]")
+            return False
+
+    async def auto_refresh_if_needed(self) -> bool:
+        """Check if token needs refresh and attempt it automatically.
+
+        Returns:
+            True if no refresh was needed or refresh was successful, False if refresh failed
+        """
+        if not self.security_config.enable_automatic_token_refresh:
+            return True
+
+        credentials = self.load_credentials()
+        if not credentials or not credentials.token_expiry:
+            return True
+
+        if not self.token_manager.should_refresh_token(credentials.token_expiry):
+            return True
+
+        if not self.token_manager.is_token_renewable(credentials.token):
+            return True
+
+        self.console.print("[yellow]Token is expiring soon, attempting automatic refresh...[/yellow]")
+        return await self.refresh_token()
+
     def get_current_user_sync(self) -> Optional[str]:
         """Get the current authenticated user's username from stored credentials.
 

@@ -29,8 +29,11 @@ class SecurityConfig(BaseModel):
     enable_audit_logging: bool = Field(default=True)
     enable_credential_encryption: bool = Field(default=True)
     enable_token_expiration_warnings: bool = Field(default=True)
+    enable_automatic_token_refresh: bool = Field(default=True)
     audit_log_max_entries: int = Field(default=1000)
     token_warning_days: int = Field(default=7)
+    token_refresh_threshold_days: int = Field(default=3)
+    max_token_refresh_attempts: int = Field(default=1)
 
 
 class AuditEntry(BaseModel):
@@ -371,6 +374,89 @@ class TokenManager:
             return {"status": "expiring", "message": message, "days": days_until_expiry}
 
         return {"status": "valid", "message": None, "days": days_until_expiry}
+
+    def should_refresh_token(self, token_expiry: Optional[datetime]) -> bool:
+        """Check if a token should be proactively refreshed.
+
+        Args:
+            token_expiry: Token expiration datetime
+
+        Returns:
+            True if token should be refreshed
+        """
+        if not self.config.enable_automatic_token_refresh or not token_expiry:
+            return False
+
+        now = datetime.now()
+        days_until_expiry = (token_expiry - now).days
+
+        return days_until_expiry <= self.config.token_refresh_threshold_days
+
+    def is_token_renewable(self, token: str) -> bool:
+        """Check if a token supports renewal based on format/type.
+
+        Args:
+            token: The API token
+
+        Returns:
+            True if token supports renewal
+        """
+        # YouTrack permanent tokens (format: perm-base64.base64.hash) typically don't refresh
+        # Temporary tokens and JWT tokens may support refresh
+        if token.startswith("perm-"):
+            self.logger.debug("Permanent token detected - refresh not supported")
+            return False
+
+        # For other token formats, assume they might be refreshable
+        # This would need to be enhanced based on actual YouTrack token types
+        return True
+
+    async def request_new_token(self, base_url: str, old_token: str, verify_ssl: bool = True) -> Optional[str]:
+        """Request a new token from YouTrack API.
+
+        Args:
+            base_url: YouTrack instance URL
+            old_token: Current token to refresh
+            verify_ssl: Whether to verify SSL certificates
+
+        Returns:
+            New token if successful, None otherwise
+        """
+        try:
+            import httpx
+
+            headers = {"Authorization": f"Bearer {old_token}", "Accept": "application/json"}
+
+            client_kwargs = {"timeout": 10.0}
+            if not verify_ssl:
+                client_kwargs["verify"] = False
+
+            async with httpx.AsyncClient(**client_kwargs) as client:
+                # Try YouTrack's token refresh endpoint
+                # Note: This endpoint may not exist in all YouTrack versions
+                response = await client.post(f"{base_url.rstrip('/')}/api/auth/token/refresh", headers=headers)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    new_token = data.get("token")
+                    if new_token:
+                        self.logger.info("Token refreshed successfully")
+                        return new_token
+                    else:
+                        self.logger.warning("Token refresh response missing token field")
+                        return None
+                elif response.status_code == 404:
+                    self.logger.debug("Token refresh endpoint not available")
+                    return None
+                else:
+                    self.logger.warning(
+                        "Token refresh failed", status_code=response.status_code, response_text=response.text
+                    )
+                    return None
+
+        except Exception as e:
+            self.logger.error("Token refresh request failed", error=str(e))
+            return None
 
     def estimate_token_expiry(self, token: str) -> Optional[datetime]:
         """Estimate token expiry from token format (if possible).

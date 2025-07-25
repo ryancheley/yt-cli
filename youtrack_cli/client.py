@@ -176,6 +176,7 @@ class HTTPClientManager:
         json_data: Optional[dict[str, Any]] = None,
         timeout: Optional[float] = None,
         max_retries: int = 3,
+        attempt_token_refresh: bool = True,
     ) -> httpx.Response:
         """Make an HTTP request with retry logic and proper error handling.
 
@@ -187,6 +188,7 @@ class HTTPClientManager:
             json_data: Optional JSON data for POST/PUT requests
             timeout: Request timeout in seconds (overrides default)
             max_retries: Maximum number of retry attempts
+            attempt_token_refresh: Whether to attempt token refresh on 401 errors
 
         Returns:
             HTTP response object
@@ -234,6 +236,18 @@ class HTTPClientManager:
                         logger.debug("Request successful", status_code=response.status_code)
                         return response
                     if response.status_code == 401:
+                        # Attempt token refresh on first 401 error if enabled
+                        if attempt_token_refresh and attempt == 0:
+                            logger.debug("401 error detected, attempting token refresh")
+                            if await self._attempt_token_refresh():
+                                logger.info("Token refreshed, retrying request")
+                                # Update authorization header with new token
+                                headers = headers.copy() if headers else {}
+                                credentials = self._get_current_credentials()
+                                if credentials:
+                                    headers["Authorization"] = f"Bearer {credentials.token}"
+                                # Retry the request with new token (don't count as a retry attempt)
+                                continue
                         raise AuthenticationError("Invalid credentials or token expired")
                     if response.status_code == 403:
                         raise PermissionError("access this resource")
@@ -368,6 +382,36 @@ class HTTPClientManager:
 
         # Should never reach here, but just in case
         raise YouTrackError("Maximum retry attempts exceeded")
+
+    async def _attempt_token_refresh(self) -> bool:
+        """Attempt to refresh the current token.
+
+        Returns:
+            True if token was successfully refreshed, False otherwise
+        """
+        try:
+            from .auth import AuthManager
+
+            auth_manager = AuthManager()
+            return await auth_manager.refresh_token()
+        except Exception as e:
+            logger.warning("Token refresh attempt failed", error=str(e))
+            return False
+
+    def _get_current_credentials(self):
+        """Get current authentication credentials.
+
+        Returns:
+            AuthConfig object if credentials exist, None otherwise
+        """
+        try:
+            from .auth import AuthManager
+
+            auth_manager = AuthManager()
+            return auth_manager.load_credentials()
+        except Exception as e:
+            logger.warning("Failed to load credentials", error=str(e))
+            return None
 
     async def batch_requests(
         self,

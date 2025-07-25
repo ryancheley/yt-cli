@@ -1383,6 +1383,97 @@ def token(ctx: click.Context, show: bool, update: bool) -> None:
         )
 
 
+@auth.command()
+@click.pass_context
+def refresh(ctx: click.Context) -> None:
+    """Manually refresh the current token."""
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+
+    credentials = auth_manager.load_credentials()
+    if not credentials:
+        format_and_print_error(CommonErrors.no_credentials())
+        console.print("Run 'yt auth login' to authenticate first.", style="blue")
+        return
+
+    console.print("🔄 Attempting to refresh token...", style="blue")
+
+    async def run_refresh() -> None:
+        success = await auth_manager.refresh_token()
+        if not success:
+            console.print("❌ Token refresh failed. You may need to login again.", style="red")
+            console.print("Run 'yt auth login' to re-authenticate.", style="blue")
+
+    asyncio.run(run_refresh())
+
+
+@auth.command()
+@click.pass_context
+def status(ctx: click.Context) -> None:
+    """Show authentication status and token information."""
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+
+    try:
+        credentials = auth_manager.load_credentials()
+        if not credentials:
+            format_and_print_error(CommonErrors.no_credentials())
+            console.print("Run 'yt auth login' to authenticate first.", style="blue")
+            return
+
+        from rich.table import Table
+
+        table = Table(title="Authentication Status")
+        table.add_column("Property", style="cyan", no_wrap=True)
+        table.add_column("Value", style="green")
+
+        # Mask token for display
+        masked_token = credentials.token[:8] + "..." + credentials.token[-4:]
+        table.add_row("Base URL", credentials.base_url)
+        table.add_row("Token", masked_token)
+
+        if credentials.username:
+            table.add_row("Username", credentials.username)
+
+        # Check token expiry and renewability
+        from .security import TokenManager
+
+        token_manager = TokenManager()
+
+        renewable = token_manager.is_token_renewable(credentials.token)
+        table.add_row("Renewable", "Yes" if renewable else "No")
+
+        if credentials.token_expiry:
+            status_info = token_manager.check_token_expiration(credentials.token_expiry)
+
+            if status_info["status"] == "expired":
+                table.add_row("Status", "🔴 Expired", style="red")
+            elif status_info["status"] == "expiring":
+                days = status_info.get("days", 0)
+                table.add_row("Status", f"🟡 Expires in {days} days", style="yellow")
+            else:
+                days = status_info.get("days", 0)
+                table.add_row("Status", f"🟢 Valid ({days} days remaining)", style="green")
+
+            table.add_row("Expires", str(credentials.token_expiry.strftime("%Y-%m-%d %H:%M")))
+        else:
+            table.add_row("Status", "⚪ Expiry unknown", style="blue")
+
+        console.print(table)
+
+        # Additional suggestions
+        if credentials.token_expiry:
+            status_info = token_manager.check_token_expiration(credentials.token_expiry)
+            if status_info["status"] == "expired":
+                console.print("\n💡 [yellow]Your token has expired. Run 'yt auth refresh' to renew it.[/yellow]")
+            elif status_info["status"] == "expiring":
+                console.print("\n💡 [yellow]Your token is expiring soon. Consider running 'yt auth refresh'.[/yellow]")
+
+    except Exception as e:
+        console.print(f"❌ Error checking authentication status: {e}", style="red")
+        raise click.ClickException("Failed to check auth status") from e
+
+
 @main.group()
 def config() -> None:
     """CLI configuration."""
