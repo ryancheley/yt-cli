@@ -362,6 +362,127 @@ class IssueManager:
             # This would require an async context, so we'll skip for now
             pass
 
+    async def list_issues(
+        self,
+        project_id: Optional[str] = None,
+        query: str = "",
+        fields: Optional[str] = None,
+        field_profile: Optional[str] = None,
+        top: Optional[int] = None,
+        skip: Optional[int] = None,
+        format_output: str = "table",
+        no_pagination: bool = False,
+        use_cached_fields: bool = False,
+        page_size: int = 100,
+        after_cursor: Optional[str] = None,
+        before_cursor: Optional[str] = None,
+        use_pagination: bool = False,
+        max_results: Optional[int] = None,
+        paginated: bool = False,
+        show_all: bool = False,
+        start_page: int = 1,
+        display_page_size: int = 50,
+    ) -> Dict[str, Any]:
+        """List issues with enhanced filtering and pagination."""
+        # Handle field_profile parameter (legacy)
+        if field_profile and not fields:
+            fields = field_profile
+
+        return await self.search_issues(
+            query=query,
+            project_id=project_id,
+            fields=fields,
+            top=top,
+            skip=skip,
+            format_output=format_output,
+            no_pagination=no_pagination,
+            use_cached_fields=use_cached_fields,
+        )
+
+    def display_issues_table(self, issues: List[Dict[str, Any]]) -> None:
+        """Display issues in a simple table format."""
+        self.display_issue_list(issues, format_output="table", no_pagination=True)
+
+    def display_issues_table_paginated(
+        self,
+        issues: List[Dict[str, Any]],
+        page_size: int = 50,
+        show_all: bool = False,
+        start_page: int = 1,
+    ) -> None:
+        """Display issues in a paginated table format."""
+        if not issues:
+            self.console.print("[yellow]No issues found.[/yellow]")
+            return
+
+        def build_issues_table(issue_subset: List[Dict[str, Any]]) -> Any:
+            """Build a Rich table for the given subset of issues."""
+            from rich.table import Table
+
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("ID", style="cyan", no_wrap=True)
+            table.add_column("Summary", style="green")
+            table.add_column("State", style="yellow")
+            table.add_column("Priority", style="red")
+            table.add_column("Assignee", style="blue")
+
+            for issue in issue_subset:
+                assignee_name = self._get_assignee_name(issue)
+                state = self._get_custom_field_value(issue, "State") or ""
+                priority = self._get_custom_field_value(issue, "Priority") or ""
+
+                table.add_row(
+                    issue.get("idReadable", issue.get("id", "")),
+                    issue.get("summary", ""),
+                    state,
+                    priority,
+                    assignee_name,
+                )
+
+            return table
+
+        # Use pagination display
+        paginated_display = create_paginated_display(self.console, page_size)
+        paginated_display.display_paginated_table(
+            issues, build_issues_table, "Issues", show_all=show_all, start_page=start_page
+        )
+
+    async def list_links(self, issue_id: str) -> Dict[str, Any]:
+        """List links for an issue."""
+        return await self.issue_service.list_links(issue_id)
+
+    def display_links_table(self, links: List[Dict[str, Any]]) -> None:
+        """Display links in a table format."""
+        if not links:
+            self.console.print("[yellow]No links found.[/yellow]")
+            return
+
+        from rich.table import Table
+
+        table = Table(title="Issue Links")
+        table.add_column("Direction", style="cyan", no_wrap=True)
+        table.add_column("Type", style="blue")
+        table.add_column("Linked Issue", style="green")
+        table.add_column("Summary", style="white")
+
+        for link in links:
+            direction = link.get("direction", "")
+            link_type = link.get("linkType", {}).get("name", "")
+
+            # Handle different link structures
+            if "issues" in link:
+                for linked_issue in link["issues"]:
+                    issue_id = linked_issue.get("idReadable", linked_issue.get("id", ""))
+                    summary = linked_issue.get("summary", "")
+                    table.add_row(direction, link_type, issue_id, summary)
+            else:
+                # Handle direct link structure
+                linked_issue_id = link.get("issue", {}).get("idReadable", "")
+                linked_summary = link.get("issue", {}).get("summary", "")
+                table.add_row(direction, link_type, linked_issue_id, linked_summary)
+
+        self.console.print(table)
+
     def display_issue_list(
         self,
         issues: List[Dict[str, Any]],

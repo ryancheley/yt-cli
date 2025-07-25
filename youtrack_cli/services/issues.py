@@ -493,3 +493,28 @@ class IssueService(BaseService):
             return self._create_error_response(str(e))
         except Exception as e:
             return self._create_error_response(f"Error creating tag: {str(e)}")
+
+    async def list_links(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+        """List links for an issue via API.
+
+        Args:
+            issue_id: Issue ID
+            fields: Comma-separated list of fields to return
+
+        Returns:
+            API response with link list
+        """
+        try:
+            params = {}
+            if fields:
+                params["fields"] = fields
+            else:
+                params["fields"] = "id,direction,linkType(name),issues(id,idReadable,summary)"
+
+            response = await self._make_request("GET", f"issues/{issue_id}/links", params=params)
+            return await self._handle_response(response)
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error listing links: {str(e)}")

@@ -442,11 +442,7 @@ class UserManager:
         return await self.user_service.get_user_permissions(user_id, project_id)
 
     async def manage_user_permissions(
-        self,
-        user_id: str,
-        action: str,
-        group_id: Optional[str] = None,
-        role_id: Optional[str] = None
+        self, user_id: str, action: str, group_id: Optional[str] = None, role_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Manage user permissions by adding/removing from groups or roles.
 
@@ -636,7 +632,7 @@ class UserManager:
 
     def display_user_groups(self, groups: List[Dict[str, Any]], user_id: str) -> None:
         """Display user groups in a table format.
-        
+
         Args:
             groups: List of group dictionaries
             user_id: User ID for display context
@@ -661,7 +657,7 @@ class UserManager:
 
     def display_user_roles(self, roles: List[Dict[str, Any]], user_id: str) -> None:
         """Display user roles in a table format.
-        
+
         Args:
             roles: List of role dictionaries
             user_id: User ID for display context
@@ -684,7 +680,7 @@ class UserManager:
 
     def display_user_teams(self, teams: List[Dict[str, Any]], user_id: str) -> None:
         """Display user teams in a table format.
-        
+
         Args:
             teams: List of team dictionaries
             user_id: User ID for display context
