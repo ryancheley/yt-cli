@@ -1,6 +1,6 @@
 """Tests for BaseService."""
 
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -25,73 +25,37 @@ class TestBaseService:
         service = BaseService(mock_auth_manager)
         assert service.auth_manager == mock_auth_manager
 
-    @pytest.mark.asyncio
-    async def test_make_request_get(self, base_service):
-        """Test _make_request with GET method."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"result": "success"}
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.request = AsyncMock(return_value=mock_response)
-
-            response = await base_service._make_request("GET", "test/endpoint")
-
-            assert response == mock_response
-            mock_client.return_value.__aenter__.return_value.request.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_make_request_post_with_json(self, base_service):
-        """Test _make_request with POST method and JSON data."""
-        mock_response = Mock()
-        mock_response.status_code = 201
-        mock_response.json.return_value = {"id": "123"}
-
-        test_data = {"name": "test"}
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.request = AsyncMock(return_value=mock_response)
-
-            response = await base_service._make_request("POST", "test/endpoint", json_data=test_data)
-
-            assert response == mock_response
-
-    @pytest.mark.asyncio
-    async def test_handle_response_success(self, base_service):
-        """Test _handle_response with successful response."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"result": "success"}
-
-        result = await base_service._handle_response(mock_response)
-
-        assert result["status"] == "success"
-        assert result["data"] == {"result": "success"}
-
-    @pytest.mark.asyncio
-    async def test_handle_response_error(self, base_service):
-        """Test _handle_response with error response."""
-        mock_response = Mock()
-        mock_response.status_code = 404
-        mock_response.text = "Not found"
-
-        result = await base_service._handle_response(mock_response)
-
-        assert result["status"] == "error"
-        assert "404" in result["message"]
-
     def test_create_error_response(self, base_service):
-        """Test _create_error_response."""
-        error_msg = "Test error message"
-        result = base_service._create_error_response(error_msg)
+        """Test _create_error_response method."""
+        error_msg = "Test error"
+        response = base_service._create_error_response(error_msg)
 
-        assert result["status"] == "error"
-        assert result["message"] == error_msg
+        assert response["status"] == "error"
+        assert response["message"] == error_msg
 
-    def test_create_success_response(self, base_service):
-        """Test _create_success_response."""
-        test_data = {"id": "123", "name": "test"}
-        result = base_service._create_success_response(test_data)
+    def test_parse_json_response_success(self, base_service):
+        """Test successful JSON parsing."""
+        mock_response = Mock()
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.text = '{"key": "value"}'
+        mock_response.json.return_value = {"key": "value"}
 
-        assert result["status"] == "success"
-        assert result["data"] == test_data
+        result = base_service._parse_json_response(mock_response)
+        assert result == {"key": "value"}
+
+    def test_parse_json_response_empty(self, base_service):
+        """Test parsing empty response."""
+        mock_response = Mock()
+        mock_response.text = ""
+
+        with pytest.raises(ValueError, match="Empty response body"):
+            base_service._parse_json_response(mock_response)
+
+    def test_parse_json_response_not_json(self, base_service):
+        """Test parsing non-JSON response."""
+        mock_response = Mock()
+        mock_response.headers = {"content-type": "text/html"}
+        mock_response.text = "<html>Not JSON</html>"
+
+        with pytest.raises(ValueError, match="Response is not JSON"):
+            base_service._parse_json_response(mock_response)

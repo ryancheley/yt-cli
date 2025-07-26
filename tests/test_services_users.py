@@ -37,7 +37,7 @@ class TestUserService:
                 user_service,
                 "_handle_response",
                 return_value={
-                    "success": True,
+                    "status": "success",
                     "data": [
                         {"id": "user1", "login": "testuser1", "fullName": "Test User 1"},
                         {"id": "user2", "login": "testuser2", "fullName": "Test User 2"},
@@ -46,7 +46,7 @@ class TestUserService:
             ):
                 result = await user_service.list_users()
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert len(result["data"]) == 2
         assert result["data"][0]["login"] == "testuser1"
 
@@ -57,7 +57,7 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": []}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": []}):
                 await user_service.list_users(query="test")
 
         mock_request.assert_called_once()
@@ -73,7 +73,7 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": []}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": []}):
                 await user_service.list_users(fields="id,login,fullName", top=10, skip=5)
 
         call_args = mock_request.call_args
@@ -92,11 +92,11 @@ class TestUserService:
             with patch.object(
                 user_service,
                 "_handle_response",
-                return_value={"success": True, "data": {"id": "user1", "login": "testuser"}},
+                return_value={"status": "success", "data": {"id": "user1", "login": "testuser"}},
             ):
                 result = await user_service.get_user("user1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert result["data"]["login"] == "testuser"
 
     @pytest.mark.asyncio
@@ -109,11 +109,11 @@ class TestUserService:
             with patch.object(
                 user_service,
                 "_handle_response",
-                return_value={"success": True, "data": {"id": "newuser", "login": "newuser"}},
+                return_value={"status": "success", "data": {"id": "newuser", "login": "newuser"}},
             ):
                 result = await user_service.create_user("newuser", "New User", "newuser@example.com")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert result["data"]["login"] == "newuser"
         mock_request.assert_called_once_with(
             "POST",
@@ -136,11 +136,11 @@ class TestUserService:
             with patch.object(
                 user_service,
                 "_handle_response",
-                return_value={"success": True, "data": {"id": "user1", "fullName": "Updated User"}},
+                return_value={"status": "success", "data": {"id": "user1", "fullName": "Updated User"}},
             ):
                 result = await user_service.update_user("user1", full_name="Updated User")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert result["data"]["fullName"] == "Updated User"
         mock_request.assert_called_once_with("POST", "users/user1", json_data={"fullName": "Updated User"})
 
@@ -151,10 +151,10 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": {}}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": {}}):
                 result = await user_service.delete_user("user1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         mock_request.assert_called_once_with("DELETE", "users/user1")
 
     @pytest.mark.asyncio
@@ -167,11 +167,11 @@ class TestUserService:
             with patch.object(
                 user_service,
                 "_handle_response",
-                return_value={"success": True, "data": [{"id": "group1", "name": "Developers"}]},
+                return_value={"status": "success", "data": [{"id": "group1", "name": "Developers"}]},
             ):
                 result = await user_service.get_user_groups("user1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert len(result["data"]) == 1
         assert result["data"][0]["name"] == "Developers"
         mock_request.assert_called_once_with(
@@ -185,10 +185,10 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": {}}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": {}}):
                 result = await user_service.add_user_to_group("user1", "group1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         mock_request.assert_called_once_with("POST", "users/user1/groups", json_data={"id": "group1"})
 
     @pytest.mark.asyncio
@@ -198,10 +198,10 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": {}}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": {}}):
                 result = await user_service.remove_user_from_group("user1", "group1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         mock_request.assert_called_once_with("DELETE", "users/user1/groups/group1")
 
     @pytest.mark.asyncio
@@ -211,10 +211,10 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": {}}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": {}}):
                 result = await user_service.ban_user("user1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         mock_request.assert_called_once_with("POST", "users/user1", json_data={"banned": True})
 
     @pytest.mark.asyncio
@@ -223,8 +223,8 @@ class TestUserService:
         with patch.object(user_service, "_make_request", side_effect=ValueError("Invalid request")):
             result = await user_service.list_users()
 
-        assert result["success"] is False
-        assert "Invalid request" in result["error"]
+        assert result["status"] == "error"
+        assert "Invalid request" in result["message"]
 
     @pytest.mark.asyncio
     async def test_exception_handling(self, user_service):
@@ -232,8 +232,8 @@ class TestUserService:
         with patch.object(user_service, "_make_request", side_effect=Exception("Network error")):
             result = await user_service.get_user("user1")
 
-        assert result["success"] is False
-        assert "Error getting user" in result["error"]
+        assert result["status"] == "error"
+        assert "Error getting user" in result["message"]
 
     @pytest.mark.asyncio
     async def test_get_user_roles_success(self, user_service):
@@ -245,11 +245,11 @@ class TestUserService:
             with patch.object(
                 user_service,
                 "_handle_response",
-                return_value={"success": True, "data": [{"id": "role1", "name": "Admin"}]},
+                return_value={"status": "success", "data": [{"id": "role1", "name": "Admin"}]},
             ):
                 result = await user_service.get_user_roles("user1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert len(result["data"]) == 1
         assert result["data"][0]["name"] == "Admin"
         mock_request.assert_called_once_with("GET", "users/user1/roles", params={"fields": "id,name,description"})
@@ -264,11 +264,11 @@ class TestUserService:
             with patch.object(
                 user_service,
                 "_handle_response",
-                return_value={"success": True, "data": [{"id": "team1", "name": "Development"}]},
+                return_value={"status": "success", "data": [{"id": "team1", "name": "Development"}]},
             ):
                 result = await user_service.get_user_teams("user1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         assert len(result["data"]) == 1
         assert result["data"][0]["name"] == "Development"
         mock_request.assert_called_once_with("GET", "users/user1/teams", params={"fields": "id,name,description"})
@@ -280,10 +280,10 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": {}}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": {}}):
                 result = await user_service.change_user_password("user1", "newpassword", force_change=True)
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         mock_request.assert_called_once_with(
             "POST", "users/user1", json_data={"password": "newpassword", "forceChangePassword": True}
         )
@@ -295,8 +295,8 @@ class TestUserService:
         mock_response.status = 200
 
         with patch.object(user_service, "_make_request", return_value=mock_response) as mock_request:
-            with patch.object(user_service, "_handle_response", return_value={"success": True, "data": []}):
+            with patch.object(user_service, "_handle_response", return_value={"status": "success", "data": []}):
                 result = await user_service.get_user_permissions("user1", project_id="project1")
 
-        assert result["success"] is True
+        assert result["status"] == "success"
         mock_request.assert_called_once_with("GET", "users/user1/permissions", params={"project": "project1"})
