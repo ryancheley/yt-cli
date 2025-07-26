@@ -25,8 +25,8 @@ from rich.table import Table
 
 from .auth import AuthManager
 from .console import get_console
-from .issues import IssueManager
 from .logging import get_logger
+from .managers.issues import IssueManager
 
 logger = get_logger(__name__)
 

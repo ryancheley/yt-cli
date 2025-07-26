@@ -169,7 +169,7 @@ def projects_list(
     max_results: Optional[int],
 ) -> None:
     """List all projects."""
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -198,7 +198,7 @@ def projects_list(
             projects = result["data"]
 
             if format == "table":
-                project_manager.display_projects_table(projects)
+                project_manager.display_project_list(projects, format_output="table")
                 console.print(f"\n[dim]Total: {result['count']} projects[/dim]")
 
                 # Display pagination info if available
@@ -259,7 +259,7 @@ def projects_show(
         # Show project data in JSON format
         yt projects show PROJECT-ID --format json
     """
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -331,7 +331,7 @@ def projects_create(
     Note: Both NAME and SHORT_NAME are required positional arguments.
     The leader will be prompted interactively if not specified with --leader.
     """
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -348,7 +348,7 @@ def projects_create(
             project_manager.create_project(
                 name=name,
                 short_name=short_name,
-                leader_id=leader,
+                leader_login=leader,
                 description=description,
                 template=template,
             )
@@ -400,7 +400,7 @@ def configure(
     show_details: bool,
 ) -> None:
     """Configure project settings."""
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -438,7 +438,7 @@ def configure(
                     project_id=project_id,
                     name=name,
                     description=description,
-                    leader_id=leader,
+                    leader_login=leader,
                 )
             )
 
@@ -471,7 +471,7 @@ def archive(
     force: bool,
 ) -> None:
     """Archive a project."""
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -528,7 +528,7 @@ def fields_list(
     format: str,
 ) -> None:
     """List custom fields for a project."""
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -611,7 +611,7 @@ def fields_attach(
     PROJECT_ID: The project ID or short name
     FIELD_ID: The global custom field ID to attach
     """
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -677,7 +677,7 @@ def fields_update(
     PROJECT_ID: The project ID or short name
     FIELD_ID: The project custom field ID to update
     """
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -740,7 +740,7 @@ def fields_detach(
     PROJECT_ID: The project ID or short name
     FIELD_ID: The project custom field ID to remove
     """
-    from ..projects import ProjectManager
+    from ..managers.projects import ProjectManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))

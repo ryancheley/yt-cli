@@ -5,8 +5,8 @@ from typing import Dict, Optional
 
 from .auth import AuthManager
 from .field_selection import get_field_selector
-from .issues import IssueManager
 from .logging import get_logger
+from .managers.issues import IssueManager
 
 __all__ = ["FieldSelectionBenchmark"]
 

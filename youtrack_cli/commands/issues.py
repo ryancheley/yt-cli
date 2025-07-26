@@ -270,7 +270,7 @@ def create(
     Tip: Issue types and priorities are project-specific. Use values that exist in your YouTrack project.
     """
     from ..exceptions import UsageError, ValidationError
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
     from ..utils import display_error, display_success, handle_error
 
     console = get_console()
@@ -472,7 +472,7 @@ def list_issues(
     Tip: For complex filtering, use --query with YouTrack's search syntax.
     Most users only need --project-id, --assignee, and --state options.
     """
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -607,7 +607,7 @@ def update(
     format: str,
 ) -> None:
     """Update an existing issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -674,7 +674,7 @@ def update(
 @click.pass_context
 def delete(ctx: click.Context, issue_id: str, force: bool) -> None:
     """Delete an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -770,7 +770,7 @@ def search(
     format: str,
 ) -> None:
     """Advanced issue search."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -852,7 +852,7 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
 
     Note: Use the username directly as a positional argument, not --assignee flag.
     """
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -898,7 +898,7 @@ def move(
     project_id: Optional[str],
 ) -> None:
     """Move an issue between states or projects."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -936,7 +936,7 @@ def tag() -> None:
 @click.pass_context
 def add_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     """Add a tag to an issue. Creates the tag if it doesn't exist."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -964,7 +964,7 @@ def add_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
 @click.pass_context
 def remove_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     """Remove a tag from an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -991,7 +991,7 @@ def remove_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
 @click.pass_context
 def list_tags(ctx: click.Context, issue_id: str) -> None:
     """List all tags for an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1079,7 +1079,7 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
     Note: Use the comment text directly as a positional argument, not --text flag.
     There is no 'create' subcommand; use 'add' instead.
     """
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1121,7 +1121,7 @@ def list_issue_comments(
     format: str,
 ) -> None:
     """List comments on an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1157,7 +1157,7 @@ def list_issue_comments(
 @click.pass_context
 def update_comment(ctx: click.Context, issue_id: str, comment_id: str, text: str) -> None:
     """Update an existing comment."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1190,7 +1190,7 @@ def update_comment(ctx: click.Context, issue_id: str, comment_id: str, text: str
 @click.pass_context
 def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, force: bool) -> None:
     """Delete a comment."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1242,7 +1242,7 @@ def attach() -> None:
 @click.pass_context
 def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     """Upload a file to an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1276,7 +1276,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
 @click.pass_context
 def download(ctx: click.Context, issue_id: str, attachment_id: str, output: Optional[str]) -> None:
     """Download an attachment from an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1316,7 +1316,7 @@ def list_attachments(
     format: str,
 ) -> None:
     """List attachments for an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1356,7 +1356,7 @@ def list_attachments(
 @click.pass_context
 def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, force: bool) -> None:
     """Delete an attachment from an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1396,7 +1396,7 @@ def links() -> None:
 @click.pass_context
 def create_link(ctx: click.Context, source_issue_id: str, target_issue_id: str, link_type: str) -> None:
     """Create a link between two issues."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1436,7 +1436,7 @@ def list_links(
     format: str,
 ) -> None:
     """Show all links for an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1476,7 +1476,7 @@ def list_links(
 @click.pass_context
 def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, force: bool) -> None:
     """Remove a link between issues."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1513,7 +1513,7 @@ def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, force: b
 @click.pass_context
 def types(ctx: click.Context, format: str) -> None:
     """List available link types."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1553,7 +1553,7 @@ def types(ctx: click.Context, format: str) -> None:
 @click.pass_context
 def show(ctx: click.Context, issue_id: str, format: str) -> None:
     """Show detailed information about an issue."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -1592,7 +1592,7 @@ def show(ctx: click.Context, issue_id: str, format: str) -> None:
 @click.pass_context
 def dependencies(ctx: click.Context, issue_id: str, format: str, show_status: bool) -> None:
     """Show issue dependencies and relationships in tree format."""
-    from ..issues import IssueManager
+    from ..managers.issues import IssueManager
     from ..trees import create_issue_dependencies_tree
 
     console = get_console()
