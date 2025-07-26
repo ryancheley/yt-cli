@@ -16,6 +16,7 @@ from ..panels import (
     create_issue_overview_panel,
 )
 from ..services.issues import IssueService
+from ..services.projects import ProjectService
 
 __all__ = ["IssueManager"]
 
@@ -34,6 +35,7 @@ class IssueManager:
         self.auth_manager = auth_manager
         self.console = get_console()
         self.issue_service = IssueService(auth_manager)
+        self.project_service = ProjectService(auth_manager)
 
     def _get_custom_field_value(self, issue: Dict[str, Any], field_name: str) -> Optional[str]:
         """Extract value from custom fields by field name using CustomFieldManager.
@@ -111,6 +113,9 @@ class IssueManager:
             issue_data = result["data"]
             issue_id = issue_data.get("id")
 
+            # Add success message for command layer
+            result["message"] = "Issue created successfully"
+
             if issue_id:
                 # Get the friendly ID (idReadable) for better user experience
                 detail_result = await self.issue_service.get_issue(issue_id, fields="idReadable")
@@ -118,6 +123,7 @@ class IssueManager:
                     friendly_id = detail_result["data"].get("idReadable")
                     if friendly_id:
                         result["friendly_id"] = friendly_id
+                        result["message"] = f"Issue {friendly_id} created successfully"
 
         return result
 
@@ -360,10 +366,28 @@ class IssueManager:
         return capture.get()
 
     async def _resolve_project_id(self, project_id_or_short_name: str) -> Optional[str]:
-        """Resolve a project ID or short name to internal project ID."""
-        # This is a business logic helper that would use the ProjectService
-        # For now, return the input as-is (this would need ProjectService integration)
-        return project_id_or_short_name
+        """Resolve a project ID or short name to internal project ID.
+
+        Args:
+            project_id_or_short_name: Project short name (e.g. 'DEMO') or internal ID
+
+        Returns:
+            Internal project ID if found, None otherwise
+        """
+        try:
+            # Try to get project by short name or internal ID
+            result = await self.project_service.get_project(project_id_or_short_name, fields="id,shortName")
+
+            if result["status"] == "success" and result["data"]:
+                project_data = result["data"]
+                # Return the internal ID
+                return project_data.get("id")
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error resolving project ID '{project_id_or_short_name}': {e}")
+            return None
 
     def display_issue_details(
         self, issue: Dict[str, Any], show_comments: bool = False, format_type: str = "table"
@@ -592,7 +616,7 @@ class IssueManager:
             if len(text) > 100:
                 text = text[:97] + "..."
 
-            table.add_row(author, created, text)
+            table.add_row(author, str(created), text)
 
         self.console.print(table)
 
