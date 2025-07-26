@@ -373,8 +373,24 @@ def _add_dependency_node(
     show_status: bool,
 ) -> None:
     """Helper function to add a dependency node to the tree."""
-    target_issue = dependency.get("target", {})
-    issue_id = target_issue.get("id", "Unknown")
+    # Handle different link data structures
+    target_issue = None
+
+    # Check for "issues" field (array of issues)
+    if "issues" in dependency and dependency["issues"]:
+        target_issue = dependency["issues"][0]  # Take first issue if multiple
+    # Check for "issue" field (single issue)
+    elif "issue" in dependency:
+        target_issue = dependency["issue"]
+    # Fallback to "target" field for backward compatibility
+    else:
+        target_issue = dependency.get("target", {})
+
+    if not target_issue:
+        # If no target issue found, skip this dependency
+        return
+
+    issue_id = target_issue.get("idReadable", target_issue.get("id", "Unknown"))
     issue_summary = target_issue.get("summary", "No summary")
 
     metadata = {

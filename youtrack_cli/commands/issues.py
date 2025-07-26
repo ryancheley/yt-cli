@@ -864,9 +864,11 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
         result = asyncio.run(issue_manager.assign_issue(issue_id, assignee))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            message = result.get("message", f"Issue {issue_id} assigned to {assignee}")
+            console.print(f"✅ {message}", style="green")
         else:
-            console.print(f"❌ {result['message']}", style="red")
+            message = result.get("message", f"Failed to assign issue {issue_id} to {assignee}")
+            console.print(f"❌ {message}", style="red")
             raise click.ClickException("Failed to assign issue")
 
     except click.ClickException:
