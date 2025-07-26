@@ -173,6 +173,12 @@ class IssueManager:
             skip=skip,
         )
 
+        # Add count field for backward compatibility with command layer
+        if result["status"] == "success" and "data" in result:
+            issues = result["data"]
+            if isinstance(issues, list):
+                result["count"] = len(issues)
+
         # Add presentation logic for different output formats
         if result["status"] == "success" and format_output != "json":
             issues = result["data"]
