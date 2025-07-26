@@ -268,6 +268,14 @@ class PanelGroup:
         console = get_console()
         console.print(self.render())
 
+    def __rich__(self) -> Group:
+        """Rich protocol method for direct printing support.
+
+        Returns:
+            Group: Rich Group containing all panels for direct console printing
+        """
+        return self.render()
+
 
 def create_issue_overview_panel(issue_data: Dict[str, Any]) -> Panel:
     """Create an issue overview panel with key information.
