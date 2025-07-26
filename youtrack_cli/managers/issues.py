@@ -623,7 +623,7 @@ class IssueManager:
             author = attachment.get("author", {}).get("fullName", "Unknown")
             created = attachment.get("created", "")
 
-            table.add_row(name, str(size), author, created)
+            table.add_row(name, str(size), author, str(created))
 
         self.console.print(table)
 
