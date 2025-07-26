@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 Fix issues list display formatting problems (#407)
+  - Fixed empty State column by implementing fallback field name lookup for State/Status/Stage/Workflow State
+  - Improved table formatting consistency and removed ANSI color code display issues
+  - Enhanced column alignment for better readability in issue list output
+
 ### Added
 - 🎨 Theme customization for CLI appearance personalization (#397)
   - Interactive theme creation with `yt config theme create` command for custom color schemes
