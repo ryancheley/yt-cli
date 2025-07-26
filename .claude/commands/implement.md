@@ -73,8 +73,12 @@ Implement the solution following best practices:
 **CLI Testing with Agent:**
 After implementing any CLI command changes, use the CLI testing agent:
 ```bash
-# Invoke the CLI testing agent to verify all commands work correctly
-/cli-tester
+# Use the Task tool to invoke the CLI testing agent to verify all commands work correctly
+Task(
+    description="Test CLI commands",
+    prompt="Test all modified CLI commands and create GitHub issues for any failures found",
+    subagent_type="cli tester"
+)
 ```
 The agent will:
 - Automatically detect modified CLI commands
@@ -93,7 +97,12 @@ pre-commit run
 # If CLI commands were modified, run the testing agent
 if git diff --name-only | grep -E "(youtrack_cli/commands/|youtrack_cli/main.py)"; then
     echo "CLI changes detected - running automated tests..."
-    /cli-tester
+    # Use the Task tool to run the cli tester agent
+    Task(
+        description="Test CLI commands",
+        prompt="Test all modified CLI commands and create GitHub issues for any failures found",
+        subagent_type="cli tester"
+    )
 fi
 ```
 
