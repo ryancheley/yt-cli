@@ -215,7 +215,7 @@ Display Settings
 Theme Settings
 ~~~~~~~~~~~~~~
 
-YouTrack CLI supports multiple themes for customizing the appearance of console output.
+YouTrack CLI supports comprehensive theme customization, allowing you to personalize the appearance of console output with built-in themes or create your own custom themes.
 
 .. list-table::
    :widths: 30 20 50
@@ -226,31 +226,141 @@ YouTrack CLI supports multiple themes for customizing the appearance of console 
      - Description
    * - ``YOUTRACK_THEME``
      - string
-     - Console theme: default, dark, light (default: default)
+     - Console theme: default, dark, light, or custom theme name (default: default)
 
-**Available Themes:**
+**Built-in Themes:**
 
 * **default**: Standard theme with cyan info text, green success, and red errors
 * **dark**: High-contrast theme optimized for dark terminals with bright colors
 * **light**: Theme optimized for light terminals with darker text colors
 
-**Setting a Theme:**
+**Theme Management Commands:**
+
+YouTrack CLI provides comprehensive theme management through the ``yt config theme`` command group:
 
 .. code-block:: bash
 
-   # Set theme via configuration file
+   # List all available themes (built-in + custom)
+   yt config theme list
+
+   # Show current theme and preview
+   yt config theme current
+
+   # Set active theme
+   yt config theme set dark
+
+   # Create a new custom theme interactively
+   yt config theme create my-theme
+
+   # Create a theme based on an existing one
+   yt config theme create my-dark --base dark
+
+   # Delete a custom theme
+   yt config theme delete my-theme
+
+   # Export a theme to JSON file
+   yt config theme export dark my-dark-theme.json
+
+   # Import a theme from JSON file
+   yt config theme import my-theme.json
+
+   # Import with custom name
+   yt config theme import downloaded-theme.json my-custom-name
+
+**Setting a Theme:**
+
+There are multiple ways to set your active theme:
+
+.. code-block:: bash
+
+   # Using theme command (recommended)
+   yt config theme set dark
+
+   # Using config command
+   yt config set YOUTRACK_THEME dark
+
+   # Via configuration file
    echo "YOUTRACK_THEME=dark" >> ~/.config/youtrack-cli/.env
 
-   # Set theme via environment variable
+   # Via environment variable
    export YOUTRACK_THEME=light
 
-   # Test different themes
+   # Test different themes temporarily
    YOUTRACK_THEME=dark yt issues list
    YOUTRACK_THEME=light yt projects list
 
-**Theme Styles:**
+**Creating Custom Themes:**
 
-Each theme provides consistent styling for:
+The ``yt config theme create`` command provides an interactive interface for creating custom themes:
+
+.. code-block:: bash
+
+   # Create a new theme from scratch
+   yt config theme create my-theme
+
+   # Create based on existing theme
+   yt config theme create my-dark --base dark
+
+The interactive creator will guide you through customizing:
+
+1. **Core colors** (most commonly customized):
+   - info, warning, error, success
+   - header, link, highlight
+
+2. **Additional colors** (optional):
+   - field, value, muted, prompt
+   - title, subtitle
+   - progress indicators
+   - table styling
+
+**Custom Theme Storage:**
+
+Custom themes are stored as JSON files in ``~/.config/youtrack-cli/themes/``:
+
+.. code-block:: json
+
+   {
+     "name": "my-custom-theme",
+     "description": "My personalized theme",
+     "colors": {
+       "info": "bright_blue",
+       "warning": "orange",
+       "error": "bright_red",
+       "success": "bright_green",
+       "header": "bold bright_cyan",
+       "link": "blue underline",
+       "highlight": "bold bright_yellow"
+     }
+   }
+
+**Theme Import/Export:**
+
+Share themes with team members or backup your customizations:
+
+.. code-block:: bash
+
+   # Export current theme
+   yt config theme export my-theme my-team-theme.json
+
+   # Share with team members
+   yt config theme import team-theme.json
+
+   # Export built-in theme as starting point
+   yt config theme export dark dark-base.json
+
+**Color Values:**
+
+Themes support Rich's extensive color system:
+
+* **Standard colors**: black, red, green, yellow, blue, magenta, cyan, white
+* **Bright colors**: bright_red, bright_green, bright_blue, etc.
+* **RGB colors**: rgb(255,0,0), #ff0000
+* **Style modifiers**: bold, italic, underline, dim
+* **Combinations**: "bold red", "underline blue", "dim cyan"
+
+**Theme Styles Reference:**
+
+Each theme provides consistent styling for these elements:
 
 * **info**: Informational messages and highlights
 * **warning**: Warning messages and cautions
@@ -265,8 +375,58 @@ Each theme provides consistent styling for:
 * **title**: Page and section titles
 * **subtitle**: Secondary headings
 * **muted**: Less important or secondary text
-* **progress**: Progress bars and status indicators
-* **table**: Table formatting and structure
+* **progress.description**: Progress bar descriptions
+* **progress.percentage**: Progress bar percentages
+* **progress.elapsed**: Progress bar elapsed time
+* **table.header**: Table column headers
+* **table.row**: Standard table rows
+* **table.row.odd**: Alternating table rows
+* **panel.border**: Panel borders
+* **panel.title**: Panel titles
+* **panel.subtitle**: Panel subtitles
+
+**Theme Examples:**
+
+Example custom theme configurations:
+
+.. code-block:: bash
+
+   # Minimal theme with just core colors
+   yt config theme create minimal
+   # Set: info=blue, warning=yellow, error=red, success=green
+
+   # High-contrast theme for accessibility
+   yt config theme create high-contrast --base dark
+   # Customize with brighter, more distinct colors
+
+   # Monochrome theme
+   yt config theme create mono
+   # Use only grayscale colors for minimal distraction
+
+**Troubleshooting Themes:**
+
+If you experience theme issues:
+
+.. code-block:: bash
+
+   # Reset to default theme
+   yt config theme set default
+
+   # Check current theme
+   yt config theme current
+
+   # List all available themes
+   yt config theme list
+
+   # Remove problematic custom theme
+   yt config theme delete problematic-theme
+
+Common issues:
+
+* **Colors not displaying**: Check terminal color support
+* **Theme not found**: Verify theme name with ``yt config theme list``
+* **Import failed**: Validate JSON format and color values
+* **Permission errors**: Ensure ``~/.config/youtrack-cli/themes/`` is writable
 
 Time Tracking Settings
 ~~~~~~~~~~~~~~~~~~~~~~

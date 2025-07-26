@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 🎨 Theme customization for CLI appearance personalization (#397)
+  - Interactive theme creation with `yt config theme create` command for custom color schemes
+  - Theme management commands: list, current, set, create, delete, export, import
+  - Built-in themes: default, dark, and light themes optimized for different terminal environments
+  - Custom theme storage in `~/.config/youtrack-cli/themes/` with JSON format for easy sharing
+  - Theme import/export functionality for sharing themes with team members
+  - Comprehensive color support including standard colors, bright colors, RGB, and style modifiers
+  - All CLI output consistently themed including tables, progress bars, panels, and messages
+  - Interactive theme creation guide with core colors (info, warning, error, success) and optional advanced customization
+  - Theme validation and error handling for invalid color values or malformed theme files
+  - Backward compatibility maintained - existing `YOUTRACK_THEME` configuration continues to work
+  - Full test coverage for theme management functionality including edge cases and error scenarios
 - ⚡ Improve caching with advanced TTL and invalidation strategies (#392)
   - Enhanced Cache class with size-based LRU eviction to prevent unlimited memory growth
   - Tag-based cache invalidation for grouping and bulk invalidation of related entries
