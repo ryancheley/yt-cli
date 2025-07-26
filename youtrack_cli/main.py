@@ -1581,6 +1581,223 @@ def list_config(ctx: click.Context) -> None:
         raise click.ClickException("Configuration list failed") from e
 
 
+@config.group()
+def theme() -> None:
+    """Manage themes for YouTrack CLI."""
+    pass
+
+
+@theme.command("list")
+@click.pass_context
+def list_themes(ctx: click.Context) -> None:
+    """List all available themes."""
+    from .themes import ThemeManager
+
+    theme_manager = ThemeManager()
+    theme_manager.display_themes_table()
+
+
+@theme.command("current")
+@click.pass_context
+def current_theme(ctx: click.Context) -> None:
+    """Show the current theme."""
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        current_theme_name = config_manager.get_config("YOUTRACK_THEME") or "default"
+        console.print(f"Current theme: [cyan]{current_theme_name}[/cyan]")
+
+        # Show a preview of the current theme
+        console.print("\nTheme preview:", style="header")
+        console.print("Info message", style="info")
+        console.print("Warning message", style="warning")
+        console.print("Error message", style="error")
+        console.print("Success message", style="success")
+        console.print("Highlighted text", style="highlight")
+
+    except Exception as e:
+        console.print(f"❌ Error getting current theme: {e}", style="red")
+        raise click.ClickException("Failed to get current theme") from e
+
+
+@theme.command("set")
+@click.argument("name")
+@click.pass_context
+def set_theme(ctx: click.Context, name: str) -> None:
+    """Set the current theme."""
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    from .console import get_theme_by_name, set_console_theme
+    from .themes import ThemeManager
+
+    try:
+        theme_manager = ThemeManager()
+        available_themes = theme_manager.list_all_themes()
+
+        if name not in available_themes:
+            console.print(f"❌ Theme '{name}' not found", style="error")
+            console.print(f"Available themes: {', '.join(sorted(available_themes.keys()))}", style="info")
+            raise click.ClickException("Theme not found")
+
+        # Set the theme in config
+        config_manager.set_config("YOUTRACK_THEME", name)
+
+        # Apply the theme immediately
+        theme = get_theme_by_name(name)
+        if theme:
+            set_console_theme(theme)
+
+        console.print(f"✅ Theme set to '{name}'", style="success")
+
+        # Show theme preview
+        console.print("\nTheme preview:", style="header")
+        console.print("Info message", style="info")
+        console.print("Warning message", style="warning")
+        console.print("Error message", style="error")
+        console.print("Success message", style="success")
+        console.print("Highlighted text", style="highlight")
+
+    except Exception as e:
+        console.print(f"❌ Error setting theme: {e}", style="red")
+        raise click.ClickException("Failed to set theme") from e
+
+
+@theme.command("create")
+@click.argument("name")
+@click.option("--base", help="Base theme to copy from")
+@click.pass_context
+def create_theme(ctx: click.Context, name: str, base: Optional[str] = None) -> None:
+    """Create a new custom theme interactively."""
+    console = get_console()
+
+    from .themes import ThemeManager
+
+    try:
+        theme_manager = ThemeManager()
+
+        if base:
+            available_themes = theme_manager.list_all_themes()
+            if base not in available_themes:
+                console.print(f"❌ Base theme '{base}' not found", style="error")
+                console.print(f"Available themes: {', '.join(sorted(available_themes.keys()))}", style="info")
+                raise click.ClickException("Base theme not found")
+
+        success = theme_manager.create_theme_interactively(name, base)
+        if not success:
+            raise click.ClickException("Theme creation failed")
+
+    except Exception as e:
+        console.print(f"❌ Error creating theme: {e}", style="red")
+        raise click.ClickException("Theme creation failed") from e
+
+
+@theme.command("delete")
+@click.argument("name")
+@click.option("--force", is_flag=True, help="Delete without confirmation")
+@click.pass_context
+def delete_theme(ctx: click.Context, name: str, force: bool = False) -> None:
+    """Delete a custom theme."""
+    console = get_console()
+
+    from rich.prompt import Confirm
+
+    from .themes import ThemeManager
+
+    try:
+        theme_manager = ThemeManager()
+        available_themes = theme_manager.list_all_themes()
+
+        if name not in available_themes:
+            console.print(f"❌ Theme '{name}' not found", style="error")
+            raise click.ClickException("Theme not found")
+
+        if available_themes[name] == "built-in":
+            console.print(f"❌ Cannot delete built-in theme '{name}'", style="error")
+            raise click.ClickException("Cannot delete built-in theme")
+
+        if not force:
+            if not Confirm.ask(f"Are you sure you want to delete theme '{name}'?"):
+                console.print("Theme deletion cancelled", style="yellow")
+                return
+
+        success = theme_manager.delete_custom_theme(name)
+        if success:
+            console.print(f"✅ Theme '{name}' deleted successfully", style="success")
+        else:
+            console.print(f"❌ Failed to delete theme '{name}'", style="error")
+            raise click.ClickException("Theme deletion failed")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting theme: {e}", style="red")
+        raise click.ClickException("Theme deletion failed") from e
+
+
+@theme.command("export")
+@click.argument("name")
+@click.argument("output_file", required=False)
+@click.pass_context
+def export_theme(ctx: click.Context, name: str, output_file: Optional[str] = None) -> None:
+    """Export a theme to a JSON file."""
+    console = get_console()
+
+    from .themes import ThemeManager
+
+    try:
+        theme_manager = ThemeManager()
+        available_themes = theme_manager.list_all_themes()
+
+        if name not in available_themes:
+            console.print(f"❌ Theme '{name}' not found", style="error")
+            console.print(f"Available themes: {', '.join(sorted(available_themes.keys()))}", style="info")
+            raise click.ClickException("Theme not found")
+
+        success = theme_manager.export_theme(name, output_file)
+        if success:
+            output = output_file or f"{name}.json"
+            console.print(f"✅ Theme '{name}' exported to '{output}'", style="success")
+        else:
+            console.print(f"❌ Failed to export theme '{name}'", style="error")
+            raise click.ClickException("Theme export failed")
+
+    except Exception as e:
+        console.print(f"❌ Error exporting theme: {e}", style="red")
+        raise click.ClickException("Theme export failed") from e
+
+
+@theme.command("import")
+@click.argument("file_path")
+@click.argument("name", required=False)
+@click.pass_context
+def import_theme(ctx: click.Context, file_path: str, name: Optional[str] = None) -> None:
+    """Import a theme from a JSON file."""
+    console = get_console()
+
+    from pathlib import Path
+
+    from .themes import ThemeManager
+
+    try:
+        if not Path(file_path).exists():
+            console.print(f"❌ File '{file_path}' not found", style="error")
+            raise click.ClickException("File not found")
+
+        theme_manager = ThemeManager()
+        imported_name = theme_manager.import_theme(file_path, name)
+
+        if imported_name:
+            console.print(f"✅ Theme imported as '{imported_name}'", style="success")
+        else:
+            console.print(f"❌ Failed to import theme from '{file_path}'", style="error")
+            console.print("Check that the file contains a valid theme definition", style="info")
+            raise click.ClickException("Theme import failed")
+
+    except Exception as e:
+        console.print(f"❌ Error importing theme: {e}", style="red")
+        raise click.ClickException("Theme import failed") from e
+
+
 @main.group()
 def alias() -> None:
     """Manage command aliases (Issue #345)."""

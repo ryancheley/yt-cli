@@ -103,7 +103,9 @@ class TestConsoleManager:
         manager = ConsoleManager()
         theme = manager.get_theme()
         assert isinstance(theme, Theme)
-        assert theme == get_default_theme()
+        # Compare theme styles instead of object identity
+        default_theme = get_default_theme()
+        assert theme.styles == default_theme.styles
 
     def test_custom_theme_initialization(self):
         """Test manager initialization with custom theme."""

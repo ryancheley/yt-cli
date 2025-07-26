@@ -105,12 +105,24 @@ def get_theme_by_name(name: str) -> Optional[Theme]:
     """Get a theme by its name.
 
     Args:
-        name: The name of the theme (default, dark, light)
+        name: The name of the theme (default, dark, light, or custom theme name)
 
     Returns:
         Optional[Theme]: The theme if found, None otherwise
     """
-    return THEMES.get(name)
+    # Check built-in themes first
+    if name in THEMES:
+        return THEMES[name]
+
+    # Check custom themes
+    try:
+        from .themes import ThemeManager
+
+        theme_manager = ThemeManager()
+        return theme_manager.get_custom_theme(name)
+    except Exception:
+        # If theme loading fails, return None
+        return None
 
 
 class ConsoleManager:
