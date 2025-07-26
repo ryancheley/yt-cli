@@ -119,7 +119,9 @@ class TestConfigCommands:
 
             result = runner.invoke(main, ["--config", str(config_path), "config", "get", "NONEXISTENT_KEY"])
             assert result.exit_code == 1
-            assert "Configuration key 'NONEXISTENT_KEY' not found" in result.output
+            # Strip ANSI codes from output for comparison
+            clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+            assert "Configuration key 'NONEXISTENT_KEY' not found" in clean_output
 
     def test_config_list_empty(self):
         """Test listing configuration when no values exist."""
