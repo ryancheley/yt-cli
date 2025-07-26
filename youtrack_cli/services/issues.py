@@ -216,7 +216,11 @@ class IssueService(BaseService):
             API response
         """
         try:
-            update_data = {"assignee": {"login": assignee}}
+            update_data = {
+                "customFields": [
+                    {"name": "Assignee", "$type": "SingleUserIssueCustomField", "value": {"login": assignee}}
+                ]
+            }
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
             return await self._handle_response(response)
 

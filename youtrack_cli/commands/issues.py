@@ -858,6 +858,32 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
+    # Handle 'me' keyword by resolving to current user's login
+    if assignee == "me":
+        current_user = auth_manager.get_current_user_sync()
+        if not current_user:
+            # Try to get current user from API
+            try:
+                credentials = auth_manager.load_credentials()
+                if credentials:
+                    verification_result = asyncio.run(
+                        auth_manager.verify_credentials(credentials.base_url, credentials.token)
+                    )
+                    if verification_result.status == "success" and verification_result.username:
+                        current_user = verification_result.username
+                    else:
+                        console.print(
+                            "❌ Unable to resolve 'me' - not authenticated or user info unavailable", style="red"
+                        )
+                        raise click.ClickException("Unable to resolve current user") from None
+                else:
+                    console.print("❌ Unable to resolve 'me' - not authenticated or user info unavailable", style="red")
+                    raise click.ClickException("Unable to resolve current user") from None
+            except Exception:
+                console.print("❌ Unable to resolve 'me' - not authenticated or user info unavailable", style="red")
+                raise click.ClickException("Unable to resolve current user") from None
+        assignee = current_user
+
     console.print(f"👤 Assigning issue '{issue_id}' to '{assignee}'...", style="blue")
 
     try:
