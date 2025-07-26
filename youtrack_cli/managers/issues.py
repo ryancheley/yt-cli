@@ -66,6 +66,18 @@ class IssueManager:
 
         return "Unassigned"
 
+    def _get_state_field_value(self, issue: Dict[str, Any]) -> str:
+        """Get state field value, trying common field names."""
+        # Try common state field names in order of preference
+        state_field_names = ["State", "Status", "Stage", "Workflow State"]
+
+        for field_name in state_field_names:
+            state = self._get_custom_field_value(issue, field_name)
+            if state:
+                return state
+
+        return ""
+
     async def create_issue(
         self,
         project_id: str,
@@ -301,7 +313,7 @@ class IssueManager:
             assignee_name = self._get_assignee_name(issue)
 
             # Extract other fields
-            state = self._get_custom_field_value(issue, "State") or ""
+            state = self._get_state_field_value(issue)
             priority = self._get_custom_field_value(issue, "Priority") or ""
             issue_type = self._get_custom_field_value(issue, "Type") or ""
 
@@ -330,7 +342,7 @@ class IssueManager:
 
         for issue in issues:
             assignee_name = self._get_assignee_name(issue)
-            state = self._get_custom_field_value(issue, "State") or ""
+            state = self._get_state_field_value(issue)
             priority = self._get_custom_field_value(issue, "Priority") or ""
 
             table.add_row(
@@ -433,7 +445,33 @@ class IssueManager:
 
     def display_issues_table(self, issues: List[Dict[str, Any]]) -> None:
         """Display issues in a simple table format."""
-        self.display_issue_list(issues, format_output="table", no_pagination=True)
+        if not issues:
+            self.console.print("[yellow]No issues found.[/yellow]")
+            return
+
+        from rich.table import Table
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("ID", style="cyan", no_wrap=True)
+        table.add_column("Summary", style="green")
+        table.add_column("State", style="yellow")
+        table.add_column("Priority", style="red")
+        table.add_column("Assignee", style="blue")
+
+        for issue in issues:
+            assignee_name = self._get_assignee_name(issue)
+            state = self._get_state_field_value(issue)
+            priority = self._get_custom_field_value(issue, "Priority") or ""
+
+            table.add_row(
+                issue.get("idReadable", issue.get("id", "")),
+                issue.get("summary", ""),
+                state,
+                priority,
+                assignee_name,
+            )
+
+        self.console.print(table)
 
     def display_issues_table_paginated(
         self,
