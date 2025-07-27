@@ -654,9 +654,11 @@ def update(
             )
 
             if result["status"] == "success":
-                console.print(f"✅ {result['message']}", style="green")
+                message = result.get("message", "Issue updated successfully")
+                console.print(f"✅ {message}", style="green")
             else:
-                console.print(f"❌ {result['message']}", style="red")
+                message = result.get("message", "Failed to update issue")
+                console.print(f"❌ {message}", style="red")
                 raise click.ClickException("Failed to update issue")
 
         except Exception as e:
