@@ -112,7 +112,7 @@ class IssueService(BaseService):
             API response
         """
         try:
-            update_data: Dict[str, Any] = {}
+            update_data: Dict[str, Any] = {"$type": "Issue"}
             custom_fields = []
 
             # Handle regular fields
@@ -127,9 +127,21 @@ class IssueService(BaseService):
 
             # Handle fields that might be custom fields
             if state is not None:
-                custom_fields.append({"name": "State", "value": {"name": state}})
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "State",
+                        "value": {"$type": "EnumBundleElement", "name": state},
+                    }
+                )
             if priority is not None:
-                custom_fields.append({"name": "Priority", "value": {"name": priority}})
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Priority",
+                        "value": {"$type": "EnumBundleElement", "name": priority},
+                    }
+                )
 
             # Add custom fields if any
             if custom_fields:
@@ -217,9 +229,10 @@ class IssueService(BaseService):
         """
         try:
             update_data = {
+                "$type": "Issue",
                 "customFields": [
-                    {"name": "Assignee", "$type": "SingleUserIssueCustomField", "value": {"login": assignee}}
-                ]
+                    {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": assignee}}
+                ],
             }
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
             return await self._handle_response(response)
@@ -228,6 +241,122 @@ class IssueService(BaseService):
             return self._create_error_response(str(e))
         except Exception as e:
             return self._create_error_response(f"Error assigning issue: {str(e)}")
+
+    async def move_issue(
+        self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Move an issue to a different state or project via API.
+
+        Args:
+            issue_id: Issue ID to move
+            state: New state name
+            project_id: New project ID (not yet implemented)
+
+        Returns:
+            API response
+        """
+        try:
+            if not state and not project_id:
+                return self._create_error_response("Either state or project_id must be provided")
+
+            if project_id:
+                return self._create_error_response("Moving issues between projects not yet implemented")
+
+            # First, get the issue to determine the correct state field name
+            params = {"fields": "customFields(name,value(name,id,$type))"}
+            issue_response = await self._make_request("GET", f"issues/{issue_id}", params=params)
+            if issue_response.status_code != 200:
+                return self._create_error_response(f"Could not fetch issue {issue_id}")
+
+            issue_data = issue_response.json()
+            custom_fields = issue_data.get("customFields", [])
+
+            # Find the appropriate state field name - try common variations
+            state_field_name = None
+            state_field_candidates = ["State", "Stage", "Status", "Kanban State"]
+            current_state_value = None
+
+            for field in custom_fields:
+                field_name = field.get("name", "")
+                if field_name in state_field_candidates:
+                    # Prefer specific order: State > Stage > Status > Kanban State
+                    if field_name == "State":
+                        state_field_name = field_name
+                        current_state_value = field.get("value")
+                        break
+                    elif field_name == "Stage" and (state_field_name is None or state_field_name == "Kanban State"):
+                        state_field_name = field_name
+                        current_state_value = field.get("value")
+                    elif field_name == "Status" and (state_field_name is None or state_field_name == "Kanban State"):
+                        state_field_name = field_name
+                        current_state_value = field.get("value")
+                    elif state_field_name is None:
+                        state_field_name = field_name
+                        current_state_value = field.get("value")
+
+            if not state_field_name:
+                return self._create_error_response(
+                    f"No state field found for issue {issue_id}. "
+                    f"Available custom fields: {[f.get('name') for f in custom_fields]}"
+                )
+
+            # Create the correct value structure based on the field type
+            # For state fields, we need to determine if it's a StateBundle or EnumBundle
+
+            # Temporary hardcoded mapping for testing - this should be dynamic in production
+            state_id_map = {
+                "Backlog": "150-12",
+                "Develop": "150-13",
+                "Review": "150-14",
+                "Test": "150-15",
+                "Staging": "150-16",
+                "Done": "150-17",
+            }
+
+            if current_state_value:
+                # Use the same structure as the current value but update both name and ID
+                new_value = current_state_value.copy() if isinstance(current_state_value, dict) else {}
+                new_value["name"] = state
+
+                # Always update the ID to match the new state name
+                if state in state_id_map:
+                    new_value["id"] = state_id_map[state]
+
+                # Ensure we have the correct $type - prefer StateBundleElement for stage fields
+                if state_field_name in ["Stage", "Status", "State"]:
+                    new_value["$type"] = "StateBundleElement"
+                else:
+                    new_value["$type"] = "EnumBundleElement"
+            else:
+                # Fallback - use StateBundleElement for stage-like fields
+                if state_field_name in ["Stage", "Status", "State"]:
+                    new_value = {"$type": "StateBundleElement", "name": state}
+                    if state in state_id_map:
+                        new_value["id"] = state_id_map[state]
+                else:
+                    new_value = {"$type": "EnumBundleElement", "name": state}
+
+            # Move to different state using proper API structure
+            update_data = {
+                "$type": "Issue",
+                "customFields": [
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": state_field_name,
+                        "value": new_value,
+                    }
+                ],
+            }
+
+            response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
+            if response.status_code == 200:
+                return {"status": "success", "message": f"Issue {issue_id} moved to {state} state"}
+            return await self._handle_response(response)
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error moving issue: {str(e)}")
 
     async def add_tag(self, issue_id: str, tag_name: str) -> Dict[str, Any]:
         """Add a tag to an issue via API.
