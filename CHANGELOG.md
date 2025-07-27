@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.13.5] - 2025-07-27
+
+### Fixed
+- 🐛 Fix issue assignment not working properly (#412)
+  - Changed from using direct assignee field to custom field API structure for assignments
+  - Added support for 'me' keyword in assignee parameter to automatically resolve to current user
+  - Fixed API request structure to properly update assignee via customFields with SingleUserIssueCustomField type
+- 🐛 Fix attachment list rendering error by converting created field to string (#418)
+- 🐛 Fix issue create command project ID structure error (#419)
+- 🐛 Fix move command "$type is required" error (#416, #420)
+- 🐛 Fix KeyError in update command error handling (#421)
+
+### Improved
+- 🧪 Reduce excessive test coverage and eliminate redundant tests (#423)
+
+## [0.13.4] - 2025-07-26
 
 ### Fixed
 - 🐛 Fix yt issues show and dependencies commands displaying object references instead of formatted output (#409)
@@ -17,6 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed empty State column by implementing fallback field name lookup for State/Status/Stage/Workflow State
   - Improved table formatting consistency and removed ANSI color code display issues
   - Enhanced column alignment for better readability in issue list output
+
+## [0.13.3] - 2025-07-25
+
+### Fixed
+- 🐛 Fix bugs in issue creation and dependencies commands (#400-403)
+
+## [0.13.2] - 2025-07-25
 
 ### Added
 - 🎨 Theme customization for CLI appearance personalization (#397)
