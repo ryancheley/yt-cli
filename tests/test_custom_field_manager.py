@@ -161,7 +161,7 @@ class TestCustomFieldManager:
 
     def test_extract_field_value_none_input(self):
         """Test extracting from None input."""
-        result = CustomFieldManager.extract_field_value(None, "Priority")
+        result = CustomFieldManager.extract_field_value(None, "Priority")  # type: ignore
         assert result is None
 
     def test_get_field_id(self):
@@ -269,7 +269,7 @@ class TestCustomFieldManager:
 
     def test_extract_user_field_info_non_dict(self):
         """Test extracting user info from non-dict input."""
-        result = CustomFieldManager.extract_user_field_info("not_a_dict")
+        result = CustomFieldManager.extract_user_field_info("not_a_dict")  # type: ignore
         assert result == {}
 
     def test_is_multi_value_field(self):

@@ -687,7 +687,7 @@ class TestFormatTimestamp:
     def test_format_timestamp_type_error(self):
         """Test formatting timestamp with wrong type."""
         # List doesn't meet int/str conditions, so returns N/A without warning
-        result = format_timestamp([1, 2, 3])
+        result = format_timestamp([1, 2, 3])  # type: ignore
         assert result == "N/A"
 
     def test_format_timestamp_exception_error(self):

@@ -684,6 +684,11 @@ The project uses semantic versioning (MAJOR.MINOR.PATCH):
 Release Workflow
 ~~~~~~~~~~~~~~~~
 
+.. toctree::
+   :maxdepth: 1
+
+   pre-commit-troubleshooting
+
 The project uses an automated release process via ``justfile`` recipes that handle all aspects of releasing.
 
 **Step 1: Pre-Release Validation**

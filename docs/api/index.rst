@@ -126,7 +126,7 @@ Helper functions and utilities:
    is_valid = validate_project_key("PROJ")
 
 Integration Examples
--------------------
+--------------------
 
 Custom Scripts
 ~~~~~~~~~~~~~~

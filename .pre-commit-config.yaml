@@ -93,7 +93,7 @@ repos:
       - id: clean-environment
         name: Clean virtual environment
         description: Ensures clean package environment before tests
-        entry: uv sync --reinstall
+        entry: uv sync --reinstall --group docs
         language: system
         files: ^(pyproject\.toml|uv\.lock|youtrack_cli/.*)$
         pass_filenames: false
