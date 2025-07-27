@@ -172,7 +172,7 @@ class TestRunCommand:
     @patch("youtrack_cli.commands.tutorial.ProgressTracker")
     @patch("youtrack_cli.commands.tutorial.TutorialEngine")
     @patch("youtrack_cli.commands.tutorial.get_default_modules")
-    @patch("youtrack_cli.commands.tutorial.asyncio.run")
+    @patch("asyncio.run")
     def test_run_command_success(
         self,
         mock_asyncio,
@@ -321,7 +321,7 @@ class TestRunCommand:
     @patch("youtrack_cli.commands.tutorial.ProgressTracker")
     @patch("youtrack_cli.commands.tutorial.TutorialEngine")
     @patch("youtrack_cli.commands.tutorial.get_default_modules")
-    @patch("youtrack_cli.commands.tutorial.asyncio.run")
+    @patch("asyncio.run")
     def test_run_command_with_step(
         self,
         mock_asyncio,

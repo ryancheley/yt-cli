@@ -111,9 +111,9 @@ class TestListUsersCommand:
     """Test the list users command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_list_users_success_table_format(
         self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner, sample_users
     ):
@@ -137,9 +137,9 @@ class TestListUsersCommand:
         assert "👥 Fetching users..." in result.output
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_list_users_success_json_format(
         self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner, sample_users
     ):
@@ -163,9 +163,9 @@ class TestListUsersCommand:
         mock_manager.display_users_table.assert_not_called()
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_list_users_with_pagination_options(
         self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner
     ):
@@ -198,9 +198,9 @@ class TestListUsersCommand:
         assert call_args[1]["after_cursor"] == "abc123"
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_list_users_error(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test user listing error handling."""
         # Setup mocks
@@ -220,9 +220,9 @@ class TestListUsersCommand:
         assert "❌ API error" in result.output
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_list_users_exception(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test user listing exception handling."""
         # Setup mocks
@@ -246,9 +246,9 @@ class TestCreateUserCommand:
     """Test the create user command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     @patch("rich.prompt.Prompt.ask")
     def test_create_user_success_with_prompt(
         self, mock_prompt, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner
@@ -282,9 +282,9 @@ class TestCreateUserCommand:
         assert "User ID: user-1" in result.output
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_create_user_with_password_option(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test user creation with password provided via option."""
         # Setup mocks
@@ -310,9 +310,9 @@ class TestCreateUserCommand:
         assert "⚠️  Warning: Password provided via command line may be visible in shell history" in result.output
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_create_user_with_banned_flag(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test user creation with banned flag."""
         # Setup mocks
@@ -345,9 +345,9 @@ class TestCreateUserCommand:
         mock_manager.ban_user.assert_called_once_with("testuser")
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     @patch("rich.prompt.Prompt.ask")
     def test_create_user_error(self, mock_prompt, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test user creation error handling."""
@@ -374,9 +374,9 @@ class TestUpdateUserCommand:
     """Test the update user command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_update_user_success(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test successful user update."""
         # Setup mocks
@@ -403,9 +403,9 @@ class TestUpdateUserCommand:
         assert "✅ User updated successfully" in result.output
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_update_user_show_details(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test user update with show details flag."""
         # Setup mocks
@@ -426,7 +426,7 @@ class TestUpdateUserCommand:
         mock_manager.display_user_details.assert_called_once()
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
     def test_update_user_no_options(self, mock_console, mock_auth, mock_manager_class, runner):
         """Test user update with no options provided."""
@@ -451,9 +451,9 @@ class TestPermissionsCommand:
     """Test the permissions command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_permissions_add_to_group(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test permissions add to group."""
         # Setup mocks
@@ -478,9 +478,9 @@ class TestPermissionsCommand:
         assert "✅ User added to group successfully" in result.output
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_permissions_error(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test permissions command error handling."""
         # Setup mocks
@@ -506,9 +506,9 @@ class TestGroupsCommand:
     """Test the groups command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_users_groups_table_format(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test users groups command in table format."""
         # Setup mocks
@@ -534,9 +534,9 @@ class TestGroupsCommand:
         mock_manager.display_user_groups.assert_called_once_with(groups_data, "testuser")
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_users_groups_json_format(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test users groups command in JSON format."""
         # Setup mocks
@@ -563,9 +563,9 @@ class TestRolesCommand:
     """Test the roles command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_users_roles_success(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test users roles command success."""
         # Setup mocks
@@ -591,9 +591,9 @@ class TestRolesCommand:
         mock_manager.display_user_roles.assert_called_once_with(roles_data, "testuser")
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_users_roles_error(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test users roles command error handling."""
         # Setup mocks
@@ -617,9 +617,9 @@ class TestTeamsCommand:
     """Test the teams command."""
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_users_teams_success(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test users teams command success."""
         # Setup mocks
@@ -645,9 +645,9 @@ class TestTeamsCommand:
         mock_manager.display_user_teams.assert_called_once_with(teams_data, "testuser")
 
     @patch("youtrack_cli.managers.users.UserManager")
-    @patch("youtrack_cli.commands.users.AuthManager")
+    @patch("youtrack_cli.auth.AuthManager")
     @patch("youtrack_cli.console.get_console")
-    @patch("youtrack_cli.commands.users.asyncio.run")
+    @patch("asyncio.run")
     def test_users_teams_exception(self, mock_asyncio, mock_console, mock_auth, mock_manager_class, runner):
         """Test users teams command exception handling."""
         # Setup mocks
