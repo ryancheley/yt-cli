@@ -581,18 +581,7 @@ class IssueManager:
         self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Move an issue to a different state or project."""
-        if not state and not project_id:
-            return {"status": "error", "message": "Either state or project_id must be provided"}
-
-        if state:
-            # Move to different state
-            return await self.update_issue(issue_id, state=state)
-        elif project_id:
-            # Move to different project - would need project service integration
-            return {"status": "error", "message": "Moving issues between projects not yet implemented"}
-
-        # This should never be reached, but adding for type safety
-        return {"status": "error", "message": "Invalid parameters"}
+        return await self.issue_service.move_issue(issue_id, state=state, project_id=project_id)
 
     def display_comments_table(self, comments: List[Dict[str, Any]]) -> None:
         """Display comments in a table format."""
