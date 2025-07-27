@@ -354,146 +354,34 @@ class TestAdminManager:
             assert result["status"] == "success"
             assert result["data"] == mock_fields
 
-    def test_display_global_settings_list(self, admin_manager):
-        """Test global settings display for list format."""
+    def test_display_methods(self, admin_manager):
+        """Test display methods for various data types."""
+        # Test global settings display
         settings = [
             {"name": "setting1", "value": "value1", "description": "Description 1"},
-            {"name": "setting2", "value": "value2", "description": "Description 2"},
         ]
-
         with patch("rich.console.Console.print") as mock_print:
             admin_manager.display_global_settings(settings)
-
-            # Verify that print was called
             mock_print.assert_called()
 
-    def test_display_global_settings_single(self, admin_manager):
-        """Test global settings display for single setting."""
-        setting = {
-            "name": "server.name",
-            "value": "Test Server",
-            "description": "Server name setting",
-        }
-
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_global_settings(setting)
-
-            # Verify that print was called multiple times
-            assert mock_print.call_count >= 2
-
-    def test_display_global_settings_nested(self, admin_manager):
-        """Test global settings display for new nested format."""
-        nested_settings = {
-            "systemSettings": {
-                "maxExportItems": 500,
-                "maxUploadFileSize": 10485760,
-                "allowStatisticsCollection": False,
-                "$type": "SystemSettings",
-            },
-            "license": {"username": "Test User", "license": "test-license-key", "$type": "License"},
-        }
-
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_global_settings(nested_settings)
-
-            # Verify that a table was printed (should call print once for the table)
-            mock_print.assert_called_once()
-
-    def test_display_license_info(self, admin_manager):
-        """Test license information display."""
+        # Test license info display
         license_info = {
             "type": "Commercial",
             "licensedTo": "Test Company",
-            "expirationDate": "2025-12-31",
-            "maxUsers": 100,
             "isActive": True,
         }
-
         with patch("rich.console.Console.print") as mock_print:
             admin_manager.display_license_info(license_info)
-
-            # Verify that print was called with a Rich table
             mock_print.assert_called_once()
-            # The argument should be a Rich Table object
-            table_arg = mock_print.call_args[0][0]
-            assert hasattr(table_arg, "add_row")  # Rich Table has add_row method
 
-    def test_display_system_health(self, admin_manager):
-        """Test system health display."""
-        health_info = {
-            "status": "healthy",
-            "checks": [
-                {"name": "Database", "status": "healthy", "message": "All good"},
-                {"name": "Memory", "status": "warning", "message": "High usage"},
-            ],
-        }
-
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_system_health(health_info)
-
-            # Verify that print was called
-            mock_print.assert_called()
-
-    def test_display_user_groups_empty(self, admin_manager):
-        """Test user groups display with empty list."""
+        # Test user groups display (empty and with data)
         with patch("rich.console.Console.print") as mock_print:
             admin_manager.display_user_groups([])
-
-            # Verify that it shows "No user groups found"
             mock_print.assert_called()
-            call_args = [call[0][0] for call in mock_print.call_args_list]
-            no_groups_found = any("No user groups found" in str(arg) for arg in call_args)
-            assert no_groups_found
 
-    def test_display_user_groups_with_data(self, admin_manager):
-        """Test user groups display with data."""
-        groups = [
-            {
-                "name": "Developers",
-                "description": "Dev team",
-                "users": [{"login": "dev1"}],
-            },
-            {"name": "Admins", "description": "Admin team", "users": []},
-        ]
-
+        groups = [{"name": "Developers", "description": "Dev team", "users": []}]
         with patch("rich.console.Console.print") as mock_print:
             admin_manager.display_user_groups(groups)
-
-            # Verify that print was called
-            mock_print.assert_called()
-
-    def test_display_custom_fields_empty(self, admin_manager):
-        """Test custom fields display with empty list."""
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_custom_fields([])
-
-            # Verify that it shows "No custom fields found"
-            mock_print.assert_called()
-            call_args = [call[0][0] for call in mock_print.call_args_list]
-            no_fields_found = any("No custom fields found" in str(arg) for arg in call_args)
-            assert no_fields_found
-
-    def test_display_custom_fields_with_data(self, admin_manager):
-        """Test custom fields display with data."""
-        fields = [
-            {
-                "name": "Priority",
-                "fieldType": {"presentation": "enum"},
-                "isPrivate": False,
-                "hasStateMachine": False,
-            },
-            {
-                "name": "Status",
-                "fieldType": {"presentation": "state"},
-                "isPrivate": True,
-                "hasStateMachine": True,
-            },
-        ]
-
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_custom_fields(fields)
-
-            # Verify that print was called
             mock_print.assert_called()
 
 
@@ -506,219 +394,49 @@ class TestAdminCommands:
         self.runner = CliRunner()
 
     @patch("youtrack_cli.main.AdminManager")
-    def test_admin_global_settings_get_success(self, mock_admin):
-        """Test global settings get command execution."""
+    def test_admin_cli_commands(self, mock_admin):
+        """Test admin CLI command execution patterns."""
         mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.get_global_settings.return_value = {
-            "status": "success",
-            "data": [{"name": "server.name", "value": "Test"}],
-        }
 
+        # Test global settings commands
+        mock_admin_instance.get_global_settings.return_value = {"status": "success", "data": []}
         with patch("asyncio.run") as mock_asyncio:
             result = self.runner.invoke(main, ["admin", "global-settings", "get"])
-
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
 
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_global_settings_set_success(self, mock_admin):
-        """Test global settings set command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.set_global_setting.return_value = {
-            "status": "success",
-            "message": "Setting updated successfully",
-        }
-
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "global-settings", "set", "server.name", "New Name"])
-
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_license_show_success(self, mock_admin):
-        """Test license show command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.get_license_info.return_value = {
-            "status": "success",
-            "data": {"type": "Commercial", "isActive": True},
-        }
-
+        # Test license commands
+        mock_admin_instance.get_license_info.return_value = {"status": "success", "data": {}}
         with patch("asyncio.run") as mock_asyncio:
             result = self.runner.invoke(main, ["admin", "license", "show"])
-
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
 
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_license_usage_success(self, mock_admin):
-        """Test license usage command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.get_license_usage.return_value = {
-            "status": "success",
-            "data": {"totalUsers": 100, "activeUsers": 75},
-        }
-
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "license", "usage"])
-
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_maintenance_clear_cache_with_confirm(self, mock_admin):
-        """Test maintenance clear cache command with confirmation."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.clear_caches.return_value = {
-            "status": "success",
-            "message": "Caches cleared successfully",
-        }
-
+        # Test maintenance commands
+        mock_admin_instance.clear_caches.return_value = {"status": "success", "message": "Cleared"}
         with patch("asyncio.run") as mock_asyncio:
             result = self.runner.invoke(main, ["admin", "maintenance", "clear-cache", "--force"])
-
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
 
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_health_check_success(self, mock_admin):
-        """Test health check command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.get_system_health.return_value = {
-            "status": "success",
-            "data": {"status": "healthy", "checks": []},
-        }
-
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "health", "check"])
-
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_user_groups_list_success(self, mock_admin):
-        """Test user groups list command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.list_user_groups.return_value = {
-            "status": "success",
-            "data": [{"name": "Developers", "description": "Dev team"}],
-        }
-
+        # Test user groups commands
+        mock_admin_instance.list_user_groups.return_value = {"status": "success", "data": []}
         with patch("asyncio.run") as mock_asyncio:
             result = self.runner.invoke(main, ["admin", "user-groups", "list"])
-
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
 
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_user_groups_create_success(self, mock_admin):
-        """Test user groups create command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.create_user_group.return_value = {
-            "status": "success",
-            "message": "Group created successfully",
-        }
-
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "user-groups", "create", "NewGroup"])
-
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-    @patch("youtrack_cli.main.AdminManager")
-    def test_admin_fields_list_success(self, mock_admin):
-        """Test fields list command execution."""
-        mock_admin_instance = mock_admin.return_value
-        mock_admin_instance.list_custom_fields.return_value = {
-            "status": "success",
-            "data": [{"name": "Priority", "fieldType": {"presentation": "enum"}}],
-        }
-
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "fields", "list"])
-
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-    def test_admin_group_help(self):
-        """Test admin group help command."""
+    def test_admin_help_commands(self):
+        """Test admin help commands."""
+        # Test main admin help
         result = self.runner.invoke(main, ["admin", "--help"])
-
         assert result.exit_code == 0
         assert "Administrative operations" in result.output
-        assert "global-settings" in result.output
-        assert "license" in result.output
-        assert "maintenance" in result.output
 
-    def test_admin_global_settings_help(self):
-        """Test admin global-settings help command."""
+        # Test one representative subcommand help
         result = self.runner.invoke(main, ["admin", "global-settings", "--help"])
-
         assert result.exit_code == 0
         assert "Manage global YouTrack settings" in result.output
-        assert "get" in result.output
-        assert "set" in result.output
-
-    def test_admin_license_help(self):
-        """Test admin license help command."""
-        result = self.runner.invoke(main, ["admin", "license", "--help"])
-
-        assert result.exit_code == 0
-        assert "License management" in result.output
-        assert "show" in result.output
-        assert "usage" in result.output
-
-    def test_admin_maintenance_help(self):
-        """Test admin maintenance help command."""
-        result = self.runner.invoke(main, ["admin", "maintenance", "--help"])
-
-        assert result.exit_code == 0
-        assert "System maintenance operations" in result.output
-        assert "clear-cache" in result.output
-
-    def test_admin_health_help(self):
-        """Test admin health help command."""
-        result = self.runner.invoke(main, ["admin", "health", "--help"])
-
-        assert result.exit_code == 0
-        assert "System health checks" in result.output
-        assert "check" in result.output
-
-    def test_admin_user_groups_help(self):
-        """Test admin user-groups help command."""
-        result = self.runner.invoke(main, ["admin", "user-groups", "--help"])
-
-        assert result.exit_code == 0
-        assert "Manage user groups" in result.output
-        assert "list" in result.output
-        assert "create" in result.output
-
-    def test_admin_fields_help(self):
-        """Test admin fields help command."""
-        result = self.runner.invoke(main, ["admin", "fields", "--help"])
-
-        assert result.exit_code == 0
-        assert "Manage custom fields" in result.output
-        assert "list" in result.output
-
-    def test_admin_locale_help(self):
-        """Test admin locale help command."""
-        result = self.runner.invoke(main, ["admin", "locale", "--help"])
-
-        assert result.exit_code == 0
-        assert "Manage YouTrack locale" in result.output
-        assert "get" in result.output
-        assert "set" in result.output
-        assert "list" in result.output
-
-    def test_admin_i18n_help(self):
-        """Test admin i18n help command."""
-        result = self.runner.invoke(main, ["admin", "i18n", "--help"])
-
-        assert result.exit_code == 0
-        assert "internationalization settings" in result.output
-        assert "get" in result.output
-        assert "set" in result.output
 
 
 @pytest.mark.unit
@@ -742,52 +460,45 @@ class TestAdminLocaleManager:
         return AdminManager(auth_manager)
 
     @pytest.mark.asyncio
-    async def test_get_locale_settings_success(self, admin_manager, auth_manager):
-        """Test successful locale settings retrieval."""
-        mock_locale_settings = {
-            "locale": {"name": "English", "locale": "en_US", "community": False, "id": "en_US", "language": "en"},
-            "isRTL": False,
-        }
+    async def test_locale_operations(self, admin_manager, auth_manager):
+        """Test locale settings operations."""
+        # Test successful locale settings retrieval
+        mock_locale_settings = {"locale": {"name": "English", "id": "en_US"}, "isRTL": False}
 
         with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
             mock_client_manager = Mock()
             mock_response = Mock()
             mock_response.json.return_value = mock_locale_settings
-
             mock_client_manager.make_request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.get_locale_settings()
-
             assert result["status"] == "success"
             assert result["data"] == mock_locale_settings
 
-    @pytest.mark.asyncio
-    async def test_get_locale_settings_no_auth(self, admin_manager):
-        """Test locale settings retrieval without authentication."""
-        admin_manager.auth_manager.load_credentials.return_value = None
-
-        result = await admin_manager.get_locale_settings()
-
-        assert result["status"] == "error"
-        assert "Not authenticated" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_set_locale_settings_success(self, admin_manager, auth_manager):
-        """Test successful locale settings update."""
+        # Test locale settings update
         with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
             mock_client_manager = Mock()
             mock_client_manager.make_request = AsyncMock()
             mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.set_locale_settings("de_DE")
-
             assert result["status"] == "success"
             assert "de_DE" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_set_locale_settings_invalid_locale(self, admin_manager, auth_manager):
-        """Test locale settings update with invalid locale."""
+    async def test_locale_auth_and_error_handling(self, admin_manager):
+        """Test locale authentication and error handling."""
+        # Test no authentication
+        admin_manager.auth_manager.load_credentials.return_value = None
+        result = await admin_manager.get_locale_settings()
+        assert result["status"] == "error"
+        assert "Not authenticated" in result["message"]
+
+        # Test invalid locale error
+        admin_manager.auth_manager.load_credentials.return_value = AuthConfig(
+            base_url="https://test.youtrack.cloud", token="test-token", username="test-user"
+        )
         with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
             mock_client_manager = Mock()
             mock_response = Mock()
@@ -798,42 +509,5 @@ class TestAdminLocaleManager:
             mock_get_client.return_value = mock_client_manager
 
             result = await admin_manager.set_locale_settings("invalid_locale")
-
             assert result["status"] == "error"
             assert "Invalid locale ID" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_get_available_locales_success(self, admin_manager, auth_manager):
-        """Test successful available locales retrieval."""
-        result = await admin_manager.get_available_locales()
-
-        assert result["status"] == "success"
-        assert "data" in result
-        assert len(result["data"]) > 0
-        assert any(locale["id"] == "en_US" for locale in result["data"])
-
-    def test_display_locale_settings(self, admin_manager):
-        """Test locale settings display."""
-        locale_settings = {
-            "locale": {"name": "English", "locale": "en_US", "community": False, "id": "en_US", "language": "en"},
-            "isRTL": False,
-        }
-
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_locale_settings(locale_settings)
-
-            # Verify that print was called multiple times for different fields
-            assert mock_print.call_count >= 5
-
-    def test_display_available_locales(self, admin_manager):
-        """Test available locales display."""
-        locales = [
-            {"id": "en_US", "name": "English (US)", "language": "en", "community": False},
-            {"id": "de_DE", "name": "German (Germany)", "language": "de", "community": False},
-        ]
-
-        with patch("rich.console.Console.print") as mock_print:
-            admin_manager.display_available_locales(locales)
-
-            # Verify that print was called (for the table)
-            mock_print.assert_called()

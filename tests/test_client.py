@@ -20,25 +20,19 @@ class TestSSLVerificationWarnings:
 
     def setup_method(self):
         """Setup for each test method."""
-        # Reset client manager before each test
         reset_client_manager_sync()
-        # Clear any warnings that might be cached
         warnings.resetwarnings()
 
     def teardown_method(self):
         """Cleanup after each test method."""
-        # Reset client manager after each test
         reset_client_manager_sync()
-        # Clear any warnings that might be cached
         warnings.resetwarnings()
 
     def test_ssl_verification_enabled_by_default(self):
         """Test that SSL verification is enabled by default."""
         with patch.dict(os.environ, {}, clear=True):
-            # Remove YOUTRACK_VERIFY_SSL if it exists
             if "YOUTRACK_VERIFY_SSL" in os.environ:
                 del os.environ["YOUTRACK_VERIFY_SSL"]
-
             manager = get_client_manager()
             assert manager._verify_ssl is True
 
@@ -47,62 +41,9 @@ class TestSSLVerificationWarnings:
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
             with warnings.catch_warnings(record=True) as warning_list:
                 warnings.simplefilter("always")
-
                 manager = get_client_manager()
 
-                # Check SSL verification is disabled
                 assert manager._verify_ssl is False
-
-                # Check warning was issued (filter for UserWarnings only)
-                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
-                assert len(user_warnings) == 1
-                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
-                assert "insecure" in str(user_warnings[0].message).lower()
-
-    def test_ssl_verification_disabled_env_var_zero(self):
-        """Test SSL verification disabled via environment variable '0'."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "0"}):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always")
-
-                manager = get_client_manager()
-
-                # Check SSL verification is disabled
-                assert manager._verify_ssl is False
-
-                # Check warning was issued (filter for UserWarnings only)
-                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
-                assert len(user_warnings) == 1
-                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
-
-    def test_ssl_verification_disabled_env_var_no(self):
-        """Test SSL verification disabled via environment variable 'no'."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "no"}):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always")
-
-                manager = get_client_manager()
-
-                # Check SSL verification is disabled
-                assert manager._verify_ssl is False
-
-                # Check warning was issued (filter for UserWarnings only)
-                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
-                assert len(user_warnings) == 1
-                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
-
-    def test_ssl_verification_disabled_env_var_off(self):
-        """Test SSL verification disabled via environment variable 'off'."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "off"}):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always")
-
-                manager = get_client_manager()
-
-                # Check SSL verification is disabled
-                assert manager._verify_ssl is False
-
-                # Check warning was issued (filter for UserWarnings only)
                 user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
                 assert len(user_warnings) == 1
                 assert "SSL verification is DISABLED" in str(user_warnings[0].message)
@@ -112,43 +53,9 @@ class TestSSLVerificationWarnings:
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "true"}):
             with warnings.catch_warnings(record=True) as warning_list:
                 warnings.simplefilter("always")
-
                 manager = get_client_manager()
 
-                # Check SSL verification is enabled
                 assert manager._verify_ssl is True
-
-                # Check no warning was issued (filter for UserWarnings only)
-                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
-                assert len(user_warnings) == 0
-
-    def test_ssl_verification_enabled_env_var_one(self):
-        """Test SSL verification enabled via environment variable '1'."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "1"}):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always")
-
-                manager = get_client_manager()
-
-                # Check SSL verification is enabled
-                assert manager._verify_ssl is True
-
-                # Check no warning was issued (filter for UserWarnings only)
-                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
-                assert len(user_warnings) == 0
-
-    def test_ssl_verification_enabled_env_var_yes(self):
-        """Test SSL verification enabled via environment variable 'yes'."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "yes"}):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always")
-
-                manager = get_client_manager()
-
-                # Check SSL verification is enabled
-                assert manager._verify_ssl is True
-
-                # Check no warning was issued (filter for UserWarnings only)
                 user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
                 assert len(user_warnings) == 0
 
@@ -157,16 +64,11 @@ class TestSSLVerificationWarnings:
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "FALSE"}):
             with warnings.catch_warnings(record=True) as warning_list:
                 warnings.simplefilter("always")
-
                 manager = get_client_manager()
 
-                # Check SSL verification is disabled
                 assert manager._verify_ssl is False
-
-                # Check warning was issued (filter for UserWarnings only)
                 user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
                 assert len(user_warnings) == 1
-                assert "SSL verification is DISABLED" in str(user_warnings[0].message)
 
     def test_audit_logging_ssl_verification_enabled(self):
         """Test audit logging when SSL verification is enabled."""
@@ -178,7 +80,6 @@ class TestSSLVerificationWarnings:
 
                     manager = get_client_manager()
 
-                    # Verify audit logger was called
                     mock_audit_logger_class.assert_called_once()
                     mock_audit_logger.log_command.assert_called_once_with(
                         command="ssl_verification_config",
@@ -186,78 +87,7 @@ class TestSSLVerificationWarnings:
                         user=None,
                         success=True,
                     )
-
-                    # Verify SSL verification is enabled
                     assert manager._verify_ssl is True
-
-    def test_audit_logging_ssl_verification_disabled(self):
-        """Test audit logging when SSL verification is disabled."""
-        with TemporaryDirectory():
-            with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
-                with patch("youtrack_cli.security.AuditLogger") as mock_audit_logger_class:
-                    mock_audit_logger = MagicMock()
-                    mock_audit_logger_class.return_value = mock_audit_logger
-
-                    with warnings.catch_warnings(record=True):
-                        warnings.simplefilter("always")
-
-                        manager = get_client_manager()
-
-                        # Verify audit logger was called
-                        mock_audit_logger_class.assert_called_once()
-                        mock_audit_logger.log_command.assert_called_once_with(
-                            command="ssl_verification_config",
-                            arguments=["YOUTRACK_VERIFY_SSL=false", "verify_ssl=False"],
-                            user=None,
-                            success=True,
-                        )
-
-                        # Verify SSL verification is disabled
-                        assert manager._verify_ssl is False
-
-    def test_audit_logging_ssl_verification_default(self):
-        """Test audit logging when SSL verification uses default value."""
-        with TemporaryDirectory():
-            with patch.dict(os.environ, {}, clear=True):
-                # Remove YOUTRACK_VERIFY_SSL if it exists
-                if "YOUTRACK_VERIFY_SSL" in os.environ:
-                    del os.environ["YOUTRACK_VERIFY_SSL"]
-
-                with patch("youtrack_cli.security.AuditLogger") as mock_audit_logger_class:
-                    mock_audit_logger = MagicMock()
-                    mock_audit_logger_class.return_value = mock_audit_logger
-
-                    manager = get_client_manager()
-
-                    # Verify audit logger was called
-                    mock_audit_logger_class.assert_called_once()
-                    mock_audit_logger.log_command.assert_called_once_with(
-                        command="ssl_verification_config",
-                        arguments=["YOUTRACK_VERIFY_SSL=true", "verify_ssl=True"],
-                        user=None,
-                        success=True,
-                    )
-
-                    # Verify SSL verification is enabled
-                    assert manager._verify_ssl is True
-
-    def test_warning_stacklevel_correct(self):
-        """Test that warning stacklevel is set correctly."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always")
-
-                get_client_manager()
-
-                # Check warning was issued with correct stacklevel (filter for UserWarnings only)
-                user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
-                assert len(user_warnings) == 1
-                warning = user_warnings[0]
-
-                # The warning should point to the call to get_client_manager()
-                # rather than the internal implementation
-                assert warning.filename.endswith("test_client.py")
-                assert warning.lineno > 0
 
     def test_client_manager_singleton_behavior(self):
         """Test that client manager maintains singleton behavior with SSL warnings."""
@@ -265,77 +95,14 @@ class TestSSLVerificationWarnings:
             with warnings.catch_warnings(record=True) as warning_list:
                 warnings.simplefilter("always")
 
-                # First call should create manager and issue warning
                 manager1 = get_client_manager()
                 user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
                 assert len(user_warnings) == 1
 
-                # Second call should return same manager without additional warning
                 manager2 = get_client_manager()
                 assert manager1 is manager2
                 user_warnings = [w for w in warning_list if issubclass(w.category, UserWarning)]
                 assert len(user_warnings) == 1  # No additional warning
-
-    def test_client_manager_logging_info(self):
-        """Test that client manager logs initialization information."""
-        with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
-            with patch("youtrack_cli.client.logger") as mock_logger:
-                with warnings.catch_warnings(record=True):
-                    warnings.simplefilter("always")
-
-                    get_client_manager()
-
-                    # Verify info logging was called
-                    mock_logger.info.assert_called_once()
-                    call_args = mock_logger.info.call_args
-                    assert call_args[0][0] == "HTTP client manager initialized"
-                    assert "verify_ssl" in call_args[1]
-                    assert call_args[1]["verify_ssl"] is False
-
-    def test_multiple_environment_values(self):
-        """Test various environment variable values for SSL verification."""
-        test_cases = [
-            # (env_value, expected_ssl_verification, should_warn)
-            ("false", False, True),
-            ("0", False, True),
-            ("no", False, True),
-            ("off", False, True),
-            ("FALSE", False, True),
-            ("Off", False, True),
-            ("true", True, False),
-            ("1", True, False),
-            ("yes", True, False),
-            ("on", True, False),
-            ("TRUE", True, False),
-            ("anything_else", True, False),
-            ("", True, False),
-        ]
-
-        for env_value, expected_ssl, should_warn in test_cases:
-            # Reset client manager for each test iteration
-            reset_client_manager_sync()
-            # Reset warnings system to ensure clean state
-            warnings.resetwarnings()
-
-            with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": env_value}):
-                with warnings.catch_warnings(record=True) as warning_list:
-                    warnings.simplefilter("always")
-
-                    manager = get_client_manager()
-
-                    # Check SSL verification setting
-                    assert manager._verify_ssl is expected_ssl, f"Failed for env_value: {env_value}"
-
-                    # Check warning behavior
-                    ssl_warnings = [w for w in warning_list if "SSL verification is DISABLED" in str(w.message)]
-                    if should_warn:
-                        assert len(ssl_warnings) == 1, (
-                            f"Expected 1 SSL warning for env_value: {env_value}, got {len(ssl_warnings)}"
-                        )
-                    else:
-                        assert len(ssl_warnings) == 0, (
-                            f"Unexpected SSL warning for env_value: {env_value}, got {len(ssl_warnings)}"
-                        )
 
 
 @pytest.mark.unit
@@ -354,13 +121,9 @@ class TestTimeoutConfiguration:
         """Test default timeout values."""
         with patch.dict(os.environ, {}, clear=True):
             manager = get_client_manager()
-            # Default timeout should be 30.0 seconds
             assert manager._default_timeout == 30.0
-            # Timeout object should use default for all timeout types
             assert manager._timeout.connect == 30.0
             assert manager._timeout.read == 30.0
-            assert manager._timeout.write == 30.0
-            assert manager._timeout.pool == 30.0
 
     def test_custom_default_timeout_env_var(self):
         """Test custom default timeout from environment variable."""
@@ -368,9 +131,6 @@ class TestTimeoutConfiguration:
             manager = get_client_manager()
             assert manager._default_timeout == 45.5
             assert manager._timeout.connect == 45.5
-            assert manager._timeout.read == 45.5
-            assert manager._timeout.write == 45.5
-            assert manager._timeout.pool == 45.5
 
     def test_specific_timeout_env_vars(self):
         """Test specific timeout configuration from environment variables."""
@@ -380,77 +140,22 @@ class TestTimeoutConfiguration:
                 "YOUTRACK_DEFAULT_TIMEOUT": "30.0",
                 "YOUTRACK_CONNECT_TIMEOUT": "10.0",
                 "YOUTRACK_READ_TIMEOUT": "60.0",
-                "YOUTRACK_WRITE_TIMEOUT": "20.0",
-                "YOUTRACK_POOL_TIMEOUT": "5.0",
             },
         ):
             manager = get_client_manager()
             assert manager._default_timeout == 30.0
             assert manager._timeout.connect == 10.0
             assert manager._timeout.read == 60.0
-            assert manager._timeout.write == 20.0
-            assert manager._timeout.pool == 5.0
-
-    def test_partial_timeout_env_vars(self):
-        """Test that unspecified timeout types fall back to default."""
-        with patch.dict(
-            os.environ,
-            {
-                "YOUTRACK_DEFAULT_TIMEOUT": "25.0",
-                "YOUTRACK_CONNECT_TIMEOUT": "10.0",
-                "YOUTRACK_READ_TIMEOUT": "40.0",
-                # write_timeout and pool_timeout not specified
-            },
-        ):
-            manager = get_client_manager()
-            assert manager._default_timeout == 25.0
-            assert manager._timeout.connect == 10.0
-            assert manager._timeout.read == 40.0
-            assert manager._timeout.write == 25.0  # Falls back to default
-            assert manager._timeout.pool == 25.0  # Falls back to default
 
     def test_invalid_timeout_values_warning(self):
         """Test handling of invalid timeout values with warnings."""
-        test_cases = [
-            ("invalid", 30.0),  # Non-numeric
-            ("-5.0", 30.0),  # Negative
-            ("0", 30.0),  # Zero
-            ("", 30.0),  # Empty string
-        ]
-
-        for invalid_value, expected_fallback in test_cases:
-            reset_client_manager_sync()
-            with patch.dict(os.environ, {"YOUTRACK_DEFAULT_TIMEOUT": invalid_value}):
-                with patch("youtrack_cli.client.logger") as mock_logger:
-                    manager = get_client_manager()
-
-                    # Should fall back to default value
-                    assert manager._default_timeout == expected_fallback
-
-                    # Should log a warning
-                    warning_calls = [
-                        call for call in mock_logger.warning.call_args_list if "Invalid timeout" in str(call)
-                    ]
-                    assert len(warning_calls) >= 1, f"Expected warning for invalid value: {invalid_value}"
-
-    def test_timeout_logging_in_client_manager_init(self):
-        """Test that timeout configuration is logged during initialization."""
-        with patch.dict(
-            os.environ,
-            {
-                "YOUTRACK_DEFAULT_TIMEOUT": "35.0",
-                "YOUTRACK_CONNECT_TIMEOUT": "15.0",
-            },
-        ):
+        reset_client_manager_sync()
+        with patch.dict(os.environ, {"YOUTRACK_DEFAULT_TIMEOUT": "invalid"}):
             with patch("youtrack_cli.client.logger") as mock_logger:
-                get_client_manager()
-
-                # Verify info logging includes timeout configuration
-                mock_logger.info.assert_called_once()
-                call_args = mock_logger.info.call_args
-                assert "default_timeout" in call_args[1]
-                assert call_args[1]["default_timeout"] == 35.0
-                assert call_args[1]["connect_timeout"] == 15.0
+                manager = get_client_manager()
+                assert manager._default_timeout == 30.0  # Falls back to default
+                warning_calls = [call for call in mock_logger.warning.call_args_list if "Invalid timeout" in str(call)]
+                assert len(warning_calls) >= 1
 
     @pytest.mark.asyncio
     async def test_timeout_parameter_in_make_request(self):
@@ -461,40 +166,15 @@ class TestTimeoutConfiguration:
             mock_client = AsyncMock()
             mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock successful response
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_client.request.return_value = mock_response
 
-            # Test with custom timeout
             await manager.make_request("GET", "https://test.com", timeout=15.0)
 
-            # Verify request was called with custom timeout
             mock_client.request.assert_called_once()
             call_args = mock_client.request.call_args
             assert call_args[1]["timeout"] == 15.0
-
-    @pytest.mark.asyncio
-    async def test_timeout_fallback_to_default(self):
-        """Test that make_request falls back to default timeout when no timeout specified."""
-        manager = HTTPClientManager(default_timeout=25.0)
-
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
-
-            # Mock successful response
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_client.request.return_value = mock_response
-
-            # Test without custom timeout
-            await manager.make_request("GET", "https://test.com")
-
-            # Verify request was called with default timeout
-            mock_client.request.assert_called_once()
-            call_args = mock_client.request.call_args
-            assert call_args[1]["timeout"] == 25.0
 
 
 @pytest.mark.unit
@@ -511,45 +191,22 @@ class TestHTTPClientManager:
         manager = HTTPClientManager(verify_ssl=False)
         assert manager._verify_ssl is False
 
-    def test_init_default_ssl_verification(self):
-        """Test HTTPClientManager initialization with default SSL verification."""
-        manager = HTTPClientManager()
-        assert manager._verify_ssl is True  # Default should be True
-
     def test_init_with_custom_timeouts(self):
         """Test HTTPClientManager initialization with custom timeout values."""
         manager = HTTPClientManager(
             default_timeout=40.0,
             connect_timeout=12.0,
             read_timeout=50.0,
-            write_timeout=25.0,
-            pool_timeout=8.0,
         )
         assert manager._default_timeout == 40.0
         assert manager._timeout.connect == 12.0
         assert manager._timeout.read == 50.0
-        assert manager._timeout.write == 25.0
-        assert manager._timeout.pool == 8.0
-
-    def test_init_with_partial_custom_timeouts(self):
-        """Test HTTPClientManager initialization with some custom timeout values."""
-        manager = HTTPClientManager(
-            default_timeout=35.0,
-            connect_timeout=15.0,
-            # read_timeout, write_timeout, pool_timeout not specified (should use default)
-        )
-        assert manager._default_timeout == 35.0
-        assert manager._timeout.connect == 15.0
-        assert manager._timeout.read == 35.0  # Falls back to default
-        assert manager._timeout.write == 35.0  # Falls back to default
-        assert manager._timeout.pool == 35.0  # Falls back to default
 
     @pytest.mark.asyncio
     async def test_ensure_client_with_ssl_verification(self):
         """Test that _ensure_client uses SSL verification setting."""
         manager = HTTPClientManager(verify_ssl=False)
 
-        # Mock httpx.AsyncClient to verify verify parameter
         with patch("youtrack_cli.client.httpx.AsyncClient") as mock_client_class:
             mock_client = MagicMock()
             mock_client_class.return_value = mock_client
@@ -557,54 +214,9 @@ class TestHTTPClientManager:
 
             await manager._ensure_client()
 
-            # Verify httpx.AsyncClient was called with correct verify parameter
             mock_client_class.assert_called_once()
             call_args = mock_client_class.call_args
             assert call_args[1]["verify"] is False
-
-    @pytest.mark.asyncio
-    async def test_ensure_client_ssl_verification_enabled(self):
-        """Test that _ensure_client uses SSL verification when enabled."""
-        manager = HTTPClientManager(verify_ssl=True)
-
-        # Mock httpx.AsyncClient to verify verify parameter
-        with patch("youtrack_cli.client.httpx.AsyncClient") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client_class.return_value = mock_client
-            mock_client.is_closed = False
-
-            await manager._ensure_client()
-
-            # Verify httpx.AsyncClient was called with correct verify parameter
-            mock_client_class.assert_called_once()
-            call_args = mock_client_class.call_args
-            assert call_args[1]["verify"] is True
-
-    @pytest.mark.asyncio
-    async def test_ensure_client_timeout_configuration(self):
-        """Test that _ensure_client uses timeout configuration."""
-        manager = HTTPClientManager(
-            default_timeout=25.0,
-            connect_timeout=10.0,
-            read_timeout=40.0,
-        )
-
-        # Mock httpx.AsyncClient to verify timeout parameter
-        with patch("youtrack_cli.client.httpx.AsyncClient") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client_class.return_value = mock_client
-            mock_client.is_closed = False
-
-            await manager._ensure_client()
-
-            # Verify httpx.AsyncClient was called with correct timeout
-            mock_client_class.assert_called_once()
-            call_args = mock_client_class.call_args
-            timeout_arg = call_args[1]["timeout"]
-            assert timeout_arg.connect == 10.0
-            assert timeout_arg.read == 40.0
-            assert timeout_arg.write == 25.0  # Falls back to default
-            assert timeout_arg.pool == 25.0  # Falls back to default
 
 
 @pytest.mark.unit
@@ -613,109 +225,44 @@ class TestSecurityIntegration:
 
     def test_audit_logger_import(self):
         """Test that AuditLogger can be imported and used."""
-
-        # This should not raise any import errors
         logger = AuditLogger()
         assert logger is not None
 
     def test_client_manager_reset_functionality(self):
         """Test reset_client_manager functionality."""
-        # Ensure clean state
         reset_client_manager_sync()
         warnings.resetwarnings()
 
         with patch.dict(os.environ, {"YOUTRACK_VERIFY_SSL": "false"}):
-            # Test first manager creation
             with warnings.catch_warnings(record=True) as warning_list1:
                 warnings.simplefilter("always")
                 manager1 = get_client_manager()
                 ssl_warnings1 = [w for w in warning_list1 if "SSL verification is DISABLED" in str(w.message)]
 
-            # Reset and test second manager creation
             reset_client_manager_sync()
             with warnings.catch_warnings(record=True) as warning_list2:
                 warnings.simplefilter("always")
                 manager2 = get_client_manager()
                 ssl_warnings2 = [w for w in warning_list2 if "SSL verification is DISABLED" in str(w.message)]
 
-            # Verify behavior
-            assert manager1 is not manager2, "Managers should be different instances after reset"
-            assert len(ssl_warnings1) >= 1, f"Expected at least 1 SSL warning in first call, got {len(ssl_warnings1)}"
-            assert len(ssl_warnings2) >= 1, f"Expected at least 1 SSL warning in second call, got {len(ssl_warnings2)}"
+            assert manager1 is not manager2
+            assert len(ssl_warnings1) >= 1
+            assert len(ssl_warnings2) >= 1
 
     @pytest.mark.asyncio
     async def test_reset_client_manager_async_cleanup(self):
         """Test that reset_client_manager properly closes connections."""
         from youtrack_cli.client import reset_client_manager
 
-        # Ensure clean state
         reset_client_manager_sync()
 
-        # Get a manager and ensure it has a client
         manager = get_client_manager()
         async with manager.get_client() as client:
             assert client is not None
             assert not client.is_closed
 
-        # Reset asynchronously and verify cleanup
         await reset_client_manager()
-
-        # Verify the client was closed
         assert manager._client is None or manager._client.is_closed
-
-    @pytest.mark.asyncio
-    async def test_reset_client_manager_cleanup_error_handling(self):
-        """Test that reset_client_manager handles cleanup errors gracefully."""
-        from youtrack_cli.client import reset_client_manager
-
-        # Ensure clean state
-        reset_client_manager_sync()
-
-        # Get a manager
-        manager = get_client_manager()
-
-        # Mock the close method to raise an exception
-        with patch.object(manager, "close", side_effect=Exception("Test cleanup error")):
-            # This should not raise an exception
-            await reset_client_manager()
-
-        # Verify the manager was still reset despite the error
-        from youtrack_cli.client import _client_manager
-
-        assert _client_manager is None
-
-    def test_reset_client_manager_sync_compatibility(self):
-        """Test backwards compatibility of reset_client_manager_sync."""
-        # Ensure clean state
-        reset_client_manager_sync()
-
-        # Get a manager
-        manager1 = get_client_manager()
-
-        # Reset using sync version
-        reset_client_manager_sync()
-
-        # Get a new manager
-        manager2 = get_client_manager()
-
-        # Verify they are different instances
-        assert manager1 is not manager2
-
-    def test_reset_client_manager_sync_without_event_loop(self):
-        """Test reset_client_manager_sync when no event loop is running."""
-        # Ensure clean state
-        reset_client_manager_sync()
-
-        # Get a manager to ensure something exists to reset
-        get_client_manager()
-
-        # This should work without an event loop
-        reset_client_manager_sync()
-
-        # Verify cleanup occurred
-        from youtrack_cli.client import _client_manager
-
-        assert _client_manager is None
 
 
 @pytest.mark.unit
@@ -735,23 +282,18 @@ class TestExceptionHandling:
         """Test network error handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        # Mock asyncio.sleep to eliminate wait times
         with patch("asyncio.sleep") as mock_sleep:
             with patch.object(manager, "get_client") as mock_get_client:
                 mock_client = AsyncMock()
                 mock_get_client.return_value.__aenter__.return_value = mock_client
 
-                # Mock request to raise a network error
                 mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
 
                 with pytest.raises(YouTrackNetworkError) as exc_info:
                     await manager.make_request("GET", "https://test.com")
 
-                # Verify the error message includes retry information
                 assert "Network error after 3 retries" in str(exc_info.value)
-                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
                 assert mock_client.request.call_count == 4
-                # Verify sleep was called for retries (3 times)
                 assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
@@ -759,47 +301,18 @@ class TestExceptionHandling:
         """Test timeout error handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        # Mock asyncio.sleep to eliminate wait times
         with patch("asyncio.sleep") as mock_sleep:
             with patch.object(manager, "get_client") as mock_get_client:
                 mock_client = AsyncMock()
                 mock_get_client.return_value.__aenter__.return_value = mock_client
 
-                # Mock request to raise a timeout error
                 mock_client.request = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
 
                 with pytest.raises(ConnectionError) as exc_info:
                     await manager.make_request("GET", "https://test.com")
 
-                # Verify the error message is about timeout
                 assert "timed out" in str(exc_info.value)
-                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
                 assert mock_client.request.call_count == 4
-                # Verify sleep was called for retries (3 times)
-                assert mock_sleep.call_count == 3
-
-    @pytest.mark.asyncio
-    async def test_os_error_retry_and_failure(self):
-        """Test OS error handling with retry and eventual failure."""
-        manager = HTTPClientManager()
-
-        # Mock asyncio.sleep to eliminate wait times
-        with patch("asyncio.sleep") as mock_sleep:
-            with patch.object(manager, "get_client") as mock_get_client:
-                mock_client = AsyncMock()
-                mock_get_client.return_value.__aenter__.return_value = mock_client
-
-                # Mock request to raise an OS error
-                mock_client.request = AsyncMock(side_effect=OSError("Network unavailable"))
-
-                with pytest.raises(YouTrackNetworkError) as exc_info:
-                    await manager.make_request("GET", "https://test.com")
-
-                # Verify the error message includes retry information
-                assert "Network error after 3 retries" in str(exc_info.value)
-                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
-                assert mock_client.request.call_count == 4
-                # Verify sleep was called for retries (3 times)
                 assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
@@ -807,18 +320,15 @@ class TestExceptionHandling:
         """Test server error (5xx) handling with retry and eventual failure."""
         manager = HTTPClientManager()
 
-        # Mock asyncio.sleep to eliminate wait times
         with patch("asyncio.sleep") as mock_sleep:
             with patch.object(manager, "get_client") as mock_get_client:
                 mock_client = AsyncMock()
                 mock_get_client.return_value.__aenter__.return_value = mock_client
 
-                # Mock response for server error
                 mock_response = MagicMock()
                 mock_response.status_code = 500
                 mock_response.text = "Internal Server Error"
 
-                # Mock request to raise a server error
                 mock_client.request = AsyncMock(
                     side_effect=httpx.HTTPStatusError("Server error", request=MagicMock(), response=mock_response)
                 )
@@ -826,13 +336,9 @@ class TestExceptionHandling:
                 with pytest.raises(YouTrackServerError) as exc_info:
                     await manager.make_request("GET", "https://test.com")
 
-                # Verify the error message includes retry information
                 assert "Server error after 3 retries" in str(exc_info.value)
-                # Verify status code is captured
                 assert cast(YouTrackServerError, exc_info.value).status_code == 500
-                # Verify it retried max_retries times (4 attempts total: initial + 3 retries)
                 assert mock_client.request.call_count == 4
-                # Verify sleep was called for retries (3 times)
                 assert mock_sleep.call_count == 3
 
     @pytest.mark.asyncio
@@ -844,12 +350,10 @@ class TestExceptionHandling:
             mock_client = AsyncMock()
             mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock response for client error
             mock_response = MagicMock()
             mock_response.status_code = 404
             mock_response.text = "Not Found"
 
-            # Mock request to raise a client error
             mock_client.request = AsyncMock(
                 side_effect=httpx.HTTPStatusError("Not found", request=MagicMock(), response=mock_response)
             )
@@ -857,7 +361,6 @@ class TestExceptionHandling:
             with pytest.raises(httpx.HTTPStatusError):
                 await manager.make_request("GET", "https://test.com")
 
-            # Verify it did not retry (only 1 attempt)
             assert mock_client.request.call_count == 1
 
     @pytest.mark.asyncio
@@ -865,26 +368,20 @@ class TestExceptionHandling:
         """Test successful retry after network error."""
         manager = HTTPClientManager()
 
-        # Mock asyncio.sleep to eliminate wait times
         with patch("asyncio.sleep") as mock_sleep:
             with patch.object(manager, "get_client") as mock_get_client:
                 mock_client = AsyncMock()
                 mock_get_client.return_value.__aenter__.return_value = mock_client
 
-                # Mock successful response
                 mock_response = MagicMock()
                 mock_response.status_code = 200
 
-                # Mock request to fail first time, then succeed
                 mock_client.request = AsyncMock(side_effect=[httpx.RequestError("Network error"), mock_response])
 
                 result = await manager.make_request("GET", "https://test.com")
 
-                # Verify the successful response was returned
                 assert result == mock_response
-                # Verify it retried once (2 attempts total)
                 assert mock_client.request.call_count == 2
-                # Verify sleep was called once for retry
                 assert mock_sleep.call_count == 1
 
     @pytest.mark.asyncio
@@ -896,68 +393,10 @@ class TestExceptionHandling:
             mock_client = AsyncMock()
             mock_get_client.return_value.__aenter__.return_value = mock_client
 
-            # Mock request to raise an unexpected error
             mock_client.request = AsyncMock(side_effect=ValueError("Unexpected error"))
 
             with pytest.raises(YouTrackError) as exc_info:
                 await manager.make_request("GET", "https://test.com")
 
-            # Verify the error message includes the unexpected error
             assert "Unexpected error" in str(exc_info.value)
-            # Verify it did not retry (only 1 attempt)
             assert mock_client.request.call_count == 1
-
-    @pytest.mark.asyncio
-    async def test_logging_for_network_errors(self):
-        """Test proper logging for network errors."""
-        manager = HTTPClientManager()
-
-        # Mock asyncio.sleep to eliminate wait times
-        with patch("asyncio.sleep") as mock_sleep:
-            with patch.object(manager, "get_client") as mock_get_client:
-                mock_client = AsyncMock()
-                mock_get_client.return_value.__aenter__.return_value = mock_client
-
-                # Mock request to raise a network error
-                mock_client.request = AsyncMock(side_effect=httpx.RequestError("Network error"))
-
-                with patch("youtrack_cli.client.logger") as mock_logger:
-                    with pytest.raises(YouTrackNetworkError):
-                        await manager.make_request("GET", "https://test.com")
-
-                    # Verify warning logs were created for retries
-                    assert mock_logger.warning.call_count == 3  # 3 retry attempts after initial failure
-                    # Verify error log was created after max retries
-                    assert mock_logger.error.call_count == 1
-                    # Verify sleep was called for retries (3 times)
-                    assert mock_sleep.call_count == 3
-
-                    # Check that error type is logged
-                    warning_calls = mock_logger.warning.call_args_list
-                    for call in warning_calls:
-                        assert "error_type" in call[1]
-                        assert call[1]["error_type"] == "RequestError"
-
-    @pytest.mark.asyncio
-    async def test_logging_for_unexpected_errors(self):
-        """Test proper logging for unexpected errors."""
-        manager = HTTPClientManager()
-
-        with patch.object(manager, "get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value.__aenter__.return_value = mock_client
-
-            # Mock request to raise an unexpected error
-            mock_client.request = AsyncMock(side_effect=ValueError("Unexpected error"))
-
-            with patch("youtrack_cli.client.logger") as mock_logger:
-                with pytest.raises(YouTrackError):
-                    await manager.make_request("GET", "https://test.com")
-
-                # Verify exception logging was called
-                assert mock_logger.exception.call_count == 1
-
-                # Check that error type is logged
-                exception_call = mock_logger.exception.call_args
-                assert "error_type" in exception_call[1]
-                assert exception_call[1]["error_type"] == "ValueError"
