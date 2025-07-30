@@ -48,6 +48,7 @@ States and Workflow
 **States** represent the current status of an issue in its lifecycle:
 
 **Common States:**
+
 * ``Open`` - Issue has been created but work hasn't started
 * ``In Progress`` - Someone is actively working on the issue
 * ``In Review`` - Work is complete and under review
@@ -142,7 +143,7 @@ Here's how YouTrack concepts map to CLI commands:
    yt issues create PROJECT-ID "Issue summary" --type Bug --priority High
 
    # List issues in a project
-   yt issues list --project PROJECT-ID
+   yt issues list --project-id PROJECT-ID
 
    # Update issue state
    yt issues update ISSUE-ID --state "In Progress"
@@ -158,7 +159,7 @@ Here's how YouTrack concepts map to CLI commands:
    yt projects list
 
    # Create a new project
-   yt projects create --name "My Project" --key "MP"
+   yt projects create "My Project" "MP" --leader admin
 
 **Comments and Communication:**
 
@@ -187,7 +188,7 @@ For New YouTrack Users
 ~~~~~~~~~~~~~~~~~~~~~~
 
 1. **Start with browsing** - Use ``yt projects list`` to see available projects
-2. **Explore issues** - Try ``yt issues list --project PROJECT-ID`` to see existing issues
+2. **Explore issues** - Try ``yt issues list --project-id PROJECT-ID`` to see existing issues
 3. **Understand the workflow** - Ask your team about the typical issue states
 4. **Practice with test issues** - Create a few test issues to get comfortable
 

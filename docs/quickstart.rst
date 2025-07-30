@@ -121,9 +121,9 @@ Create a Project
 
 .. code-block:: bash
 
-   yt projects create --name "New Project" --key "NP" --description "Project description"
+   yt projects create "New Project" "NP" --description "Project description"
 
-4. Time Tracking
+1. Time Tracking
 ----------------
 
 Log Work Time
@@ -213,7 +213,7 @@ If you encounter issues, YouTrack CLI provides enhanced debugging capabilities:
 .. code-block:: bash
 
    yt --verbose issues list
-   yt --verbose projects create --name "New Project" --key "NP"
+   yt --verbose projects create "New Project" "NP"
 
 **Debug Mode** - Shows detailed information for troubleshooting:
 
@@ -249,9 +249,6 @@ Control how results are displayed:
 
    # JSON format for automation
    yt issues list --format json
-
-   # Disable colors for plain text
-   yt issues list --no-color
 
 Next Steps
 ----------
