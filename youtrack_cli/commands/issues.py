@@ -1161,7 +1161,7 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
         result = asyncio.run(issue_manager.add_comment(issue_id, text))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            console.print(f"✅ Comment added successfully to issue '{issue_id}'", style="green")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to add comment")
@@ -1239,7 +1239,7 @@ def update_comment(ctx: click.Context, issue_id: str, comment_id: str, text: str
         result = asyncio.run(issue_manager.update_comment(issue_id, comment_id, text))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            console.print(f"✅ Comment '{comment_id}' updated successfully", style="green")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to update comment")
