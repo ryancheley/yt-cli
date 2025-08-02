@@ -745,19 +745,21 @@ class IssueManager:
         return await self.issue_service.move_issue(issue_id, state=state, project_id=project_id)
 
     def display_comments_table(self, comments: List[Dict[str, Any]]) -> None:
-        """Display comments in a table format."""
+        """Display comments in a table format with comment IDs for delete/update operations."""
         if not comments:
             self.console.print("[yellow]No comments found.[/yellow]")
             return
 
         from rich.table import Table
 
-        table = Table(title="Issue Comments")
+        table = Table(title="📋 Issue Comments")
+        table.add_column("ID", style="bright_black", no_wrap=True, width=10)
         table.add_column("Author", style="cyan", no_wrap=True)
         table.add_column("Date", style="blue")
         table.add_column("Comment", style="white")
 
         for comment in comments:
+            comment_id = comment.get("id", "N/A")
             author = comment.get("author", {}).get("fullName", "Unknown")
             created = comment.get("created", "")
             text = comment.get("text", "")
@@ -766,7 +768,7 @@ class IssueManager:
             if len(text) > 100:
                 text = text[:97] + "..."
 
-            table.add_row(author, str(created), text)
+            table.add_row(str(comment_id), author, str(created), text)
 
         self.console.print(table)
 
