@@ -1589,6 +1589,75 @@ class TestIssuesCLI:
             assert result.exit_code == 1
             assert "api request failed" in result.output.lower()
 
+    def test_issues_update_command_empty_assignee_valid(self):
+        """Test that empty assignee string is treated as valid update."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Issue updated successfully",
+            }
+
+            result = runner.invoke(main, ["issues", "update", "PROJ-123", "--assignee", ""])
+
+            assert result.exit_code == 0
+            assert "updating issue" in result.output.lower()
+            assert "no updates specified" not in result.output.lower()
+
+    def test_issues_update_command_empty_summary_valid(self):
+        """Test that empty summary string is treated as valid update."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Issue updated successfully",
+            }
+
+            result = runner.invoke(main, ["issues", "update", "PROJ-123", "--summary", ""])
+
+            assert result.exit_code == 0
+            assert "updating issue" in result.output.lower()
+            assert "no updates specified" not in result.output.lower()
+
+    def test_issues_update_command_no_options_invalid(self):
+        """Test that no update options still shows 'no updates specified'."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["issues", "update", "PROJ-123"])
+
+        # Should exit with 0 but show the validation message and return early
+        assert result.exit_code == 0
+        assert "no updates specified" in result.output.lower()
+
+    def test_issues_update_command_empty_fields_combination(self):
+        """Test that combination of empty fields is treated as valid update."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {
+                "status": "success",
+                "message": "Issue updated successfully",
+            }
+
+            result = runner.invoke(
+                main,
+                ["issues", "update", "PROJ-123", "--assignee", "", "--description", "", "--summary", "New summary"],
+            )
+
+            assert result.exit_code == 0
+            assert "updating issue" in result.output.lower()
+            assert "no updates specified" not in result.output.lower()
+
 
 @pytest.mark.unit
 class TestIssueTablePagination:
