@@ -306,7 +306,7 @@ class ProjectService(BaseService):
             if fields:
                 params["fields"] = fields
             else:
-                params["fields"] = "id,name,fieldType,localizedName,isPublic,ordinal"
+                params["fields"] = "id,field(name,fieldType),canBeEmpty,isPublic,ordinal"
 
             response = await self._make_request("GET", f"admin/projects/{project_id}/customFields", params=params)
             return await self._handle_response(response)
