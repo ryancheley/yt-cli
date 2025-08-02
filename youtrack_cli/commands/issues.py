@@ -166,7 +166,7 @@ def show_issues_verbose_help(ctx):
     # Tips
     console.print("[bold]Tips:[/bold]")
     console.print("  • Issue types and priorities are project-specific")
-    console.print("  • Use 'me' as assignee to assign to yourself")
+    console.print("  • Use 'me' as assignee to filter or assign to yourself")
     console.print("  • Most commands accept both short (-t) and long (--type) options")
     console.print("  • Use --format option to change output format (table, json, etc.)")
     console.print("")
@@ -844,13 +844,14 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
     """Assign an issue to a user.
 
     Assigns the specified issue to a user by their username.
+    Use 'me' to assign the issue to yourself.
 
     Examples:
         # Assign issue to a specific user
         yt issues assign DEMO-20 admin
 
-        # Assign issue to yourself (use your username)
-        yt issues assign WEB-123 john.doe
+        # Assign issue to yourself
+        yt issues assign WEB-123 me
 
     Note: Use the username directly as a positional argument, not --assignee flag.
     """
@@ -862,29 +863,34 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
 
     # Handle 'me' keyword by resolving to current user's login
     if assignee == "me":
-        current_user = auth_manager.get_current_user_sync()
-        if not current_user:
-            # Try to get current user from API
-            try:
-                credentials = auth_manager.load_credentials()
-                if credentials:
-                    verification_result = asyncio.run(
-                        auth_manager.verify_credentials(credentials.base_url, credentials.token)
-                    )
-                    if verification_result.status == "success" and verification_result.username:
-                        current_user = verification_result.username
-                    else:
-                        console.print(
-                            "❌ Unable to resolve 'me' - not authenticated or user info unavailable", style="red"
-                        )
-                        raise click.ClickException("Unable to resolve current user") from None
+        try:
+            credentials = auth_manager.load_credentials()
+            if credentials:
+                # Try to get current user from API to ensure we have the latest info
+                verification_result = asyncio.run(
+                    auth_manager.verify_credentials(credentials.base_url, credentials.token)
+                )
+                if (
+                    verification_result.status == "success"
+                    and verification_result.username
+                    and verification_result.username != "Unknown"
+                ):
+                    assignee = verification_result.username
+                    console.print(f"👤 Resolving 'me' to current user: {assignee}", style="blue")
+                elif credentials.username and credentials.username != "Unknown":
+                    # Fallback to stored username if API verification doesn't give us the username
+                    assignee = credentials.username
+                    console.print(f"👤 Resolving 'me' to stored user: {assignee}", style="blue")
                 else:
-                    console.print("❌ Unable to resolve 'me' - not authenticated or user info unavailable", style="red")
+                    console.print("❌ Unable to resolve 'me' - could not determine current user", style="red")
+                    console.print("💡 Hint: Try using your actual username instead of 'me'", style="yellow")
                     raise click.ClickException("Unable to resolve current user") from None
-            except Exception:
-                console.print("❌ Unable to resolve 'me' - not authenticated or user info unavailable", style="red")
+            else:
+                console.print("❌ Unable to resolve 'me' - not authenticated", style="red")
                 raise click.ClickException("Unable to resolve current user") from None
-        assignee = current_user
+        except Exception as e:
+            console.print(f"❌ Unable to resolve 'me' - {str(e)}", style="red")
+            raise click.ClickException("Unable to resolve current user") from None
 
     console.print(f"👤 Assigning issue '{issue_id}' to '{assignee}'...", style="blue")
 
