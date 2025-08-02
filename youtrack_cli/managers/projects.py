@@ -116,12 +116,18 @@ class ProjectManager:
             return result
         else:
             # Legacy single request approach
-            return await self.project_service.list_projects(
+            result = await self.project_service.list_projects(
                 fields=fields,
                 top=top,
                 skip=0,
                 show_archived=show_archived,
             )
+
+            # Ensure count field is always present
+            if result["status"] == "success" and isinstance(result["data"], list):
+                result["count"] = len(result["data"])
+
+            return result
 
     async def get_project(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """Get a specific project with enhanced error handling.
