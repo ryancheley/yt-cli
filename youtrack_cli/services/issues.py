@@ -140,8 +140,6 @@ class IssueService(BaseService):
                 update_data["summary"] = summary
             if description is not None:
                 update_data["description"] = description
-            if assignee is not None:
-                update_data["assignee"] = {"login": assignee} if assignee else None
             if issue_type is not None:
                 update_data["type"] = {"name": issue_type}
 
@@ -199,6 +197,16 @@ class IssueService(BaseService):
                             "value": {"$type": "StateBundleElement", "name": state},
                         }
                     )
+
+            # Handle assignee field (custom field)
+            if assignee is not None:
+                custom_fields.append(
+                    {
+                        "$type": "SingleUserIssueCustomField",
+                        "name": "Assignee",
+                        "value": {"login": assignee} if assignee else None,
+                    }
+                )
 
             # Handle priority field (keep existing logic for now)
             if priority is not None:
