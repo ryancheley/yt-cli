@@ -280,6 +280,27 @@ class TestIssueServiceUpdate:
             }
             mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
 
+    @pytest.mark.asyncio
+    async def test_assign_issue_with_resolved_username(self, issue_service, mock_response):
+        """Test issue assignment with resolved username (not 'me' directly)."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+
+            # The command layer should resolve 'me' to actual username before calling the service
+            await issue_service.assign_issue("TEST-1", "actual-username")
+
+            expected_data = {
+                "$type": "Issue",
+                "customFields": [
+                    {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": "actual-username"}}
+                ],
+            }
+            mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
+
 
 class TestIssueServiceDelete:
     """Test issue deletion functionality."""
