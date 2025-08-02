@@ -71,20 +71,20 @@ Implement the solution following best practices:
 - When working on a custom field, the documentation is available [here](https://www.jetbrains.com/help/youtrack/devportal/api-how-to-update-custom-fields-values.html)
 
 **CLI Testing with Agent:**
-After implementing any CLI command changes, use the CLI testing agent:
-```bash
-# Use the Task tool to invoke the CLI testing agent to verify all commands work correctly
-Task(
-    description="Test CLI commands",
-    prompt="Test all modified CLI commands and create GitHub issues for any failures found",
-    subagent_type="cli tester"
-)
-```
-The agent will:
-- Automatically detect modified CLI commands
-- Run comprehensive tests on affected commands
-- Create GitHub issues for any failures found
-- Ensure commands work before PR creation
+After implementing any CLI command changes, use the cli-tester subagent for comprehensive validation:
+
+> Use the cli-tester subagent to test all modified CLI commands and create GitHub issues for any failures found
+
+The cli-tester agent will:
+- Automatically detect modified CLI commands by analyzing git diff
+- Run comprehensive tests on affected commands including:
+  - Basic functionality tests
+  - Flag and option combinations
+  - Error handling scenarios
+  - Help text validation
+- Cross-reference behavior with documentation in docs/
+- Create detailed GitHub issues for any failures found
+- Ensure all commands work correctly before PR creation
 
 ## 5. Pre-commit Validation
 
@@ -97,12 +97,8 @@ pre-commit run
 # If CLI commands were modified, run the testing agent
 if git diff --name-only | grep -E "(youtrack_cli/commands/|youtrack_cli/main.py)"; then
     echo "CLI changes detected - running automated tests..."
-    # Use the Task tool to run the cli tester agent
-    Task(
-        description="Test CLI commands",
-        prompt="Test all modified CLI commands and create GitHub issues for any failures found",
-        subagent_type="cli tester"
-    )
+    # Use the cli-tester subagent to validate all modified CLI commands
+    echo "> Use the cli-tester subagent to test all modified CLI commands and create GitHub issues for any failures found"
 fi
 ```
 
