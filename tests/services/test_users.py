@@ -241,16 +241,22 @@ class TestUserServiceUpdateUser:
         with (
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
         ):
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "fullName": "New Name", "email": "test@example.com"},
+            }
 
             result = await user_service.update_user("user-1", full_name="New Name")
 
             expected_data = {"fullName": "New Name"}
             mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
-            mock_handle.assert_called_once_with(mock_response)
+            mock_get_user.assert_called_once_with("user-1", fields="id,login,fullName,email,banned,online,guest")
             assert result["status"] == "success"
+            assert result["data"]["fullName"] == "New Name"
 
     @pytest.mark.asyncio
     async def test_update_user_all_fields(self, user_service, mock_response):
@@ -258,9 +264,20 @@ class TestUserServiceUpdateUser:
         with (
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
         ):
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {
+                    "id": "user-1",
+                    "login": "testuser",
+                    "fullName": "New Name",
+                    "email": "new@example.com",
+                    "banned": True,
+                },
+            }
 
             result = await user_service.update_user(
                 "user-1",
@@ -279,7 +296,10 @@ class TestUserServiceUpdateUser:
                 "forceChangePassword": True,
             }
             mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
+            mock_get_user.assert_called_once_with("user-1", fields="id,login,fullName,email,banned,online,guest")
             assert result["status"] == "success"
+            assert result["data"]["fullName"] == "New Name"
+            assert result["data"]["email"] == "new@example.com"
 
     @pytest.mark.asyncio
     async def test_update_user_error_handling(self, user_service):
