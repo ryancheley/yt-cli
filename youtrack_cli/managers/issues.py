@@ -805,18 +805,15 @@ class IssueManager:
 
     async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
         """Create a link between two issues."""
-        # This would need to be implemented in the service layer
-        return {"status": "error", "message": "Issue linking not yet implemented in service layer"}
+        return await self.issue_service.create_link(source_issue_id, target_issue_id, link_type)
 
-    async def delete_link(self, source_issue_id: str, link_id: str) -> Dict[str, Any]:
+    async def delete_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
         """Delete a link between issues."""
-        # This would need to be implemented in the service layer
-        return {"status": "error", "message": "Issue link deletion not yet implemented in service layer"}
+        return await self.issue_service.delete_link(source_issue_id, target_issue_id, link_type)
 
     async def list_link_types(self) -> Dict[str, Any]:
         """List available link types."""
-        # This would need to be implemented in the service layer
-        return {"status": "error", "message": "Link types listing not yet implemented in service layer"}
+        return await self.issue_service.list_link_types()
 
     def display_link_types_table(self, link_types: List[Dict[str, Any]]) -> None:
         """Display link types in a table format."""

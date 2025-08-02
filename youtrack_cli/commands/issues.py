@@ -1503,14 +1503,15 @@ def list_links(
 
 @links.command(name="delete")
 @click.argument("source_issue_id")
-@click.argument("link_id")
+@click.argument("target_issue_id")
+@click.argument("link_type")
 @click.option(
     "--force",
     is_flag=True,
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, force: bool) -> None:
+def delete_link(ctx: click.Context, source_issue_id: str, target_issue_id: str, link_type: str, force: bool) -> None:
     """Remove a link between issues."""
     from ..managers.issues import IssueManager
 
@@ -1519,14 +1520,18 @@ def delete_link(ctx: click.Context, source_issue_id: str, link_id: str, force: b
     issue_manager = IssueManager(auth_manager)
 
     if not force:
-        if not click.confirm(f"Are you sure you want to delete link '{link_id}'?"):
+        if not click.confirm(
+            f"Are you sure you want to delete '{link_type}' link between '{source_issue_id}' and '{target_issue_id}'?"
+        ):
             console.print("Delete cancelled.", style="yellow")
             return
 
-    console.print(f"🔗 Deleting link '{link_id}'...", style="blue")
+    console.print(
+        f"🔗 Deleting '{link_type}' link between '{source_issue_id}' and '{target_issue_id}'...", style="blue"
+    )
 
     try:
-        result = asyncio.run(issue_manager.delete_link(source_issue_id, link_id))
+        result = asyncio.run(issue_manager.delete_link(source_issue_id, target_issue_id, link_type))
 
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")

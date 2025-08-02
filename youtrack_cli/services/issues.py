@@ -836,3 +836,192 @@ class IssueService(BaseService):
             return self._create_error_response(str(e))
         except Exception as e:
             return self._create_error_response(f"Error listing links: {str(e)}")
+
+    async def _resolve_issue_id(self, issue_id: str) -> str:
+        """Resolve issue ID to internal format if needed.
+
+        Args:
+            issue_id: Issue ID (readable like FPU-1 or internal like 3-21)
+
+        Returns:
+            Internal issue ID
+        """
+        # If it looks like an internal ID already, return as-is
+        if issue_id.count("-") == 1 and all(part.isdigit() for part in issue_id.split("-")):
+            return issue_id
+
+        # Otherwise, fetch the issue to get the internal ID
+        result = await self.get_issue(issue_id, fields="id")
+        if result["status"] == "success":
+            return result["data"]["id"]
+        else:
+            # If we can't resolve it, return original and let the API handle the error
+            return issue_id
+
+    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type_id: str) -> Dict[str, Any]:
+        """Create a link between two issues via API.
+
+        Args:
+            source_issue_id: Source issue ID (readable or internal format)
+            target_issue_id: Target issue ID (readable or internal format)
+            link_type_id: Link type ID or name
+
+        Returns:
+            API response with creation result
+        """
+        try:
+            # Resolve issue IDs to internal format
+            source_issue_id = await self._resolve_issue_id(source_issue_id)
+            target_issue_id = await self._resolve_issue_id(target_issue_id)
+            # If link_type_id looks like a name (not an ID), we need to get the actual ID first
+            if not (link_type_id.replace("-", "").replace("s", "").replace("t", "").isdigit()):
+                # Get all link types to find the ID by name
+                link_types_result = await self.list_link_types()
+                if link_types_result["status"] != "success":
+                    return link_types_result
+
+                link_types = link_types_result["data"]
+                matching_type = None
+                for link_type in link_types:
+                    if (
+                        link_type.get("name", "").lower() == link_type_id.lower()
+                        or link_type.get("sourceToTarget", "").lower() == link_type_id.lower()
+                        or link_type.get("targetToSource", "").lower() == link_type_id.lower()
+                    ):
+                        matching_type = link_type
+                        break
+
+                if not matching_type:
+                    return self._create_error_response(f"Link type '{link_type_id}' not found")
+
+                # For directed links, determine direction
+                base_link_id = matching_type["id"]
+                if matching_type.get("directed", False):
+                    # If user specified a directional name, use appropriate suffix
+                    if link_type_id.lower() == matching_type.get("sourceToTarget", "").lower():
+                        link_type_id = f"{base_link_id}s"  # outward link
+                    elif link_type_id.lower() == matching_type.get("targetToSource", "").lower():
+                        link_type_id = f"{base_link_id}t"  # inward link
+                    else:
+                        # Default to outward for directed links when just name is given
+                        link_type_id = f"{base_link_id}s"
+                else:
+                    # Undirected link, use base ID
+                    link_type_id = base_link_id
+
+            # Create the link by posting to the source issue's links endpoint
+            data = {"id": target_issue_id}
+            response = await self._make_request(
+                "POST", f"issues/{source_issue_id}/links/{link_type_id}/issues", json_data=data
+            )
+
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Link created between {source_issue_id} and {target_issue_id}",
+                    "data": {},
+                }
+            else:
+                return await self._handle_response(response)
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error creating link: {str(e)}")
+
+    async def delete_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
+        """Delete a specific link between two issues via API.
+
+        Args:
+            source_issue_id: Source issue ID (readable or internal format)
+            target_issue_id: Target issue ID (readable or internal format)
+            link_type: Link type name or ID
+
+        Returns:
+            API response with deletion result
+        """
+        try:
+            # Resolve issue IDs to internal format
+            source_issue_id = await self._resolve_issue_id(source_issue_id)
+            target_issue_id = await self._resolve_issue_id(target_issue_id)
+
+            # Resolve link type to ID format
+            if not (link_type.replace("-", "").replace("s", "").replace("t", "").isdigit()):
+                # Get all link types to find the ID by name
+                link_types_result = await self.list_link_types()
+                if link_types_result["status"] != "success":
+                    return link_types_result
+
+                link_types = link_types_result["data"]
+                matching_type = None
+                for link_type_data in link_types:
+                    if (
+                        link_type_data.get("name", "").lower() == link_type.lower()
+                        or link_type_data.get("sourceToTarget", "").lower() == link_type.lower()
+                        or link_type_data.get("targetToSource", "").lower() == link_type.lower()
+                    ):
+                        matching_type = link_type_data
+                        break
+
+                if not matching_type:
+                    return self._create_error_response(f"Link type '{link_type}' not found")
+
+                # For directed links, determine direction
+                base_link_id = matching_type["id"]
+                if matching_type.get("directed", False):
+                    # If user specified a directional name, use appropriate suffix
+                    if link_type.lower() == matching_type.get("sourceToTarget", "").lower():
+                        link_type_id = f"{base_link_id}s"  # outward link
+                    elif link_type.lower() == matching_type.get("targetToSource", "").lower():
+                        link_type_id = f"{base_link_id}t"  # inward link
+                    else:
+                        # Default to outward for directed links when just name is given
+                        link_type_id = f"{base_link_id}s"
+                else:
+                    # Undirected link, use base ID
+                    link_type_id = base_link_id
+            else:
+                link_type_id = link_type
+
+            # Delete the link using the specific endpoint
+            response = await self._make_request(
+                "DELETE", f"issues/{source_issue_id}/links/{link_type_id}/issues/{target_issue_id}"
+            )
+
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"Link deleted between {source_issue_id} and {target_issue_id}",
+                    "data": {},
+                }
+            else:
+                return await self._handle_response(response)
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error deleting link: {str(e)}")
+
+    async def list_link_types(self, fields: Optional[str] = None) -> Dict[str, Any]:
+        """List available issue link types via API.
+
+        Args:
+            fields: Comma-separated list of fields to return
+
+        Returns:
+            API response with link types list
+        """
+        try:
+            params = {}
+            if fields:
+                params["fields"] = fields
+            else:
+                params["fields"] = "id,name,directed,sourceToTarget,targetToSource,aggregation,readOnly"
+
+            response = await self._make_request("GET", "issueLinkTypes", params=params)
+            return await self._handle_response(response)
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error listing link types: {str(e)}")
