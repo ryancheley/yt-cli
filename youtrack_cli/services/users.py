@@ -143,7 +143,7 @@ class UserService(BaseService):
             force_change_password: Force password change on next login
 
         Returns:
-            API response
+            API response with updated user data
         """
         try:
             update_data: Dict[str, Any] = {}
@@ -159,8 +159,28 @@ class UserService(BaseService):
             if force_change_password is not None:
                 update_data["forceChangePassword"] = force_change_password
 
+            # Perform the update
             response = await self._make_request("POST", f"users/{user_id}", json_data=update_data)
-            return await self._handle_response(response)
+            update_result = await self._handle_response(response)
+
+            if update_result["status"] == "success":
+                # The update API returns empty response, so fetch updated user data
+                user_data_result = await self.get_user(user_id, fields="id,login,fullName,email,banned,online,guest")
+
+                if user_data_result["status"] == "success":
+                    # Return success with the updated user data
+                    return self._create_success_response(user_data_result["data"])
+                else:
+                    # Update succeeded but couldn't fetch updated data
+                    return self._create_success_response(
+                        {
+                            "login": user_id,
+                            "fullName": "Updated (unable to fetch current data)",
+                            "email": "Updated (unable to fetch current data)",
+                        }
+                    )
+            else:
+                return update_result
 
         except ValueError as e:
             return self._create_error_response(str(e))
