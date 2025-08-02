@@ -236,19 +236,14 @@ class TestAdminManager:
             assert "Low-level Admin Read" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_clear_caches_success(self, admin_manager, auth_manager):
-        """Test successful cache clearing."""
-        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
-            mock_client_manager = Mock()
-            mock_response = Mock()
+    async def test_clear_caches_not_available(self, admin_manager, auth_manager):
+        """Test cache clearing returns unavailable message."""
+        result = await admin_manager.clear_caches()
 
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
-            mock_get_client.return_value = mock_client_manager
-
-            result = await admin_manager.clear_caches()
-
-            assert result["status"] == "success"
-            assert "cleared successfully" in result["message"]
+        assert result["status"] == "error"
+        assert "not available through the YouTrack REST API" in result["message"]
+        assert "administrative UI" in result["message"]
+        assert "Server restart procedures" in result["message"]
 
     @pytest.mark.asyncio
     async def test_list_user_groups_success(self, admin_manager, auth_manager):
@@ -413,7 +408,10 @@ class TestAdminCommands:
             mock_asyncio.assert_called_once()
 
         # Test maintenance commands
-        mock_admin_instance.clear_caches.return_value = {"status": "success", "message": "Cleared"}
+        mock_admin_instance.clear_caches.return_value = {
+            "status": "error",
+            "message": "Cache clearing is not available through the YouTrack REST API.",
+        }
         with patch("asyncio.run") as mock_asyncio:
             result = self.runner.invoke(main, ["admin", "maintenance", "clear-cache", "--force"])
             assert result.exit_code == 0

@@ -138,7 +138,15 @@ System Maintenance
 maintenance clear-cache
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Clear system caches to improve performance or resolve issues.
+.. note::
+   This command is not functional as cache clearing is not available through the YouTrack REST API.
+   Cache management must be performed through:
+
+   * The YouTrack administrative UI
+   * Server restart procedures
+   * Direct server access
+
+   Please consult your YouTrack administrator or the JetBrains support team for alternative methods.
 
 .. code-block:: bash
 
@@ -153,7 +161,7 @@ Clear system caches to improve performance or resolve issues.
    * - Option
      - Type
      - Description
-   * - ``--confirm``
+   * - ``--force``
      - flag
      - Skip confirmation prompt
 
@@ -161,14 +169,11 @@ Clear system caches to improve performance or resolve issues.
 
 .. code-block:: bash
 
-   # Clear caches with confirmation prompt
+   # Attempting to clear caches will show an informative error message
    yt admin maintenance clear-cache
 
-   # Clear caches without confirmation
-   yt admin maintenance clear-cache --confirm
-
-   # Use in automated maintenance scripts
-   yt admin maintenance clear-cache --confirm
+   # The command will explain that this functionality is not available
+   yt admin maintenance clear-cache --force
 
 System Health Monitoring
 ------------------------
@@ -344,7 +349,7 @@ System Maintenance
 ~~~~~~~~~~~~~~~~~
 
 **Cache Management**
-  Clear system caches to resolve performance issues and ensure data consistency.
+  Note: Cache clearing is not available through the REST API. Use the YouTrack administrative UI or server-side tools for cache management.
 
 **Health Monitoring**
   Comprehensive system health checks and diagnostics.
@@ -410,9 +415,9 @@ Regular Maintenance
    # Weekly maintenance routine
    echo "=== Weekly YouTrack Maintenance ==="
 
-   # Clear caches for performance
-   echo "Clearing system caches..."
-   yt admin maintenance clear-cache --confirm
+   # Note: Cache clearing is not available through the REST API
+   echo "Cache clearing must be done through the YouTrack UI or server tools"
+   # yt admin maintenance clear-cache --force  # This will show an informative error
 
    # Health check after maintenance
    echo "Post-maintenance health check..."
@@ -543,8 +548,8 @@ Common Issues and Solutions
 **Setting Not Found**
   Check setting key spelling and availability in your YouTrack version.
 
-**Cache Clear Failures**
-  Ensure system has sufficient resources and no active maintenance operations.
+**Cache Clear Not Available**
+  The clear-cache command returns an error explaining that cache clearing is not available through the YouTrack REST API. Use the administrative UI or server-side tools instead.
 
 **Group Creation Failures**
   Check for naming conflicts and permission requirements.
@@ -596,9 +601,9 @@ Error Recovery
    # Error recovery procedures
    echo "=== Administrative Error Recovery ==="
 
-   # Clear caches if system is unresponsive
-   echo "Clearing system caches..."
-   yt admin maintenance clear-cache --confirm
+   # Note: Cache clearing is not available through the REST API
+   echo "Cache management must be done through YouTrack UI or server tools"
+   # Manual intervention required for cache clearing
 
    # Verify system health after recovery
    echo "Verifying system health..."
@@ -669,9 +674,9 @@ Automation Scripts
 
    log "Starting automated maintenance"
 
-   # Clear caches
-   log "Clearing system caches"
-   yt admin maintenance clear-cache --confirm
+   # Note: Cache clearing is not available through the REST API
+   log "Cache clearing must be done through YouTrack UI or server tools"
+   # Manual cache management required
 
    # Health check
    log "Running health check"

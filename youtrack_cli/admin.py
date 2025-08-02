@@ -473,42 +473,17 @@ class AdminManager:
         Returns:
             Dictionary with operation result
         """
-        credentials = self.auth_manager.load_credentials()
-        if not credentials:
-            return {
-                "status": "error",
-                "message": "Not authenticated. Run 'yt auth login' first.",
-            }
-
-        headers = {
-            "Authorization": f"Bearer {credentials.token}",
-            "Accept": "application/json",
+        return {
+            "status": "error",
+            "message": (
+                "Cache clearing is not available through the YouTrack REST API.\n"
+                "This functionality may be available through:\n"
+                "- The YouTrack administrative UI\n"
+                "- Server restart procedures\n"
+                "- Direct server access\n\n"
+                "Please consult your YouTrack administrator or the JetBrains support team for alternative methods."
+            ),
         }
-
-        client_manager = get_client_manager()
-        try:
-            await client_manager.make_request(
-                "POST",
-                f"{credentials.base_url.rstrip('/')}/api/admin/maintenance/clearCache",
-                headers=headers,
-                timeout=30.0,
-            )
-
-            return {
-                "status": "success",
-                "message": "System caches cleared successfully",
-            }
-
-        except httpx.HTTPError as e:
-            if hasattr(e, "response") and e.response is not None:
-                if e.response.status_code == 403:
-                    return {
-                        "status": "error",
-                        "message": "Insufficient permissions for maintenance.",
-                    }
-            return {"status": "error", "message": f"HTTP error: {e}"}
-        except Exception as e:
-            return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # User Groups Management
     async def list_user_groups(self, fields: Optional[str] = None) -> dict[str, Any]:
