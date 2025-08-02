@@ -130,8 +130,7 @@ class BoardManager:
             "Accept": "application/json",
         }
         params = {
-            "fields": "id,name,projects(id,name),owner(id,name,fullName),"
-            "columns(id,presentation(name)),sprintsSettings(disableSprints)"
+            "fields": "id,name,projects(id,name),owner(id,name,fullName),columnSettings(columns(id,presentation(name))),sprintsSettings(disableSprints)"
         }
 
         try:
@@ -161,8 +160,10 @@ class BoardManager:
                 table.add_row("Projects", "None")
 
             # Columns
-            if board.get("columns"):
-                columns = ", ".join([col.get("name", "N/A") for col in board["columns"]])
+            column_settings = board.get("columnSettings", {})
+            columns_data = column_settings.get("columns", [])
+            if columns_data:
+                columns = ", ".join([col.get("presentation", "N/A") for col in columns_data])
                 table.add_row("Columns", columns)
             else:
                 table.add_row("Columns", "None")
