@@ -629,7 +629,16 @@ def update(
             console.print(f"❌ Error getting issue details: {e}", style="red")
             raise click.ClickException("Failed to get issue details") from e
     else:
-        if not any([summary, description, state, priority, assignee, type]):
+        if not any(
+            [
+                summary is not None,
+                description is not None,
+                state is not None,
+                priority is not None,
+                assignee is not None,
+                type is not None,
+            ]
+        ):
             console.print("❌ No updates specified.", style="red")
             console.print(
                 "Use --summary, --description, --state, --priority, --assignee, "
