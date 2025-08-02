@@ -325,7 +325,7 @@ class IssueService(BaseService):
         """
         try:
             response = await self._make_request("DELETE", f"issues/{issue_id}")
-            return await self._handle_response(response)
+            return await self._handle_response(response, success_codes=[200, 204])
 
         except ValueError as e:
             return self._create_error_response(str(e))
@@ -575,7 +575,7 @@ class IssueService(BaseService):
         """
         try:
             response = await self._make_request("DELETE", f"issues/{issue_id}/tags/{tag_name}")
-            return await self._handle_response(response)
+            return await self._handle_response(response, success_codes=[200, 204])
 
         except ValueError as e:
             return self._create_error_response(str(e))
@@ -680,7 +680,7 @@ class IssueService(BaseService):
         """
         try:
             response = await self._make_request("DELETE", f"issues/{issue_id}/comments/{comment_id}")
-            return await self._handle_response(response)
+            return await self._handle_response(response, success_codes=[200, 204])
 
         except ValueError as e:
             return self._create_error_response(str(e))
@@ -747,7 +747,7 @@ class IssueService(BaseService):
         """
         try:
             response = await self._make_request("DELETE", f"issues/{issue_id}/attachments/{attachment_id}")
-            return await self._handle_response(response)
+            return await self._handle_response(response, success_codes=[200, 204])
 
         except ValueError as e:
             return self._create_error_response(str(e))

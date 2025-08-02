@@ -1243,7 +1243,7 @@ def delete_comment(ctx: click.Context, issue_id: str, comment_id: str, force: bo
         result = asyncio.run(issue_manager.delete_comment(issue_id, comment_id))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            console.print(f"✅ Comment '{comment_id}' deleted successfully", style="green")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to delete comment")
