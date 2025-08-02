@@ -532,10 +532,7 @@ class IssueService(BaseService):
                         # Continue with original error if enhanced error handling fails
                         pass
 
-            # Return the original result (success or enhanced error)
-            if result["status"] == "success":
-                # Customize success message for move operation
-                return {"status": "success", "message": f"Issue {issue_id} moved to {state} state"}
+            # Return the original result without overriding the message
             return result
 
         except ValueError as e:
