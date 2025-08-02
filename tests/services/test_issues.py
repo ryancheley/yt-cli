@@ -471,12 +471,18 @@ class TestIssueServiceTags:
             patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success"}
+            # First call returns tag lookup result, second call returns add result
+            mock_handle.side_effect = [
+                {"status": "success", "data": [{"id": "10-1", "name": "urgent"}]},  # find_tag_by_name
+                {"status": "success"},  # add_tag
+            ]
 
             await issue_service.add_tag("TEST-1", "urgent")
 
-            mock_request.assert_called_once_with("POST", "issues/TEST-1/tags", json_data={"name": "urgent"})
-            mock_handle.assert_called_once_with(mock_response, success_codes=[200, 201])
+            # Should call find_tag_by_name first, then add_tag with ID
+            assert mock_request.call_count == 2
+            mock_request.assert_any_call("GET", "tags", params={"fields": "id,name"})
+            mock_request.assert_any_call("POST", "issues/TEST-1/tags", json_data={"id": "10-1"})
 
     @pytest.mark.asyncio
     async def test_remove_tag(self, issue_service, mock_response):
@@ -486,11 +492,18 @@ class TestIssueServiceTags:
             patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success"}
+            # First call returns tag lookup result, second call returns remove result
+            mock_handle.side_effect = [
+                {"status": "success", "data": [{"id": "10-1", "name": "urgent"}]},  # find_tag_by_name
+                {"status": "success"},  # remove_tag
+            ]
 
             await issue_service.remove_tag("TEST-1", "urgent")
 
-            mock_request.assert_called_once_with("DELETE", "issues/TEST-1/tags/urgent")
+            # Should call find_tag_by_name first, then remove_tag with ID
+            assert mock_request.call_count == 2
+            mock_request.assert_any_call("GET", "tags", params={"fields": "id,name"})
+            mock_request.assert_any_call("DELETE", "issues/TEST-1/tags/10-1")
 
     @pytest.mark.asyncio
     async def test_list_tags(self, issue_service, mock_response):
@@ -514,11 +527,14 @@ class TestIssueServiceTags:
             patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"data": [{"id": "tag-1", "name": "urgent"}]}
+            mock_handle.return_value = {"status": "success", "data": [{"id": "tag-1", "name": "urgent"}]}
 
-            await issue_service.find_tag_by_name("urgent")
+            result = await issue_service.find_tag_by_name("urgent")
 
-            mock_request.assert_called_once_with("GET", "issueTags", params={"query": "urgent", "fields": "id,name"})
+            mock_request.assert_called_once_with("GET", "tags", params={"fields": "id,name"})
+            # Should filter the result to find the matching tag
+            assert result["data"]["id"] == "tag-1"
+            assert result["data"]["name"] == "urgent"
 
     @pytest.mark.asyncio
     async def test_create_tag(self, issue_service, mock_response):
@@ -532,7 +548,7 @@ class TestIssueServiceTags:
 
             await issue_service.create_tag("new-tag")
 
-            mock_request.assert_called_once_with("POST", "issueTags", json_data={"name": "new-tag"})
+            mock_request.assert_called_once_with("POST", "tags", json_data={"name": "new-tag"})
             mock_handle.assert_called_once_with(mock_response, success_codes=[200, 201])
 
 
@@ -743,4 +759,8 @@ class TestIssueServiceErrorHandling:
                 result = await method(*args)
 
                 assert result["status"] == "error"
-                mock_error.assert_called_once()
+                # add_tag and remove_tag methods call _create_error_response twice (for find_tag_by_name and add_tag/remove_tag)
+                if method_name in ["add_tag", "remove_tag"]:
+                    assert mock_error.call_count == 2
+                else:
+                    mock_error.assert_called_once()

@@ -554,7 +554,16 @@ class IssueService(BaseService):
             API response
         """
         try:
-            tag_data = {"name": tag_name}
+            # First, find the tag by name to get its ID
+            tag_result = await self.find_tag_by_name(tag_name)
+
+            if tag_result["status"] != "success" or not tag_result["data"]:
+                return self._create_error_response(
+                    f"Tag '{tag_name}' not found. Use 'yt tags create {tag_name}' to create it first."
+                )
+
+            tag_id = tag_result["data"]["id"]
+            tag_data = {"id": tag_id}
             response = await self._make_request("POST", f"issues/{issue_id}/tags", json_data=tag_data)
             return await self._handle_response(response, success_codes=[200, 201])
 
@@ -574,7 +583,14 @@ class IssueService(BaseService):
             API response
         """
         try:
-            response = await self._make_request("DELETE", f"issues/{issue_id}/tags/{tag_name}")
+            # First, find the tag by name to get its ID
+            tag_result = await self.find_tag_by_name(tag_name)
+
+            if tag_result["status"] != "success" or not tag_result["data"]:
+                return self._create_error_response(f"Tag '{tag_name}' not found.")
+
+            tag_id = tag_result["data"]["id"]
+            response = await self._make_request("DELETE", f"issues/{issue_id}/tags/{tag_id}")
             return await self._handle_response(response, success_codes=[200, 204])
 
         except ValueError as e:
@@ -784,9 +800,17 @@ class IssueService(BaseService):
             API response with tag data
         """
         try:
-            params = {"query": tag_name, "fields": "id,name"}
-            response = await self._make_request("GET", "issueTags", params=params)
-            return await self._handle_response(response)
+            params = {"fields": "id,name"}
+            response = await self._make_request("GET", "tags", params=params)
+            result = await self._handle_response(response)
+
+            if result["status"] == "success":
+                # Filter tags by name since API doesn't support name-based queries
+                tags = result["data"]
+                matching_tags = [tag for tag in tags if tag.get("name") == tag_name]
+                result["data"] = matching_tags[0] if matching_tags else None
+
+            return result
 
         except ValueError as e:
             return self._create_error_response(str(e))
@@ -804,7 +828,7 @@ class IssueService(BaseService):
         """
         try:
             tag_data = {"name": tag_name}
-            response = await self._make_request("POST", "issueTags", json_data=tag_data)
+            response = await self._make_request("POST", "tags", json_data=tag_data)
             return await self._handle_response(response, success_codes=[200, 201])
 
         except ValueError as e:

@@ -969,9 +969,25 @@ def tag() -> None:
 @tag.command(name="add")
 @click.argument("issue_id")
 @click.argument("tag_name")
+@click.option(
+    "--create-if-missing",
+    is_flag=True,
+    help="Create the tag if it doesn't exist",
+)
 @click.pass_context
-def add_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
-    """Add a tag to an issue. Creates the tag if it doesn't exist."""
+def add_tag(ctx: click.Context, issue_id: str, tag_name: str, create_if_missing: bool) -> None:
+    """Add a tag to an issue.
+
+    By default, the tag must already exist. Use --create-if-missing to create
+    the tag if it doesn't exist.
+
+    Examples:
+        # Add existing tag
+        yt issues tag add DEMO-23 "bug"
+
+        # Create and add new tag
+        yt issues tag add DEMO-23 "urgent" --create-if-missing
+    """
     from ..managers.issues import IssueManager
 
     console = get_console()
@@ -981,12 +997,19 @@ def add_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
     console.print(f"🏷️  Adding tag '{tag_name}' to issue '{issue_id}'...", style="blue")
 
     try:
-        result = asyncio.run(issue_manager.add_tag(issue_id, tag_name))
+        result = asyncio.run(issue_manager.add_tag(issue_id, tag_name, create_if_missing))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            message = result.get("message", "Tag added successfully")
+            console.print(f"✅ {message}", style="green")
         else:
-            console.print(f"❌ {result['message']}", style="red")
+            message = result.get("message", "Failed to add tag")
+            console.print(f"❌ {message}", style="red")
+            if "not found" in message.lower() and not create_if_missing:
+                console.print(
+                    f"💡 Hint: Use --create-if-missing to create the tag '{tag_name}' if it doesn't exist",
+                    style="yellow",
+                )
             raise click.ClickException("Failed to add tag")
 
     except Exception as e:
@@ -1012,9 +1035,11 @@ def remove_tag(ctx: click.Context, issue_id: str, tag_name: str) -> None:
         result = asyncio.run(issue_manager.remove_tag(issue_id, tag_name))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            message = result.get("message", "Tag removed successfully")
+            console.print(f"✅ {message}", style="green")
         else:
-            console.print(f"❌ {result['message']}", style="red")
+            message = result.get("message", "Failed to remove tag")
+            console.print(f"❌ {message}", style="red")
             raise click.ClickException("Failed to remove tag")
 
     except Exception as e:

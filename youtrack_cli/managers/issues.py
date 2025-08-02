@@ -225,17 +225,28 @@ class IssueManager:
         """Assign an issue to a user."""
         return await self.issue_service.assign_issue(issue_id, assignee)
 
-    async def add_tag(self, issue_id: str, tag: str) -> Dict[str, Any]:
-        """Add a tag to an issue with tag creation if needed."""
+    async def add_tag(self, issue_id: str, tag: str, create_if_missing: bool = False) -> Dict[str, Any]:
+        """Add a tag to an issue with optional tag creation.
+
+        Args:
+            issue_id: Issue ID to add tag to
+            tag: Tag name to add
+            create_if_missing: Whether to create the tag if it doesn't exist
+
+        Returns:
+            API response with success/error status
+        """
         # First try to add the tag directly
         result = await self.issue_service.add_tag(issue_id, tag)
 
-        # If tag doesn't exist, try to create it first
-        if result["status"] == "error" and "not found" in result["message"].lower():
+        # If tag doesn't exist and create_if_missing is True, try to create it first
+        if result["status"] == "error" and "not found" in result.get("message", "").lower() and create_if_missing:
             create_result = await self.issue_service.create_tag(tag)
             if create_result["status"] == "success":
                 # Try adding the tag again
                 result = await self.issue_service.add_tag(issue_id, tag)
+            else:
+                return create_result
 
         return result
 
