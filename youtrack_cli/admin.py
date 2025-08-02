@@ -674,6 +674,7 @@ class AdminManager:
                 "GET",
                 f"{credentials.base_url.rstrip('/')}/api/admin/globalSettings/localeSettings",
                 headers=headers,
+                params={"fields": "locale(id,name,language,locale,community),isRTL"},
                 timeout=10.0,
             )
 
@@ -1069,26 +1070,33 @@ class AdminManager:
         Args:
             locale_settings: Locale settings dictionary
         """
-        self.console.print("\n[bold blue]Locale Settings[/bold blue]")
+        table = Table(title="Locale Settings")
+        table.add_column("Setting", style="cyan", no_wrap=True)
+        table.add_column("Value", style="green")
 
         locale = locale_settings.get("locale", {})
         is_rtl = locale_settings.get("isRTL", False)
 
-        self.console.print(f"[cyan]Language:[/cyan] {locale.get('name', 'N/A')}")
-        self.console.print(f"[cyan]Locale ID:[/cyan] {locale.get('id', 'N/A')}")
-        self.console.print(f"[cyan]Language Code:[/cyan] {locale.get('language', 'N/A')}")
-        self.console.print(f"[cyan]Full Locale:[/cyan] {locale.get('locale', 'N/A')}")
+        # Add locale information rows
+        table.add_row("Language", locale.get("name", "N/A"))
+        table.add_row("Locale ID", locale.get("id", "N/A"))
+        table.add_row("Language Code", locale.get("language", "N/A"))
+        table.add_row("Full Locale", locale.get("locale", "N/A"))
 
-        # Display community status
+        # Display community status with color
         is_community = locale.get("community", False)
         community_text = "Yes" if is_community else "No"
         community_color = "yellow" if is_community else "green"
-        self.console.print(f"[cyan]Community Language:[/cyan] [{community_color}]{community_text}[/{community_color}]")
+        community_styled = Text(community_text, style=community_color)
+        table.add_row("Community Language", community_styled)
 
-        # Display RTL status
+        # Display RTL status with color
         rtl_text = "Yes" if is_rtl else "No"
         rtl_color = "blue" if is_rtl else "green"
-        self.console.print(f"[cyan]Right-to-Left:[/cyan] [{rtl_color}]{rtl_text}[/{rtl_color}]")
+        rtl_styled = Text(rtl_text, style=rtl_color)
+        table.add_row("Right-to-Left", rtl_styled)
+
+        self.console.print(table)
 
     def display_available_locales(self, locales: list[dict[str, Any]], message: Optional[str] = None) -> None:
         """Display available locales in a formatted table.
