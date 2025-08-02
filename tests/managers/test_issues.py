@@ -263,7 +263,7 @@ class TestIssueManagerTags:
         # Tag creation succeeds
         issue_manager.issue_service.create_tag.return_value = {"status": "success"}
 
-        result = await issue_manager.add_tag("TEST-123", "newtag")
+        result = await issue_manager.add_tag("TEST-123", "newtag", create_if_missing=True)
 
         # Verify create_tag was called
         issue_manager.issue_service.create_tag.assert_called_once_with("newtag")
