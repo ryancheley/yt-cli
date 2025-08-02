@@ -226,7 +226,7 @@ class TestProjectServiceCreateProject:
                 "shortName": "TEST",
                 "name": "Test Project",
                 "description": "Test Description",
-                "leader": {"login": "testuser"},
+                "leader": {"id": "testuser"},
             }
             mock_request.assert_called_once_with("POST", "admin/projects", json_data=expected_data)
             assert result["status"] == "success"
@@ -284,7 +284,7 @@ class TestProjectServiceUpdateProject:
             expected_data = {
                 "name": "New Name",
                 "description": "New Description",
-                "leader": {"login": "newuser"},
+                "leader": {"id": "newuser"},
                 "archived": True,
             }
             mock_request.assert_called_once_with("POST", "admin/projects/TEST", json_data=expected_data)

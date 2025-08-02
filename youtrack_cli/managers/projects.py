@@ -40,9 +40,29 @@ class ProjectManager:
         Returns:
             Tuple of (user_id, error_message). If successful, error_message is None.
         """
-        # If it looks like a user ID (contains dash), return as-is
-        if "-" in username_or_id:
-            return username_or_id, None
+        # Better user ID detection: YouTrack user IDs typically follow patterns like:
+        # "2-1", "guest", or other specific formats. If it contains only digits and dashes,
+        # or is a known system user, treat as user ID. Otherwise, try username resolution.
+
+        # Check if it looks like a user ID pattern (digits with dashes, or known system users)
+        if (
+            username_or_id.replace("-", "").isdigit()
+            or username_or_id in ["guest", "root"]
+            or (len(username_or_id) >= 3 and "-" in username_or_id and any(c.isdigit() for c in username_or_id))
+        ):
+            # Validate that this user ID actually exists
+            try:
+                result = await self.user_manager.get_user(username_or_id, fields="id,login")
+                if result["status"] == "success":
+                    user_data = result["data"]
+                    user_id = user_data.get("id")
+                    if user_id:
+                        return user_id, None
+                    return username_or_id, f"User ID '{username_or_id}' found but missing ID field"
+                # If the presumed user ID doesn't exist, fall through to username resolution
+            except Exception:
+                # If validation fails, fall through to username resolution
+                pass
 
         # Try to resolve as username
         try:
@@ -52,7 +72,8 @@ class ProjectManager:
                 user_id = user_data.get("id")
                 if user_id:
                     return user_id, None
-                return username_or_id, f"User '{username_or_id}' found but missing ID"
+                return username_or_id, f"User '{username_or_id}' found but missing ID field"
+            # If user not found, return error instead of original input
             return username_or_id, f"User '{username_or_id}' not found"
         except Exception as e:
             return username_or_id, f"Error resolving username '{username_or_id}': {e}"
