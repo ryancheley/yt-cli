@@ -450,28 +450,37 @@ class TestIssueManagerLinks:
         assert result == expected_result
 
     @pytest.mark.asyncio
-    async def test_create_link_not_implemented(self, issue_manager):
-        """Test create link (not implemented)."""
+    async def test_create_link(self, issue_manager):
+        """Test create link calls service layer."""
+        expected_result = {"status": "success", "message": "Link created"}
+        issue_manager.issue_service.create_link = AsyncMock(return_value=expected_result)
+
         result = await issue_manager.create_link("TEST-123", "TEST-456", "relates to")
 
-        assert result["status"] == "error"
-        assert "not yet implemented" in result["message"]
+        assert result == expected_result
+        issue_manager.issue_service.create_link.assert_called_once_with("TEST-123", "TEST-456", "relates to")
 
     @pytest.mark.asyncio
-    async def test_delete_link_not_implemented(self, issue_manager):
-        """Test delete link (not implemented)."""
-        result = await issue_manager.delete_link("TEST-123", "link-1")
+    async def test_delete_link(self, issue_manager):
+        """Test delete link calls service layer."""
+        expected_result = {"status": "success", "message": "Link deleted"}
+        issue_manager.issue_service.delete_link = AsyncMock(return_value=expected_result)
 
-        assert result["status"] == "error"
-        assert "not yet implemented" in result["message"]
+        result = await issue_manager.delete_link("TEST-123", "TEST-456", "relates to")
+
+        assert result == expected_result
+        issue_manager.issue_service.delete_link.assert_called_once_with("TEST-123", "TEST-456", "relates to")
 
     @pytest.mark.asyncio
-    async def test_list_link_types_not_implemented(self, issue_manager):
-        """Test list link types (not implemented)."""
+    async def test_list_link_types(self, issue_manager):
+        """Test list link types calls service layer."""
+        expected_result = {"status": "success", "data": []}
+        issue_manager.issue_service.list_link_types = AsyncMock(return_value=expected_result)
+
         result = await issue_manager.list_link_types()
 
-        assert result["status"] == "error"
-        assert "not yet implemented" in result["message"]
+        assert result == expected_result
+        issue_manager.issue_service.list_link_types.assert_called_once()
 
 
 class TestIssueManagerUtilities:
