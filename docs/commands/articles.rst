@@ -316,7 +316,7 @@ Search articles using full-text search.
 draft
 ~~~~~
 
-List and manage draft articles (articles with private visibility).
+List and manage draft articles (unpublished articles that do not have unlimited visibility).
 
 .. code-block:: bash
 
