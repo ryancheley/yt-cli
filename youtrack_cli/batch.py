@@ -216,6 +216,108 @@ class BatchOperationManager:
 
         return validated_items
 
+    async def validate_api_compatibility(self, items: List[BatchIssueUpdate]) -> List[Dict[str, Any]]:
+        """Validate API compatibility for batch update items.
+
+        This method tests whether the field values in the batch items
+        are compatible with the YouTrack API, particularly for state fields
+        which require special formatting.
+
+        Args:
+            items: List of validated batch update items
+
+        Returns:
+            List of validation error dictionaries (empty if all valid)
+        """
+        errors = []
+
+        for i, item in enumerate(items):
+            # Only validate items that have state field updates
+            if item.state is not None:
+                try:
+                    # Use the same validation logic as IssueService.update_issue
+                    # Check if the issue exists and get its project ID
+                    issue_result = await self.issue_manager.issue_service.get_issue(item.issue_id, "project(id)")
+                    if issue_result["status"] != "success":
+                        errors.append(
+                            {
+                                "item_index": i,
+                                "issue_id": item.issue_id,
+                                "field": "issue_id",
+                                "error": f"Issue {item.issue_id} not found or not accessible",
+                                "type": "api_compatibility_error",
+                            }
+                        )
+                        continue
+
+                    # Get project ID from the issue
+                    project_data = issue_result.get("data", {}).get("project", {})
+                    project_id = project_data.get("id")
+
+                    if not project_id:
+                        errors.append(
+                            {
+                                "item_index": i,
+                                "issue_id": item.issue_id,
+                                "field": "state",
+                                "error": "Could not determine project ID for state field validation",
+                                "type": "api_compatibility_error",
+                            }
+                        )
+                        continue
+
+                    # Use IssueService's state field discovery logic
+                    try:
+                        state_field_info = await self.issue_manager.issue_service._discover_state_field_for_project(
+                            project_id
+                        )
+                        if not state_field_info:
+                            # Get available fields for better error message
+                            from .services.projects import ProjectService
+
+                            project_service = ProjectService(self.auth_manager)
+                            fields_result = await project_service.get_project_custom_fields(
+                                project_id, "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)"
+                            )
+
+                            available_fields = []
+                            if fields_result["status"] == "success":
+                                available_fields = [
+                                    f.get("field", {}).get("name", "")
+                                    for f in fields_result["data"]
+                                    if f.get("field", {}).get("name")
+                                ]
+
+                            errors.append(
+                                {
+                                    "item_index": i,
+                                    "issue_id": item.issue_id,
+                                    "field": "state",
+                                    "value": item.state,
+                                    "error": f"No state field found for project '{project_id}'. "
+                                    + f"Available custom fields: {', '.join(available_fields) if available_fields else 'None'}. "
+                                    + "Please check if the project has a state/status field configured.",
+                                    "type": "api_compatibility_error",
+                                }
+                            )
+                    except Exception as e:
+                        # If state field discovery fails, we'll rely on the fallback logic
+                        # This is acceptable as the actual update call will handle it
+                        logger.debug(f"State field discovery failed for issue {item.issue_id}, using fallback: {e}")
+
+                except Exception as e:
+                    errors.append(
+                        {
+                            "item_index": i,
+                            "issue_id": item.issue_id,
+                            "field": "state",
+                            "error": f"API compatibility check failed: {str(e)}",
+                            "type": "api_compatibility_error",
+                        }
+                    )
+
+        return errors
+
     def validate_file(
         self, file_path: Path, operation_type: str
     ) -> Union[List[BatchIssueCreate], List[BatchIssueUpdate]]:
@@ -242,6 +344,34 @@ class BatchOperationManager:
         if operation_type == "create":
             return cast(List[BatchIssueCreate], result)
         return cast(List[BatchIssueUpdate], result)
+
+    async def validate_file_with_api_check(
+        self, file_path: Path, operation_type: str
+    ) -> Union[List[BatchIssueCreate], List[BatchIssueUpdate]]:
+        """Validate a batch operation file with API compatibility checking.
+
+        Args:
+            file_path: Path to the file
+            operation_type: Type of operation ('create' or 'update')
+
+        Returns:
+            List of validated batch operation objects
+
+        Raises:
+            BatchValidationError: If validation fails
+        """
+        # First do regular file validation
+        result = self.validate_file(file_path, operation_type)
+
+        # For updates, also check API compatibility
+        if operation_type == "update":
+            api_errors = await self.validate_api_compatibility(cast(List[BatchIssueUpdate], result))
+            if api_errors:
+                raise BatchValidationError(
+                    f"API compatibility validation failed with {len(api_errors)} errors", api_errors
+                )
+
+        return result
 
     async def batch_create_issues(
         self, items: List[BatchIssueCreate], dry_run: bool = False, continue_on_error: bool = True
