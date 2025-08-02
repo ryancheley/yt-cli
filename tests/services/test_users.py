@@ -184,7 +184,7 @@ class TestUserServiceCreateUser:
                 "email": "test@example.com",
                 "forceChangePassword": False,
             }
-            mock_request.assert_called_once_with("POST", "users", json_data=expected_data)
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users", json_data=expected_data)
             mock_handle.assert_called_once_with(mock_response, success_codes=[200, 201])
             assert result["status"] == "success"
 
@@ -213,7 +213,7 @@ class TestUserServiceCreateUser:
                 "password": "secret123",
                 "forceChangePassword": True,
             }
-            mock_request.assert_called_once_with("POST", "users", json_data=expected_data)
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users", json_data=expected_data)
             assert result["status"] == "success"
 
     @pytest.mark.asyncio

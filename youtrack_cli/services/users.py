@@ -115,7 +115,7 @@ class UserService(BaseService):
             if password:
                 user_data["password"] = password
 
-            response = await self._make_request("POST", "users", json_data=user_data)
+            response = await self._make_request("POST", "../hub/api/rest/users", json_data=user_data)
             return await self._handle_response(response, success_codes=[200, 201])
 
         except ValueError as e:
