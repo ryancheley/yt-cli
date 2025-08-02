@@ -564,20 +564,27 @@ def draft(
         result = asyncio.run(
             article_manager.list_articles(
                 project_id=project_id,
-                query="visibility:private",
             )
         )
 
         if result["status"] == "success":
-            articles = result["data"]
+            # Filter articles to show only drafts (non-published articles)
+            # Published articles have visibility type "UnlimitedVisibility"
+            # Draft articles should have different visibility types
+            all_articles = result["data"]
+            draft_articles = [
+                article
+                for article in all_articles
+                if article.get("visibility", {}).get("$type") != "UnlimitedVisibility"
+            ]
 
             if format == "table":
-                article_manager.display_articles_table(articles)
-                console.print(f"\n[dim]Total drafts: {result['count']} articles[/dim]")
+                article_manager.display_articles_table(draft_articles)
+                console.print(f"\n[dim]Total drafts: {len(draft_articles)} articles[/dim]")
             else:
                 import json
 
-                console.print(json.dumps(articles, indent=2))
+                console.print(json.dumps(draft_articles, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list draft articles")

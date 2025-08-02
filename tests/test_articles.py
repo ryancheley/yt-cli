@@ -600,6 +600,68 @@ class TestArticlesCLI:
             assert result.exit_code == 0
             assert "Fetching attachments" in result.output
 
+    def test_articles_draft_command(self):
+        """Test articles draft command filtering."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        with (
+            patch("youtrack_cli.main.asyncio.run") as mock_run,
+            patch("youtrack_cli.main.AuthManager") as mock_auth,
+            patch("youtrack_cli.articles.ArticleManager"),
+        ):
+            mock_auth_instance = mock_auth.return_value
+            mock_auth_instance.get_current_user_sync.return_value = "test_user"
+
+            # Test draft command with mixed articles (some published, some draft)
+            mock_articles_data = [
+                {
+                    "id": "123",
+                    "idReadable": "DOC-A-1",
+                    "summary": "Published Article",
+                    "visibility": {"$type": "UnlimitedVisibility"},
+                },
+                {
+                    "id": "124",
+                    "idReadable": "DOC-A-2",
+                    "summary": "Draft Article",
+                    "visibility": {"$type": "LimitedVisibility"},
+                },
+                {
+                    "id": "125",
+                    "idReadable": "DOC-A-3",
+                    "summary": "Another Draft",
+                    "visibility": {"$type": "PrivateVisibility"},
+                },
+            ]
+            mock_run.return_value = {"status": "success", "data": mock_articles_data, "count": 3}
+
+            result = runner.invoke(main, ["articles", "draft", "--project-id", "TEST"])
+            assert result.exit_code == 0
+            assert "Fetching draft articles" in result.output
+            # Should show 2 draft articles (filtering out UnlimitedVisibility)
+            assert "Total drafts: 2 articles" in result.output
+
+            # Test draft command with all published articles (should show 0 drafts)
+            mock_published_only = [
+                {
+                    "id": "123",
+                    "summary": "Published Article 1",
+                    "visibility": {"$type": "UnlimitedVisibility"},
+                },
+                {
+                    "id": "124",
+                    "summary": "Published Article 2",
+                    "visibility": {"$type": "UnlimitedVisibility"},
+                },
+            ]
+            mock_run.return_value = {"status": "success", "data": mock_published_only, "count": 2}
+
+            result = runner.invoke(main, ["articles", "draft"])
+            assert result.exit_code == 0
+            assert "Total drafts: 0 articles" in result.output
+
 
 @pytest.mark.unit
 class TestArticleSortFunctions:
