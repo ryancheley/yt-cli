@@ -98,6 +98,22 @@ class IssueManager:
                 "message": f"Project '{project_id}' not found. Please check the project short name or ID.",
             }
 
+        # Validate custom field values if provided
+        validation_errors = []
+        if priority:
+            validation_result = await self._validate_custom_field_value(resolved_project_id, "Priority", priority)
+            if not validation_result["valid"]:
+                validation_errors.append(validation_result["message"])
+
+        if issue_type:
+            validation_result = await self._validate_custom_field_value(resolved_project_id, "Type", issue_type)
+            if not validation_result["valid"]:
+                validation_errors.append(validation_result["message"])
+
+        # Return validation errors if any
+        if validation_errors:
+            return {"status": "error", "message": f"Validation failed: {'; '.join(validation_errors)}"}
+
         # Use service to create the issue
         result = await self.issue_service.create_issue(
             project_id=resolved_project_id,
@@ -388,6 +404,151 @@ class IssueManager:
         except Exception as e:
             logger.error(f"Error resolving project ID '{project_id_or_short_name}': {e}")
             return None
+
+    async def _validate_custom_field_value(self, project_id: str, field_name: str, value: str) -> Dict[str, Any]:
+        """Validate that a custom field value exists for the project.
+
+        Args:
+            project_id: Internal project ID
+            field_name: Name of the custom field (e.g., "Priority", "Type")
+            value: Value to validate
+
+        Returns:
+            Dictionary with 'valid' boolean and 'message' string
+        """
+        try:
+            # Get project custom fields to find the field
+            fields_result = await self.project_service.get_project_custom_fields(
+                project_id, fields="id,name,fieldType,bundle(values(name))"
+            )
+
+            if fields_result["status"] != "success":
+                # If we can't get custom fields, allow the value (fail open)
+                logger.warning(f"Could not validate custom field '{field_name}' - allowing value '{value}'")
+                return {"valid": True, "message": ""}
+
+            custom_fields = fields_result["data"]
+            if not isinstance(custom_fields, list):
+                return {"valid": True, "message": ""}
+
+            # Find the specified field by name if available
+            target_field = None
+            for field in custom_fields:
+                if field.get("name") == field_name:
+                    target_field = field
+                    break
+
+            # If field name matching failed (names might be None), try heuristic matching
+            if not target_field:
+                target_field = await self._find_field_by_heuristics(custom_fields, field_name, value)
+
+            if not target_field:
+                # Field doesn't exist in project, provide helpful message
+                available_fields = [f.get("name", "") for f in custom_fields if f.get("name")]
+                if not available_fields:
+                    # If no field names are available, we can't provide good error messages
+                    # This is likely due to API limitations, so we'll fail open for now
+                    logger.warning(
+                        f"Field names not available from project API - allowing '{field_name}' with value '{value}'"
+                    )
+                    return {"valid": True, "message": ""}
+                return {
+                    "valid": False,
+                    "message": f"Field '{field_name}' is not available in this project. Available fields: {', '.join(available_fields)}",
+                }
+
+            # Get valid values for the field
+            bundle = target_field.get("bundle", {})
+            valid_values = bundle.get("values", [])
+
+            if not valid_values:
+                # If no bundle values, allow any value (might be a text field)
+                return {"valid": True, "message": ""}
+
+            # Check if the provided value is in the valid values
+            valid_value_names = [v.get("name", "") for v in valid_values if isinstance(v, dict)]
+
+            if value not in valid_value_names:
+                return {
+                    "valid": False,
+                    "message": f"'{value}' is not a valid {field_name}. Valid values: {', '.join(valid_value_names)}",
+                }
+
+            return {"valid": True, "message": ""}
+
+        except Exception as e:
+            logger.error(f"Error validating custom field '{field_name}' value '{value}': {e}")
+            # Fail open - allow the value if validation fails
+            return {"valid": True, "message": ""}
+
+    async def _find_field_by_heuristics(
+        self, custom_fields: list, field_name: str, value: str
+    ) -> Optional[Dict[str, Any]]:
+        """Find a custom field using heuristics when field names are not available.
+
+        This method attempts to identify fields by examining their bundle values and types.
+        It's used as a fallback when the YouTrack API doesn't return field names.
+        """
+        if field_name == "Priority":
+            # Look for fields that contain typical priority values
+            priority_indicators = [
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "normal",
+                "major",
+                "minor",
+                "blocker",
+                "show-stopper",
+                "trivial",
+            ]
+
+            for field in custom_fields:
+                bundle = field.get("bundle", {})
+                values = bundle.get("values", [])
+                if values:
+                    value_names = [v.get("name", "").lower() for v in values if isinstance(v, dict)]
+                    # Check if this field contains priority-like values
+                    priority_matches = sum(
+                        1 for indicator in priority_indicators if any(indicator in vname for vname in value_names)
+                    )
+                    if priority_matches >= 2:  # At least 2 priority-like values
+                        logger.info(
+                            f"Identified Priority field by heuristics: field_id={field.get('id')}, values={[v.get('name') for v in values]}"
+                        )
+                        return field
+
+        elif field_name == "Type":
+            # Look for fields that contain typical issue type values
+            type_indicators = ["bug", "feature", "task", "epic", "story", "improvement", "sub-task", "defect"]
+
+            for field in custom_fields:
+                bundle = field.get("bundle", {})
+                values = bundle.get("values", [])
+                if values:
+                    value_names = [v.get("name", "").lower() for v in values if isinstance(v, dict)]
+                    # Check if this field contains type-like values
+                    type_matches = sum(
+                        1 for indicator in type_indicators if any(indicator in vname for vname in value_names)
+                    )
+                    if type_matches >= 1:  # At least 1 type-like value
+                        logger.info(
+                            f"Identified Type field by heuristics: field_id={field.get('id')}, values={[v.get('name') for v in values]}"
+                        )
+                        return field
+
+        # If heuristics fail, try to find a field that contains the provided value
+        for field in custom_fields:
+            bundle = field.get("bundle", {})
+            values = bundle.get("values", [])
+            if values:
+                value_names = [v.get("name", "") for v in values if isinstance(v, dict)]
+                if value in value_names:
+                    logger.info(f"Found field containing value '{value}' by heuristics: field_id={field.get('id')}")
+                    return field
+
+        return None
 
     def display_issue_details(
         self, issue: Dict[str, Any], show_comments: bool = False, format_type: str = "table"

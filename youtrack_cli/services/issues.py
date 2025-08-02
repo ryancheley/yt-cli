@@ -39,15 +39,35 @@ class IssueService(BaseService):
                 "project": {"id": project_id},
                 "summary": summary,
             }
+            custom_fields = []
 
             if description:
                 issue_data["description"] = description
-            if issue_type:
-                issue_data["type"] = {"name": issue_type}
-            if priority:
-                issue_data["priority"] = {"name": priority}
             if assignee:
                 issue_data["assignee"] = {"login": assignee}
+
+            # Handle custom fields - Priority and Type are typically custom fields in YouTrack
+            if priority:
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Priority",
+                        "value": {"$type": "EnumBundleElement", "name": priority},
+                    }
+                )
+
+            if issue_type:
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Type",
+                        "value": {"$type": "EnumBundleElement", "name": issue_type},
+                    }
+                )
+
+            # Add custom fields if any were specified
+            if custom_fields:
+                issue_data["customFields"] = custom_fields
 
             response = await self._make_request("POST", "issues", json_data=issue_data)
             return await self._handle_response(response, success_codes=[200, 201])
@@ -125,15 +145,61 @@ class IssueService(BaseService):
             if issue_type is not None:
                 update_data["type"] = {"name": issue_type}
 
-            # Handle fields that might be custom fields
+            # Handle state field with dynamic discovery
             if state is not None:
-                custom_fields.append(
-                    {
-                        "$type": "SingleEnumIssueCustomField",
-                        "name": "State",
-                        "value": {"$type": "EnumBundleElement", "name": state},
-                    }
-                )
+                state_field_added = False
+                try:
+                    # First, get the project ID from the issue
+                    project_id = await self._get_project_id_from_issue(issue_id)
+                    if project_id:
+                        # Discover the correct state field for this project
+                        state_field_info = await self._discover_state_field_for_project(project_id)
+                        if state_field_info:
+                            custom_fields.append(
+                                {
+                                    "$type": "SingleEnumIssueCustomField",
+                                    "name": state_field_info["field_name"],
+                                    "value": {"$type": state_field_info["bundle_type"], "name": state},
+                                }
+                            )
+                            state_field_added = True
+                        else:
+                            # Field discovery failed - get available fields for error message
+                            from .projects import ProjectService
+
+                            project_service = ProjectService(self.auth_manager)
+                            fields_result = await project_service.get_project_custom_fields(
+                                project_id, "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)"
+                            )
+
+                            available_fields = []
+                            if fields_result["status"] == "success":
+                                available_fields = [
+                                    f.get("field", {}).get("name", "")
+                                    for f in fields_result["data"]
+                                    if f.get("field", {}).get("name")
+                                ]
+
+                            return self._create_error_response(
+                                f"No state field found for project '{project_id}'. "
+                                f"Available custom fields: {', '.join(available_fields) if available_fields else 'None'}. "
+                                f"Please check if the project has a state/status field configured."
+                            )
+                except Exception:
+                    # Log the exception but continue with fallback
+                    pass
+
+                # Use fallback only if field discovery didn't work
+                if not state_field_added:
+                    custom_fields.append(
+                        {
+                            "$type": "SingleEnumIssueCustomField",
+                            "name": "State",
+                            "value": {"$type": "EnumBundleElement", "name": state},
+                        }
+                    )
+
+            # Handle priority field (keep existing logic for now)
             if priority is not None:
                 custom_fields.append(
                     {
@@ -148,12 +214,96 @@ class IssueService(BaseService):
                 update_data["customFields"] = custom_fields
 
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
-            return await self._handle_response(response)
+            result = await self._handle_response(response)
+
+            # Enhance error messages for common state field issues
+            if result["status"] == "error" and state is not None:
+                error_message = result.get("message", "").lower()
+
+                # Check for common state field errors
+                if "incompatible-issue-custom-field-name" in error_message or "state" in error_message:
+                    # Try to get the project ID and available fields for better error message
+                    try:
+                        project_id = await self._get_project_id_from_issue(issue_id)
+                        if project_id:
+                            from .projects import ProjectService
+
+                            project_service = ProjectService(self.auth_manager)
+
+                            # Get state field info
+                            state_field_result = await project_service.discover_state_field(project_id)
+                            if state_field_result["status"] == "success":
+                                field_name = state_field_result["data"]["field_name"]
+                                return self._create_error_response(
+                                    f"State update failed. This project uses '{field_name}' instead of 'State'. "
+                                    f'Try: yt issues update {issue_id} --state "{state}" '
+                                    f"(Note: the CLI should handle this automatically, please report this as a bug)"
+                                )
+                            else:
+                                # Get available fields
+                                fields_result = await project_service.get_project_custom_fields(
+                                    project_id, "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)"
+                                )
+                                available_fields = []
+                                if fields_result["status"] == "success":
+                                    available_fields = [
+                                        f.get("field", {}).get("name", "")
+                                        for f in fields_result["data"]
+                                        if f.get("field", {}).get("name")
+                                    ]
+
+                                return self._create_error_response(
+                                    f"State update failed. No state field found in project '{project_id}'. "
+                                    f"Available custom fields: {', '.join(available_fields) if available_fields else 'None'}. "
+                                    f"Original error: {result['message']}"
+                                )
+                    except Exception:
+                        pass
+
+                elif "statebundleelement" in error_message or "enumbundleelement" in error_message:
+                    return self._create_error_response(
+                        f"State field type mismatch. The project expects a different field type. "
+                        f"This is likely a configuration issue with the project's state field. "
+                        f"Original error: {result['message']}"
+                    )
+
+            return result
 
         except ValueError as e:
             return self._create_error_response(str(e))
         except Exception as e:
             return self._create_error_response(f"Error updating issue: {str(e)}")
+
+    async def _get_project_id_from_issue(self, issue_id: str) -> Optional[str]:
+        """Get the project ID from an issue by fetching minimal issue data."""
+        try:
+            response = await self._make_request("GET", f"issues/{issue_id}", params={"fields": "project(id,shortName)"})
+            result = await self._handle_response(response)
+
+            if result["status"] == "success":
+                project_info = result["data"].get("project")
+                if project_info:
+                    # Prioritize shortName for admin API calls, fallback to id
+                    return project_info.get("shortName") or project_info.get("id")
+            return None
+        except Exception:
+            return None
+
+    async def _discover_state_field_for_project(self, project_id: str) -> Optional[Dict[str, Any]]:
+        """Discover state field information for a project."""
+        try:
+            # Import ProjectService here to avoid circular imports
+            from .projects import ProjectService
+
+            # Use the existing auth_manager from BaseService
+            project_service = ProjectService(self.auth_manager)
+            result = await project_service.discover_state_field(project_id)
+
+            if result["status"] == "success":
+                return result["data"]
+            return None
+        except Exception:
+            return None
 
     async def delete_issue(self, issue_id: str) -> Dict[str, Any]:
         """Delete an issue via API.

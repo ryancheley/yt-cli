@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional
 
 from .base import BaseService
+from .field_cache import get_field_cache
 
 
 class ProjectService(BaseService):
@@ -423,3 +424,159 @@ class ProjectService(BaseService):
             return self._create_error_response(str(e))
         except Exception as e:
             return self._create_error_response(f"Error creating project version: {str(e)}")
+
+    async def get_custom_field_details(
+        self, project_id: str, field_id: str, include_bundle: bool = True
+    ) -> Dict[str, Any]:
+        """Get detailed custom field information including bundle data.
+
+        Args:
+            project_id: Project ID
+            field_id: Custom field ID
+            include_bundle: Whether to include bundle values
+
+        Returns:
+            API response with detailed field information
+        """
+        try:
+            # First get the field details
+            field_response = await self._make_request(
+                "GET",
+                f"admin/projects/{project_id}/customFields/{field_id}",
+                params={"fields": "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)"},
+            )
+            field_result = await self._handle_response(field_response)
+
+            if field_result["status"] != "success" or not include_bundle:
+                return field_result
+
+            # Try to get bundle information if available
+            try:
+                bundle_response = await self._make_request(
+                    "GET",
+                    f"admin/projects/{project_id}/customFields/{field_id}/bundle",
+                    params={"fields": "id,values(id,name,description,$type)"},
+                )
+                bundle_result = await self._handle_response(bundle_response)
+
+                if bundle_result["status"] == "success":
+                    field_result["data"]["bundle"] = bundle_result["data"]
+            except Exception:
+                # Bundle might not exist for all field types, that's ok
+                pass
+
+            return field_result
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error getting custom field details: {str(e)}")
+
+    async def discover_state_field(self, project_id: str) -> Dict[str, Any]:
+        """Discover the state field for a project by checking common field names.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Dict containing field discovery results with field name, type, and bundle info
+        """
+        try:
+            # Check cache first
+            cache = get_field_cache()
+            cached_result = cache.get(project_id, "state")
+            if cached_result is not None:
+                return {"status": "success", "data": cached_result}
+            # Get all custom fields for the project
+            fields_response = await self.get_project_custom_fields(
+                project_id, fields="id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)"
+            )
+
+            if fields_response["status"] != "success":
+                return fields_response
+
+            custom_fields = fields_response["data"]
+            if not isinstance(custom_fields, list):
+                return self._create_error_response("Invalid custom fields response format")
+
+            # Common state field names in order of priority
+            state_field_names = [
+                "State",
+                "Status",
+                "Kanban State",
+                "Workflow State",
+                "Stage",
+                "Issue State",
+                "Current State",
+                "Work State",
+            ]
+
+            discovered_field = None
+            for field_name in state_field_names:
+                for field in custom_fields:
+                    # Field name is in field.name, not directly in name
+                    actual_field_name = field.get("field", {}).get("name", "")
+                    if actual_field_name.lower() == field_name.lower():
+                        discovered_field = field
+                        break
+                if discovered_field:
+                    break
+
+            if not discovered_field:
+                # Look for any field containing "state" in the name
+                for field in custom_fields:
+                    actual_field_name = field.get("field", {}).get("name", "").lower()
+                    if "state" in actual_field_name or "status" in actual_field_name:
+                        discovered_field = field
+                        break
+
+            if not discovered_field:
+                return {
+                    "status": "error",
+                    "message": "No state field found in project",
+                    "available_fields": [f.get("field", {}).get("name", "") for f in custom_fields],
+                }
+
+            # Get detailed information about the discovered field
+            field_details = await self.get_custom_field_details(project_id, discovered_field["id"], include_bundle=True)
+
+            if field_details["status"] != "success":
+                return field_details
+
+            # Extract bundle type information for proper API formatting
+            bundle_type = "EnumBundleElement"  # Default fallback
+            field_data = field_details["data"]
+
+            # Try to determine the bundle type from the field information
+            if "bundle" in field_data and "values" in field_data["bundle"]:
+                bundle_values = field_data["bundle"]["values"]
+                if isinstance(bundle_values, list) and len(bundle_values) > 0:
+                    first_value = bundle_values[0]
+                    if "$type" in first_value:
+                        bundle_type = first_value["$type"]
+
+            # Alternative: Check field type information
+            if "field" in field_data and "fieldType" in field_data["field"]:
+                field_type = field_data["field"]["fieldType"]
+                # field_type is a dict like {'$type': 'FieldType'}, get the $type value
+                if isinstance(field_type, dict) and "$type" in field_type:
+                    field_type_name = field_type["$type"]
+                    if isinstance(field_type_name, str) and "state" in field_type_name.lower():
+                        bundle_type = "StateBundleElement"
+
+            result_data = {
+                "field_name": discovered_field.get("field", {}).get("name", ""),
+                "field_id": discovered_field["id"],
+                "bundle_type": bundle_type,
+                "field_details": field_data,
+            }
+
+            # Cache the result for future use
+            cache.set(project_id, result_data, "state")
+
+            return {"status": "success", "data": result_data}
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error discovering state field: {str(e)}")
