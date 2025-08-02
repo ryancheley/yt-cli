@@ -509,7 +509,7 @@ class TestProjectServiceCustomFields:
 
             result = await project_service.get_project_custom_fields("TEST")
 
-            expected_params = {"fields": "id,name,fieldType,localizedName,isPublic,ordinal"}
+            expected_params = {"fields": "id,field(name,fieldType),canBeEmpty,isPublic,ordinal"}
             mock_request.assert_called_once_with("GET", "admin/projects/TEST/customFields", params=expected_params)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"

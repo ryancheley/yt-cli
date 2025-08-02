@@ -481,7 +481,7 @@ class ProjectManager:
         for field in custom_fields:
             field_data = field.get("field", {})
             name = field_data.get("name", "N/A")
-            field_type = field_data.get("fieldType", {}).get("id", "N/A")
+            field_type = field.get("$type", "N/A")
 
             # Simplify field type display
             if "ProjectCustomField" in field_type:
