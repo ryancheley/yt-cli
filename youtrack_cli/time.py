@@ -59,15 +59,14 @@ class TimeManager:
         work_item_data = {
             "duration": {"minutes": duration_minutes},
             "date": work_date,
-            "issue": {"id": issue_id},
         }
 
         if description:
-            work_item_data["description"] = description
+            work_item_data["text"] = description
         if work_type:
             work_item_data["type"] = {"name": work_type}
 
-        url = f"{credentials.base_url.rstrip('/')}/api/workItems"
+        url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
             "Content-Type": "application/json",
