@@ -1,0 +1,3 @@
+project_id,summary,description,type,priority,assignee
+FPU,Fix login bug,Login fails on mobile devices,Bug,High,john.doe
+FPU,Add user dashboard,Create a user dashboard with metrics,Feature,Medium,jane.smith

@@ -1880,15 +1880,18 @@ def batch_update(
 
     console.print(f"🔍 Validating batch update file: {file_path}", style="blue")
 
-    try:
-        # Validate the input file
-        validated_items = batch_manager.validate_file(file_path, "update")
+    async def run_batch_update():
+        # Validate the input file with API compatibility checking
+        validated_items = await batch_manager.validate_file_with_api_check(file_path, "update")
         console.print(f"✅ Validation successful! Found {len(validated_items)} items to process.", style="green")
 
         # Perform the batch operation
-        result = asyncio.run(
-            batch_manager.batch_update_issues(validated_items, dry_run=dry_run, continue_on_error=continue_on_error)  # type: ignore[arg-type]
-        )
+        return await batch_manager.batch_update_issues(
+            validated_items, dry_run=dry_run, continue_on_error=continue_on_error
+        )  # type: ignore[arg-type]
+
+    try:
+        result = asyncio.run(run_batch_update())
 
         # Display summary
         batch_manager.display_operation_summary(result)
@@ -1951,8 +1954,15 @@ def validate(
 
     console.print(f"🔍 Validating {operation} file: {file_path}", style="blue")
 
+    async def run_validation():
+        # Use enhanced validation for update operations to check API compatibility
+        if operation == "update":
+            return await batch_manager.validate_file_with_api_check(file_path, operation)
+        else:
+            return batch_manager.validate_file(file_path, operation)
+
     try:
-        validated_items = batch_manager.validate_file(file_path, operation)
+        validated_items = asyncio.run(run_validation())
         console.print("✅ Validation successful!", style="green")
         console.print(f"Found {len(validated_items)} valid items for {operation} operation.", style="green")
 
