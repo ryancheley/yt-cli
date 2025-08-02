@@ -261,6 +261,75 @@ class TestIssueServiceUpdate:
             mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
 
     @pytest.mark.asyncio
+    async def test_update_issue_with_assignee(self, issue_service, mock_response):
+        """Test issue update with assignee field."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+
+            result = await issue_service.update_issue("TEST-1", assignee="admin")
+
+            expected_data = {
+                "$type": "Issue",
+                "customFields": [
+                    {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": "admin"}}
+                ],
+            }
+            mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
+            assert result["status"] == "success"
+
+    @pytest.mark.asyncio
+    async def test_update_issue_with_assignee_and_other_fields(self, issue_service, mock_response):
+        """Test issue update with assignee and other fields."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+
+            result = await issue_service.update_issue(
+                "TEST-1", summary="Updated Summary", assignee="admin", priority="High"
+            )
+
+            expected_data = {
+                "$type": "Issue",
+                "summary": "Updated Summary",
+                "customFields": [
+                    {"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": {"login": "admin"}},
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Priority",
+                        "value": {"$type": "EnumBundleElement", "name": "High"},
+                    },
+                ],
+            }
+            mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
+            assert result["status"] == "success"
+
+    @pytest.mark.asyncio
+    async def test_update_issue_with_empty_assignee(self, issue_service, mock_response):
+        """Test issue update with empty assignee (unassign)."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+
+            result = await issue_service.update_issue("TEST-1", assignee="")
+
+            expected_data = {
+                "$type": "Issue",
+                "customFields": [{"$type": "SingleUserIssueCustomField", "name": "Assignee", "value": None}],
+            }
+            mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
+            assert result["status"] == "success"
+
+    @pytest.mark.asyncio
     async def test_assign_issue(self, issue_service, mock_response):
         """Test issue assignment."""
         with (
@@ -351,38 +420,41 @@ class TestIssueServiceMove:
 
     @pytest.mark.asyncio
     async def test_move_issue_successful(self, issue_service):
-        """Test successful issue state move."""
-        # Mock the initial GET request to fetch issue data
-        initial_response = MagicMock(spec=httpx.Response)
-        initial_response.status_code = 200
-        initial_response.json.return_value = {
-            "customFields": [
-                {"name": "State", "value": {"$type": "StateBundleElement", "name": "Open", "id": "150-12"}}
-            ]
-        }
-
+        """Test successful issue state move with dynamic field discovery."""
         # Mock the update request
         update_response = MagicMock(spec=httpx.Response)
         update_response.status_code = 200
 
-        with patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request:
-            mock_request.side_effect = [initial_response, update_response]
+        with (
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch.object(issue_service, "_discover_state_field_for_project", new_callable=AsyncMock) as mock_discover,
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+        ):
+            # Mock dynamic field discovery
+            mock_get_project.return_value = "TEST"
+            mock_discover.return_value = {"field_name": "State", "bundle_type": "StateBundleElement"}
+
+            # Mock API response
+            mock_request.return_value = update_response
+            mock_handle.return_value = {"status": "success", "message": "Issue TEST-1 moved to In Progress state"}
 
             result = await issue_service.move_issue("TEST-1", state="In Progress")
 
-            # Verify initial GET request
-            assert mock_request.call_count == 2
-            first_call = mock_request.call_args_list[0]
-            assert first_call[0] == ("GET", "issues/TEST-1")
-            assert first_call[1]["params"]["fields"] == "customFields(name,value(name,id,$type))"
+            # Verify field discovery was called
+            mock_get_project.assert_called_once_with("TEST-1")
+            mock_discover.assert_called_once_with("TEST")
 
             # Verify update request
-            second_call = mock_request.call_args_list[1]
-            assert second_call[0] == ("POST", "issues/TEST-1")
-            update_data = second_call[1]["json_data"]
+            mock_request.assert_called_once()
+            call_args = mock_request.call_args
+            assert call_args[0] == ("POST", "issues/TEST-1")
+            update_data = call_args[1]["json_data"]
             assert update_data["$type"] == "Issue"
             assert len(update_data["customFields"]) == 1
             assert update_data["customFields"][0]["name"] == "State"
+            assert update_data["customFields"][0]["$type"] == "SingleEnumIssueCustomField"
+            assert update_data["customFields"][0]["value"]["$type"] == "StateBundleElement"
             assert update_data["customFields"][0]["value"]["name"] == "In Progress"
 
             assert result["status"] == "success"

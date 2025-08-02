@@ -140,8 +140,6 @@ class IssueService(BaseService):
                 update_data["summary"] = summary
             if description is not None:
                 update_data["description"] = description
-            if assignee is not None:
-                update_data["assignee"] = {"login": assignee} if assignee else None
             if issue_type is not None:
                 update_data["type"] = {"name": issue_type}
 
@@ -199,6 +197,16 @@ class IssueService(BaseService):
                             "value": {"$type": "StateBundleElement", "name": state},
                         }
                     )
+
+            # Handle assignee field (custom field)
+            if assignee is not None:
+                custom_fields.append(
+                    {
+                        "$type": "SingleUserIssueCustomField",
+                        "name": "Assignee",
+                        "value": {"login": assignee} if assignee else None,
+                    }
+                )
 
             # Handle priority field (keep existing logic for now)
             if priority is not None:
@@ -413,96 +421,122 @@ class IssueService(BaseService):
             if project_id:
                 return self._create_error_response("Moving issues between projects not yet implemented")
 
-            # First, get the issue to determine the correct state field name
-            params = {"fields": "customFields(name,value(name,id,$type))"}
-            issue_response = await self._make_request("GET", f"issues/{issue_id}", params=params)
-            if issue_response.status_code != 200:
-                return self._create_error_response(f"Could not fetch issue {issue_id}")
+            # Handle state field with dynamic discovery (same approach as update_issue)
+            state_field_added = False
+            try:
+                # First, get the project ID from the issue
+                project_id_from_issue = await self._get_project_id_from_issue(issue_id)
+                if project_id_from_issue:
+                    # Discover the correct state field for this project
+                    state_field_info = await self._discover_state_field_for_project(project_id_from_issue)
+                    if state_field_info:
+                        # Use discovered field information
+                        update_data = {
+                            "$type": "Issue",
+                            "customFields": [
+                                {
+                                    "$type": "SingleEnumIssueCustomField",
+                                    "name": state_field_info["field_name"],
+                                    "value": {"$type": state_field_info["bundle_type"], "name": state},
+                                }
+                            ],
+                        }
+                        state_field_added = True
+                    else:
+                        # Field discovery failed - get available fields for error message
+                        from .projects import ProjectService
 
-            issue_data = issue_response.json()
-            custom_fields = issue_data.get("customFields", [])
+                        project_service = ProjectService(self.auth_manager)
+                        fields_result = await project_service.get_project_custom_fields(
+                            project_id_from_issue,
+                            "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)",
+                        )
 
-            # Find the appropriate state field name - try common variations
-            state_field_name = None
-            state_field_candidates = ["State", "Stage", "Status", "Kanban State"]
-            current_state_value = None
+                        available_fields = []
+                        if fields_result["status"] == "success":
+                            available_fields = [
+                                f.get("field", {}).get("name", "")
+                                for f in fields_result["data"]
+                                if f.get("field", {}).get("name")
+                            ]
 
-            for field in custom_fields:
-                field_name = field.get("name", "")
-                if field_name in state_field_candidates:
-                    # Prefer specific order: State > Stage > Status > Kanban State
-                    if field_name == "State":
-                        state_field_name = field_name
-                        current_state_value = field.get("value")
-                        break
-                    elif field_name == "Stage" and (state_field_name is None or state_field_name == "Kanban State"):
-                        state_field_name = field_name
-                        current_state_value = field.get("value")
-                    elif field_name == "Status" and (state_field_name is None or state_field_name == "Kanban State"):
-                        state_field_name = field_name
-                        current_state_value = field.get("value")
-                    elif state_field_name is None:
-                        state_field_name = field_name
-                        current_state_value = field.get("value")
+                        return self._create_error_response(
+                            f"No state field found for project '{project_id_from_issue}'. "
+                            f"Available custom fields: {', '.join(available_fields) if available_fields else 'None'}. "
+                            f"Please check if the project has a state/status field configured."
+                        )
+            except Exception:
+                # Log the exception but continue with fallback
+                pass
 
-            if not state_field_name:
-                return self._create_error_response(
-                    f"No state field found for issue {issue_id}. "
-                    f"Available custom fields: {[f.get('name') for f in custom_fields]}"
-                )
-
-            # Create the correct value structure based on the field type
-            # For state fields, we need to determine if it's a StateBundle or EnumBundle
-
-            # Temporary hardcoded mapping for testing - this should be dynamic in production
-            state_id_map = {
-                "Backlog": "150-12",
-                "Develop": "150-13",
-                "Review": "150-14",
-                "Test": "150-15",
-                "Staging": "150-16",
-                "Done": "150-17",
-            }
-
-            if current_state_value:
-                # Use the same structure as the current value but update both name and ID
-                new_value = current_state_value.copy() if isinstance(current_state_value, dict) else {}
-                new_value["name"] = state
-
-                # Always update the ID to match the new state name
-                if state in state_id_map:
-                    new_value["id"] = state_id_map[state]
-
-                # Ensure we have the correct $type - prefer StateBundleElement for stage fields
-                if state_field_name in ["Stage", "Status", "State"]:
-                    new_value["$type"] = "StateBundleElement"
-                else:
-                    new_value["$type"] = "EnumBundleElement"
-            else:
-                # Fallback - use StateBundleElement for stage-like fields
-                if state_field_name in ["Stage", "Status", "State"]:
-                    new_value = {"$type": "StateBundleElement", "name": state}
-                    if state in state_id_map:
-                        new_value["id"] = state_id_map[state]
-                else:
-                    new_value = {"$type": "EnumBundleElement", "name": state}
-
-            # Move to different state using proper API structure
-            update_data = {
-                "$type": "Issue",
-                "customFields": [
-                    {
-                        "$type": "SingleEnumIssueCustomField",
-                        "name": state_field_name,
-                        "value": new_value,
-                    }
-                ],
-            }
+            # Use fallback only if field discovery didn't work
+            if not state_field_added:
+                # Use StateBundleElement for state-type fields (consistent with update_issue logic)
+                update_data = {
+                    "$type": "Issue",
+                    "customFields": [
+                        {
+                            "$type": "SingleEnumIssueCustomField",
+                            "name": "State",
+                            "value": {"$type": "StateBundleElement", "name": state},
+                        }
+                    ],
+                }
 
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
-            if response.status_code == 200:
+            result = await self._handle_response(response)
+
+            # Enhance error messages for common state field issues (same as update_issue)
+            if result["status"] == "error":
+                error_message = result.get("message", "").lower()
+
+                # Check for common state field errors
+                if "incompatible-issue-custom-field-name" in error_message or "state" in error_message:
+                    # Try to get the project ID and available fields for better error message
+                    try:
+                        project_id_from_issue = await self._get_project_id_from_issue(issue_id)
+                        if project_id_from_issue:
+                            from .projects import ProjectService
+
+                            project_service = ProjectService(self.auth_manager)
+
+                            # Get state field info
+                            state_field_result = await project_service.discover_state_field(project_id_from_issue)
+                            if state_field_result["status"] == "success":
+                                field_name = state_field_result["data"]["field_name"]
+                                return self._create_error_response(
+                                    f"State move failed. This project uses '{field_name}' instead of 'State'. "
+                                    f'Try: yt issues move {issue_id} --state "{state}" '
+                                    f"(Note: the CLI should handle this automatically, please report this as a bug)"
+                                )
+                            else:
+                                # Get available fields
+                                fields_result = await project_service.get_project_custom_fields(
+                                    project_id_from_issue,
+                                    "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)",
+                                )
+                                available_fields = []
+                                if fields_result["status"] == "success":
+                                    available_fields = [
+                                        f.get("field", {}).get("name", "")
+                                        for f in fields_result["data"]
+                                        if f.get("field", {}).get("name")
+                                    ]
+
+                                return self._create_error_response(
+                                    f"State move failed. No state field found in project '{project_id_from_issue}'. "
+                                    f"Available custom fields: {', '.join(available_fields) if available_fields else 'None'}. "
+                                    f"Original error: {result['message']}"
+                                )
+                    except Exception:
+                        # Continue with original error if enhanced error handling fails
+                        pass
+
+            # Return the original result (success or enhanced error)
+            if result["status"] == "success":
+                # Customize success message for move operation
                 return {"status": "success", "message": f"Issue {issue_id} moved to {state} state"}
-            return await self._handle_response(response)
+            return result
 
         except ValueError as e:
             return self._create_error_response(str(e))
