@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🐛 Fix issue create command project ID structure error (#419)
 - 🐛 Fix move command "$type is required" error (#416, #420)
 - 🐛 Fix KeyError in update command error handling (#421)
+- 🐛 Fix admin maintenance clear-cache command returning 404 error (#431)
+  - Updated clear_caches method to return informative error message explaining cache clearing is not available through YouTrack REST API
+  - Updated documentation to clarify cache management must be done through YouTrack UI or server-side tools
+  - Fixed tests to expect the correct error response
 
 ### Improved
 - 🧪 Reduce excessive test coverage and eliminate redundant tests (#423)
