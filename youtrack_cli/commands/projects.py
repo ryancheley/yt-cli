@@ -355,12 +355,14 @@ def projects_create(
         )
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
             project = result["data"]
+            project_name = project.get("name", name)
+            console.print(f"✅ Project '{project_name}' created successfully", style="green")
             console.print(f"Project ID: {project.get('id', 'N/A')}", style="blue")
             console.print(f"Short Name: {project.get('shortName', 'N/A')}", style="blue")
         else:
-            console.print(f"❌ {result['message']}", style="red")
+            error_message = result.get("message", "Unknown error occurred")
+            console.print(f"❌ {error_message}", style="red")
             raise click.ClickException("Failed to create project")
 
     except Exception as e:
