@@ -461,7 +461,18 @@ class TestAdminLocaleManager:
     async def test_locale_operations(self, admin_manager, auth_manager):
         """Test locale settings operations."""
         # Test successful locale settings retrieval
-        mock_locale_settings = {"locale": {"name": "English", "id": "en_US"}, "isRTL": False}
+        mock_locale_settings = {
+            "locale": {
+                "name": "English",
+                "id": "en_US",
+                "language": "en",
+                "locale": "en_US",
+                "community": False,
+                "$type": "LocaleDescriptor",
+            },
+            "isRTL": False,
+            "$type": "LocaleSettings",
+        }
 
         with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
             mock_client_manager = Mock()
@@ -473,6 +484,11 @@ class TestAdminLocaleManager:
             result = await admin_manager.get_locale_settings()
             assert result["status"] == "success"
             assert result["data"] == mock_locale_settings
+
+            # Verify the API call was made with the correct fields parameter
+            mock_client_manager.make_request.assert_called_once()
+            call_args = mock_client_manager.make_request.call_args
+            assert call_args[1]["params"]["fields"] == "locale(id,name,language,locale,community),isRTL"
 
         # Test locale settings update
         with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
