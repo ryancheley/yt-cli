@@ -39,15 +39,35 @@ class IssueService(BaseService):
                 "project": {"id": project_id},
                 "summary": summary,
             }
+            custom_fields = []
 
             if description:
                 issue_data["description"] = description
-            if issue_type:
-                issue_data["type"] = {"name": issue_type}
-            if priority:
-                issue_data["priority"] = {"name": priority}
             if assignee:
                 issue_data["assignee"] = {"login": assignee}
+
+            # Handle custom fields - Priority and Type are typically custom fields in YouTrack
+            if priority:
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Priority",
+                        "value": {"$type": "EnumBundleElement", "name": priority},
+                    }
+                )
+
+            if issue_type:
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Type",
+                        "value": {"$type": "EnumBundleElement", "name": issue_type},
+                    }
+                )
+
+            # Add custom fields if any were specified
+            if custom_fields:
+                issue_data["customFields"] = custom_fields
 
             response = await self._make_request("POST", "issues", json_data=issue_data)
             return await self._handle_response(response, success_codes=[200, 201])
