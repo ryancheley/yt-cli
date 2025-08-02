@@ -191,11 +191,12 @@ class IssueService(BaseService):
 
                 # Use fallback only if field discovery didn't work
                 if not state_field_added:
+                    # Use StateBundleElement for state-type fields (consistent with move_issue logic)
                     custom_fields.append(
                         {
                             "$type": "SingleEnumIssueCustomField",
                             "name": "State",
-                            "value": {"$type": "EnumBundleElement", "name": state},
+                            "value": {"$type": "StateBundleElement", "name": state},
                         }
                     )
 
