@@ -77,9 +77,19 @@ class TestIssueServiceCreation:
                 "project": {"id": "project-1"},
                 "summary": "Test Summary",
                 "description": "Test Description",
-                "type": {"name": "Bug"},
-                "priority": {"name": "High"},
                 "assignee": {"login": "user123"},
+                "customFields": [
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Priority",
+                        "value": {"$type": "EnumBundleElement", "name": "High"},
+                    },
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Type",
+                        "value": {"$type": "EnumBundleElement", "name": "Bug"},
+                    },
+                ],
             }
 
             mock_request.assert_called_once_with("POST", "issues", json_data=expected_data)
