@@ -105,7 +105,7 @@ class ProjectService(BaseService):
             short_name: Project short name (ID)
             name: Project full name
             description: Project description
-            leader_login: Project leader login
+            leader_login: Project leader user ID (resolved from username by manager)
 
         Returns:
             API response with created project data
@@ -119,7 +119,8 @@ class ProjectService(BaseService):
             if description:
                 project_data["description"] = description
             if leader_login:
-                project_data["leader"] = {"login": leader_login}
+                # Use user ID instead of login for reliable API resolution
+                project_data["leader"] = {"id": leader_login}
 
             response = await self._make_request("POST", "admin/projects", json_data=project_data)
             return await self._handle_response(response, success_codes=[200, 201])
@@ -143,7 +144,7 @@ class ProjectService(BaseService):
             project_id: Project ID to update
             name: New project name
             description: New project description
-            leader_login: New project leader login
+            leader_login: New project leader user ID (resolved from username by manager)
             archived: Archive status
 
         Returns:
@@ -157,7 +158,8 @@ class ProjectService(BaseService):
             if description is not None:
                 update_data["description"] = description
             if leader_login is not None:
-                update_data["leader"] = {"login": leader_login}
+                # Use user ID instead of login for reliable API resolution
+                update_data["leader"] = {"id": leader_login}
             if archived is not None:
                 update_data["archived"] = archived
 
