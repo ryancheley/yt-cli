@@ -232,9 +232,13 @@ class TestIssueServiceUpdate:
         with (
             patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch.object(issue_service, "_discover_state_field_for_project", new_callable=AsyncMock) as mock_discover,
         ):
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "TEST"
+            mock_discover.return_value = {"field_name": "State", "bundle_type": "EnumBundleElement"}
 
             await issue_service.update_issue("TEST-1", summary="Updated Summary", state="In Progress", priority="High")
 
