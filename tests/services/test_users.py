@@ -500,12 +500,12 @@ class TestUserServiceGroups:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success", "data": []}
+            mock_handle.return_value = {"status": "success", "data": {"groups": []}}
 
             result = await user_service.get_user_groups("user-1")
 
-            expected_params = {"fields": "id,name,description,autoJoin,teamAutoJoin"}
-            mock_request.assert_called_once_with("GET", "users/user-1/groups", params=expected_params)
+            expected_params = {"fields": "groups(id,name,description,autoJoin,teamAutoJoin)"}
+            mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
 
@@ -517,12 +517,12 @@ class TestUserServiceGroups:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success", "data": []}
+            mock_handle.return_value = {"status": "success", "data": {"groups": []}}
 
             result = await user_service.get_user_groups("user-1", fields="id,name")
 
-            expected_params = {"fields": "id,name"}
-            mock_request.assert_called_once_with("GET", "users/user-1/groups", params=expected_params)
+            expected_params = {"fields": "groups(id,name)"}
+            mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -566,11 +566,12 @@ class TestUserServiceGroups:
             patch.object(user_service, "_create_error_response") as mock_error,
         ):
             mock_request.side_effect = Exception("Network error")
-            mock_error.return_value = {"status": "error", "message": "Error getting user groups: Network error"}
+            mock_error.return_value = {"status": "error", "message": "Error getting user: Network error"}
 
             result = await user_service.get_user_groups("user-1")
 
-            mock_error.assert_called_once_with("Error getting user groups: Network error")
+            # The error now comes from get_user since get_user_groups calls get_user internally
+            mock_error.assert_called_once_with("Error getting user: Network error")
             assert result["status"] == "error"
 
 
@@ -589,10 +590,11 @@ class TestUserServiceRoles:
 
             result = await user_service.get_user_roles("user-1")
 
-            expected_params = {"fields": "id,name,description"}
-            mock_request.assert_called_once_with("GET", "users/user-1/roles", params=expected_params)
-            mock_handle.assert_called_once_with(mock_response)
+            # Roles are not directly available, so the method tries permissions first then returns empty
+            expected_params = {}
+            mock_request.assert_called_once_with("GET", "users/user-1/permissions", params=expected_params)
             assert result["status"] == "success"
+            assert result["data"] == []
 
     @pytest.mark.asyncio
     async def test_get_user_roles_custom_fields(self, user_service, mock_response):
@@ -606,9 +608,11 @@ class TestUserServiceRoles:
 
             result = await user_service.get_user_roles("user-1", fields="id,name")
 
-            expected_params = {"fields": "id,name"}
-            mock_request.assert_called_once_with("GET", "users/user-1/roles", params=expected_params)
+            # Roles are not directly available, so the method tries permissions first then returns empty
+            expected_params = {}
+            mock_request.assert_called_once_with("GET", "users/user-1/permissions", params=expected_params)
             assert result["status"] == "success"
+            assert result["data"] == []
 
     @pytest.mark.asyncio
     async def test_assign_user_role(self, user_service, mock_response):
@@ -648,15 +652,17 @@ class TestUserServiceRoles:
         """Test role management error handling."""
         with (
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
-            patch.object(user_service, "_create_error_response") as mock_error,
+            patch.object(user_service, "_create_success_response") as mock_success,
         ):
             mock_request.side_effect = Exception("Network error")
-            mock_error.return_value = {"status": "error", "message": "Error getting user roles: Network error"}
+            mock_success.return_value = {"status": "success", "data": []}
 
             result = await user_service.get_user_roles("user-1")
 
-            mock_error.assert_called_once_with("Error getting user roles: Network error")
-            assert result["status"] == "error"
+            # Roles method gracefully handles errors by returning empty array
+            mock_success.assert_called_once_with([])
+            assert result["status"] == "success"
+            assert result["data"] == []
 
 
 class TestUserServiceTeams:
@@ -670,12 +676,12 @@ class TestUserServiceTeams:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success", "data": []}
+            mock_handle.return_value = {"status": "success", "data": {"teams": []}}
 
             result = await user_service.get_user_teams("user-1")
 
-            expected_params = {"fields": "id,name,description"}
-            mock_request.assert_called_once_with("GET", "users/user-1/teams", params=expected_params)
+            expected_params = {"fields": "teams(id,name,description)"}
+            mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
 
@@ -687,12 +693,12 @@ class TestUserServiceTeams:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success", "data": []}
+            mock_handle.return_value = {"status": "success", "data": {"teams": []}}
 
             result = await user_service.get_user_teams("user-1", fields="id,name")
 
-            expected_params = {"fields": "id,name"}
-            mock_request.assert_called_once_with("GET", "users/user-1/teams", params=expected_params)
+            expected_params = {"fields": "teams(id,name)"}
+            mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -736,11 +742,12 @@ class TestUserServiceTeams:
             patch.object(user_service, "_create_error_response") as mock_error,
         ):
             mock_request.side_effect = Exception("Network error")
-            mock_error.return_value = {"status": "error", "message": "Error getting user teams: Network error"}
+            mock_error.return_value = {"status": "error", "message": "Error getting user: Network error"}
 
             result = await user_service.get_user_teams("user-1")
 
-            mock_error.assert_called_once_with("Error getting user teams: Network error")
+            # The error now comes from get_user since get_user_teams calls get_user internally
+            mock_error.assert_called_once_with("Error getting user: Network error")
             assert result["status"] == "error"
 
 
