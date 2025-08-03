@@ -642,6 +642,34 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    async def delete_comment(self, article_id: str, comment_id: str) -> dict[str, Any]:
+        """Delete a comment from an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/comments/{comment_id}"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code in [200, 204]:
+                return {
+                    "status": "success",
+                    "message": "Comment deleted successfully",
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete comment: HTTP {response.status_code}",
+                }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     async def get_article_attachments(self, article_id: str) -> dict[str, Any]:
         """Get attachments for an article."""
         credentials = self.auth_manager.load_credentials()
