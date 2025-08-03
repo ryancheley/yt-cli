@@ -301,6 +301,37 @@ class TestTokenManager:
 
         assert result is None
 
+    def test_is_token_renewable_permanent(self):
+        """Test is_token_renewable for permanent tokens."""
+        manager = TokenManager()
+
+        # Test permanent token formats
+        permanent_tokens = [
+            "perm-YWRtaW4=.NDItMA==.koCA3wYLxWqMmE2nPEONGey3LOw9Ds",
+            "perm-base64.base64.hash",
+            "perm-abc123.def456.ghi789",
+        ]
+
+        for token in permanent_tokens:
+            result = manager.is_token_renewable(token)
+            assert result is False, f"Token {token} should not be renewable"
+
+    def test_is_token_renewable_non_permanent(self):
+        """Test is_token_renewable for non-permanent tokens."""
+        manager = TokenManager()
+
+        # Test non-permanent token formats
+        non_permanent_tokens = [
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+            "temporary_token_12345",
+            "bearer_token_67890",
+            "api_key_abcdef",
+        ]
+
+        for token in non_permanent_tokens:
+            result = manager.is_token_renewable(token)
+            assert result is True, f"Token {token} should be renewable"
+
 
 @pytest.mark.unit
 class TestSensitiveDataMasking:

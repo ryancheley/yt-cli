@@ -2058,10 +2058,11 @@ def token_status(ctx: click.Context) -> None:
             console.print("Run 'yt auth login' to authenticate first", style="blue")
             return
 
-        if credentials.token_expiry:
-            from .security import TokenManager
+        from .security import TokenManager
 
-            token_manager = TokenManager()
+        token_manager = TokenManager()
+
+        if credentials.token_expiry:
             status = token_manager.check_token_expiration(credentials.token_expiry)
 
             if status["status"] == "expired":
@@ -2075,11 +2076,18 @@ def token_status(ctx: click.Context) -> None:
                     style="green",
                 )
         else:
-            console.print("⚪ Token expiration date unknown", style="blue")
-            console.print(
-                "Consider updating your token to include expiration information",
-                style="dim",
-            )
+            # Check if this is a permanent token
+            is_renewable = token_manager.is_token_renewable(credentials.token)
+
+            if not is_renewable:  # Permanent token
+                console.print("✅ Permanent token active", style="green")
+                console.print("This token does not expire", style="dim")
+            else:
+                console.print("⚪ Token expiration date unknown", style="blue")
+                console.print(
+                    "Consider updating your token to include expiration information",
+                    style="dim",
+                )
 
     except Exception as e:
         console.print(f"❌ Error checking token status: {e}", style="red")

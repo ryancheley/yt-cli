@@ -112,6 +112,7 @@ The output will show:
 - 🟢 **Valid**: Token is current and not expiring soon
 - 🟡 **Expiring**: Token expires within the warning period
 - 🔴 **Expired**: Token has expired and needs renewal
+- ✅ **Permanent**: Token is permanent and does not expire
 - ⚪ **Unknown**: Expiration date not available
 
 **Setting Token Expiry:**
