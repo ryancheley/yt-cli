@@ -458,8 +458,18 @@ class IssueManager:
                 # Field doesn't exist in project, provide helpful message
                 available_fields = [f.get("name", "") for f in custom_fields if f.get("name")]
                 if not available_fields:
-                    # If no field names are available, we can't provide good error messages
-                    # This is likely due to API limitations, so we'll fail open for now
+                    # If no field names are available due to API limitations,
+                    # fail closed for critical fields like Type and Priority to prevent
+                    # validation from passing when creation will fail
+                    critical_fields = {"Type", "Priority", "State", "Status"}
+                    if field_name in critical_fields:
+                        return {
+                            "valid": False,
+                            "message": f"Cannot validate '{field_name}' field - field information not available from project API. "
+                            + "This field may not exist in the project configuration. "
+                            + "Please verify the field exists or remove it from your data.",
+                        }
+                    # For other fields, log warning but fail open (backwards compatibility)
                     logger.warning(
                         f"Field names not available from project API - allowing '{field_name}' with value '{value}'"
                     )
