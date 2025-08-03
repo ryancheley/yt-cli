@@ -942,7 +942,27 @@ def move(
     state: Optional[str],
     project_id: Optional[str],
 ) -> None:
-    """Move an issue between states or projects."""
+    """Move an issue between states or projects.
+
+    Move an issue to a different state within the same project, or move it
+    to a different project entirely. When moving between projects, the issue
+    will be transferred with all its data preserved.
+
+    Examples:
+        # Move issue to different state
+        yt issues move DEMO-123 --state "In Progress"
+
+        # Move issue to different project
+        yt issues move DEMO-123 --project-id WEB
+
+        # Using short form
+        yt issues move DEMO-123 -s "Done"
+        yt issues move DEMO-123 -p TEST
+
+    Note: When moving between projects, ensure you have appropriate permissions
+    in both the source and target projects. Custom fields may need attention
+    if they differ between projects.
+    """
     from ..managers.issues import IssueManager
 
     console = get_console()

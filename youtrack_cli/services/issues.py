@@ -314,6 +314,82 @@ class IssueService(BaseService):
         except Exception:
             return None
 
+    async def _resolve_project_database_id(self, project_id_or_short_name: str) -> Optional[str]:
+        """Resolve a project short name to database ID for move operations.
+
+        Args:
+            project_id_or_short_name: Project short name (e.g. 'DEMO') or database ID
+
+        Returns:
+            Database ID if found, None otherwise
+        """
+        try:
+            from .projects import ProjectService
+
+            project_service = ProjectService(self.auth_manager)
+            result = await project_service.get_project(project_id_or_short_name, fields="id,shortName,name")
+
+            if result["status"] == "success" and result["data"]:
+                project_data = result["data"]
+                return project_data.get("id")
+            return None
+        except Exception:
+            return None
+
+    async def _move_issue_to_project(self, issue_id: str, target_project_id: str) -> Dict[str, Any]:
+        """Move an issue to a different project using YouTrack API.
+
+        Args:
+            issue_id: Issue ID to move
+            target_project_id: Target project short name or database ID
+
+        Returns:
+            API response
+        """
+        try:
+            # Resolve target project to database ID
+            target_db_id = await self._resolve_project_database_id(target_project_id)
+            if not target_db_id:
+                return self._create_error_response(
+                    f"Target project '{target_project_id}' not found. "
+                    "Please check the project short name or ID and ensure you have access to it."
+                )
+
+            # Get current issue info for validation and feedback
+            current_issue_result = await self.get_issue(
+                issue_id, fields="id,idReadable,summary,project(id,shortName,name)"
+            )
+            if current_issue_result["status"] != "success":
+                return self._create_error_response(
+                    f"Unable to access issue '{issue_id}': {current_issue_result.get('message', 'Issue not found')}"
+                )
+
+            current_issue = current_issue_result["data"]
+            current_project = current_issue.get("project", {})
+            current_project_name = current_project.get("name", current_project.get("shortName", "Unknown"))
+
+            # Check if already in target project
+            if current_project.get("id") == target_db_id:
+                return self._create_error_response(f"Issue '{issue_id}' is already in project '{target_project_id}'")
+
+            # Make the API call to move the issue
+            response = await self._make_request("POST", f"issues/{issue_id}/project", json_data={"id": target_db_id})
+
+            result = await self._handle_response(response)
+
+            # Enhance success message
+            if result["status"] == "success":
+                issue_readable_id = current_issue.get("idReadable", issue_id)
+                result["message"] = (
+                    f"Issue '{issue_readable_id}' successfully moved from '{current_project_name}' "
+                    f"to '{target_project_id}'"
+                )
+
+            return result
+
+        except Exception as e:
+            return self._create_error_response(f"Error moving issue to project: {str(e)}")
+
     async def delete_issue(self, issue_id: str) -> Dict[str, Any]:
         """Delete an issue via API.
 
@@ -409,7 +485,7 @@ class IssueService(BaseService):
         Args:
             issue_id: Issue ID to move
             state: New state name
-            project_id: New project ID (not yet implemented)
+            project_id: New project short name or database ID
 
         Returns:
             API response
@@ -418,8 +494,9 @@ class IssueService(BaseService):
             if not state and not project_id:
                 return self._create_error_response("Either state or project_id must be provided")
 
+            # Handle project move
             if project_id:
-                return self._create_error_response("Moving issues between projects not yet implemented")
+                return await self._move_issue_to_project(issue_id, project_id)
 
             # Handle state field with dynamic discovery (same approach as update_issue)
             state_field_added = False

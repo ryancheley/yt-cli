@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- ✨ Implement moving issues between projects feature (#446)
+  - Added full support for moving issues from one project to another using YouTrack REST API
+  - Implemented project short name to database ID resolution for seamless user experience
+  - Added comprehensive validation including project existence and permissions checks
+  - Enhanced error handling with detailed feedback for common failure scenarios
+  - Updated command help with examples and usage guidance for both state and project moves
+  - Added comprehensive test coverage for new functionality
+
 ### Fixed
 - 🐛 Fix users update command not persisting changes (#482)
   - Updated user modification methods to use Hub API instead of YouTrack API for fields like email and fullName
@@ -17,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improved
 - 📝 Added documentation note about Hub API requirements for user updates
+- 📝 Enhanced issues move command documentation with comprehensive examples and considerations
 
 ## [0.13.5] - 2025-07-27
 
