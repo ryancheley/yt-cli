@@ -143,7 +143,7 @@ def create_issue_dependencies_tree(
     dependencies: List[Dict[str, Any]],
     show_status: bool = True,
 ) -> Tree:
-    """Create a tree view of issue dependencies.
+    """Create a tree view of issue dependencies (legacy function - kept for compatibility).
 
     Args:
         issue: Main issue data
@@ -153,7 +153,7 @@ def create_issue_dependencies_tree(
     Returns:
         Rich Tree object with dependencies
     """
-    issue_id = issue.get("id", "Unknown")
+    issue_id = issue.get("idReadable") or issue.get("id", "Unknown")
     issue_summary = issue.get("summary", "No summary")
 
     builder = EnhancedTreeBuilder(f"🎯 Dependencies for {issue_id}")
@@ -217,6 +217,155 @@ def create_issue_dependencies_tree(
             _add_dependency_node(builder, related_node, dep, show_status)
 
     return builder.tree
+
+
+def create_issue_relationships_tree(
+    issue: Dict[str, Any],
+    links: List[Dict[str, Any]],
+    link_types: List[Dict[str, Any]],
+    show_status: bool = True,
+) -> Tree:
+    """Create a tree view of all issue relationships dynamically.
+
+    Args:
+        issue: Main issue data
+        links: List of issue links from the API
+        link_types: List of available link types from the API
+        show_status: Whether to show status indicators
+
+    Returns:
+        Rich Tree object with all relationships
+    """
+    from collections import defaultdict
+
+    issue_id = issue.get("idReadable") or issue.get("id", "Unknown")
+    issue_summary = issue.get("summary", "No summary")
+
+    builder = EnhancedTreeBuilder(f"🔗 Relationships for {issue_id}: {issue_summary}")
+    root_node = builder.tree
+
+    if not links:
+        root_node.add("[dim]No relationships found[/dim]")
+        return builder.get_tree()
+
+    # Create a map of link type IDs to their metadata
+    link_type_map = {}
+    for link_type in link_types:
+        link_type_map[link_type.get("id")] = link_type
+
+    # Group relationships by type and direction
+    relationships_by_type = defaultdict(lambda: {"outward": [], "inward": []})
+
+    for link in links:
+        direction = link.get("direction", "")
+        link_type = link.get("linkType", {})
+        link_type_id = link_type.get("id")
+        link_type_name = link_type.get("name", "Unknown")
+
+        # Get the appropriate display name based on direction
+        display_name = link_type_name
+        if link_type_id in link_type_map:
+            type_info = link_type_map[link_type_id]
+            if direction == "OUTWARD" and type_info.get("sourceToTarget"):
+                display_name = type_info.get("sourceToTarget")
+            elif direction == "INWARD" and type_info.get("targetToSource"):
+                display_name = type_info.get("targetToSource")
+
+        # Extract linked issues
+        linked_issues = []
+        if "issues" in link:
+            linked_issues = link["issues"]
+        elif "issue" in link:
+            linked_issues = [link["issue"]]
+
+        # Add to appropriate direction group
+        direction_key = "outward" if direction == "OUTWARD" else "inward"
+        for linked_issue in linked_issues:
+            issue_data = {
+                "id": linked_issue.get("idReadable") or linked_issue.get("id", "Unknown"),
+                "summary": linked_issue.get("summary", "No summary"),
+                "issue_data": linked_issue,
+                "display_name": display_name,
+                "type_name": link_type_name,
+            }
+            relationships_by_type[link_type_name][direction_key].append(issue_data)
+
+    # Build the tree structure grouped by relationship types
+    for relationship_type, directions in relationships_by_type.items():
+        # Add relationship type node
+        type_node = root_node.add(f"[bold cyan]{relationship_type}[/bold cyan]")
+
+        # Add outward relationships
+        if directions["outward"]:
+            for rel_issue in directions["outward"]:
+                display_name = rel_issue["display_name"]
+                issue_metadata = {}
+
+                if show_status:
+                    # Try to get status from the linked issue
+                    linked_issue_data = rel_issue["issue_data"]
+                    status = _extract_status_from_issue(linked_issue_data)
+                    if status:
+                        issue_metadata["Status"] = status
+
+                    assignee = _get_assignee_name_from_issue(linked_issue_data)
+                    if assignee and assignee != "Unassigned":
+                        issue_metadata["Assignee"] = assignee
+
+                outward_node = type_node.add(f"[green]→ {display_name}[/green]")
+                builder.add_node_with_metadata(
+                    outward_node,
+                    f"{rel_issue['id']}: {rel_issue['summary'][:60]}{'...' if len(rel_issue['summary']) > 60 else ''}",
+                    issue_metadata,
+                    style="blue",
+                )
+
+        # Add inward relationships
+        if directions["inward"]:
+            for rel_issue in directions["inward"]:
+                display_name = rel_issue["display_name"]
+                issue_metadata = {}
+
+                if show_status:
+                    # Try to get status from the linked issue
+                    linked_issue_data = rel_issue["issue_data"]
+                    status = _extract_status_from_issue(linked_issue_data)
+                    if status:
+                        issue_metadata["Status"] = status
+
+                    assignee = _get_assignee_name_from_issue(linked_issue_data)
+                    if assignee and assignee != "Unassigned":
+                        issue_metadata["Assignee"] = assignee
+
+                inward_node = type_node.add(f"[yellow]← {display_name}[/yellow]")
+                builder.add_node_with_metadata(
+                    inward_node,
+                    f"{rel_issue['id']}: {rel_issue['summary'][:60]}{'...' if len(rel_issue['summary']) > 60 else ''}",
+                    issue_metadata,
+                    style="blue",
+                )
+
+    return builder.get_tree()
+
+
+def _extract_status_from_issue(issue: Dict[str, Any]) -> Optional[str]:
+    """Extract status from issue data, checking multiple possible locations."""
+    # Try state field first
+    if "state" in issue and isinstance(issue["state"], dict):
+        return issue["state"].get("name")
+
+    # Try custom fields
+    custom_fields = issue.get("customFields", [])
+    if isinstance(custom_fields, list):
+        for field in custom_fields:
+            if isinstance(field, dict) and field.get("name") in ["State", "Status", "Stage"]:
+                value = field.get("value")
+                if value and isinstance(value, dict):
+                    return value.get("name")
+                elif isinstance(value, str):
+                    return value
+
+    return None
 
 
 def create_project_hierarchy_tree(projects: List[Dict[str, Any]]) -> Tree:

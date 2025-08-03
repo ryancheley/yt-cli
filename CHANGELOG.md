@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- ♻️ Rename 'issues dependencies' to 'issues related' and show all relationship types dynamically (#519)
+  - Rename command from `yt issues dependencies` to `yt issues related` for better clarity
+  - Dynamically fetch and display all relationship types from YouTrack instance
+  - Support custom relationship types specific to different YouTrack configurations
+  - Enhanced tree and table formats showing relationship directions (inward/outward)
+  - Maintain backward compatibility with `dependencies` as an alias
+  - Improved display with proper relationship type names (sourceToTarget/targetToSource)
 - ✨ Add CSV format support to yt issues attach list command (#505)
   - Implement CSV output formatting for attachment listings
   - Support for all three formats: table, json, and csv

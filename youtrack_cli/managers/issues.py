@@ -760,6 +760,82 @@ class IssueManager:
 
         self.console.print(table)
 
+    def display_relationships_table(self, links: List[Dict[str, Any]], link_types: List[Dict[str, Any]]) -> None:
+        """Display relationships in a table format grouped by relationship type.
+
+        Args:
+            links: List of issue links from the API
+            link_types: List of available link types from the API
+        """
+        if not links:
+            self.console.print("[yellow]No relationships found.[/yellow]")
+            return
+
+        from collections import defaultdict
+
+        from rich.table import Table
+
+        # Group links by relationship type and direction
+        relationships_by_type = defaultdict(list)
+
+        # Create a map of link type IDs to their metadata
+        link_type_map = {}
+        for link_type in link_types:
+            link_type_map[link_type.get("id")] = link_type
+
+        for link in links:
+            direction = link.get("direction", "")
+            link_type = link.get("linkType", {})
+            link_type_id = link_type.get("id")
+            link_type_name = link_type.get("name", "")
+
+            # Get the display name based on direction
+            display_name = link_type_name
+            if link_type_id in link_type_map:
+                type_info = link_type_map[link_type_id]
+                if direction == "OUTWARD" and type_info.get("sourceToTarget"):
+                    display_name = type_info.get("sourceToTarget")
+                elif direction == "INWARD" and type_info.get("targetToSource"):
+                    display_name = type_info.get("targetToSource")
+
+            # Handle different link structures
+            if "issues" in link:
+                for linked_issue in link["issues"]:
+                    issue_id = linked_issue.get("idReadable", linked_issue.get("id", ""))
+                    summary = linked_issue.get("summary", "")
+                    relationships_by_type[display_name].append(
+                        {"direction": direction, "issue_id": issue_id, "summary": summary, "type_name": link_type_name}
+                    )
+            else:
+                # Handle direct link structure
+                linked_issue_id = link.get("issue", {}).get("idReadable", "")
+                linked_summary = link.get("issue", {}).get("summary", "")
+                relationships_by_type[display_name].append(
+                    {
+                        "direction": direction,
+                        "issue_id": linked_issue_id,
+                        "summary": linked_summary,
+                        "type_name": link_type_name,
+                    }
+                )
+
+        # Create table with relationship type grouping
+        table = Table(title="Issue Relationships")
+        table.add_column("Relationship Type", style="cyan", no_wrap=True)
+        table.add_column("Direction", style="magenta", no_wrap=True)
+        table.add_column("Related Issue", style="green")
+        table.add_column("Summary", style="white")
+
+        for relationship_type, related_issues in relationships_by_type.items():
+            for i, related_issue in enumerate(related_issues):
+                # Only show the relationship type for the first issue in each group
+                type_display = relationship_type if i == 0 else ""
+                direction_symbol = "→" if related_issue["direction"] == "OUTWARD" else "←"
+
+                table.add_row(type_display, direction_symbol, related_issue["issue_id"], related_issue["summary"])
+
+        self.console.print(table)
+
     async def move_issue(
         self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
     ) -> Dict[str, Any]:
