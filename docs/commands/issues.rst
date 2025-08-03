@@ -222,7 +222,7 @@ Assign issues to users.
 Move Issues
 ~~~~~~~~~~~
 
-Move issues between states or projects.
+Move issues between states within the same project, or transfer issues to different projects entirely.
 
 .. code-block:: bash
 
@@ -233,23 +233,51 @@ Move issues between states or projects.
 
 **Options:**
   * ``-s, --state TEXT`` - New state for the issue
-  * ``-p, --project-id TEXT`` - Move to different project
+  * ``-p, --project-id TEXT`` - Move to different project (short name or ID)
 
-**Examples:**
+**State Moves (Within Project):**
 
 .. code-block:: bash
 
    # Move issue to different state
    yt issues move PROJ-123 -s "In Progress"
+   yt issues move PROJ-123 --state "Done"
+
+**Project Moves (Between Projects):**
+
+.. code-block:: bash
 
    # Move issue to different project
-   yt issues move PROJ-123 -p OTHER-PROJ
+   yt issues move PROJ-123 -p WEB
+   yt issues move DEMO-456 --project-id TEST
+
+**Advanced Examples:**
+
+.. code-block:: bash
+
+   # Check available projects first
+   yt projects list
+
+   # Move issue with validation
+   yt issues show PROJ-123  # Verify source issue
+   yt issues move PROJ-123 -p TARGET-PROJ
+   yt issues list -p TARGET-PROJ  # Verify move
+
+.. warning::
+   **Project Move Considerations:**
+
+   * Ensure you have appropriate permissions in both source and target projects
+   * Custom fields that exist in the source project but not in the target may be lost
+   * Issue numbering will change to match the target project's scheme
+   * All issue data (description, comments, attachments) will be preserved
+   * Verify the move completed successfully by checking the target project
 
 .. note::
-   State changes are implemented using YouTrack's custom field format to ensure
-   reliable state transitions. The CLI will report success only when the state
-   change is actually applied in YouTrack. Use exact state names as they appear
-   in your YouTrack workflow.
+   **State Changes:**
+
+   State changes use YouTrack's custom field format to ensure reliable transitions.
+   The CLI will report success only when the state change is actually applied.
+   Use exact state names as they appear in your YouTrack workflow.
 
 Tag Management
 ~~~~~~~~~~~~~~

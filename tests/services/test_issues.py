@@ -405,18 +405,38 @@ class TestIssueServiceMove:
             assert result["status"] == "error"
 
     @pytest.mark.asyncio
-    async def test_move_issue_project_not_implemented(self, issue_service):
-        """Test move issue to project (not implemented)."""
-        with patch.object(issue_service, "_create_error_response") as mock_error:
-            mock_error.return_value = {
-                "status": "error",
-                "message": "Moving issues between projects not yet implemented",
+    async def test_move_issue_to_project_success(self, issue_service):
+        """Test successful move issue to project."""
+        with (
+            patch.object(issue_service, "_move_issue_to_project", new_callable=AsyncMock) as mock_move,
+        ):
+            mock_move.return_value = {
+                "status": "success",
+                "message": "Issue 'TEST-1' successfully moved from 'Old Project' to 'new-project'",
             }
 
             result = await issue_service.move_issue("TEST-1", project_id="new-project")
 
-            mock_error.assert_called_once_with("Moving issues between projects not yet implemented")
+            mock_move.assert_called_once_with("TEST-1", "new-project")
+            assert result["status"] == "success"
+            assert "successfully moved" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_move_issue_to_project_not_found(self, issue_service):
+        """Test move issue to project when target project not found."""
+        with (
+            patch.object(issue_service, "_move_issue_to_project", new_callable=AsyncMock) as mock_move,
+        ):
+            mock_move.return_value = {
+                "status": "error",
+                "message": "Target project 'NONEXISTENT' not found. Please check the project short name or ID and ensure you have access to it.",
+            }
+
+            result = await issue_service.move_issue("TEST-1", project_id="NONEXISTENT")
+
+            mock_move.assert_called_once_with("TEST-1", "NONEXISTENT")
             assert result["status"] == "error"
+            assert "not found" in result["message"]
 
     @pytest.mark.asyncio
     async def test_move_issue_successful(self, issue_service):
