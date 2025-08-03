@@ -64,7 +64,7 @@ Create a new article in YouTrack.
      - Project ID or short name to associate with the article (required)
    * - ``--parent-id``
      - string
-     - Parent article ID for nested articles
+     - Parent article ID for nested articles (supports both readable IDs like "FPU-A-1" and internal IDs)
    * - ``--summary, -s``
      - string
      - Article summary (defaults to title)
@@ -85,8 +85,8 @@ Create a new article in YouTrack.
    # Create an article in a specific project from a file
    yt articles create "API Documentation" --file api-docs.md --project-id FPU
 
-   # Create a nested article (child of another article) from a file
-   yt articles create "Advanced Features" --file advanced.md --parent-id ARTICLE-456 --project-id FPU
+   # Create a nested article (child of another article) using readable parent ID
+   yt articles create "Advanced Features" --file advanced.md --parent-id FPU-A-1 --project-id FPU
 
    # Create a draft article (private visibility) from a file
    yt articles create "Draft Article" --file draft.md --visibility private --project-id FPU
@@ -827,7 +827,7 @@ Common error scenarios and solutions:
   Verify the article ID exists and you have access to view it.
 
 **Invalid Parent ID**
-  Check that the parent article ID exists and you have permission to create child articles.
+  Check that the parent article ID exists and you have permission to create child articles. The ``--parent-id`` option accepts both readable IDs (like "FPU-A-1") and internal IDs.
 
 **Visibility Restrictions**
   Ensure you have appropriate permissions for the specified visibility level.
