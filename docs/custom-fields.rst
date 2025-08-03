@@ -136,18 +136,20 @@ The issues commands automatically handle custom fields for common use cases:
 Projects Commands
 -----------------
 
-Manage custom fields at the project level:
+View custom fields at the project level:
 
 .. code-block:: bash
 
     # List project custom fields
-    yt projects fields list PROJECT-ID
+    yt projects fields PROJECT-ID
 
-    # Attach a custom field to a project
-    yt projects fields attach PROJECT-ID FIELD-ID EnumProjectCustomField
+    # List with specific attributes in JSON format
+    yt projects fields PROJECT-ID --fields "field(name),canBeEmpty" --format json
 
-    # Update custom field settings
-    yt projects fields update PROJECT-ID FIELD-ID --can-be-empty false
+.. note::
+    Custom field management operations (attach, update, detach) should be performed
+    through the YouTrack web interface. The CLI provides read-only access for
+    viewing field configurations.
 
 Admin Commands
 --------------

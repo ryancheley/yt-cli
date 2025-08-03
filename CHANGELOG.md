@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive validation and error handling
   - Enhanced command help with examples
 
+### Changed
+- 🔧 Simplify 'yt projects fields' command to only provide list functionality (#523)
+  - **BREAKING CHANGE**: Removed attach, update, and detach subcommands from `yt projects fields`
+  - Command now directly lists project fields: `yt projects fields PROJECT-ID`
+  - Field management operations should be performed through YouTrack web interface
+  - Simplified CLI interface reduces maintenance burden and prevents accidental field modifications
+  - Updated documentation to reflect read-only nature of field operations
+
 ### Fixed
 - 🐛 Fix documentation inconsistency: Update --confirm to --force in delete commands (#506)
 - 🐛 Fix JSON output pollution in issues attach list command (#502)
