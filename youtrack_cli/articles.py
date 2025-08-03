@@ -613,6 +613,35 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    async def update_comment(self, article_id: str, comment_id: str, text: str) -> dict[str, Any]:
+        """Update an existing comment on an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        comment_data = {"text": text}
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/comments/{comment_id}"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("POST", url, headers=headers, json_data=comment_data)
+            data = self._safe_json_parse(response)
+            return {
+                "status": "success",
+                "message": "Comment updated successfully",
+                "data": data,
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     async def get_article_attachments(self, article_id: str) -> dict[str, Any]:
         """Get attachments for an article."""
         credentials = self.auth_manager.load_credentials()

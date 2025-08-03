@@ -539,19 +539,27 @@ List comments on an article.
 comments update
 ~~~~~~~~~~~~~~~
 
-Update an existing comment (not yet implemented).
+Update an existing comment on an article.
 
 .. code-block:: bash
 
-   yt articles comments update COMMENT_ID TEXT
+   yt articles comments update ARTICLE_ID COMMENT_ID TEXT
 
 **Arguments:**
 
-* ``COMMENT_ID`` - The ID of the comment (required)
+* ``ARTICLE_ID`` - The ID of the article containing the comment (required)
+* ``COMMENT_ID`` - The ID of the comment to update (required)
 * ``TEXT`` - The new comment text (required)
 
-.. note::
-   This functionality is not yet implemented and requires additional API endpoints.
+**Example:**
+
+.. code-block:: bash
+
+   yt articles comments update FPU-A-1 8-0 "This is my updated comment text"
+
+**Permissions:**
+
+Requires "Update Comment" permission for your own comments or "Update Not Own Comment" permission for comments by other users.
 
 comments delete
 ~~~~~~~~~~~~~~~
