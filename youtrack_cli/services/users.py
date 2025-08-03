@@ -119,7 +119,27 @@ class UserService(BaseService):
                 user_data["password"] = password
 
             response = await self._make_request("POST", "../hub/api/rest/users", json_data=user_data)
-            return await self._handle_response(response, success_codes=[200, 201])
+            creation_result = await self._handle_response(response, success_codes=[200, 201])
+
+            if creation_result["status"] == "success":
+                # After successful creation, fetch the user data from YouTrack API to get accurate information
+                user_data_result = await self.get_user(login, fields="id,login,fullName,email,banned,online,guest")
+
+                if user_data_result["status"] == "success":
+                    # Return success with the actual user data from YouTrack
+                    return self._create_success_response(user_data_result["data"])
+                else:
+                    # Creation succeeded but couldn't fetch user data, return basic info
+                    return self._create_success_response(
+                        {
+                            "login": login,
+                            "fullName": full_name,
+                            "email": email,
+                            "note": "User created successfully, but unable to fetch current user data",
+                        }
+                    )
+            else:
+                return creation_result
 
         except ValueError as e:
             return self._create_error_response(str(e))

@@ -172,9 +172,14 @@ class TestUserServiceCreateUser:
         with (
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
         ):
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success", "data": {"id": "user-1"}}
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "fullName": "Test User", "email": "test@example.com"},
+            }
 
             result = await user_service.create_user(login="testuser", full_name="Test User", email="test@example.com")
 
@@ -185,8 +190,10 @@ class TestUserServiceCreateUser:
                 "forceChangePassword": False,
             }
             mock_request.assert_called_once_with("POST", "../hub/api/rest/users", json_data=expected_data)
-            mock_handle.assert_called_once_with(mock_response, success_codes=[200, 201])
+            mock_get_user.assert_called_once_with("testuser", fields="id,login,fullName,email,banned,online,guest")
             assert result["status"] == "success"
+            assert result["data"]["fullName"] == "Test User"
+            assert result["data"]["email"] == "test@example.com"
 
     @pytest.mark.asyncio
     async def test_create_user_with_password(self, user_service, mock_response):
@@ -194,9 +201,14 @@ class TestUserServiceCreateUser:
         with (
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
         ):
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "fullName": "Test User", "email": "test@example.com"},
+            }
 
             result = await user_service.create_user(
                 login="testuser",
@@ -214,7 +226,38 @@ class TestUserServiceCreateUser:
                 "forceChangePassword": True,
             }
             mock_request.assert_called_once_with("POST", "../hub/api/rest/users", json_data=expected_data)
+            mock_get_user.assert_called_once_with("testuser", fields="id,login,fullName,email,banned,online,guest")
             assert result["status"] == "success"
+            assert result["data"]["fullName"] == "Test User"
+            assert result["data"]["email"] == "test@example.com"
+
+    @pytest.mark.asyncio
+    async def test_create_user_with_get_user_failure(self, user_service, mock_response):
+        """Test user creation when get_user fails - should return fallback data."""
+        with (
+            patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success", "data": {"id": "user-1"}}
+            mock_get_user.return_value = {"status": "error", "message": "User not found"}
+
+            result = await user_service.create_user(login="testuser", full_name="Test User", email="test@example.com")
+
+            expected_data = {
+                "login": "testuser",
+                "fullName": "Test User",
+                "email": "test@example.com",
+                "forceChangePassword": False,
+            }
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users", json_data=expected_data)
+            mock_get_user.assert_called_once_with("testuser", fields="id,login,fullName,email,banned,online,guest")
+            assert result["status"] == "success"
+            assert result["data"]["login"] == "testuser"
+            assert result["data"]["fullName"] == "Test User"
+            assert result["data"]["email"] == "test@example.com"
+            assert "note" in result["data"]
 
     @pytest.mark.asyncio
     async def test_create_user_error_handling(self, user_service):
