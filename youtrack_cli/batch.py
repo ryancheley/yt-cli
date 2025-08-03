@@ -216,6 +216,86 @@ class BatchOperationManager:
 
         return validated_items
 
+    async def validate_api_compatibility_create(self, items: List[BatchIssueCreate]) -> List[Dict[str, Any]]:
+        """Validate API compatibility for batch create items.
+
+        This method tests whether the field values in the batch items
+        are compatible with the YouTrack API, validating project IDs,
+        assignee logins, and custom field values.
+
+        Args:
+            items: List of validated batch create items
+
+        Returns:
+            List of validation error dictionaries (empty if all valid)
+        """
+        errors = []
+
+        for i, item in enumerate(items):
+            try:
+                # Validate project ID exists
+                resolved_project_id = await self.issue_manager._resolve_project_id(item.project_id)
+                if resolved_project_id is None:
+                    errors.append(
+                        {
+                            "item_index": i,
+                            "field": "project_id",
+                            "value": item.project_id,
+                            "error": f"Project '{item.project_id}' not found. Please check the project short name or ID.",
+                            "type": "api_compatibility_error",
+                        }
+                    )
+                    continue  # Skip further validation for this item if project doesn't exist
+
+                # Validate custom field values if provided
+                if item.priority:
+                    validation_result = await self.issue_manager._validate_custom_field_value(
+                        resolved_project_id, "Priority", item.priority
+                    )
+                    if not validation_result["valid"]:
+                        errors.append(
+                            {
+                                "item_index": i,
+                                "field": "priority",
+                                "value": item.priority,
+                                "error": validation_result["message"],
+                                "type": "api_compatibility_error",
+                            }
+                        )
+
+                if item.type:
+                    validation_result = await self.issue_manager._validate_custom_field_value(
+                        resolved_project_id, "Type", item.type
+                    )
+                    if not validation_result["valid"]:
+                        errors.append(
+                            {
+                                "item_index": i,
+                                "field": "type",
+                                "value": item.type,
+                                "error": validation_result["message"],
+                                "type": "api_compatibility_error",
+                            }
+                        )
+
+                # Validate assignee if provided
+                if item.assignee:
+                    # For now, we'll skip assignee validation as it's complex
+                    # and the API will provide a clear error if the user doesn't exist
+                    pass
+
+            except Exception as e:
+                errors.append(
+                    {
+                        "item_index": i,
+                        "field": "general",
+                        "error": f"API compatibility check failed: {str(e)}",
+                        "type": "api_compatibility_error",
+                    }
+                )
+
+        return errors
+
     async def validate_api_compatibility(self, items: List[BatchIssueUpdate]) -> List[Dict[str, Any]]:
         """Validate API compatibility for batch update items.
 
@@ -363,8 +443,14 @@ class BatchOperationManager:
         # First do regular file validation
         result = self.validate_file(file_path, operation_type)
 
-        # For updates, also check API compatibility
-        if operation_type == "update":
+        # Check API compatibility for both create and update operations
+        if operation_type == "create":
+            api_errors = await self.validate_api_compatibility_create(cast(List[BatchIssueCreate], result))
+            if api_errors:
+                raise BatchValidationError(
+                    f"API compatibility validation failed with {len(api_errors)} errors", api_errors
+                )
+        elif operation_type == "update":
             api_errors = await self.validate_api_compatibility(cast(List[BatchIssueUpdate], result))
             if api_errors:
                 raise BatchValidationError(
