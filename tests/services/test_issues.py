@@ -77,7 +77,6 @@ class TestIssueServiceCreation:
                 "project": {"id": "project-1"},
                 "summary": "Test Summary",
                 "description": "Test Description",
-                "assignee": {"login": "user123"},
                 "customFields": [
                     {
                         "$type": "SingleEnumIssueCustomField",
@@ -88,6 +87,11 @@ class TestIssueServiceCreation:
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Type",
                         "value": {"$type": "EnumBundleElement", "name": "Bug"},
+                    },
+                    {
+                        "$type": "SingleUserIssueCustomField",
+                        "name": "Assignee",
+                        "value": {"login": "user123"},
                     },
                 ],
             }

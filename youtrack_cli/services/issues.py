@@ -43,10 +43,8 @@ class IssueService(BaseService):
 
             if description:
                 issue_data["description"] = description
-            if assignee:
-                issue_data["assignee"] = {"login": assignee}
 
-            # Handle custom fields - Priority and Type are typically custom fields in YouTrack
+            # Handle custom fields - Priority, Type, and Assignee are typically custom fields in YouTrack
             if priority:
                 custom_fields.append(
                     {
@@ -62,6 +60,15 @@ class IssueService(BaseService):
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Type",
                         "value": {"$type": "EnumBundleElement", "name": issue_type},
+                    }
+                )
+
+            if assignee:
+                custom_fields.append(
+                    {
+                        "$type": "SingleUserIssueCustomField",
+                        "name": "Assignee",
+                        "value": {"login": assignee},
                     }
                 )
 
