@@ -171,6 +171,16 @@ class ArticleManager:
         if summary:
             article_data["summary"] = summary
 
+        # Handle visibility parameter
+        if visibility:
+            if visibility.lower() in ["public", "unlimited"]:
+                article_data["visibility"] = {"$type": "UnlimitedVisibility"}
+            elif visibility.lower() in ["private", "limited"]:
+                article_data["visibility"] = {"$type": "LimitedVisibility"}
+            else:
+                # Default to unlimited visibility if unknown value
+                article_data["visibility"] = {"$type": "UnlimitedVisibility"}
+
         url = f"{credentials.base_url.rstrip('/')}/api/articles"
         headers = {
             "Authorization": f"Bearer {credentials.token}",
@@ -698,6 +708,8 @@ class ArticleManager:
                 visibility_display = "Visible"
             elif visibility_type == "LimitedVisibility":
                 visibility_display = "Hidden"
+            elif visibility_type == "PrivateVisibility":
+                visibility_display = "Private"
             else:
                 visibility_display = "Unknown"
 
@@ -849,6 +861,8 @@ class ArticleManager:
                 visibility_display = "Visible"
             elif visibility_type == "LimitedVisibility":
                 visibility_display = "Hidden"
+            elif visibility_type == "PrivateVisibility":
+                visibility_display = "Private"
             else:
                 visibility_display = "Unknown"
 
@@ -910,7 +924,9 @@ class ArticleManager:
         if visibility_type == "UnlimitedVisibility":
             visibility_display = "Visible"
         elif visibility_type == "LimitedVisibility":
-            visibility_display = "Hidden"
+            visibility_display = "Limited"
+        elif visibility_type == "PrivateVisibility":
+            visibility_display = "Private"
         else:
             visibility_display = "Unknown"
         self.console.print(f"Visibility: {visibility_display}")
