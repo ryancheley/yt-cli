@@ -85,6 +85,125 @@ class TestArticleManager:
             assert "HTTP 400: Bad Request" in result["message"]
 
     @pytest.mark.asyncio
+    async def test_create_sub_article_with_parent_id_success(self, article_manager):
+        """Test successful sub-article creation with readable parent ID."""
+        # Mock responses for project resolution, parent ID resolution, and article creation
+        project_response = [{"id": "167-0", "shortName": "FPU"}]
+
+        parent_article_response = {
+            "id": "167-6",  # Internal ID
+            "idReadable": "FPU-A-1",
+            "summary": "Parent Article",
+        }
+
+        create_response = {
+            "id": "167-7",
+            "idReadable": "FPU-A-2",
+            "summary": "Sub Article",
+            "content": "Sub article content",
+            "parentArticle": {"id": "167-6"},
+        }
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+
+            # First call is to resolve project ID
+            project_resp = Mock()
+            project_resp.status_code = 200
+            project_resp.json.return_value = project_response
+            project_resp.text = '[{"id": "167-0", "shortName": "FPU"}]'
+            project_resp.headers = {"content-type": "application/json"}
+
+            # Second call is to resolve parent article ID
+            parent_resp = Mock()
+            parent_resp.status_code = 200
+            parent_resp.json.return_value = parent_article_response
+            parent_resp.text = '{"id": "167-6", "idReadable": "FPU-A-1"}'
+            parent_resp.headers = {"content-type": "application/json"}
+
+            # Third call is to create the article
+            create_resp = Mock()
+            create_resp.status_code = 200
+            create_resp.json.return_value = create_response
+            create_resp.text = '{"id": "167-7", "idReadable": "FPU-A-2"}'
+            create_resp.headers = {"content-type": "application/json"}
+
+            # Set up the mock to return different responses for each call
+            mock_client_manager.make_request = AsyncMock(side_effect=[project_resp, parent_resp, create_resp])
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.create_article(
+                title="Sub Article",
+                content="Sub article content",
+                project_id="FPU",
+                parent_id="FPU-A-1",  # Using readable ID
+            )
+
+            assert result["status"] == "success", f"Expected success, got error: {result.get('message', 'No message')}"
+            assert "Sub Article" in result["message"]
+            assert result["data"]["parentArticle"]["id"] == "167-6"
+
+    @pytest.mark.asyncio
+    async def test_create_sub_article_parent_not_found(self, article_manager):
+        """Test sub-article creation failure when parent article not found."""
+        # Mock project resolution success, but parent article resolution failure
+        project_response = [{"id": "167-0", "shortName": "FPU"}]
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+
+            # First call is to resolve project ID (succeeds)
+            project_resp = Mock()
+            project_resp.status_code = 200
+            project_resp.json.return_value = project_response
+            project_resp.text = '[{"id": "167-0", "shortName": "FPU"}]'
+            project_resp.headers = {"content-type": "application/json"}
+
+            # Mock parent resolution failure for the second call
+            mock_client_manager.make_request = AsyncMock(
+                side_effect=[project_resp, Exception("Article 'FPU-A-999' not found")]
+            )
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.create_article(
+                title="Sub Article",
+                content="Sub article content",
+                project_id="FPU",
+                parent_id="FPU-A-999",  # Non-existent parent
+            )
+
+            assert result["status"] == "error"
+            assert "Failed to resolve parent article" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_resolve_article_id(self, article_manager):
+        """Test article ID resolution functionality."""
+        # Test resolving readable ID to internal ID
+        mock_article_response = {
+            "id": "167-6",
+            "idReadable": "FPU-A-1",
+            "summary": "Test Article",
+        }
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = mock_article_response
+            mock_resp.text = '{"id": "167-6", "idReadable": "FPU-A-1"}'
+            mock_resp.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            # Test with readable ID
+            internal_id = await article_manager._resolve_article_id("FPU-A-1")
+            assert internal_id == "167-6"
+
+            # Test with already internal ID (should return as-is)
+            internal_id = await article_manager._resolve_article_id("167-6")
+            assert internal_id == "167-6"
+
+    @pytest.mark.asyncio
     async def test_list_articles_success(self, article_manager):
         """Test successful article listing."""
         mock_response = [
