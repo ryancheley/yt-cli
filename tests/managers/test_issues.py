@@ -49,6 +49,7 @@ def issue_manager(auth_manager):
             "update_comment",
             "delete_comment",
             "upload_attachment",
+            "download_attachment",
             "list_attachments",
             "delete_attachment",
             "list_links",
@@ -427,12 +428,21 @@ class TestIssueManagerAttachments:
         assert result == expected_result
 
     @pytest.mark.asyncio
-    async def test_download_attachment_not_implemented(self, issue_manager):
-        """Test download attachment (not implemented)."""
-        result = await issue_manager.download_attachment("TEST-123", "attachment-1")
+    async def test_download_attachment_success(self, issue_manager):
+        """Test successful attachment download."""
+        # Mock the service layer response
+        issue_manager.issue_service.download_attachment.return_value = {
+            "status": "success",
+            "data": {"content": b"test content", "filename": "test.txt", "metadata": {"name": "test.txt", "size": 12}},
+        }
 
-        assert result["status"] == "error"
-        assert "not yet implemented" in result["message"]
+        with patch("pathlib.Path.write_bytes") as mock_write:
+            result = await issue_manager.download_attachment("TEST-123", "attachment-1", "output.txt")
+
+            assert result["status"] == "success"
+            assert "Attachment downloaded successfully" in result["message"]
+            mock_write.assert_called_once_with(b"test content")
+            issue_manager.issue_service.download_attachment.assert_called_once_with("TEST-123", "attachment-1")
 
 
 class TestIssueManagerLinks:

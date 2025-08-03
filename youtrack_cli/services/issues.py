@@ -789,16 +789,126 @@ class IssueService(BaseService):
             API response
         """
         try:
-            # Note: This is a simplified implementation
-            # In reality, you'd need to handle multipart/form-data
-            # files = {"file": (file_path, file_data)}
+            from pathlib import Path
 
-            # For now, return a placeholder response
-            # Real implementation would require multipart upload support
-            return self._create_error_response("Attachment upload not yet implemented in service layer")
+            import httpx
+
+            # Extract filename from path
+            filename = Path(file_path).name
+
+            # Create multipart form data
+            files = {"file": (filename, file_data, "application/octet-stream")}
+
+            # Build the URL
+            base_url = self._get_base_url()
+            url = f"{base_url}/api/issues/{issue_id}/attachments"
+
+            # Get authentication headers
+            headers = self._get_auth_headers()
+            # Don't set Content-Type manually - httpx will set it for multipart
+
+            # Make the request with httpx directly for multipart support
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url=url, headers=headers, files=files, timeout=30.0)
+
+            # Handle the response
+            if response.status_code == 200:
+                try:
+                    data = response.json() if response.text else {}
+                    return {"status": "success", "message": "Attachment uploaded successfully", "data": data}
+                except Exception:
+                    # Success but no JSON response
+                    return {"status": "success", "message": "Attachment uploaded successfully", "data": {}}
+            else:
+                return self._create_error_response(f"Upload failed with status {response.status_code}: {response.text}")
 
         except Exception as e:
             return self._create_error_response(f"Error uploading attachment: {str(e)}")
+
+    async def download_attachment(self, issue_id: str, attachment_id: str) -> Dict[str, Any]:
+        """Download an attachment from an issue via API.
+
+        Args:
+            issue_id: Issue ID
+            attachment_id: Attachment ID
+
+        Returns:
+            API response containing attachment content and metadata
+        """
+        try:
+            import httpx
+
+            # Build the URL for attachment metadata
+            base_url = self._get_base_url()
+            metadata_url = f"{base_url}/api/issues/{issue_id}/attachments/{attachment_id}"
+
+            # Get authentication headers
+            headers = self._get_auth_headers()
+
+            async with httpx.AsyncClient() as client:
+                # First, get attachment metadata
+                metadata_response = await client.get(
+                    url=metadata_url,
+                    headers=headers,
+                    params={"fields": "id,name,size,mimeType,author(name),created,url,content"},
+                    timeout=30.0,
+                )
+
+                if metadata_response.status_code != 200:
+                    return self._create_error_response(
+                        f"Failed to get attachment metadata: {metadata_response.status_code} - {metadata_response.text}"
+                    )
+
+                metadata = metadata_response.json()
+
+                # Try to get URL from metadata first
+                possible_urls = []
+
+                # Check if metadata provides URL fields
+                if "url" in metadata:
+                    url_from_meta = metadata["url"]
+                    if url_from_meta.startswith("/"):
+                        possible_urls.append(f"{base_url}{url_from_meta}")
+                    else:
+                        possible_urls.append(url_from_meta)
+
+                # Add standard URL patterns
+                possible_urls.extend(
+                    [
+                        f"{base_url}/api/files/{attachment_id}",
+                        f"{base_url}/files/{attachment_id}",
+                        f"{base_url}/api/issues/{issue_id}/attachments/{attachment_id}/download",
+                        f"{base_url}/api/issues/{issue_id}/attachments/{attachment_id}/content",
+                    ]
+                )
+
+                for url_to_try in possible_urls:
+                    content_response = await client.get(url=url_to_try, headers=headers, timeout=60.0)
+
+                    if content_response.status_code == 200:
+                        # Check if we got HTML instead of actual file content
+                        content_type = content_response.headers.get("content-type", "")
+                        if "text/html" in content_type:
+                            # This is likely the login page, try next URL
+                            continue
+
+                        return {
+                            "status": "success",
+                            "message": f"Attachment downloaded successfully using {url_to_try}",
+                            "data": {
+                                "metadata": metadata,
+                                "content": content_response.content,
+                                "filename": metadata.get("name", f"attachment_{attachment_id}"),
+                            },
+                        }
+
+                # If none worked, return error
+                return self._create_error_response(
+                    f"Could not find working download URL for attachment {attachment_id}. Tried: {', '.join(possible_urls)}"
+                )
+
+        except Exception as e:
+            return self._create_error_response(f"Error downloading attachment: {str(e)}")
 
     async def list_attachments(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
         """List attachments for an issue via API.

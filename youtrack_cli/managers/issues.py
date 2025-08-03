@@ -1,5 +1,6 @@
 """Issue manager for YouTrack CLI business logic."""
 
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from rich.table import Table
@@ -787,8 +788,40 @@ class IssueManager:
         self, issue_id: str, attachment_id: str, output: Optional[str] = None
     ) -> Dict[str, Any]:
         """Download an attachment from an issue."""
-        # This would need to be implemented in the service layer
-        return {"status": "error", "message": "Attachment download not yet implemented in service layer"}
+        try:
+            # Call the service layer to download the attachment
+            result = await self.issue_service.download_attachment(issue_id, attachment_id)
+
+            if result["status"] != "success":
+                return result
+
+            # Extract data from the service response
+            data = result["data"]
+            content = data["content"]
+            filename = data["filename"]
+
+            # Determine output path
+            if output:
+                output_path = Path(output)
+            else:
+                output_path = Path(filename)
+
+            # Write the file to disk
+            output_path.write_bytes(content)
+
+            return {
+                "status": "success",
+                "message": f"Attachment downloaded successfully to {output_path}",
+                "data": {
+                    "filename": filename,
+                    "output_path": str(output_path),
+                    "size": len(content),
+                    "metadata": data["metadata"],
+                },
+            }
+
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to download attachment: {str(e)}"}
 
     def display_attachments_table(self, attachments: List[Dict[str, Any]]) -> None:
         """Display attachments in a table format."""
