@@ -830,152 +830,6 @@ class TestProjectCustomFields:
         assert result["status"] == "error"
         assert "Not authenticated" in result["message"]
 
-    @pytest.mark.asyncio
-    async def test_attach_custom_field_success(self, project_manager, auth_manager):
-        """Test successful custom field attachment."""
-        mock_attached_field = {
-            "id": "project-field-1",
-            "canBeEmpty": False,
-            "emptyFieldText": "Required field",
-            "isPublic": True,
-            "field": {
-                "id": "global-field-1",
-                "name": "Priority",
-            },
-        }
-
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.json.return_value = mock_attached_field
-            mock_response.raise_for_status.return_value = None
-            mock_response.headers = {"content-type": "application/json"}
-            mock_response.text = '{"id": "project-field-1"}'
-            mock_response.status_code = 200
-
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
-            mock_get_client_manager.return_value = mock_client_manager
-
-            result = await project_manager.attach_custom_field(
-                project_id="TEST-PROJECT",
-                field_id="global-field-1",
-                field_type="EnumProjectCustomField",
-                can_be_empty=False,
-                empty_field_text="Required field",
-                is_public=True,
-            )
-
-            assert result["status"] == "success"
-            assert "attached" in result["message"]
-            assert result["data"]["field"]["name"] == "Priority"
-
-    @pytest.mark.asyncio
-    async def test_attach_custom_field_already_exists(self, project_manager, auth_manager):
-        """Test attaching a custom field that already exists."""
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.status_code = 400
-
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(side_effect=httpx.HTTPError("Bad request"))
-            mock_get_client_manager.return_value = mock_client_manager
-
-            result = await project_manager.attach_custom_field(
-                project_id="TEST-PROJECT",
-                field_id="global-field-1",
-                field_type="EnumProjectCustomField",
-            )
-
-            assert result["status"] == "error"
-            assert "Invalid custom field data" in result["message"] or "HTTP error" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_update_custom_field_success(self, project_manager, auth_manager):
-        """Test successful custom field update."""
-        mock_updated_field = {
-            "id": "project-field-1",
-            "canBeEmpty": True,
-            "emptyFieldText": "Updated text",
-            "isPublic": False,
-            "field": {
-                "id": "global-field-1",
-                "name": "Priority",
-            },
-        }
-
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.json.return_value = mock_updated_field
-            mock_response.raise_for_status.return_value = None
-            mock_response.headers = {"content-type": "application/json"}
-            mock_response.text = '{"id": "project-field-1"}'
-            mock_response.status_code = 200
-
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
-            mock_get_client_manager.return_value = mock_client_manager
-
-            result = await project_manager.update_custom_field(
-                project_id="TEST-PROJECT",
-                field_id="project-field-1",
-                can_be_empty=True,
-                empty_field_text="Updated text",
-                is_public=False,
-            )
-
-            assert result["status"] == "success"
-            assert "updated successfully" in result["message"]
-            assert result["data"]["emptyFieldText"] == "Updated text"
-
-    @pytest.mark.asyncio
-    async def test_update_custom_field_no_changes(self, project_manager, auth_manager):
-        """Test custom field update with no changes provided."""
-        result = await project_manager.update_custom_field(
-            project_id="TEST-PROJECT",
-            field_id="project-field-1",
-        )
-
-        assert result["status"] == "error"
-        assert "No updates provided" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_detach_custom_field_success(self, project_manager, auth_manager):
-        """Test successful custom field removal."""
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.status_code = 200
-
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
-            mock_get_client_manager.return_value = mock_client_manager
-
-            result = await project_manager.detach_custom_field(
-                project_id="TEST-PROJECT",
-                field_id="project-field-1",
-            )
-
-            assert result["status"] == "success"
-            assert "removed" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_detach_custom_field_not_found(self, project_manager, auth_manager):
-        """Test removing a custom field that doesn't exist."""
-        with patch("youtrack_cli.projects.get_client_manager") as mock_get_client_manager:
-            mock_response = Mock()
-            mock_response.status_code = 404
-
-            mock_client_manager = Mock()
-            mock_client_manager.make_request = AsyncMock(side_effect=httpx.HTTPError("Not found"))
-            mock_get_client_manager.return_value = mock_client_manager
-
-            result = await project_manager.detach_custom_field(
-                project_id="TEST-PROJECT",
-                field_id="nonexistent-field",
-            )
-
-            assert result["status"] == "error"
-            assert "not found" in result["message"].lower()
-
     def test_display_custom_fields_table_empty(self):
         """Test displaying empty custom fields table."""
         auth_manager = Mock()
@@ -1089,37 +943,9 @@ class TestProjectCustomFieldsCLI:
         assert result.exit_code == 0
         assert "custom fields" in result.output.lower()
 
-    def test_projects_fields_list_help(self):
-        """Test projects fields list command help."""
-        runner = CliRunner()
-        result = runner.invoke(main, ["projects", "fields", "list", "--help"])
-        assert result.exit_code == 0
-        assert "List custom fields" in result.output
-
-    def test_projects_fields_attach_help(self):
-        """Test projects fields attach command help."""
-        runner = CliRunner()
-        result = runner.invoke(main, ["projects", "fields", "attach", "--help"])
-        assert result.exit_code == 0
-        assert "Attach an existing custom field" in result.output
-
-    def test_projects_fields_update_help(self):
-        """Test projects fields update command help."""
-        runner = CliRunner()
-        result = runner.invoke(main, ["projects", "fields", "update", "--help"])
-        assert result.exit_code == 0
-        assert "Update settings of a custom field" in result.output
-
-    def test_projects_fields_detach_help(self):
-        """Test projects fields detach command help."""
-        runner = CliRunner()
-        result = runner.invoke(main, ["projects", "fields", "detach", "--help"])
-        assert result.exit_code == 0
-        assert "Remove a custom field from a project" in result.output
-
     @patch("youtrack_cli.projects.ProjectManager")
-    def test_projects_fields_list_command(self, mock_project_manager_class):
-        """Test projects fields list command execution."""
+    def test_projects_fields_command(self, mock_project_manager_class):
+        """Test projects fields command execution."""
         mock_project_manager = Mock()
         mock_project_manager_class.return_value = mock_project_manager
 
@@ -1139,28 +965,6 @@ class TestProjectCustomFieldsCLI:
         with patch("asyncio.run", return_value=mock_result):
             with patch("youtrack_cli.auth.AuthManager"):
                 runner = CliRunner()
-                result = runner.invoke(main, ["projects", "fields", "list", "TEST-PROJECT"])
+                result = runner.invoke(main, ["projects", "fields", "TEST-PROJECT"])
 
                 assert result.exit_code in [0, 1]  # May fail on auth but command exists
-
-    @patch("youtrack_cli.projects.ProjectManager")
-    def test_projects_fields_attach_command(self, mock_project_manager_class):
-        """Test projects fields attach command execution."""
-        mock_project_manager = Mock()
-        mock_project_manager_class.return_value = mock_project_manager
-
-        mock_result = {
-            "status": "success",
-            "data": {"field": {"name": "Priority"}},
-            "message": "Custom field attached successfully",
-        }
-
-        with patch("asyncio.run", return_value=mock_result):
-            with patch("youtrack_cli.auth.AuthManager"):
-                runner = CliRunner()
-                result = runner.invoke(
-                    main,
-                    ["projects", "fields", "attach", "TEST-PROJECT", "field-123", "--type", "EnumProjectCustomField"],
-                )
-
-                assert result.exit_code in [0, 1]
