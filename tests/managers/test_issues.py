@@ -57,7 +57,7 @@ def issue_manager(auth_manager):
         ]:
             setattr(manager.issue_service, method_name, AsyncMock())
 
-        for method_name in ["get_project"]:
+        for method_name in ["get_project", "get_project_custom_fields"]:
             setattr(manager.project_service, method_name, AsyncMock())
 
         return manager
@@ -705,3 +705,182 @@ class TestIssueManagerFormatting:
         issue_manager.display_issue_list([])
 
         issue_manager.console.print.assert_called_once_with("[yellow]No issues found.[/yellow]")
+
+
+class TestIssueManagerCustomFieldValidation:
+    """Test custom field validation functionality."""
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_field_exists_valid_value(self, issue_manager):
+        """Test validation when field exists and value is valid."""
+        # Mock project custom fields response
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [
+                {
+                    "name": "Priority",
+                    "bundle": {"values": [{"name": "Critical"}, {"name": "High"}, {"name": "Normal"}, {"name": "Low"}]},
+                }
+            ],
+        }
+
+        result = await issue_manager._validate_custom_field_value("project-123", "Priority", "High")
+
+        assert result["valid"] is True
+        assert result["message"] == ""
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_field_exists_invalid_value(self, issue_manager):
+        """Test validation when field exists but value is invalid."""
+        # Mock project custom fields response
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [
+                {
+                    "name": "Priority",
+                    "bundle": {"values": [{"name": "Critical"}, {"name": "High"}, {"name": "Normal"}, {"name": "Low"}]},
+                }
+            ],
+        }
+
+        result = await issue_manager._validate_custom_field_value("project-123", "Priority", "Invalid")
+
+        assert result["valid"] is False
+        assert "Invalid" in result["message"]
+        assert "not a valid Priority" in result["message"]
+        assert "Critical, High, Normal, Low" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_field_not_exists_with_field_names(self, issue_manager):
+        """Test validation when field doesn't exist but other field names are available."""
+        # Mock project custom fields response with other fields but not the requested one
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [
+                {"name": "Priority", "bundle": {"values": [{"name": "High"}]}},
+                {"name": "Assignee", "bundle": {"values": []}},
+            ],
+        }
+
+        # Mock heuristics method to return None (field not found)
+        with patch.object(issue_manager, "_find_field_by_heuristics", return_value=None):
+            result = await issue_manager._validate_custom_field_value("project-123", "Type", "Bug")
+
+            assert result["valid"] is False
+            assert "Field 'Type' is not available in this project" in result["message"]
+            assert "Available fields: Priority, Assignee" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_critical_field_no_field_names(self, issue_manager):
+        """Test validation when critical field validation fails due to missing field names."""
+        # Mock project custom fields response with no field names available
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [
+                {
+                    "name": None,  # No field name available
+                    "bundle": {"values": [{"name": "High"}]},
+                }
+            ],
+        }
+
+        # Mock heuristics method to return None (field not found)
+        with patch.object(issue_manager, "_find_field_by_heuristics", return_value=None):
+            result = await issue_manager._validate_custom_field_value("project-123", "Type", "Bug")
+
+            assert result["valid"] is False
+            assert "Cannot validate 'Type' field" in result["message"]
+            assert "field information not available from project API" in result["message"]
+            assert "This field may not exist in the project configuration" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_non_critical_field_no_field_names(self, issue_manager):
+        """Test validation when non-critical field validation with missing field names fails open."""
+        # Mock project custom fields response with no field names available
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [
+                {
+                    "name": None,  # No field name available
+                    "bundle": {"values": [{"name": "High"}]},
+                }
+            ],
+        }
+
+        with patch("youtrack_cli.managers.issues.logger") as mock_logger:
+            with patch.object(issue_manager, "_find_field_by_heuristics", return_value=None):
+                result = await issue_manager._validate_custom_field_value("project-123", "CustomField", "Value")
+
+                assert result["valid"] is True
+                assert result["message"] == ""
+                mock_logger.warning.assert_called_once_with(
+                    "Field names not available from project API - allowing 'CustomField' with value 'Value'"
+                )
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_api_failure(self, issue_manager):
+        """Test validation when API call fails."""
+        # Mock API failure
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "error",
+            "message": "API Error",
+        }
+
+        with patch("youtrack_cli.managers.issues.logger") as mock_logger:
+            result = await issue_manager._validate_custom_field_value("project-123", "Priority", "High")
+
+            assert result["valid"] is True
+            assert result["message"] == ""
+            mock_logger.warning.assert_called_once_with(
+                "Could not validate custom field 'Priority' - allowing value 'High'"
+            )
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_field_no_bundle_values(self, issue_manager):
+        """Test validation when field exists but has no bundle values (text field)."""
+        # Mock project custom fields response with field but no bundle values
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [
+                {
+                    "name": "Description",
+                    "bundle": {"values": []},  # No values - likely a text field
+                }
+            ],
+        }
+
+        result = await issue_manager._validate_custom_field_value("project-123", "Description", "Any text value")
+
+        assert result["valid"] is True
+        assert result["message"] == ""
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_critical_fields_list(self, issue_manager):
+        """Test that all critical fields are handled correctly."""
+        critical_fields = ["Type", "Priority", "State", "Status"]
+
+        # Mock project custom fields response with no field names available
+        issue_manager.project_service.get_project_custom_fields.return_value = {
+            "status": "success",
+            "data": [{"name": None}],
+        }
+
+        with patch.object(issue_manager, "_find_field_by_heuristics", return_value=None):
+            for field_name in critical_fields:
+                result = await issue_manager._validate_custom_field_value("project-123", field_name, "TestValue")
+
+                assert result["valid"] is False
+                assert f"Cannot validate '{field_name}' field" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_validate_custom_field_value_exception_handling(self, issue_manager):
+        """Test validation handles exceptions gracefully."""
+        # Mock an exception during API call
+        issue_manager.project_service.get_project_custom_fields.side_effect = Exception("Test exception")
+
+        with patch("youtrack_cli.managers.issues.logger") as mock_logger:
+            result = await issue_manager._validate_custom_field_value("project-123", "Priority", "High")
+
+            assert result["valid"] is True
+            assert result["message"] == ""
+            mock_logger.error.assert_called_once()
