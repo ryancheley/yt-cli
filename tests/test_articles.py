@@ -204,6 +204,24 @@ class TestArticleManager:
             assert internal_id == "167-6"
 
     @pytest.mark.asyncio
+    async def test_resolve_article_id_nonexistent_internal(self, article_manager):
+        """Test that _resolve_article_id fails for non-existent internal IDs."""
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            # Mock response for non-existent article (404 or error)
+            mock_resp = Mock()
+            mock_resp.status_code = 404
+            mock_resp.text = "Article not found"
+            mock_resp.headers = {"content-type": "text/plain"}
+            mock_client_manager.make_request = AsyncMock(side_effect=Exception("Article not found"))
+            mock_get_client.return_value = mock_client_manager
+
+            # Test with non-existent internal ID
+            with pytest.raises(ValueError, match="Article '999-999' not found"):
+                await article_manager._resolve_article_id("999-999")
+
+    @pytest.mark.asyncio
     async def test_list_articles_success(self, article_manager):
         """Test successful article listing."""
         mock_response = [
