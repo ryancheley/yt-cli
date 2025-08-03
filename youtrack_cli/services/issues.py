@@ -238,7 +238,7 @@ class IssueService(BaseService):
                 update_data["customFields"] = custom_fields
 
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
-            result = await self._handle_response(response)
+            result = await self._handle_response(response, success_codes=[200, 204])
 
             # Enhance error messages for common state field issues
             if result["status"] == "error" and state is not None:
@@ -390,7 +390,7 @@ class IssueService(BaseService):
             # Make the API call to move the issue
             response = await self._make_request("POST", f"issues/{issue_id}/project", json_data={"id": target_db_id})
 
-            result = await self._handle_response(response)
+            result = await self._handle_response(response, success_codes=[200, 204])
 
             # Enhance success message
             if result["status"] == "success":
@@ -485,7 +485,7 @@ class IssueService(BaseService):
                 ],
             }
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
-            return await self._handle_response(response)
+            return await self._handle_response(response, success_codes=[200, 204])
 
         except ValueError as e:
             return self._create_error_response(str(e))
@@ -576,7 +576,7 @@ class IssueService(BaseService):
                 }
 
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
-            result = await self._handle_response(response)
+            result = await self._handle_response(response, success_codes=[200, 204])
 
             # Enhance error messages for common state field issues (same as update_issue)
             if result["status"] == "error":
@@ -624,7 +624,11 @@ class IssueService(BaseService):
                         # Continue with original error if enhanced error handling fails
                         pass
 
-            # Return the original result without overriding the message
+            # Enhance success message for state changes
+            if result["status"] == "success" and state:
+                result["message"] = f"Issue '{issue_id}' state successfully changed to '{state}'"
+
+            # Return the result
             return result
 
         except ValueError as e:
