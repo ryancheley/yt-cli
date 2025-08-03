@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- 🐛 Fix users update command not persisting changes (#482)
+  - Updated user modification methods to use Hub API instead of YouTrack API for fields like email and fullName
+  - Added logic to fetch user's ringId (Hub user ID) before attempting updates
+  - Applied same fix to ban_user, unban_user, and change_user_password methods
+  - Added warning message for local/test instances where Hub API may not be fully available
+  - Fixed missing 'count' key error in users list command for non-paginated results
+
+### Improved
+- 📝 Added documentation note about Hub API requirements for user updates
+
 ## [0.13.5] - 2025-07-27
 
 ### Fixed

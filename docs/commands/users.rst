@@ -217,6 +217,11 @@ Update user information and settings.
      --email "new@email.com" \
      --force-change-password
 
+.. note::
+   User updates (email, full name, etc.) require proper Hub API configuration.
+   On local or test YouTrack instances, these updates may not persist due to
+   Hub API limitations. This is a known limitation of test environments.
+
 permissions
 ~~~~~~~~~~~
 
@@ -408,7 +413,7 @@ User Management Features
   Control user account status including active, banned, and password change requirements.
 
 User Account States
-------------------
+-------------------
 
 **Active Users**
   Normal user accounts with full access based on their permissions.
@@ -442,7 +447,7 @@ User Onboarding
    yt users update john.doe --show-details
 
 User Maintenance
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -457,7 +462,7 @@ User Maintenance
    yt users update john.doe --show-details
 
 Security Management
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -471,7 +476,7 @@ Security Management
    yt users update suspicious.user --unbanned
 
 User Discovery and Reporting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -497,7 +502,7 @@ User Discovery and Reporting
    yt users list --fields "id,login,fullName,email,created,lastAccess,banned"
 
 Permission Management
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -512,7 +517,7 @@ Permission Management
    yt users permissions project.lead --action add_to_group --group-id project-managers
 
 Permission Analysis
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -561,10 +566,10 @@ Best Practices
 10. **Deactivation Process**: Have a clear process for handling user departures and account cleanup.
 
 Security Considerations
-----------------------
+-----------------------
 
 Password Management
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -575,7 +580,7 @@ Password Management
    yt users update USERNAME --password "new-secure-password"
 
 Account Security
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -589,7 +594,7 @@ Account Security
    yt users update AFFECTED_USER --force-change-password
 
 Access Control
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -665,10 +670,10 @@ Common error scenarios and solutions:
   Some operations may be restricted on banned user accounts.
 
 Integration Examples
--------------------
+--------------------
 
 Bulk User Management
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -703,7 +708,7 @@ User Audit Script
    jq -r '.[] | select(.forcePasswordChange == true) | .login' users_audit.json
 
 Permission Cleanup
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
