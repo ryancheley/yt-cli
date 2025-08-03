@@ -41,14 +41,12 @@ class AliasedGroup(click.Group):
         # Check user-defined aliases first (they take precedence)
         if cmd_name in self.user_aliases:
             alias_command = self.user_aliases[cmd_name]
-            # For now, only handle simple single-word aliases
-            # Complex aliases will be handled by alias management commands
+            # Handle simple single-word aliases
             if " " not in alias_command:
                 cmd_name = alias_command
             else:
-                # For complex aliases, we'll need special handling
-                # This will be implemented in Phase 3 with alias management commands
-                pass
+                # Handle complex aliases with arguments
+                return self._create_alias_command(cmd_name, alias_command)
 
         # Check built-in aliases
         if cmd_name in self.aliases:
@@ -61,6 +59,64 @@ class AliasedGroup(click.Group):
             self._handle_command_not_found(ctx, cmd_name)
 
         return command
+
+    def _create_alias_command(self, alias_name: str, alias_command: str) -> Optional[click.Command]:
+        """Create a dynamic command that executes the alias."""
+        import shlex
+
+        # Parse the alias command into parts
+        try:
+            command_parts = shlex.split(alias_command)
+        except ValueError:
+            # If shlex parsing fails, fall back to simple split
+            command_parts = alias_command.split()
+
+        if not command_parts:
+            return None
+
+        main_command = command_parts[0]
+        command_args = command_parts[1:]
+
+        # Create a dynamic command that invokes the expanded alias
+        @click.command(name=alias_name, context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
+        @click.pass_context
+        def alias_command_func(ctx: click.Context) -> None:
+            """Execute the aliased command."""
+            # Get the root command group
+            root_ctx = ctx.find_root()
+            root_command = root_ctx.command
+
+            # Find the target command
+            if not isinstance(root_command, click.Group):
+                ctx.exit(1)
+                return
+
+            target_command = root_command.get_command(root_ctx, main_command)
+            if target_command is None:
+                # Command not found, let the normal error handling take care of it
+                from ..exceptions import CommandValidationError
+                from ..utils import display_error, handle_error
+
+                error = CommandValidationError(
+                    f"Alias '{alias_name}' references unknown command '{main_command}'",
+                    command_path=f"{root_ctx.info_name} {alias_name}",
+                    similar_commands=[],
+                    usage_example=f"{root_ctx.info_name} alias remove {alias_name}",
+                )
+                error_result = handle_error(error, "alias expansion")
+                display_error(error_result)
+                ctx.exit(1)
+                return
+
+            # Combine alias arguments with any additional arguments passed by user
+            all_args = command_args + ctx.args
+
+            # Create a new context for the target command
+            with target_command.make_context(main_command, all_args, parent=root_ctx) as sub_ctx:
+                # Execute the target command
+                target_command.invoke(sub_ctx)
+
+        return alias_command_func
 
     def _handle_command_not_found(self, ctx: click.Context, cmd_name: str) -> None:
         """Handle command not found with helpful suggestions."""
