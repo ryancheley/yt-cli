@@ -52,19 +52,13 @@ class ArticleManager:
             raise ValueError(f"Failed to resolve project ID: {str(e)}") from e
 
     async def _resolve_article_id(self, article_identifier: str) -> str:
-        """Resolve readable article ID to internal entity ID."""
+        """Resolve readable article ID to internal entity ID and validate existence."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
             raise ValueError("Not authenticated")
 
-        # If the identifier doesn't look like a readable ID (e.g., no project prefix like FPU-A-1),
-        # assume it's already an internal ID and return as-is
-        if not any(char.isalpha() for char in article_identifier.split("-")[0] if "-" in article_identifier):
-            return article_identifier
-
-        # Try to fetch the article using the readable ID
+        # Try to fetch the article directly first (works for both readable and internal IDs)
         try:
-            # Use the get_article method to fetch by readable ID
             result = await self.get_article(article_identifier, fields="id")
             if result["status"] == "success" and result.get("data"):
                 internal_id = result["data"].get("id")
@@ -73,27 +67,36 @@ class ArticleManager:
                 else:
                     raise ValueError(f"Article '{article_identifier}' found but has no internal ID")
             else:
-                raise ValueError(f"Article '{article_identifier}' not found")
-        except Exception as e:
-            # If direct fetch fails, try searching for the article
-            try:
-                # Search for the article by its readable ID
-                search_result = await self.search_articles(query=f"id: {article_identifier}", top=1)
-                if search_result["status"] == "success" and search_result.get("data"):
-                    articles = search_result["data"]
-                    if articles and len(articles) > 0:
-                        # Find exact match
-                        for article in articles:
-                            if article.get("idReadable") == article_identifier:
-                                internal_id = article.get("id")
-                                if internal_id:
-                                    return internal_id
+                # If direct fetch fails, it might be a readable ID that needs search
+                raise ValueError("Direct fetch failed")
+        except Exception:
+            # If direct fetch fails and the identifier looks like a readable ID,
+            # try searching for it by readable ID
+            if any(char.isalpha() for char in article_identifier.split("-")[0] if "-" in article_identifier):
+                try:
+                    # Search for the article by its readable ID
+                    search_result = await self.search_articles(query=f"id: {article_identifier}", top=1)
+                    if search_result["status"] == "success" and search_result.get("data"):
+                        articles = search_result["data"]
+                        if articles and len(articles) > 0:
+                            # Find exact match
+                            for article in articles:
+                                if article.get("idReadable") == article_identifier:
+                                    internal_id = article.get("id")
+                                    if internal_id:
+                                        return internal_id
 
-                # If we get here, article was not found
-                raise ValueError(f"Article '{article_identifier}' not found")
-            except Exception as search_error:
-                # Re-raise the original error with more context
-                raise ValueError(f"Failed to resolve article ID '{article_identifier}': {str(e)}") from search_error
+                    # If we get here, article was not found
+                    raise ValueError(f"Article '{article_identifier}' not found")
+                except Exception as search_error:
+                    # Re-raise with more context
+                    raise ValueError(
+                        f"Failed to resolve article ID '{article_identifier}': {str(search_error)}"
+                    ) from search_error
+            else:
+                # If it doesn't look like a readable ID and direct fetch failed,
+                # it's an invalid internal ID
+                raise ValueError(f"Article '{article_identifier}' not found") from None
 
     def _safe_json_parse(self, response: httpx.Response) -> Any:
         """Safely parse JSON response, handling empty or invalid JSON responses."""
