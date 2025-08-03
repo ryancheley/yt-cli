@@ -643,17 +643,67 @@ class TestIssueServiceAttachments:
     """Test attachment-related functionality."""
 
     @pytest.mark.asyncio
-    async def test_upload_attachment_not_implemented(self, issue_service):
-        """Test attachment upload (not implemented)."""
-        with patch.object(issue_service, "_create_error_response") as mock_error:
-            mock_error.return_value = {
-                "status": "error",
-                "message": "Attachment upload not yet implemented in service layer",
-            }
+    async def test_upload_attachment_success(self, issue_service):
+        """Test successful attachment upload."""
+        with (
+            patch.object(issue_service, "_get_base_url") as mock_base_url,
+            patch.object(issue_service, "_get_auth_headers") as mock_headers,
+            patch("httpx.AsyncClient") as mock_client_class,
+        ):
+            # Setup mocks
+            mock_base_url.return_value = "https://youtrack.example.com"
+            mock_headers.return_value = {"Authorization": "Bearer token"}
 
-            await issue_service.upload_attachment("TEST-1", "file.txt", b"content")
+            mock_client = AsyncMock()
+            mock_client_class.return_value.__aenter__.return_value = mock_client
 
-            mock_error.assert_called_once_with("Attachment upload not yet implemented in service layer")
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.text = '{"id": "attachment-1"}'
+            mock_response.json.return_value = {"id": "attachment-1"}
+            mock_client.post.return_value = mock_response
+
+            result = await issue_service.upload_attachment("TEST-1", "file.txt", b"content")
+
+            assert result["status"] == "success"
+            assert result["message"] == "Attachment uploaded successfully"
+            mock_client.post.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_download_attachment_success(self, issue_service):
+        """Test successful attachment download."""
+        with (
+            patch.object(issue_service, "_get_base_url") as mock_base_url,
+            patch.object(issue_service, "_get_auth_headers") as mock_headers,
+            patch("httpx.AsyncClient") as mock_client_class,
+        ):
+            # Setup mocks
+            mock_base_url.return_value = "https://youtrack.example.com"
+            mock_headers.return_value = {"Authorization": "Bearer token"}
+
+            mock_client = AsyncMock()
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            # Mock metadata response
+            mock_metadata_response = MagicMock()
+            mock_metadata_response.status_code = 200
+            mock_metadata_response.json.return_value = {"name": "test.txt", "size": 12}
+
+            # Mock content response
+            mock_content_response = MagicMock()
+            mock_content_response.status_code = 200
+            mock_content_response.content = b"test content"
+            mock_content_response.headers = {"content-type": "text/plain"}
+
+            # Setup client get method to return different responses
+            mock_client.get.side_effect = [mock_metadata_response, mock_content_response]
+
+            result = await issue_service.download_attachment("TEST-1", "attachment-1")
+
+            assert result["status"] == "success"
+            assert result["data"]["content"] == b"test content"
+            assert result["data"]["filename"] == "test.txt"
+            assert mock_client.get.call_count == 2
 
     @pytest.mark.asyncio
     async def test_list_attachments(self, issue_service, mock_response):
