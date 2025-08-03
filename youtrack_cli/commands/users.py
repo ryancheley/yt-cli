@@ -204,7 +204,8 @@ def list_users(
 
             if format == "table":
                 user_manager.display_users_table(users)
-                console.print(f"\n[dim]Total: {result['count']} users[/dim]")
+                if "count" in result:
+                    console.print(f"\n[dim]Total: {result['count']} users[/dim]")
 
                 # Display pagination info if available
                 if "pagination" in result:
