@@ -304,7 +304,18 @@ class ProjectService(BaseService):
         try:
             params = {}
             if fields:
-                params["fields"] = fields
+                # Always include field(name) for table display when custom fields are specified
+                # This ensures the name is available even when users specify their own fields
+                fields_list = [f.strip() for f in fields.split(",")]
+
+                # Check if field(name) is already included in some form
+                has_field_name = any("field(" in f and "name" in f for f in fields_list)
+
+                if not has_field_name:
+                    # Add field(name) to ensure name is always available for display
+                    fields_list.append("field(name)")
+
+                params["fields"] = ",".join(fields_list)
             else:
                 params["fields"] = "id,field(name,fieldType),canBeEmpty,isPublic,ordinal"
 
