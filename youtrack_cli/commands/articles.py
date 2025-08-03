@@ -938,14 +938,32 @@ def list_comments(
 
 
 @comments.command(name="update")
+@click.argument("article_id")
 @click.argument("comment_id")
 @click.argument("text")
 @click.pass_context
-def update_comment(ctx: click.Context, comment_id: str, text: str) -> None:
+def update_comment(ctx: click.Context, article_id: str, comment_id: str, text: str) -> None:
     """Update an existing comment."""
+    from ..articles import ArticleManager
+
     console = get_console()
-    console.print("⚠️  Comment update functionality not yet implemented", style="yellow")
-    console.print("This feature requires additional API endpoints", style="blue")
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
+
+    console.print(f"💬 Updating comment '{comment_id}' on article '{article_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(article_manager.update_comment(article_id, comment_id, text))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to update comment")
+
+    except Exception as e:
+        console.print(f"❌ Error updating comment: {e}", style="red")
+        raise click.ClickException("Failed to update comment") from e
 
 
 @comments.command(name="delete")
