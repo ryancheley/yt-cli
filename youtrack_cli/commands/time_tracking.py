@@ -107,6 +107,47 @@ def list(
         raise click.ClickException("Failed to list time entries") from e
 
 
+@time.command(name="work-types")
+@click.option("--issue", "-i", help="Issue ID to get project-specific work types")
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def work_types(
+    ctx: click.Context,
+    issue: Optional[str],
+    format: str,
+) -> None:
+    """List available work types for time tracking."""
+    from ..time import TimeManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    time_manager = TimeManager(auth_manager)
+
+    console.print("📋 Fetching work types...", style="blue")
+
+    try:
+        result = asyncio.run(time_manager.get_work_types(issue_id=issue))
+
+        if result["status"] == "success":
+            if format == "json":
+                console.print_json(data=result["data"])
+            else:
+                time_manager.display_work_types(result["data"])
+                console.print(f"\n📊 Total work types: {len(result['data'])}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException(result["message"])
+    except Exception as e:
+        console.print(f"❌ Error: {str(e)}", style="red")
+        raise click.ClickException("Failed to fetch work types") from e
+
+
 @time.command()
 @click.option("--user-id", "-u", help="Filter by specific user ID")
 @click.option("--start-date", "-s", help="Start date for filtering (YYYY-MM-DD)")

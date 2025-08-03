@@ -15,10 +15,11 @@ YouTrack time tracking helps teams monitor effort, generate reports, and underst
 * Log work time on issues with flexible duration formats
 * List time entries with filtering options
 * Track different types of work (Development, Testing, etc.)
-* List time entries with filtering
+* List available work types for your organization
 * View time summaries grouped by various criteria
 * Export time data for analysis and billing
 * Support for historical time entries and date flexibility
+* Automatic work type name resolution to IDs
 
 Base Command
 ------------
@@ -192,6 +193,47 @@ View time summaries with aggregation and grouping options.
    # User-specific summary for performance review
    yt time summary --user-id USER-123 --start-date "2024-01-01" --end-date "2024-03-31"
 
+work-types
+~~~~~~~~~~
+
+List available work types for time tracking.
+
+.. code-block:: bash
+
+   yt time work-types [OPTIONS]
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--issue, -i``
+     - string
+     - Issue ID to get project-specific work types
+   * - ``--format, -f``
+     - choice
+     - Output format: table, json (default: table)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # List all available work types
+   yt time work-types
+
+   # List work types in JSON format
+   yt time work-types --format json
+
+   # List project-specific work types for an issue
+   yt time work-types --issue ISSUE-123
+
+   # Export work types for documentation
+   yt time work-types --format json > work_types.json
+
 Duration Formats
 ----------------
 
@@ -280,7 +322,24 @@ Relative Dates
 Work Types
 ----------
 
-Common work type classifications for better time categorization:
+YouTrack supports configurable work types for time categorization. The CLI automatically resolves work type names to their IDs when logging time.
+
+.. note::
+   Work types are case-insensitive when logging time. The CLI will match "development", "Development", or "DEVELOPMENT" to the same work type.
+
+Listing Available Work Types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # List all available work types
+   yt time work-types
+
+   # List project-specific work types
+   yt time work-types --issue ISSUE-123
+
+   # Export work types for reference
+   yt time work-types --format json > available_work_types.json
 
 Development Work
 ~~~~~~~~~~~~~~~
@@ -540,7 +599,7 @@ Common error scenarios and solutions:
   Be careful not to log duplicate time entries for the same work.
 
 **Invalid Work Type**
-  Verify work type names match your organization's standards.
+  The CLI will show available work types when an invalid type is provided. Use ``yt time work-types`` to list all available work types beforehand.
 
 Performance Optimization
 -----------------------

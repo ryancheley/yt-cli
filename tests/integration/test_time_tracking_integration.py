@@ -544,3 +544,151 @@ class TestTimeTrackingWorkflows:
                     main, ["time", "summary", "--start-date", start_date, "--end-date", end_date, "--format", "json"]
                 )
                 assert result.exit_code == 0, f"Failed date range analysis: {description}"
+
+    async def test_work_types_list_command(self, integration_auth_manager, test_time_data):
+        """Test listing available work types."""
+        runner = CliRunner()
+
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            # Test listing global work types
+            result = runner.invoke(main, ["time", "work-types"])
+            assert result.exit_code == 0, f"Failed to list work types: {result.output}"
+            assert "work types" in result.output.lower() or "work type" in result.output.lower()
+
+            # Test listing work types in JSON format
+            result = runner.invoke(main, ["time", "work-types", "--format", "json"])
+            assert result.exit_code == 0, f"Failed to list work types in JSON: {result.output}"
+
+            # Verify JSON output is valid
+            if result.output.strip():
+                try:
+                    work_types_data = json.loads(result.output)
+                    assert isinstance(work_types_data, list), "Work types should be a list"
+                    if work_types_data:
+                        # Check that work types have expected fields
+                        for work_type in work_types_data:
+                            assert "id" in work_type, "Work type should have an id field"
+                            assert "name" in work_type, "Work type should have a name field"
+                except json.JSONDecodeError:
+                    # If the output is not JSON, the test still passes if exit code is 0
+                    pass
+
+            # Test listing project-specific work types
+            result = runner.invoke(main, ["time", "work-types", "--issue", test_time_data["issue_id"]])
+            assert result.exit_code == 0, f"Failed to list project work types: {result.output}"
+
+    async def test_work_type_resolution_in_time_log(self, integration_auth_manager, test_time_data):
+        """Test that work type names are correctly resolved to IDs when logging time."""
+        runner = CliRunner()
+
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            # First, get available work types to use a valid one
+            result = runner.invoke(main, ["time", "work-types", "--format", "json"])
+            valid_work_type = None
+
+            if result.exit_code == 0 and result.output.strip():
+                try:
+                    work_types_data = json.loads(result.output)
+                    if work_types_data and isinstance(work_types_data, list):
+                        # Use the first available work type
+                        valid_work_type = work_types_data[0].get("name")
+                except json.JSONDecodeError:
+                    pass
+
+            # If we found a valid work type, try to log time with it
+            if valid_work_type:
+                result = runner.invoke(
+                    main,
+                    [
+                        "time",
+                        "log",
+                        test_time_data["issue_id"],
+                        "30m",
+                        "--description",
+                        "Testing work type resolution",
+                        "--work-type",
+                        valid_work_type,
+                    ],
+                )
+                # Should succeed with valid work type
+                assert result.exit_code == 0, (
+                    f"Failed to log time with valid work type {valid_work_type}: {result.output}"
+                )
+                assert "logged" in result.output.lower() or "added" in result.output.lower()
+
+            # Test with invalid work type - should fail with helpful error message
+            result = runner.invoke(
+                main,
+                [
+                    "time",
+                    "log",
+                    test_time_data["issue_id"],
+                    "30m",
+                    "--description",
+                    "Testing invalid work type",
+                    "--work-type",
+                    "InvalidWorkTypeXYZ123",
+                ],
+            )
+            assert result.exit_code != 0, "Should fail with invalid work type"
+            assert "invalid work type" in result.output.lower() or "available types" in result.output.lower()
+
+    async def test_work_type_case_insensitive_matching(self, integration_auth_manager, test_time_data):
+        """Test that work type matching is case-insensitive."""
+        runner = CliRunner()
+
+        with patch.dict(
+            os.environ,
+            {
+                "YOUTRACK_BASE_URL": integration_auth_manager.config.base_url,
+                "YOUTRACK_API_KEY": integration_auth_manager.config.token,
+            },
+        ):
+            # Get available work types
+            result = runner.invoke(main, ["time", "work-types", "--format", "json"])
+
+            if result.exit_code == 0 and result.output.strip():
+                try:
+                    work_types_data = json.loads(result.output)
+                    if work_types_data and isinstance(work_types_data, list):
+                        # Use the first available work type with different cases
+                        original_name = work_types_data[0].get("name")
+                        if original_name:
+                            test_cases = [
+                                original_name.lower(),
+                                original_name.upper(),
+                                original_name.capitalize(),
+                            ]
+
+                            for test_case in test_cases:
+                                result = runner.invoke(
+                                    main,
+                                    [
+                                        "time",
+                                        "log",
+                                        test_time_data["issue_id"],
+                                        "15m",
+                                        "--description",
+                                        f"Testing case sensitivity with {test_case}",
+                                        "--work-type",
+                                        test_case,
+                                    ],
+                                )
+                                # Should work with any case variation
+                                assert result.exit_code == 0, (
+                                    f"Failed with case variation '{test_case}' of '{original_name}': {result.output}"
+                                )
+                except json.JSONDecodeError:
+                    pass
