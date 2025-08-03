@@ -15,7 +15,7 @@ YouTrack time tracking helps teams monitor effort, generate reports, and underst
 * Log work time on issues with flexible duration formats
 * List time entries with filtering options
 * Track different types of work (Development, Testing, etc.)
-* Generate detailed time reports with filtering
+* List time entries with filtering
 * View time summaries grouped by various criteria
 * Export time data for analysis and billing
 * Support for historical time entries and date flexibility
@@ -135,58 +135,6 @@ List time entries with filtering options.
    # Export time entries in JSON format
    yt time list --format json --issue ISSUE-123
 
-report
-~~~~~~
-
-Generate detailed time reports with filtering options.
-
-.. code-block:: bash
-
-   yt time report [OPTIONS]
-
-**Options:**
-
-.. list-table::
-   :widths: 20 20 60
-   :header-rows: 1
-
-   * - Option
-     - Type
-     - Description
-   * - ``--issue-id, -i``
-     - string
-     - Filter by specific issue ID
-   * - ``--user-id, -u``
-     - string
-     - Filter by specific user ID
-   * - ``--start-date, -s``
-     - string
-     - Start date for filtering (YYYY-MM-DD)
-   * - ``--end-date, -e``
-     - string
-     - End date for filtering (YYYY-MM-DD)
-   * - ``--format, -f``
-     - choice
-     - Output format: table, json (default: table)
-
-**Examples:**
-
-.. code-block:: bash
-
-   # Generate time reports for specific issues
-   yt time report --issue-id ISSUE-123
-
-   # Generate time reports for a user
-   yt time report --user-id USER-456
-
-   # Generate time reports for a date range
-   yt time report --start-date "2024-01-01" --end-date "2024-01-31"
-
-   # Generate comprehensive report with multiple filters
-   yt time report --user-id USER-123 --start-date "2024-01-01" --end-date "2024-01-31"
-
-   # Export reports in JSON format
-   yt time report --format json --start-date "2024-01-01"
 
 summary
 ~~~~~~~
@@ -404,14 +352,14 @@ Time Reporting and Analysis
 
 .. code-block:: bash
 
-   # Weekly time report
-   yt time report --start-date "2024-01-15" --end-date "2024-01-21"
+   # Weekly time list
+   yt time list --start-date "2024-01-15" --end-date "2024-01-21"
 
    # Monthly summary by user
    yt time summary --start-date "2024-01-01" --end-date "2024-01-31" --group-by user
 
    # Project time analysis
-   yt time report --issue-id PROJECT-* --format json > project_time.json
+   yt time list --issue PROJECT-* --format json > project_time.json
 
    # Individual productivity report
    yt time summary --user-id john.doe --group-by type --start-date "2024-01-01"
@@ -429,7 +377,7 @@ Sprint Time Tracking
    yt time summary --start-date "2024-01-15" --end-date "2024-01-29" --group-by issue
 
    # Team sprint velocity analysis
-   yt time report --start-date "2024-01-15" --end-date "2024-01-29" --format json
+   yt time list --start-date "2024-01-15" --end-date "2024-01-29" --format json
 
 Billing and Client Reporting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -440,7 +388,7 @@ Billing and Client Reporting
    yt time log CLIENT-ISSUE-123 "4h" --work-type "Consulting" --description "Requirements gathering"
 
    # Generate billable hours report
-   yt time report --start-date "2024-01-01" --end-date "2024-01-31" --format json
+   yt time list --start-date "2024-01-01" --end-date "2024-01-31" --format json
 
    # Export for billing system
    yt time summary --group-by user --format json > billing_report.json
@@ -491,13 +439,13 @@ Detailed Time Reports
 .. code-block:: bash
 
    # Individual performance report
-   yt time report --user-id john.doe --start-date "2024-01-01" --end-date "2024-03-31"
+   yt time list --user-id john.doe --start-date "2024-01-01" --end-date "2024-03-31"
 
    # Issue-specific time tracking
-   yt time report --issue-id MAJOR-FEATURE-123
+   yt time list --issue MAJOR-FEATURE-123
 
    # Team time allocation
-   yt time report --start-date "2024-01-15" --end-date "2024-01-21" --format json
+   yt time list --start-date "2024-01-15" --end-date "2024-01-21" --format json
 
 Export and Integration
 ~~~~~~~~~~~~~~~~~~~~~
@@ -505,13 +453,13 @@ Export and Integration
 .. code-block:: bash
 
    # Export for external systems
-   yt time report --format json --start-date "2024-01-01" > time_export.json
+   yt time list --format json --start-date "2024-01-01" > time_export.json
 
    # Generate CSV-compatible data
    yt time summary --format json | jq -r '.[] | [.user, .duration, .count] | @csv'
 
    # Billing system integration
-   yt time report --user-id contractor --format json > contractor_hours.json
+   yt time list --user-id contractor --format json > contractor_hours.json
 
 Output Formats
 --------------
@@ -599,14 +547,14 @@ Performance Optimization
 
 .. code-block:: bash
 
-   # Limit report scope for better performance
-   yt time report --start-date "2024-01-01" --end-date "2024-01-31" --top 100
+   # Limit listing scope for better performance
+   yt time list --start-date "2024-01-01" --end-date "2024-01-31"
 
    # Use specific filters to reduce data volume
-   yt time report --user-id specific.user --issue-id ISSUE-123
+   yt time list --user-id specific.user --issue ISSUE-123
 
    # Export large datasets in JSON for processing
-   yt time report --format json --start-date "2024-01-01" > large_export.json
+   yt time list --format json --start-date "2024-01-01" > large_export.json
 
 See Also
 --------

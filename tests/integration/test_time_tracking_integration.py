@@ -207,23 +207,23 @@ class TestTimeTrackingWorkflows:
                 # Continue even if some fail due to permissions
                 pass
 
-            # Generate reports
+            # Generate reports using list command
             report_scenarios = [
                 # Basic report
-                (["time", "report", "--issue", test_time_data["issue_id"]], "Basic issue report"),
+                (["time", "list", "--issue", test_time_data["issue_id"]], "Basic issue list"),
                 # JSON format report
-                (["time", "report", "--issue", test_time_data["issue_id"], "--format", "json"], "JSON report"),
+                (["time", "list", "--issue", test_time_data["issue_id"], "--format", "json"], "JSON list"),
                 # Date range report
                 (
                     [
                         "time",
-                        "report",
+                        "list",
                         "--start-date",
                         (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
                         "--end-date",
                         datetime.now().strftime("%Y-%m-%d"),
                     ],
-                    "Date range report",
+                    "Date range list",
                 ),
             ]
 
@@ -322,7 +322,7 @@ class TestTimeTrackingWorkflows:
             end_date = datetime.now().strftime("%Y-%m-%d")
 
             result = runner.invoke(
-                main, ["time", "report", "--start-date", start_date, "--end-date", end_date, "--format", "json"]
+                main, ["time", "list", "--start-date", start_date, "--end-date", end_date, "--format", "json"]
             )
             assert result.exit_code == 0
 
