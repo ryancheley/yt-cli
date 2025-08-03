@@ -8,25 +8,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- ✨ Implement moving issues between projects feature (#446)
-  - Added full support for moving issues from one project to another using YouTrack REST API
-  - Implemented project short name to database ID resolution for seamless user experience
-  - Added comprehensive validation including project existence and permissions checks
-  - Enhanced error handling with detailed feedback for common failure scenarios
-  - Updated command help with examples and usage guidance for both state and project moves
-  - Added comprehensive test coverage for new functionality
+- ✨ Add CSV format support to yt issues attach list command (#505)
+  - Implement CSV output formatting for attachment listings
+  - Support for all three formats: table, json, and csv
+  - Maintain backward compatibility with existing formats
+- ✨ Complete implementation of issues attach upload/download commands (#501, #454)
+  - Full multipart form support for file uploads to issues
+  - Multiple URL pattern fallbacks for reliable file downloads
+  - Content type detection to avoid downloading HTML login pages
+  - Comprehensive error handling for file operations
+  - Support for various file types and edge cases
+- ✨ Implement moving issues between projects feature (#499)
+  - Full support for moving issues between projects using YouTrack REST API
+  - Project short name to database ID resolution
+  - Comprehensive validation and error handling
+  - Enhanced command help with examples
 
 ### Fixed
-- 🐛 Fix users update command not persisting changes (#482)
-  - Updated user modification methods to use Hub API instead of YouTrack API for fields like email and fullName
+- 🐛 Fix documentation inconsistency: Update --confirm to --force in delete commands (#506)
+- 🐛 Fix JSON output pollution in issues attach list command (#502)
+  - Direct progress messages to stderr when using JSON format
+  - Ensure clean JSON output on stdout for automation scripts
+- 🐛 Fix time list command duration field display (#497)
+- 🐛 Fix yt time list --issue filter not working correctly (#496)
+- 🔧 Remove duplicate time report command (#494)
+- 🐛 Fix users create command fullName and email display issue (#492)
+- 🐛 Fix users list command KeyError for missing count field (#491)
+- 🐛 Fix users update command not persisting changes (#490, #482)
+  - Updated user modification methods to use Hub API instead of YouTrack API
   - Added logic to fetch user's ringId (Hub user ID) before attempting updates
   - Applied same fix to ban_user, unban_user, and change_user_password methods
   - Added warning message for local/test instances where Hub API may not be fully available
-  - Fixed missing 'count' key error in users list command for non-paginated results
+- 🐛 Fix issue and attachment deletion commands showing 'message' error despite successful execution (#489)
+- 🐛 Fix comment add and update commands showing 'message' error despite successful execution (#488)
+- 🐛 Fix issues update command to allow empty assignee for unassignment (#487)
+- 🐛 Fix issues move command false success reporting (#486)
+- 🐛 Fix users update command to display actual updated user data (#485)
+- 🐛 Fix users create command to use correct Hub API endpoint (#481)
+- 🐛 Fix time log command to actually save time entries (#480, #479)
+- 🐛 Fix comment deletion and other DELETE operations showing 'message' error (#478)
+- 🐛 Fix batch update validation vs execution inconsistency (#475)
+- 🐛 Fix issues links subcommand group completely broken (#474)
+- 🐛 Fix issues update command assignee field not updating (#472, #471)
+- 🐛 Fix issues update command state field type mismatch (#469)
+- 🐛 Fix projects create command response handling bug (#467)
+- 🐛 Fix projects fields list command to display actual field names and types (#466)
+- 🐛 Fix boards view command to display actual column names (#465)
+- 🐛 Fix articles draft command to properly filter draft articles (#464)
+- 🐛 Fix admin i18n get command showing N/A values and add rich table formatting (#463)
+- 🐛 Fix 'me' assignee resolution in assign command (#462)
+- 🐛 Fix admin maintenance clear-cache command returning 404 error (#461)
+- 🔧 Fix project creation with username for leader parameter (#460)
+- 🐛 Fix projects list command 'count' error (#459)
+- 🔧 Fix state field handling across projects (#458)
+- 🐛 Fix priority and type assignment in issue creation (#457)
 
 ### Improved
-- 📝 Added documentation note about Hub API requirements for user updates
-- 📝 Enhanced issues move command documentation with comprehensive examples and considerations
+- ✨ Add comment IDs to issues comments list display (#473)
+- 🔍 Enhance security token-status command for permanent tokens (#498)
+- 📝 Update implement command to integrate cli-tester subagent (#456)
+- 🧪 Enhanced test coverage across multiple modules
 
 ## [0.13.5] - 2025-07-27
 
