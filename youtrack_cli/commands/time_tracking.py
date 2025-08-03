@@ -108,61 +108,6 @@ def list(
 
 
 @time.command()
-@click.option("--issue-id", "-i", help="Filter by specific issue ID")
-@click.option("--user-id", "-u", help="Filter by specific user ID")
-@click.option("--start-date", "-s", help="Start date for filtering (YYYY-MM-DD)")
-@click.option("--end-date", "-e", help="End date for filtering (YYYY-MM-DD)")
-@click.option(
-    "--format",
-    "-f",
-    type=click.Choice(["table", "json"]),
-    default="table",
-    help="Output format",
-)
-@click.pass_context
-def report(
-    ctx: click.Context,
-    issue_id: Optional[str],
-    user_id: Optional[str],
-    start_date: Optional[str],
-    end_date: Optional[str],
-    format: str,
-) -> None:
-    """Generate time reports with filtering options."""
-    from ..time import TimeManager
-
-    console = get_console()
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    time_manager = TimeManager(auth_manager)
-
-    console.print("📊 Generating time report...", style="blue")
-
-    try:
-        result = asyncio.run(
-            time_manager.get_time_entries(
-                issue_id=issue_id,
-                user_id=user_id,
-                start_date=start_date,
-                end_date=end_date,
-                fields="id,duration,date,description,author(id,fullName),issue(id,summary,numberInProject,project(shortName)),type(name)",
-            )
-        )
-
-        if result["status"] == "success":
-            if format == "json":
-                console.print_json(data=result["data"])
-            else:
-                time_manager.display_time_entries(result["data"])
-                console.print(f"\n📈 Total entries: {result['count']}", style="green")
-        else:
-            console.print(f"❌ {result['message']}", style="red")
-            raise click.ClickException(result["message"])
-    except Exception as e:
-        console.print(f"❌ Error: {str(e)}", style="red")
-        raise click.ClickException("Failed to generate report") from e
-
-
-@time.command()
 @click.option("--user-id", "-u", help="Filter by specific user ID")
 @click.option("--start-date", "-s", help="Start date for filtering (YYYY-MM-DD)")
 @click.option("--end-date", "-e", help="End date for filtering (YYYY-MM-DD)")
