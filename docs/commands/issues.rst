@@ -358,7 +358,7 @@ Delete Comments
    yt issues comments delete ISSUE_ID COMMENT_ID [OPTIONS]
 
 **Options:**
-  * ``--confirm`` - Skip confirmation prompt
+  * ``--force`` - Skip confirmation prompt
 
 Attachment Management
 ---------------------
@@ -406,7 +406,7 @@ Delete Attachments
    yt issues attach delete ISSUE_ID ATTACHMENT_ID [OPTIONS]
 
 **Options:**
-  * ``--confirm`` - Skip confirmation prompt
+  * ``--force`` - Skip confirmation prompt
 
 Issue Relationships
 -------------------
@@ -461,7 +461,7 @@ Delete Links
    yt issues links delete SOURCE_ISSUE_ID LINK_ID [OPTIONS]
 
 **Options:**
-  * ``--confirm`` - Skip confirmation prompt
+  * ``--force`` - Skip confirmation prompt
 
 List Link Types
 ~~~~~~~~~~~~~~~
