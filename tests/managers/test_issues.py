@@ -669,7 +669,15 @@ class TestIssueManagerFormatting:
 
     def test_display_attachments_table(self, issue_manager):
         """Test displaying attachments table."""
-        attachments = [{"name": "test.txt", "size": 1234, "author": {"fullName": "Test User"}, "created": "2023-01-01"}]
+        attachments = [
+            {
+                "id": "attach-1",
+                "name": "test.txt",
+                "size": 1234,
+                "author": {"fullName": "Test User"},
+                "created": "2023-01-01",
+            }
+        ]
 
         issue_manager.display_attachments_table(attachments)
         issue_manager.console.print.assert_called_once()

@@ -841,19 +841,21 @@ class IssueManager:
 
         from rich.table import Table
 
-        table = Table(title="Issue Attachments")
+        table = Table(title="📎 Attachments")
+        table.add_column("ID", style="bright_black", no_wrap=True, width=10)
         table.add_column("Name", style="cyan", no_wrap=True)
         table.add_column("Size", style="blue")
         table.add_column("Author", style="green")
         table.add_column("Created", style="yellow")
 
         for attachment in attachments:
+            attachment_id = attachment.get("id", "N/A")
             name = attachment.get("name", "N/A")
             size = attachment.get("size", "N/A")
             author = attachment.get("author", {}).get("fullName", "Unknown")
             created = attachment.get("created", "")
 
-            table.add_row(name, str(size), author, str(created))
+            table.add_row(str(attachment_id), name, str(size), author, str(created))
 
         self.console.print(table)
 

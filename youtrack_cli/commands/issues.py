@@ -94,18 +94,19 @@ def _format_attachments_as_csv(attachments):
     import io
 
     if not attachments:
-        return "Name,Size,Author,Created\n"
+        return "ID,Name,Size,Author,Created\n"
 
     # Create CSV in memory
     output = io.StringIO()
     writer = csv.writer(output)
 
     # Write header
-    headers = ["Name", "Size", "Author", "Created"]
+    headers = ["ID", "Name", "Size", "Author", "Created"]
     writer.writerow(headers)
 
     # Write data rows
     for attachment in attachments:
+        attachment_id = attachment.get("id", "N/A")
         name = attachment.get("name", "N/A")
         size = attachment.get("size", "N/A")
 
@@ -116,7 +117,7 @@ def _format_attachments_as_csv(attachments):
 
         created = attachment.get("created", "")
 
-        row = [name, str(size), author_name, str(created)]
+        row = [str(attachment_id), name, str(size), author_name, str(created)]
         writer.writerow(row)
 
     return output.getvalue()

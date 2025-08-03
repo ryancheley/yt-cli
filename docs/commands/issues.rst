@@ -391,12 +391,16 @@ Download Attachments
 List Attachments
 ~~~~~~~~~~~~~~~~
 
+List all attachments for an issue, displaying attachment IDs needed for download and delete operations.
+
 .. code-block:: bash
 
    yt issues attach list ISSUE_ID [OPTIONS]
 
 **Options:**
   * ``--format [table|json|csv]`` - Output format
+
+**Output:** Displays attachment ID, name, size, author, and creation date. The attachment ID can be used with the ``download`` and ``delete`` commands.
 
 Delete Attachments
 ~~~~~~~~~~~~~~~~~~
