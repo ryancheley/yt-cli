@@ -684,7 +684,12 @@ class TestUserManagerDisplay:
         """Test displaying empty user roles."""
         user_manager.display_user_roles([], "user-1")
 
-        user_manager.console.print.assert_called_once_with("[yellow]User 'user-1' has no assigned roles.[/yellow]")
+        # Should print three messages: empty roles message and two help messages
+        assert user_manager.console.print.call_count == 3
+        calls = user_manager.console.print.call_args_list
+        assert calls[0][0][0] == "[yellow]User 'user-1' has no assigned roles.[/yellow]"
+        assert "project-specific" in calls[1][0][0]
+        assert "permissions" in calls[2][0][0]
 
     def test_display_user_roles_with_roles(self, user_manager):
         """Test displaying user roles with roles."""

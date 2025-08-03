@@ -668,6 +668,10 @@ class UserManager:
         """
         if not roles:
             self.console.print(f"[yellow]User '{user_id}' has no assigned roles.[/yellow]")
+            self.console.print(
+                "[dim]Note: Roles in YouTrack are project-specific and managed through permissions.[/dim]"
+            )
+            self.console.print("[dim]Use 'yt users permissions' command for detailed permission information.[/dim]")
             return
 
         table = Table(title=f"Roles for User: {user_id}")
