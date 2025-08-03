@@ -967,6 +967,7 @@ def update_comment(ctx: click.Context, article_id: str, comment_id: str, text: s
 
 
 @comments.command(name="delete")
+@click.argument("article_id")
 @click.argument("comment_id")
 @click.option(
     "--force",
@@ -974,17 +975,34 @@ def update_comment(ctx: click.Context, article_id: str, comment_id: str, text: s
     help="Skip confirmation prompt",
 )
 @click.pass_context
-def delete_comment(ctx: click.Context, comment_id: str, force: bool) -> None:
+def delete_comment(ctx: click.Context, article_id: str, comment_id: str, force: bool) -> None:
     """Delete a comment."""
+    from ..articles import ArticleManager
+    from ..auth import AuthManager
+
     console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
 
     if not force:
         if not click.confirm(f"Are you sure you want to delete comment '{comment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
 
-    console.print("⚠️  Comment delete functionality not yet implemented", style="yellow")
-    console.print("This feature requires additional API endpoints", style="blue")
+    console.print(f"🗑️  Deleting comment '{comment_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(article_manager.delete_comment(article_id, comment_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ Comment '{comment_id}' deleted successfully", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to delete comment")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting comment: {e}", style="red")
+        raise click.ClickException("Failed to delete comment") from e
 
 
 @articles.group(name="attach")
