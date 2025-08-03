@@ -538,12 +538,17 @@ def fields_command(
 
     Examples:
         # List all custom fields for a project
+
         yt projects fields PROJECT-ID
 
+
         # List fields with specific attributes
+
         yt projects fields PROJECT-ID --fields name,fieldType,canBeEmpty
 
+
         # Output as JSON
+
         yt projects fields PROJECT-ID --format json
     """
     from ..managers.projects import ProjectManager
