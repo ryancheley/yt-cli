@@ -1212,3 +1212,31 @@ class ArticleManager:
                 "status": "error",
                 "message": f"Error downloading attachment: {str(e)}",
             }
+
+    async def delete_attachment(self, article_id: str, attachment_id: str) -> dict[str, Any]:
+        """Delete an attachment from an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        url = f"{credentials.base_url.rstrip('/')}/api/articles/{article_id}/attachments/{attachment_id}"
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request("DELETE", url, headers=headers)
+            if response.status_code in [200, 204]:
+                return {
+                    "status": "success",
+                    "message": f"Attachment '{attachment_id}' deleted successfully from article '{article_id}'",
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Failed to delete attachment: HTTP {response.status_code} - {response.text}",
+                }
+        except Exception as e:
+            return {"status": "error", "message": f"Error deleting attachment: {str(e)}"}

@@ -1187,15 +1187,31 @@ def list_attachments(
 @click.pass_context
 def delete_attachment(ctx: click.Context, article_id: str, attachment_id: str, force: bool) -> None:
     """Delete an attachment from an article."""
+    from ..articles import ArticleManager
+
     console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
 
     if not force:
         if not click.confirm(f"Are you sure you want to delete attachment '{attachment_id}'?"):
             console.print("Delete cancelled.", style="yellow")
             return
 
-    console.print("⚠️  Attachment delete functionality not yet implemented", style="yellow")
-    console.print("This feature requires additional API endpoints", style="blue")
+    console.print(f"🗑️  Deleting attachment '{attachment_id}' from article '{article_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(article_manager.delete_attachment(article_id, attachment_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ {result['message']}", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to delete attachment")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting attachment: {e}", style="red")
+        raise click.ClickException("Failed to delete attachment") from e
 
 
 def _sort_articles(
