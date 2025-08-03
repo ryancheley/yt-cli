@@ -1723,7 +1723,7 @@ def show(ctx: click.Context, issue_id: str, format: str) -> None:
     "--format",
     type=click.Choice(["tree", "table"], case_sensitive=False),
     default="tree",
-    help="Output format for dependencies display",
+    help="Output format for related issues display",
 )
 @click.option(
     "--show-status",
@@ -1732,28 +1732,45 @@ def show(ctx: click.Context, issue_id: str, format: str) -> None:
     help="Show status indicators in tree view",
 )
 @click.pass_context
-def dependencies(ctx: click.Context, issue_id: str, format: str, show_status: bool) -> None:
-    """Show issue dependencies and relationships in tree format."""
+def related(ctx: click.Context, issue_id: str, format: str, show_status: bool) -> None:
+    """Show all issue relationships dynamically based on YouTrack instance configuration.
+
+    This command shows all relationship types for an issue, not just dependencies.
+    Relationship types are fetched dynamically from the YouTrack instance, so it
+    adapts to custom relationship types in different YouTrack configurations.
+
+    Examples:
+        # Show all relationships in tree format
+        yt issues related DEMO-123
+
+        # Show relationships in table format
+        yt issues related DEMO-123 --format table
+
+        # Hide status indicators
+        yt issues related DEMO-123 --show-status false
+    """
     from ..managers.issues import IssueManager
-    from ..trees import create_issue_dependencies_tree
+    from ..trees import create_issue_relationships_tree
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(f"🔗 Fetching dependencies for issue '{issue_id}'...", style="blue")
+    console.print(f"🔗 Fetching relationships for issue '{issue_id}'...", style="blue")
 
-    async def get_issue_and_links():
-        """Get both issue details and links in a single async context."""
+    async def get_issue_and_relationships():
+        """Get issue details, links and available link types in a single async context."""
         issue_result = await issue_manager.get_issue(issue_id)
         if issue_result["status"] != "success":
-            return issue_result, None
+            return issue_result, None, None
 
         links_result = await issue_manager.list_links(issue_id)
-        return issue_result, links_result
+        link_types_result = await issue_manager.list_link_types()
+
+        return issue_result, links_result, link_types_result
 
     try:
-        issue_result, links_result = asyncio.run(get_issue_and_links())
+        issue_result, links_result, link_types_result = asyncio.run(get_issue_and_relationships())
 
         if issue_result["status"] != "success":
             console.print(f"❌ {issue_result['message']}", style="red")
@@ -1763,20 +1780,27 @@ def dependencies(ctx: click.Context, issue_id: str, format: str, show_status: bo
             console.print(f"❌ {links_result['message'] if links_result else 'Failed to get links'}", style="red")
             raise click.ClickException("Failed to get issue links")
 
+        if link_types_result is None or link_types_result["status"] != "success":
+            console.print(
+                f"❌ {link_types_result['message'] if link_types_result else 'Failed to get link types'}", style="red"
+            )
+            raise click.ClickException("Failed to get link types")
+
         issue_data = issue_result["data"]
         links_data = links_result["data"]
+        link_types_data = link_types_result["data"]
 
         if format == "tree":
-            # Create and display dependency tree
-            tree = create_issue_dependencies_tree(issue_data, links_data, show_status)
+            # Create and display relationships tree with all relationship types
+            tree = create_issue_relationships_tree(issue_data, links_data, link_types_data, show_status)
             console.print(tree)
         else:
-            # Fall back to table format
-            issue_manager.display_links_table(links_data)
+            # Display relationships table with enhanced grouping by type
+            issue_manager.display_relationships_table(links_data, link_types_data)
 
     except Exception as e:
-        console.print(f"❌ Error getting dependencies: {e}", style="red")
-        raise click.ClickException("Failed to get dependencies") from e
+        console.print(f"❌ Error getting relationships: {e}", style="red")
+        raise click.ClickException("Failed to get relationships") from e
 
 
 @issues.command()
@@ -2149,3 +2173,5 @@ issues.add_alias("find", "search")
 issues.add_alias("d", "delete")
 issues.add_alias("del", "delete")
 issues.add_alias("rm", "delete")
+# Add alias for backward compatibility
+issues.add_alias("dependencies", "related")
