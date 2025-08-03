@@ -541,7 +541,7 @@ class TestIssueServiceTags:
 
             await issue_service.list_tags("TEST-1")
 
-            mock_request.assert_called_once_with("GET", "issues/TEST-1/tags")
+            mock_request.assert_called_once_with("GET", "issues/TEST-1/tags", params={"fields": "id,name"})
 
     @pytest.mark.asyncio
     async def test_find_tag_by_name(self, issue_service, mock_response):

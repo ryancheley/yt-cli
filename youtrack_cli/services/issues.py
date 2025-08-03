@@ -714,7 +714,8 @@ class IssueService(BaseService):
             API response with tag list
         """
         try:
-            response = await self._make_request("GET", f"issues/{issue_id}/tags")
+            params = {"fields": "id,name"}
+            response = await self._make_request("GET", f"issues/{issue_id}/tags", params=params)
             return await self._handle_response(response)
 
         except ValueError as e:
