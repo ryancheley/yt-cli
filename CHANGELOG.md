@@ -7,32 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2025-08-03
+
 ### Added
-- ♻️ Rename 'issues dependencies' to 'issues related' and show all relationship types dynamically (#519)
+- ✨ Implement article attachment delete functionality (#552)
+- ✨ Implement article attachment download functionality (#551)
+- ✨ Implement article comments delete functionality (#550)
+- ✨ Implement article comments update command (#549)
+- ✨ Add attachment IDs to issues attach list command output (#542)
+- ♻️ Rename 'issues dependencies' to 'issues related' and show all relationship types dynamically (#543)
   - Rename command from `yt issues dependencies` to `yt issues related` for better clarity
   - Dynamically fetch and display all relationship types from YouTrack instance
   - Support custom relationship types specific to different YouTrack configurations
   - Enhanced tree and table formats showing relationship directions (inward/outward)
   - Maintain backward compatibility with `dependencies` as an alias
   - Improved display with proper relationship type names (sourceToTarget/targetToSource)
-- ✨ Add CSV format support to yt issues attach list command (#505)
-  - Implement CSV output formatting for attachment listings
-  - Support for all three formats: table, json, and csv
-  - Maintain backward compatibility with existing formats
-- ✨ Complete implementation of issues attach upload/download commands (#501, #454)
-  - Full multipart form support for file uploads to issues
-  - Multiple URL pattern fallbacks for reliable file downloads
-  - Content type detection to avoid downloading HTML login pages
-  - Comprehensive error handling for file operations
-  - Support for various file types and edge cases
-- ✨ Implement moving issues between projects feature (#499)
-  - Full support for moving issues between projects using YouTrack REST API
-  - Project short name to database ID resolution
-  - Comprehensive validation and error handling
-  - Enhanced command help with examples
 
 ### Changed
-- 🔧 Simplify 'yt projects fields' command to only provide list functionality (#523)
+- 🔧 Simplify 'yt projects fields' command to only provide list functionality (#546)
   - **BREAKING CHANGE**: Removed attach, update, and detach subcommands from `yt projects fields`
   - Command now directly lists project fields: `yt projects fields PROJECT-ID`
   - Field management operations should be performed through YouTrack web interface
@@ -40,49 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated documentation to reflect read-only nature of field operations
 
 ### Fixed
-- 🐛 Fix documentation inconsistency: Update --confirm to --force in delete commands (#506)
-- 🐛 Fix JSON output pollution in issues attach list command (#502)
-  - Direct progress messages to stderr when using JSON format
-  - Ensure clean JSON output on stdout for automation scripts
-- 🐛 Fix time list command duration field display (#497)
-- 🐛 Fix yt time list --issue filter not working correctly (#496)
-- 🔧 Remove duplicate time report command (#494)
-- 🐛 Fix users create command fullName and email display issue (#492)
-- 🐛 Fix users list command KeyError for missing count field (#491)
-- 🐛 Fix users update command not persisting changes (#490, #482)
-  - Updated user modification methods to use Hub API instead of YouTrack API
-  - Added logic to fetch user's ringId (Hub user ID) before attempting updates
-  - Applied same fix to ban_user, unban_user, and change_user_password methods
-  - Added warning message for local/test instances where Hub API may not be fully available
-- 🐛 Fix issue and attachment deletion commands showing 'message' error despite successful execution (#489)
-- 🐛 Fix comment add and update commands showing 'message' error despite successful execution (#488)
-- 🐛 Fix issues update command to allow empty assignee for unassignment (#487)
-- 🐛 Fix issues move command false success reporting (#486)
-- 🐛 Fix users update command to display actual updated user data (#485)
-- 🐛 Fix users create command to use correct Hub API endpoint (#481)
-- 🐛 Fix time log command to actually save time entries (#480, #479)
-- 🐛 Fix comment deletion and other DELETE operations showing 'message' error (#478)
-- 🐛 Fix batch update validation vs execution inconsistency (#475)
-- 🐛 Fix issues links subcommand group completely broken (#474)
-- 🐛 Fix issues update command assignee field not updating (#472, #471)
-- 🐛 Fix issues update command state field type mismatch (#469)
-- 🐛 Fix projects create command response handling bug (#467)
-- 🐛 Fix projects fields list command to display actual field names and types (#466)
-- 🐛 Fix boards view command to display actual column names (#465)
-- 🐛 Fix articles draft command to properly filter draft articles (#464)
-- 🐛 Fix admin i18n get command showing N/A values and add rich table formatting (#463)
-- 🐛 Fix 'me' assignee resolution in assign command (#462)
-- 🐛 Fix admin maintenance clear-cache command returning 404 error (#461)
-- 🔧 Fix project creation with username for leader parameter (#460)
-- 🐛 Fix projects list command 'count' error (#459)
-- 🔧 Fix state field handling across projects (#458)
-- 🐛 Fix priority and type assignment in issue creation (#457)
-
-### Improved
-- ✨ Add comment IDs to issues comments list display (#473)
-- 🔍 Enhance security token-status command for permanent tokens (#498)
-- 📝 Update implement command to integrate cli-tester subagent (#456)
-- 🧪 Enhanced test coverage across multiple modules
+- 🐛 Fix yt projects fields --fields parameter showing N/A in Name column (#548)
+- 🐛 Fix help text formatting for yt projects fields command (#547)
+- 🐛 Fix Type field validation to fail closed when field names unavailable (#541)
+- 🐛 Fix users groups/roles/teams commands 404 errors (#540)
+- 🐛 Fix time log WorkItemType entity error with work type resolution (#539)
+- 🐛 Fix issues tag list command returning empty results (#538)
+- 🐛 Fix complex alias execution - aliases with arguments now work (#537)
+- 🐛 Fix batch create API compatibility validation (#536)
+- 🐛 Fix false success in issues move command between projects (#534)
+- 🐛 Fix issues move command showing error messages despite successful state changes (#533)
+- 🐛 Fix assignee parameter not working in issues create command (#532)
+- 🐛 Fix issue type update parameter not working in issues update command (#531)
+- 🐛 Fix article visibility parameter ignored in create command (#530)
+- 🐛 Fix inconsistent parent ID validation in articles create command (#529)
+- 🐛 Fix article creation with readable parent IDs (#528)
 
 ## [0.13.5] - 2025-07-27
 
