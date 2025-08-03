@@ -32,86 +32,31 @@ Base Command
 Global Settings Management
 --------------------------
 
-global-settings get
-~~~~~~~~~~~~~~~~~~
+.. note::
+   The global-settings commands have been deprecated and are no longer available.
+   Use the global-settings list command to view settings.
 
-Retrieve global YouTrack settings and configuration values.
+global-settings list
+~~~~~~~~~~~~~~~~~~~~
+
+List all global YouTrack settings.
 
 .. code-block:: bash
 
-   yt admin global-settings get [SETTING_KEY]
-
-**Arguments:**
-
-* ``SETTING_KEY`` - Specific setting key to retrieve (optional, if omitted returns all settings)
+   yt admin global-settings list
 
 **Examples:**
 
 .. code-block:: bash
 
-   # Get all global settings
-   yt admin global-settings get
-
-   # Get a specific setting
-   yt admin global-settings get server.name
-
-   # Get server configuration
-   yt admin global-settings get server.maxUploadFileSize
-
-   # Get authentication settings
-   yt admin global-settings get auth.sessionTimeout
-
-global-settings set
-~~~~~~~~~~~~~~~~~~
-
-Set or update global YouTrack settings.
-
-.. code-block:: bash
-
-   yt admin global-settings set SETTING_KEY VALUE
-
-**Arguments:**
-
-* ``SETTING_KEY`` - The setting key to update (required)
-* ``VALUE`` - The new value for the setting (required)
-
-**Examples:**
-
-.. code-block:: bash
-
-   # Set server name
-   yt admin global-settings set server.name "My YouTrack Instance"
-
-   # Set maximum upload file size
-   yt admin global-settings set server.maxUploadFileSize "50MB"
-
-   # Configure session timeout
-   yt admin global-settings set auth.sessionTimeout "3600"
-
-   # Set email notification settings
-   yt admin global-settings set notifications.enabled "true"
+   # List all global settings
+   yt admin global-settings list
 
 License Management
 -----------------
 
-license show
-~~~~~~~~~~~
-
-Display comprehensive license information including expiration, features, and usage limits.
-
-.. code-block:: bash
-
-   yt admin license show
-
-**Examples:**
-
-.. code-block:: bash
-
-   # Display license information
-   yt admin license show
-
-   # Review license before renewal
-   yt admin license show
+.. note::
+   The license show command has been deprecated and is no longer available.
 
 license usage
 ~~~~~~~~~~~~
@@ -135,45 +80,15 @@ Show detailed license usage statistics and capacity information.
 System Maintenance
 ------------------
 
-maintenance clear-cache
-~~~~~~~~~~~~~~~~~~~~~~
-
 .. note::
-   This command is not functional as cache clearing is not available through the YouTrack REST API.
+   The maintenance clear-cache command has been deprecated and is no longer available.
    Cache management must be performed through:
 
    * The YouTrack administrative UI
    * Server restart procedures
    * Direct server access
 
-   Please consult your YouTrack administrator or the JetBrains support team for alternative methods.
-
-.. code-block:: bash
-
-   yt admin maintenance clear-cache [OPTIONS]
-
-**Options:**
-
-.. list-table::
-   :widths: 20 20 60
-   :header-rows: 1
-
-   * - Option
-     - Type
-     - Description
-   * - ``--force``
-     - flag
-     - Skip confirmation prompt
-
-**Examples:**
-
-.. code-block:: bash
-
-   # Attempting to clear caches will show an informative error message
-   yt admin maintenance clear-cache
-
-   # The command will explain that this functionality is not available
-   yt admin maintenance clear-cache --force
+   Please consult your YouTrack administrator or the JetBrains support team for cache management.
 
 System Health Monitoring
 ------------------------
@@ -315,6 +230,31 @@ List all custom fields configured across YouTrack projects.
    # List field types and usage
    yt admin fields list --fields "name,fieldType(presentation),projects(name)"
 
+Internationalization (i18n) Management
+--------------------------------------
+
+i18n list
+~~~~~~~~~
+
+List available locales for internationalization. This command is an alias for ``yt admin locale list``.
+
+.. code-block:: bash
+
+   yt admin i18n list
+
+**Examples:**
+
+.. code-block:: bash
+
+   # List all available locales
+   yt admin i18n list
+
+   # Same functionality as locale list
+   yt admin locale list
+
+.. note::
+   This command provides the same functionality as ``yt admin locale list`` for consistency with other i18n commands.
+
 Administrative Features
 ----------------------
 
@@ -400,7 +340,7 @@ System Health Monitoring
    # Check license status
    echo ""
    echo "=== License Status ==="
-   yt admin license show
+   yt admin license usage
 
    # Check license usage
    echo ""
@@ -417,7 +357,7 @@ Regular Maintenance
 
    # Note: Cache clearing is not available through the REST API
    echo "Cache clearing must be done through the YouTrack UI or server tools"
-   # yt admin maintenance clear-cache --force  # This will show an informative error
+   # Cache clearing commands have been deprecated
 
    # Health check after maintenance
    echo "Post-maintenance health check..."
@@ -454,19 +394,12 @@ System Configuration
    # Configure system settings for new installation
    echo "Configuring YouTrack system settings..."
 
-   # Set basic server information
-   yt admin global-settings set server.name "Company YouTrack"
-   yt admin global-settings set server.maxUploadFileSize "100MB"
-
-   # Configure authentication
-   yt admin global-settings set auth.sessionTimeout "7200"
-
-   # Enable notifications
-   yt admin global-settings set notifications.enabled "true"
+   # Note: Global settings configuration commands have been deprecated
+   echo "System settings must be configured through the YouTrack web interface"
 
    # Verify configuration
    echo "Verifying configuration..."
-   yt admin global-settings get
+   yt admin global-settings list
 
 License Monitoring
 ~~~~~~~~~~~~~~~~~
@@ -481,11 +414,8 @@ License Monitoring
    echo ""
 
    # Get license information
-   LICENSE_INFO=$(yt admin license show)
    USAGE_INFO=$(yt admin license usage)
 
-   echo "$LICENSE_INFO"
-   echo ""
    echo "$USAGE_INFO"
 
    # Alert if usage is high (example threshold: 80%)
@@ -589,7 +519,7 @@ System Diagnostics
 
    # Check license status
    echo "3. License status..."
-   yt admin license show
+   yt admin license usage
 
    echo "Diagnostics completed"
 
@@ -611,8 +541,7 @@ Error Recovery
 
    # Check critical settings
    echo "Verifying critical settings..."
-   yt admin global-settings get server.name
-   yt admin global-settings get auth.sessionTimeout
+   yt admin global-settings list
 
 Integration Examples
 -------------------
@@ -648,7 +577,7 @@ Backup Integration
    mkdir -p "$BACKUP_DIR"
 
    # Export global settings
-   yt admin global-settings get > "$BACKUP_DIR/global_settings.txt"
+   yt admin global-settings list > "$BACKUP_DIR/global_settings.txt"
 
    # Export user groups
    yt admin user-groups list --fields "id,name,description" > "$BACKUP_DIR/user_groups.txt"

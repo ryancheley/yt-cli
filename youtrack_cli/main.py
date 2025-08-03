@@ -376,83 +376,6 @@ def groups_create(ctx: click.Context, name: str, description: Optional[str]) -> 
     asyncio.run(run_create_group())
 
 
-@main.group()
-def settings() -> None:
-    """Manage global YouTrack settings.
-
-    This is a flatter alternative to 'yt admin global-settings'.
-    You can also use 'yt admin global-settings' for the same functionality.
-    """
-    pass
-
-
-@settings.command(name="get")
-@click.option("--name", "-n", help="Specific setting name to retrieve")
-@click.pass_context
-def settings_get(ctx: click.Context, name: Optional[str]) -> None:
-    """Get global settings."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    async def run_get_settings() -> None:
-        result = await admin_manager.get_global_settings(name)
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        settings = result["data"]
-        if name:
-            admin_manager.display_global_settings(settings)
-        else:
-            admin_manager.display_global_settings(settings)
-
-    asyncio.run(run_get_settings())
-
-
-@settings.command(name="set")
-@click.argument("name")
-@click.argument("value")
-@click.pass_context
-def settings_set(ctx: click.Context, name: str, value: str) -> None:
-    """Set a global setting."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    async def run_set_setting() -> None:
-        result = await admin_manager.set_global_setting(name, value)
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        console.print(f"[green]Success:[/green] {result['message']}")
-
-    asyncio.run(run_set_setting())
-
-
-@settings.command(name="list")
-@click.pass_context
-def settings_list(ctx: click.Context) -> None:
-    """List all global settings."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    async def run_list_settings() -> None:
-        result = await admin_manager.get_global_settings()
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        admin_manager.display_global_settings(result["data"])
-
-    asyncio.run(run_list_settings())
-
-
 @main.command(name="audit")
 @click.option(
     "--limit",
@@ -2101,54 +2024,6 @@ def global_settings() -> None:
     pass
 
 
-@global_settings.command(name="get")
-@click.option("--name", "-n", help="Specific setting name to retrieve")
-@click.pass_context
-def get_settings(ctx: click.Context, name: Optional[str]) -> None:
-    """Get global settings."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    async def run_get_settings() -> None:
-        result = await admin_manager.get_global_settings(name)
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        settings = result["data"]
-        if name:
-            # For specific setting requests, the data should be the setting itself
-            admin_manager.display_global_settings(settings)
-        else:
-            admin_manager.display_global_settings(settings)
-
-    asyncio.run(run_get_settings())
-
-
-@global_settings.command(name="set")
-@click.argument("name")
-@click.argument("value")
-@click.pass_context
-def set_setting(ctx: click.Context, name: str, value: str) -> None:
-    """Set a global setting."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    async def run_set_setting() -> None:
-        result = await admin_manager.set_global_setting(name, value)
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        console.print(f"[green]Success:[/green] {result['message']}")
-
-    asyncio.run(run_set_setting())
-
-
 @global_settings.command(name="list")
 @click.pass_context
 def list_settings(ctx: click.Context) -> None:
@@ -2177,26 +2052,6 @@ def license() -> None:
 
 @license.command()
 @click.pass_context
-def show(ctx: click.Context) -> None:
-    """Display license information."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    async def run_license_info() -> None:
-        result = await admin_manager.get_license_info()
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        admin_manager.display_license_info(result["data"])
-
-    asyncio.run(run_license_info())
-
-
-@license.command()
-@click.pass_context
 def usage(ctx: click.Context) -> None:
     """Show license usage statistics."""
     auth_manager = AuthManager(ctx.obj.get("config"))
@@ -2219,33 +2074,6 @@ def usage(ctx: click.Context) -> None:
 def maintenance() -> None:
     """System maintenance operations."""
     pass
-
-
-@maintenance.command(name="clear-cache")
-@click.option("--force", is_flag=True, help="Skip confirmation prompt")
-@click.pass_context
-def clear_cache(ctx: click.Context, force: bool) -> None:
-    """Clear system caches."""
-    auth_manager = AuthManager(ctx.obj.get("config"))
-    admin_manager = AdminManager(auth_manager)
-    console = get_console()
-
-    if not force:
-        console.print("[yellow]Warning:[/yellow] This will clear all system caches.")
-        if not click.confirm("Continue?"):
-            console.print("Operation cancelled.")
-            return
-
-    async def run_clear_cache() -> None:
-        result = await admin_manager.clear_caches()
-
-        if result["status"] == "error":
-            console.print(f"[red]Error:[/red] {result['message']}")
-            return
-
-        console.print(f"[green]Success:[/green] {result['message']}")
-
-    asyncio.run(run_clear_cache())
 
 
 @admin.group()
@@ -2446,6 +2274,26 @@ def get_i18n(ctx: click.Context) -> None:
         admin_manager.display_locale_settings(result["data"])
 
     asyncio.run(run_get_i18n())
+
+
+@i18n.command(name="list")
+@click.pass_context
+def list_i18n(ctx: click.Context) -> None:
+    """List available locales (same as locale list)."""
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    admin_manager = AdminManager(auth_manager)
+    console = get_console()
+
+    async def run_list_i18n() -> None:
+        result = await admin_manager.get_available_locales()
+
+        if result["status"] == "error":
+            console.print(f"[red]Error:[/red] {result['message']}")
+            return
+
+        admin_manager.display_available_locales(result["data"], result.get("message"))
+
+    asyncio.run(run_list_i18n())
 
 
 @i18n.command(name="set")

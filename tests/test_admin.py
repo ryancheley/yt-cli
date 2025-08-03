@@ -32,132 +32,6 @@ class TestAdminManager:
         return AdminManager(auth_manager)
 
     @pytest.mark.asyncio
-    async def test_get_global_settings_success(self, admin_manager, auth_manager):
-        """Test successful global settings retrieval with new nested format."""
-        # Mock responses for each endpoint
-        mock_system_settings = {
-            "maxExportItems": 500,
-            "maxUploadFileSize": 10485760,
-            "allowStatisticsCollection": False,
-            "$type": "SystemSettings",
-        }
-        mock_license = {"username": "Test User", "license": "test-license-key", "$type": "License"}
-        mock_appearance = {"logo": {"url": "/test.svg", "$type": "Logo"}, "$type": "AppearanceSettings"}
-        mock_notification = {"emailSettings": {"$type": "EmailSettings"}, "$type": "NotificationSettings"}
-
-        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
-            mock_client_manager = Mock()
-
-            # Mock responses for each endpoint call
-            mock_responses = [
-                Mock(),  # systemSettings
-                Mock(),  # license
-                Mock(),  # appearanceSettings
-                Mock(),  # notificationSettings
-            ]
-            mock_responses[0].json.return_value = mock_system_settings
-            mock_responses[1].json.return_value = mock_license
-            mock_responses[2].json.return_value = mock_appearance
-            mock_responses[3].json.return_value = mock_notification
-
-            mock_client_manager.make_request = AsyncMock(side_effect=mock_responses)
-            mock_get_client.return_value = mock_client_manager
-
-            result = await admin_manager.get_global_settings()
-
-            assert result["status"] == "success"
-            # Check that we got nested data with the expected categories
-            assert "systemSettings" in result["data"]
-            assert "license" in result["data"]
-            assert "appearanceSettings" in result["data"]
-            assert "notificationSettings" in result["data"]
-            assert result["data"]["systemSettings"] == mock_system_settings
-
-    @pytest.mark.asyncio
-    async def test_get_global_settings_no_auth(self, admin_manager):
-        """Test global settings retrieval without authentication."""
-        admin_manager.auth_manager.load_credentials.return_value = None
-
-        result = await admin_manager.get_global_settings()
-
-        assert result["status"] == "error"
-        assert "Not authenticated" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_get_global_settings_insufficient_permissions(self, admin_manager, auth_manager):
-        """Test global settings retrieval with insufficient permissions."""
-        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
-            mock_client_manager = Mock()
-            mock_response = Mock()
-            mock_response.status_code = 403
-            mock_request = Mock()
-            http_error = httpx.HTTPStatusError("Forbidden", request=mock_request, response=mock_response)
-            # All endpoints return 403
-            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
-            mock_get_client.return_value = mock_client_manager
-
-            result = await admin_manager.get_global_settings()
-
-            assert result["status"] == "error"
-            assert "Insufficient permissions" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_set_global_setting_success(self, admin_manager, auth_manager):
-        """Test successful global setting update."""
-        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
-            mock_client_manager = Mock()
-            mock_response = Mock()
-
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
-            mock_get_client.return_value = mock_client_manager
-
-            result = await admin_manager.set_global_setting("server.name", "New Name")
-
-            assert result["status"] == "success"
-            assert "updated successfully" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_set_global_setting_invalid_data(self, admin_manager, auth_manager):
-        """Test global setting update with invalid data."""
-        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
-            mock_client_manager = Mock()
-            mock_response = Mock()
-            mock_response.status_code = 400
-            mock_request = Mock()
-            http_error = httpx.HTTPStatusError("Bad Request", request=mock_request, response=mock_response)
-            mock_client_manager.make_request = AsyncMock(side_effect=http_error)
-            mock_get_client.return_value = mock_client_manager
-
-            result = await admin_manager.set_global_setting("invalid.key", "value")
-
-            assert result["status"] == "error"
-            assert "Invalid setting" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_get_license_info_success(self, admin_manager, auth_manager):
-        """Test successful license information retrieval."""
-        mock_license = {
-            "type": "Commercial",
-            "licensedTo": "Test Company",
-            "expirationDate": "2025-12-31",
-            "maxUsers": 100,
-            "isActive": True,
-        }
-
-        with patch("youtrack_cli.admin.get_client_manager") as mock_get_client:
-            mock_client_manager = Mock()
-            mock_response = Mock()
-            mock_response.json.return_value = mock_license
-
-            mock_client_manager.make_request = AsyncMock(return_value=mock_response)
-            mock_get_client.return_value = mock_client_manager
-
-            result = await admin_manager.get_license_info()
-
-            assert result["status"] == "success"
-            assert result["data"] == mock_license
-
-    @pytest.mark.asyncio
     async def test_get_license_usage_success(self, admin_manager, auth_manager):
         """Test successful license usage retrieval."""
         mock_usage = {"totalUsers": 75, "activeUsers": 50, "remainingUsers": 25}
@@ -234,16 +108,6 @@ class TestAdminManager:
             assert result["status"] == "error"
             assert "Insufficient permissions for health check" in result["message"]
             assert "Low-level Admin Read" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_clear_caches_not_available(self, admin_manager, auth_manager):
-        """Test cache clearing returns unavailable message."""
-        result = await admin_manager.clear_caches()
-
-        assert result["status"] == "error"
-        assert "not available through the YouTrack REST API" in result["message"]
-        assert "administrative UI" in result["message"]
-        assert "Server restart procedures" in result["message"]
 
     @pytest.mark.asyncio
     async def test_list_user_groups_success(self, admin_manager, auth_manager):
@@ -393,34 +257,17 @@ class TestAdminCommands:
         """Test admin CLI command execution patterns."""
         mock_admin_instance = mock_admin.return_value
 
-        # Test global settings commands
-        mock_admin_instance.get_global_settings.return_value = {"status": "success", "data": []}
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "global-settings", "get"])
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-        # Test license commands
-        mock_admin_instance.get_license_info.return_value = {"status": "success", "data": {}}
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "license", "show"])
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
-        # Test maintenance commands
-        mock_admin_instance.clear_caches.return_value = {
-            "status": "error",
-            "message": "Cache clearing is not available through the YouTrack REST API.",
-        }
-        with patch("asyncio.run") as mock_asyncio:
-            result = self.runner.invoke(main, ["admin", "maintenance", "clear-cache", "--force"])
-            assert result.exit_code == 0
-            mock_asyncio.assert_called_once()
-
         # Test user groups commands
         mock_admin_instance.list_user_groups.return_value = {"status": "success", "data": []}
         with patch("asyncio.run") as mock_asyncio:
             result = self.runner.invoke(main, ["admin", "user-groups", "list"])
+            assert result.exit_code == 0
+            mock_asyncio.assert_called_once()
+
+        # Test i18n list command (alias for locale list)
+        mock_admin_instance.get_available_locales.return_value = {"status": "success", "data": []}
+        with patch("asyncio.run") as mock_asyncio:
+            result = self.runner.invoke(main, ["admin", "i18n", "list"])
             assert result.exit_code == 0
             mock_asyncio.assert_called_once()
 
