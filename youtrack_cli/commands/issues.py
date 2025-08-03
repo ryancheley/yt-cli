@@ -88,6 +88,40 @@ def _format_issues_as_csv(issues):
     return output.getvalue()
 
 
+def _format_attachments_as_csv(attachments):
+    """Format attachments data as CSV."""
+    import csv
+    import io
+
+    if not attachments:
+        return "Name,Size,Author,Created\n"
+
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    headers = ["Name", "Size", "Author", "Created"]
+    writer.writerow(headers)
+
+    # Write data rows
+    for attachment in attachments:
+        name = attachment.get("name", "N/A")
+        size = attachment.get("size", "N/A")
+
+        # Extract author info
+        author_name = "Unknown"
+        if attachment.get("author") and isinstance(attachment["author"], dict):
+            author_name = attachment["author"].get("fullName", "Unknown")
+
+        created = attachment.get("created", "")
+
+        row = [name, str(size), author_name, str(created)]
+        writer.writerow(row)
+
+    return output.getvalue()
+
+
 def show_issues_verbose_help(ctx):
     """Show comprehensive help for the issues command group."""
     from rich.console import Console
@@ -1395,7 +1429,7 @@ def download(ctx: click.Context, issue_id: str, attachment_id: str, output: Opti
 @click.argument("issue_id")
 @click.option(
     "--format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     help="Output format",
 )
@@ -1431,6 +1465,9 @@ def list_attachments(
 
             if format == "table":
                 issue_manager.display_attachments_table(attachments)
+            elif format == "csv":
+                csv_output = _format_attachments_as_csv(attachments)
+                console.print(csv_output)
             else:
                 import json
 
