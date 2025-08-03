@@ -243,18 +243,24 @@ class TestUserServiceUpdateUser:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
             patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
         ):
+            # Mock get_user to return user with ringId for initial fetch and updated data for final fetch
+            mock_get_user.side_effect = [
+                {"status": "success", "data": {"id": "user-1", "login": "testuser", "ringId": "ring-123"}},
+                {
+                    "status": "success",
+                    "data": {"id": "user-1", "login": "testuser", "fullName": "New Name", "email": "test@example.com"},
+                },
+            ]
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
-            mock_get_user.return_value = {
-                "status": "success",
-                "data": {"id": "user-1", "login": "testuser", "fullName": "New Name", "email": "test@example.com"},
-            }
 
             result = await user_service.update_user("user-1", full_name="New Name")
 
             expected_data = {"fullName": "New Name"}
-            mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
-            mock_get_user.assert_called_once_with("user-1", fields="id,login,fullName,email,banned,online,guest")
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
+            assert mock_get_user.call_count == 2
+            mock_get_user.assert_any_call("user-1", fields="id,login,ringId")
+            mock_get_user.assert_any_call("user-1", fields="id,login,fullName,email,banned,online,guest")
             assert result["status"] == "success"
             assert result["data"]["fullName"] == "New Name"
 
@@ -266,18 +272,22 @@ class TestUserServiceUpdateUser:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
             patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
         ):
+            # Mock get_user to return user with ringId for initial fetch and updated data for final fetch
+            mock_get_user.side_effect = [
+                {"status": "success", "data": {"id": "user-1", "login": "testuser", "ringId": "ring-123"}},
+                {
+                    "status": "success",
+                    "data": {
+                        "id": "user-1",
+                        "login": "testuser",
+                        "fullName": "New Name",
+                        "email": "new@example.com",
+                        "banned": True,
+                    },
+                },
+            ]
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
-            mock_get_user.return_value = {
-                "status": "success",
-                "data": {
-                    "id": "user-1",
-                    "login": "testuser",
-                    "fullName": "New Name",
-                    "email": "new@example.com",
-                    "banned": True,
-                },
-            }
 
             result = await user_service.update_user(
                 "user-1",
@@ -295,8 +305,10 @@ class TestUserServiceUpdateUser:
                 "password": "newpass123",
                 "forceChangePassword": True,
             }
-            mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
-            mock_get_user.assert_called_once_with("user-1", fields="id,login,fullName,email,banned,online,guest")
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
+            assert mock_get_user.call_count == 2
+            mock_get_user.assert_any_call("user-1", fields="id,login,ringId")
+            mock_get_user.assert_any_call("user-1", fields="id,login,fullName,email,banned,online,guest")
             assert result["status"] == "success"
             assert result["data"]["fullName"] == "New Name"
             assert result["data"]["email"] == "new@example.com"
@@ -305,10 +317,10 @@ class TestUserServiceUpdateUser:
     async def test_update_user_error_handling(self, user_service):
         """Test update user error handling."""
         with (
-            patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_create_error_response") as mock_error,
         ):
-            mock_request.side_effect = Exception("Network error")
+            mock_get_user.side_effect = Exception("Network error")
             mock_error.return_value = {"status": "error", "message": "Error updating user: Network error"}
 
             result = await user_service.update_user("user-1", full_name="New Name")
@@ -359,16 +371,23 @@ class TestUserServiceBanUnban:
     async def test_ban_user(self, user_service, mock_response):
         """Test banning a user."""
         with (
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
+            # Mock get_user to return user with ringId
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "ringId": "ring-123"},
+            }
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
 
             result = await user_service.ban_user("user-1")
 
+            mock_get_user.assert_called_once_with("user-1", fields="id,login,ringId")
             expected_data = {"banned": True}
-            mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
 
@@ -376,16 +395,23 @@ class TestUserServiceBanUnban:
     async def test_unban_user(self, user_service, mock_response):
         """Test unbanning a user."""
         with (
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
+            # Mock get_user to return user with ringId
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "ringId": "ring-123"},
+            }
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
 
             result = await user_service.unban_user("user-1")
 
+            mock_get_user.assert_called_once_with("user-1", fields="id,login,ringId")
             expected_data = {"banned": False}
-            mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
 
@@ -393,10 +419,10 @@ class TestUserServiceBanUnban:
     async def test_ban_user_error_handling(self, user_service):
         """Test ban user error handling."""
         with (
-            patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_create_error_response") as mock_error,
         ):
-            mock_request.side_effect = Exception("Network error")
+            mock_get_user.side_effect = Exception("Network error")
             mock_error.return_value = {"status": "error", "message": "Error banning user: Network error"}
 
             result = await user_service.ban_user("user-1")
@@ -408,10 +434,10 @@ class TestUserServiceBanUnban:
     async def test_unban_user_error_handling(self, user_service):
         """Test unban user error handling."""
         with (
-            patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_create_error_response") as mock_error,
         ):
-            mock_request.side_effect = Exception("Network error")
+            mock_get_user.side_effect = Exception("Network error")
             mock_error.return_value = {"status": "error", "message": "Error unbanning user: Network error"}
 
             result = await user_service.unban_user("user-1")
@@ -682,16 +708,23 @@ class TestUserServicePasswordAndPermissions:
     async def test_change_user_password_basic(self, user_service, mock_response):
         """Test changing user password."""
         with (
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
+            # Mock get_user to return user with ringId
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "ringId": "ring-123"},
+            }
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
 
             result = await user_service.change_user_password("user-1", "newpass123")
 
+            mock_get_user.assert_called_once_with("user-1", fields="id,login,ringId")
             expected_data = {"password": "newpass123", "forceChangePassword": False}
-            mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
 
@@ -699,26 +732,33 @@ class TestUserServicePasswordAndPermissions:
     async def test_change_user_password_with_force(self, user_service, mock_response):
         """Test changing user password with force change."""
         with (
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
+            # Mock get_user to return user with ringId
+            mock_get_user.return_value = {
+                "status": "success",
+                "data": {"id": "user-1", "login": "testuser", "ringId": "ring-123"},
+            }
             mock_request.return_value = mock_response
             mock_handle.return_value = {"status": "success"}
 
             result = await user_service.change_user_password("user-1", "newpass123", force_change=True)
 
+            mock_get_user.assert_called_once_with("user-1", fields="id,login,ringId")
             expected_data = {"password": "newpass123", "forceChangePassword": True}
-            mock_request.assert_called_once_with("POST", "users/user-1", json_data=expected_data)
+            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
             assert result["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_change_user_password_error_handling(self, user_service):
         """Test change password error handling."""
         with (
-            patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
             patch.object(user_service, "_create_error_response") as mock_error,
         ):
-            mock_request.side_effect = Exception("Network error")
+            mock_get_user.side_effect = Exception("Network error")
             mock_error.return_value = {"status": "error", "message": "Error changing user password: Network error"}
 
             result = await user_service.change_user_password("user-1", "newpass123")

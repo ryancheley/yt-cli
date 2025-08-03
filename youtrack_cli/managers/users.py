@@ -112,6 +112,10 @@ class UserManager:
                     filtered_users = [user for user in users if not user.get("banned", False)]
                     result["data"] = filtered_users
 
+            # Add count to result if successful
+            if result["status"] == "success":
+                result["count"] = len(result["data"]) if isinstance(result["data"], list) else 0
+
             return result
 
     async def get_user(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:

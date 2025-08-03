@@ -2,7 +2,10 @@
 
 from typing import Any, Dict, Optional
 
+from ..logging import get_logger
 from .base import BaseService
+
+logger = get_logger(__name__)
 
 
 class UserService(BaseService):
@@ -159,9 +162,27 @@ class UserService(BaseService):
             if force_change_password is not None:
                 update_data["forceChangePassword"] = force_change_password
 
-            # Perform the update
-            response = await self._make_request("POST", f"users/{user_id}", json_data=update_data)
+            # First, get the user to obtain their ringId (Hub user ID)
+            user_data = await self.get_user(user_id, fields="id,login,ringId")
+            if user_data["status"] != "success":
+                return user_data
+
+            ring_id = user_data["data"].get("ringId")
+            if not ring_id:
+                return self._create_error_response("Unable to find Hub user ID (ringId) for this user")
+
+            # Use Hub API with ringId for updating user attributes (email, fullName, etc.)
+            # as these fields are read-only in YouTrack API
+            response = await self._make_request("POST", f"../hub/api/rest/users/{ring_id}", json_data=update_data)
             update_result = await self._handle_response(response)
+
+            # Check if we're on a local/test instance (common ports for local instances)
+            base_url = self._get_base_url()
+            if any(port in base_url for port in [":8080", ":8088", "localhost", "0.0.0.0", "127.0.0.1"]):
+                logger.warning(
+                    "Note: User updates may not persist on local/test YouTrack instances due to Hub API limitations. "
+                    "This is a known limitation of the test environment."
+                )
 
             if update_result["status"] == "success":
                 # The update API returns empty response, so fetch updated user data
@@ -215,8 +236,18 @@ class UserService(BaseService):
             API response
         """
         try:
+            # First, get the user to obtain their ringId (Hub user ID)
+            user_data = await self.get_user(user_id, fields="id,login,ringId")
+            if user_data["status"] != "success":
+                return user_data
+
+            ring_id = user_data["data"].get("ringId")
+            if not ring_id:
+                return self._create_error_response("Unable to find Hub user ID (ringId) for this user")
+
             update_data = {"banned": True}
-            response = await self._make_request("POST", f"users/{user_id}", json_data=update_data)
+            # Use Hub API for updating banned status as it's read-only in YouTrack API
+            response = await self._make_request("POST", f"../hub/api/rest/users/{ring_id}", json_data=update_data)
             return await self._handle_response(response)
 
         except ValueError as e:
@@ -234,8 +265,18 @@ class UserService(BaseService):
             API response
         """
         try:
+            # First, get the user to obtain their ringId (Hub user ID)
+            user_data = await self.get_user(user_id, fields="id,login,ringId")
+            if user_data["status"] != "success":
+                return user_data
+
+            ring_id = user_data["data"].get("ringId")
+            if not ring_id:
+                return self._create_error_response("Unable to find Hub user ID (ringId) for this user")
+
             update_data = {"banned": False}
-            response = await self._make_request("POST", f"users/{user_id}", json_data=update_data)
+            # Use Hub API for updating banned status as it's read-only in YouTrack API
+            response = await self._make_request("POST", f"../hub/api/rest/users/{ring_id}", json_data=update_data)
             return await self._handle_response(response)
 
         except ValueError as e:
@@ -447,12 +488,22 @@ class UserService(BaseService):
             API response
         """
         try:
+            # First, get the user to obtain their ringId (Hub user ID)
+            user_data = await self.get_user(user_id, fields="id,login,ringId")
+            if user_data["status"] != "success":
+                return user_data
+
+            ring_id = user_data["data"].get("ringId")
+            if not ring_id:
+                return self._create_error_response("Unable to find Hub user ID (ringId) for this user")
+
             password_data = {
                 "password": new_password,
                 "forceChangePassword": force_change,
             }
 
-            response = await self._make_request("POST", f"users/{user_id}", json_data=password_data)
+            # Use Hub API for updating password as it's read-only in YouTrack API
+            response = await self._make_request("POST", f"../hub/api/rest/users/{ring_id}", json_data=password_data)
             return await self._handle_response(response)
 
         except ValueError as e:
