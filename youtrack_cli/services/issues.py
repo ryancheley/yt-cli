@@ -140,8 +140,6 @@ class IssueService(BaseService):
                 update_data["summary"] = summary
             if description is not None:
                 update_data["description"] = description
-            if issue_type is not None:
-                update_data["type"] = {"name": issue_type}
 
             # Handle state field with dynamic discovery
             if state is not None:
@@ -215,6 +213,16 @@ class IssueService(BaseService):
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Priority",
                         "value": {"$type": "EnumBundleElement", "name": priority},
+                    }
+                )
+
+            # Handle issue type field (as custom field, consistent with create_issue)
+            if issue_type is not None:
+                custom_fields.append(
+                    {
+                        "$type": "SingleEnumIssueCustomField",
+                        "name": "Type",
+                        "value": {"$type": "EnumBundleElement", "name": issue_type},
                     }
                 )
 
