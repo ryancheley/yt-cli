@@ -178,7 +178,7 @@ class TimeManager:
             user_id=user_id,
             start_date=start_date,
             end_date=end_date,
-            fields="id,duration,date,description,author(id,fullName),issue(id,summary),type(name)",
+            fields="id,duration(minutes),date,description,author(id,fullName),issue(id,summary),type(name)",
         )
 
         if time_entries_result["status"] != "success":
@@ -325,7 +325,7 @@ class TimeManager:
         table.add_column("Entry ID", style="cyan")
 
         for entry in time_entries:
-            # Handle duration - YouTrack API may not include minutes field
+            # Handle duration - extract minutes from YouTrack DurationValue
             duration = entry.get("duration", {})
             if isinstance(duration, dict):
                 minutes = duration.get("minutes", 0)
