@@ -64,7 +64,19 @@ class TimeManager:
         if description:
             work_item_data["text"] = description
         if work_type:
-            work_item_data["type"] = {"name": work_type}
+            # Resolve work type name to ID
+            work_type_id = await self._resolve_work_type_id(issue_id, work_type)
+            if not work_type_id:
+                # Get available work types for helpful error message
+                available_types = await self.get_work_types(issue_id)
+                if available_types["status"] == "success":
+                    type_names = [t["name"] for t in available_types["data"]]
+                    return {
+                        "status": "error",
+                        "message": f"Invalid work type '{work_type}'. Available types: {', '.join(type_names)}",
+                    }
+                return {"status": "error", "message": f"Invalid work type: {work_type}"}
+            work_item_data["type"] = {"id": work_type_id}
 
         url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
         headers = {
@@ -416,3 +428,117 @@ class TimeManager:
                 )
 
             self.console.print(table)
+
+    async def get_work_types(self, issue_id: Optional[str] = None) -> dict[str, Any]:
+        """Get available work item types.
+
+        Args:
+            issue_id: Optional issue ID to get project-specific work types.
+                     If not provided, fetches global work types.
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {"status": "error", "message": "Not authenticated"}
+
+        # Try to get project-specific work types if issue_id is provided
+        if issue_id:
+            # First, get the issue to find its project
+            url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}"
+            headers = {
+                "Authorization": f"Bearer {credentials.token}",
+                "Accept": "application/json",
+            }
+            params = {"fields": "project(id,shortName)"}
+
+            try:
+                client_manager = get_client_manager()
+                response = await client_manager.make_request(method="GET", url=url, params=params, headers=headers)
+                if response.status_code == 200:
+                    issue_data = response.json()
+                    project_id = issue_data.get("project", {}).get("id")
+                    if project_id:
+                        # Get project-specific work types
+                        url = f"{credentials.base_url.rstrip('/')}/api/admin/projects/{project_id}/timeTrackingSettings/workItemTypes"
+                        params = {"fields": "id,name,autoAttached"}
+                        response = await client_manager.make_request(
+                            method="GET", url=url, params=params, headers=headers
+                        )
+                        if response.status_code == 200:
+                            data = response.json()
+                            return {
+                                "status": "success",
+                                "data": data if isinstance(data, list) else [data],
+                            }
+            except Exception:
+                # Fall back to global work types
+                pass
+
+        # Get global work types
+        url = f"{credentials.base_url.rstrip('/')}/api/admin/timeTrackingSettings/workItemTypes"
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Accept": "application/json",
+        }
+        params = {"fields": "id,name,autoAttached"}
+
+        try:
+            client_manager = get_client_manager()
+            response = await client_manager.make_request(method="GET", url=url, params=params, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "status": "success",
+                    "data": data if isinstance(data, list) else [data],
+                }
+            error_text = response.text
+            return {
+                "status": "error",
+                "message": f"Failed to get work types: {error_text}",
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error getting work types: {str(e)}",
+            }
+
+    async def _resolve_work_type_id(self, issue_id: str, work_type_name: str) -> Optional[str]:
+        """Resolve work type name to ID.
+
+        Args:
+            issue_id: Issue ID to get project-specific work types
+            work_type_name: Name of the work type to resolve
+
+        Returns:
+            Work type ID if found, None otherwise
+        """
+        result = await self.get_work_types(issue_id)
+        if result["status"] != "success":
+            return None
+
+        # Case-insensitive matching
+        work_type_name_lower = work_type_name.lower()
+        for work_type in result["data"]:
+            if work_type.get("name", "").lower() == work_type_name_lower:
+                return work_type.get("id")
+
+        return None
+
+    def display_work_types(self, work_types: list[dict[str, Any]]) -> None:
+        """Display work types in a table format."""
+        if not work_types:
+            self.console.print("No work types found.", style="yellow")
+            return
+
+        table = Table(title="Available Work Types")
+        table.add_column("Name", style="cyan")
+        table.add_column("ID", style="green")
+        table.add_column("Auto-attached", style="blue")
+
+        for work_type in work_types:
+            table.add_row(
+                work_type.get("name", "N/A"),
+                work_type.get("id", "N/A"),
+                "Yes" if work_type.get("autoAttached") else "No",
+            )
+
+        self.console.print(table)
