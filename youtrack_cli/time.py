@@ -117,11 +117,12 @@ class TimeManager:
         if end_date:
             params["endDate"] = end_date
 
-        # Get all time entries from the global endpoint
-        url = f"{credentials.base_url.rstrip('/')}/api/workItems"
+        # Use issue-specific endpoint when filtering by issue_id
         if issue_id:
-            # Filter by issue in parameters
-            params["issue"] = issue_id
+            url = f"{credentials.base_url.rstrip('/')}/api/issues/{issue_id}/timeTracking/workItems"
+        else:
+            # Get all time entries from the global endpoint
+            url = f"{credentials.base_url.rstrip('/')}/api/workItems"
 
         headers = {
             "Authorization": f"Bearer {credentials.token}",
