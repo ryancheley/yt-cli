@@ -89,7 +89,7 @@ def list(
                 user_id=user_id,
                 start_date=start_date,
                 end_date=end_date,
-                fields="id,duration,date,description,author(id,fullName),issue(id,summary,numberInProject,project(shortName)),type(name)",
+                fields="id,duration(minutes),date,description,author(id,fullName),issue(id,summary,numberInProject,project(shortName)),type(name)",
             )
         )
 
