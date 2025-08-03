@@ -1123,3 +1123,92 @@ class ArticleManager:
             "message": f"Removed {success_count} tags, failed to remove {error_count} tags from article {article_id}",  # noqa: E501
             "data": results,
         }
+
+    async def download_attachment(self, article_id: str, attachment_id: str) -> dict[str, Any]:
+        """Download an attachment from an article."""
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        try:
+            import httpx
+
+            # Build the URL for attachment metadata
+            base_url = credentials.base_url.rstrip("/")
+            metadata_url = f"{base_url}/api/articles/{article_id}/attachments/{attachment_id}"
+
+            # Get authentication headers
+            headers = {"Authorization": f"Bearer {credentials.token}"}
+
+            async with httpx.AsyncClient() as client:
+                # First, get attachment metadata
+                metadata_response = await client.get(
+                    url=metadata_url,
+                    headers=headers,
+                    params={"fields": "id,name,size,mimeType,author(name),created,url,content"},
+                    timeout=30.0,
+                )
+
+                if metadata_response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "message": f"Failed to get attachment metadata: {metadata_response.status_code} - {metadata_response.text}",
+                    }
+
+                metadata = metadata_response.json()
+
+                # Try to get URL from metadata first
+                possible_urls = []
+
+                # Check if metadata provides URL fields
+                if "url" in metadata:
+                    url_from_meta = metadata["url"]
+                    if url_from_meta.startswith("/"):
+                        possible_urls.append(f"{base_url}{url_from_meta}")
+                    else:
+                        possible_urls.append(url_from_meta)
+
+                # Add standard URL patterns for article attachments
+                possible_urls.extend(
+                    [
+                        f"{base_url}/api/files/{attachment_id}",
+                        f"{base_url}/files/{attachment_id}",
+                        f"{base_url}/api/articles/{article_id}/attachments/{attachment_id}/download",
+                        f"{base_url}/api/articles/{article_id}/attachments/{attachment_id}/content",
+                    ]
+                )
+
+                for url_to_try in possible_urls:
+                    content_response = await client.get(url=url_to_try, headers=headers, timeout=60.0)
+
+                    if content_response.status_code == 200:
+                        # Check if we got HTML instead of actual file content
+                        content_type = content_response.headers.get("content-type", "")
+                        if "text/html" in content_type:
+                            # This is likely the login page, try next URL
+                            continue
+
+                        return {
+                            "status": "success",
+                            "message": f"Attachment downloaded successfully using {url_to_try}",
+                            "data": {
+                                "metadata": metadata,
+                                "content": content_response.content,
+                                "filename": metadata.get("name", f"attachment_{attachment_id}"),
+                            },
+                        }
+
+                # If none worked, return error
+                return {
+                    "status": "error",
+                    "message": f"Could not find working download URL for attachment {attachment_id}. Tried: {', '.join(possible_urls)}",
+                }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error downloading attachment: {str(e)}",
+            }

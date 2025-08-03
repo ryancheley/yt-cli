@@ -1048,12 +1048,65 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     type=click.Path(),
     help="Output file path",
 )
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing files",
+)
 @click.pass_context
-def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str]) -> None:
+def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str], overwrite: bool) -> None:
     """Download an attachment from an article."""
+    from pathlib import Path
+
+    from ..articles import ArticleManager
+
     console = get_console()
-    console.print("⚠️  File download functionality not yet implemented", style="yellow")
-    console.print("This feature requires binary file handling", style="blue")
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
+
+    console.print(f"📥 Downloading attachment '{attachment_id}' from article '{article_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(article_manager.download_attachment(article_id, attachment_id))
+
+        if result["status"] == "success":
+            # Get attachment data
+            attachment_data = result["data"]
+            content = attachment_data["content"]
+            filename = attachment_data["filename"]
+
+            # Determine output path
+            if output:
+                output_path = Path(output)
+            else:
+                output_path = Path(filename)
+
+            # Check if file exists and handle overwrite
+            if output_path.exists() and not overwrite:
+                console.print(f"❌ File '{output_path}' already exists. Use --overwrite to replace it.", style="red")
+                raise click.ClickException("File exists")
+
+            # Write the file
+            with open(output_path, "wb") as file:
+                file.write(content)
+
+            console.print(f"✅ Attachment downloaded successfully to '{output_path}'", style="green")
+
+            # Show file info
+            metadata = attachment_data["metadata"]
+            file_size = len(content)
+            console.print(f"📄 File: {filename}", style="blue")
+            console.print(f"📏 Size: {file_size} bytes", style="blue")
+            if metadata.get("mimeType"):
+                console.print(f"🏷️  Type: {metadata['mimeType']}", style="blue")
+
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to download attachment")
+
+    except Exception as e:
+        console.print(f"❌ Error downloading attachment: {e}", style="red")
+        raise click.ClickException("Failed to download attachment") from e
 
 
 @attach.command("list")
