@@ -702,7 +702,7 @@ def delete(ctx: click.Context, issue_id: str, force: bool) -> None:
         result = asyncio.run(issue_manager.delete_issue(issue_id))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            console.print(f"✅ Issue '{issue_id}' deleted successfully", style="green")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to delete issue")
@@ -1443,7 +1443,7 @@ def delete_attachment(ctx: click.Context, issue_id: str, attachment_id: str, for
         result = asyncio.run(issue_manager.delete_attachment(issue_id, attachment_id))
 
         if result["status"] == "success":
-            console.print(f"✅ {result['message']}", style="green")
+            console.print(f"✅ Attachment '{attachment_id}' deleted successfully", style="green")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to delete attachment")
