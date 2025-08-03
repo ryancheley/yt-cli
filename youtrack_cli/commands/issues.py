@@ -1412,7 +1412,16 @@ def list_attachments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(f"📎 Fetching attachments for issue '{issue_id}'...", style="blue")
+    # Print progress message to stderr when JSON format is used to avoid polluting JSON output
+    if format == "json":
+        import sys
+
+        from rich.console import Console
+
+        stderr_console = Console(file=sys.stderr)
+        stderr_console.print(f"📎 Fetching attachments for issue '{issue_id}'...", style="blue")
+    else:
+        console.print(f"📎 Fetching attachments for issue '{issue_id}'...", style="blue")
 
     try:
         result = asyncio.run(issue_manager.list_attachments(issue_id))
