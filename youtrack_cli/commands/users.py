@@ -595,6 +595,45 @@ def users_roles(ctx: click.Context, user_id: str, format: str) -> None:
         raise click.ClickException("Failed to get user roles") from e
 
 
+@users.command("assign-role")
+@click.argument("user_id")
+@click.argument("role_id")
+@click.pass_context
+def assign_user_role(ctx: click.Context, user_id: str, role_id: str) -> None:
+    """Assign a role to a user.
+
+    Assigns the specified role to the user. Roles in YouTrack are typically
+    project-specific and managed through Hub API.
+
+    Examples:
+        # Assign a role to a user
+        yt users assign-role john.doe developer-role-id
+
+        # Assign admin role to user
+        yt users assign-role admin system-admin
+    """
+    from ..managers.users import UserManager
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    user_manager = UserManager(auth_manager)
+
+    console.print(f"🔐 Assigning role '{role_id}' to user '{user_id}'...", style="blue")
+
+    try:
+        result = asyncio.run(user_manager.assign_user_role(user_id, role_id))
+
+        if result["status"] == "success":
+            console.print(f"✅ Role '{role_id}' successfully assigned to user '{user_id}'", style="green")
+        else:
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to assign role to user")
+
+    except Exception as e:
+        console.print(f"❌ Error assigning role to user: {e}", style="red")
+        raise click.ClickException("Failed to assign role to user") from e
+
+
 @users.command("teams")
 @click.argument("user_id")
 @click.option(
