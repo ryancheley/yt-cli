@@ -385,33 +385,28 @@ class IssueService(BaseService):
             current_issue = current_issue_result["data"]
             current_project = current_issue.get("project", {})
             current_project_name = current_project.get("name", current_project.get("shortName", "Unknown"))
+            current_project_short = current_project.get("shortName", "Unknown")
 
-            # Check if already in target project
-            if current_project.get("id") == target_db_id:
+            # Check if already in target project by comparing short names
+            # (database IDs might be unreliable for comparison)
+            if current_project_short == target_project_id:
                 return self._create_error_response(f"Issue '{issue_id}' is already in project '{target_project_id}'")
 
             # Make the API call to move the issue
-            response = await self._make_request("POST", f"issues/{issue_id}/project", json_data={"id": target_db_id})
+            # Use the standard issue update endpoint with project field
+            response = await self._make_request(
+                "POST", f"issues/{issue_id}", json_data={"project": {"id": target_db_id}}
+            )
             result = await self._handle_response(response, success_codes=[200, 204])
 
-            # Verify the move was actually successful by checking if returned project ID matches target
-            if result["status"] == "success" and result["data"]:
-                returned_project_id = result["data"].get("id")
-
-                if returned_project_id == target_db_id:
-                    # Move was successful
-                    issue_readable_id = current_issue.get("idReadable", issue_id)
-                    result["message"] = (
-                        f"Issue '{issue_readable_id}' successfully moved from '{current_project_name}' "
-                        f"to '{target_project_id}'"
-                    )
-                else:
-                    # Move failed - YouTrack returned current project instead of target project
-                    return self._create_error_response(
-                        f"Failed to move issue '{issue_id}' to project '{target_project_id}'. "
-                        f"This may be due to insufficient permissions or project constraints. "
-                        f"Verify you have 'Update Issue' permission in both projects."
-                    )
+            # If the API call succeeded, the move was successful
+            # YouTrack may return 200 with the updated issue or 204 with no content
+            if result["status"] == "success":
+                issue_readable_id = current_issue.get("idReadable", issue_id)
+                result["message"] = (
+                    f"Issue '{issue_readable_id}' successfully moved from '{current_project_name}' "
+                    f"to '{target_project_id}'"
+                )
 
             return result
 

@@ -191,10 +191,33 @@ class UserService(BaseService):
             if not ring_id:
                 return self._create_error_response("Unable to find Hub user ID (ringId) for this user")
 
-            # Use Hub API with ringId for updating user attributes (email, fullName, etc.)
-            # as these fields are read-only in YouTrack API
-            response = await self._make_request("POST", f"../hub/api/rest/users/{ring_id}", json_data=update_data)
-            update_result = await self._handle_response(response)
+            # Try to update user via YouTrack API first
+            # The YouTrack API can update some fields directly
+            logger.debug(f"Attempting to update user {user_id} with data: {update_data}")
+            response = await self._make_request("POST", f"users/{user_id}", json_data=update_data)
+            update_result = await self._handle_response(response, success_codes=[200, 204])
+            logger.debug(f"YouTrack API update result: {update_result}")
+
+            # If that fails due to read-only fields, try Hub API endpoint
+            if update_result["status"] != "success":
+                # Fall back to Hub API with ringId for updating user attributes
+                # Try different approaches based on the error
+                logger.info(f"YouTrack API failed: {update_result.get('message', 'Unknown error')}")
+                logger.info(f"Attempting Hub API update for user {user_id} (ringId: {ring_id})")
+
+                # Try PUT method first (standard REST update)
+                response = await self._make_request("PUT", f"../hub/api/rest/users/{ring_id}", json_data=update_data)
+                update_result = await self._handle_response(response, success_codes=[200, 204])
+
+                if update_result["status"] != "success":
+                    # If PUT fails, try POST as some Hub versions might use it
+                    logger.info("PUT failed, trying POST method")
+                    response = await self._make_request(
+                        "POST", f"../hub/api/rest/users/{ring_id}", json_data=update_data
+                    )
+                    update_result = await self._handle_response(response, success_codes=[200, 204])
+
+                logger.info(f"Hub API update result: {update_result}")
 
             # Check if we're on a local/test instance (common ports for local instances)
             base_url = self._get_base_url()
@@ -316,14 +339,26 @@ class UserService(BaseService):
         """
         try:
             # Get user data with groups information embedded
-            group_fields = fields if fields else "id,name,description,autoJoin,teamAutoJoin"
-            user_fields = f"groups({group_fields})"
+            # Use comprehensive field specification to get all group data
+            group_fields = fields if fields else "id,name,description,autoJoin,teamAutoJoin,users(id,login)"
+            user_fields = f"id,login,fullName,groups({group_fields})"
 
             user_result = await self.get_user(user_id, fields=user_fields)
 
             if user_result["status"] == "success":
                 user_data = user_result["data"]
                 groups = user_data.get("groups", [])
+
+                # If no groups found through field expansion, check if field exists
+                if not groups and "groups" not in user_data:
+                    # Groups field doesn't exist - try alternative method
+                    # This might happen if groups aren't properly expanded
+                    # Try getting just basic user info and see if groups field appears
+                    basic_result = await self.get_user(user_id, fields="id,login,groups")
+                    if basic_result["status"] == "success":
+                        basic_data = basic_result["data"]
+                        groups = basic_data.get("groups", [])
+
                 return self._create_success_response(groups)
             else:
                 return user_result
@@ -376,35 +411,42 @@ class UserService(BaseService):
         """Get user's roles via API.
 
         Note: Roles in YouTrack are typically project-specific and managed through permissions.
-        This method attempts to extract role information from user permissions, but may return
-        empty results as roles are not directly exposed as a user attribute in YouTrack API.
+        This method gets role information from user data with field expansion.
 
         Args:
             user_id: User ID or login
             fields: Comma-separated list of role fields to return
 
         Returns:
-            API response with role list (may be empty for YouTrack instances)
+            API response with role list
         """
         try:
-            # Try to get user permissions which may contain role information
-            permissions_result = await self.get_user_permissions(user_id)
+            # Get user data with roles information embedded
+            role_fields = fields if fields else "id,name,description"
+            user_fields = f"id,login,fullName,roles({role_fields})"
 
-            if permissions_result["status"] == "success":
-                # For now, return empty list as roles are not directly available
-                # This is a known limitation - roles in YouTrack are project-specific
-                # and managed through Hub API or permissions
-                return self._create_success_response([])
+            user_result = await self.get_user(user_id, fields=user_fields)
+
+            if user_result["status"] == "success":
+                user_data = user_result["data"]
+                roles = user_data.get("roles", [])
+
+                # If no roles found through field expansion, check if field exists
+                if not roles and "roles" not in user_data:
+                    # Roles field doesn't exist - try basic user info
+                    basic_result = await self.get_user(user_id, fields="id,login,roles")
+                    if basic_result["status"] == "success":
+                        basic_data = basic_result["data"]
+                        roles = basic_data.get("roles", [])
+
+                return self._create_success_response(roles)
             else:
-                # If permissions call fails, still return empty list rather than failing
-                # since roles are not a core user attribute in YouTrack
-                return self._create_success_response([])
+                return user_result
 
         except ValueError as e:
             return self._create_error_response(str(e))
-        except Exception:
-            # Instead of failing, return empty list for roles since they're not directly available
-            return self._create_success_response([])
+        except Exception as e:
+            return self._create_error_response(f"Error getting user roles: {str(e)}")
 
     async def assign_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
         """Assign a role to user via API.
@@ -457,14 +499,28 @@ class UserService(BaseService):
         """
         try:
             # Get user data with teams information embedded
-            team_fields = fields if fields else "id,name,description"
-            user_fields = f"teams({team_fields})"
+            # In YouTrack, teams might be called "projectTeams" or be related to projects
+            team_fields = fields if fields else "id,name,description,project(id,name,shortName)"
+            user_fields = f"id,login,fullName,teams({team_fields}),projectTeams({team_fields})"
 
             user_result = await self.get_user(user_id, fields=user_fields)
 
             if user_result["status"] == "success":
                 user_data = user_result["data"]
                 teams = user_data.get("teams", [])
+
+                # If no teams found, try projectTeams field as alternative
+                if not teams:
+                    teams = user_data.get("projectTeams", [])
+
+                # If still no teams found through field expansion, check if field exists
+                if not teams and "teams" not in user_data and "projectTeams" not in user_data:
+                    # Teams field doesn't exist - try basic user info
+                    basic_result = await self.get_user(user_id, fields="id,login,teams,projectTeams")
+                    if basic_result["status"] == "success":
+                        basic_data = basic_result["data"]
+                        teams = basic_data.get("teams", []) or basic_data.get("projectTeams", [])
+
                 return self._create_success_response(teams)
             else:
                 return user_result

@@ -1,6 +1,6 @@
 """Tests for UserService."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import httpx
 import pytest
@@ -300,7 +300,11 @@ class TestUserServiceUpdateUser:
             result = await user_service.update_user("user-1", full_name="New Name")
 
             expected_data = {"fullName": "New Name"}
-            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
+            # Should first try YouTrack API
+            expected_calls = [
+                call("POST", "users/user-1", json_data=expected_data),
+            ]
+            mock_request.assert_has_calls(expected_calls, any_order=False)
             assert mock_get_user.call_count == 2
             mock_get_user.assert_any_call("user-1", fields="id,login,ringId")
             mock_get_user.assert_any_call("user-1", fields="id,login,fullName,email,banned,online,guest")
@@ -348,7 +352,11 @@ class TestUserServiceUpdateUser:
                 "password": "newpass123",
                 "forceChangePassword": True,
             }
-            mock_request.assert_called_once_with("POST", "../hub/api/rest/users/ring-123", json_data=expected_data)
+            # Should first try YouTrack API, then fall back to Hub API if needed
+            expected_calls = [
+                call("POST", "users/user-1", json_data=expected_data),
+            ]
+            mock_request.assert_has_calls(expected_calls, any_order=False)
             assert mock_get_user.call_count == 2
             mock_get_user.assert_any_call("user-1", fields="id,login,ringId")
             mock_get_user.assert_any_call("user-1", fields="id,login,fullName,email,banned,online,guest")
@@ -504,7 +512,9 @@ class TestUserServiceGroups:
 
             result = await user_service.get_user_groups("user-1")
 
-            expected_params = {"fields": "groups(id,name,description,autoJoin,teamAutoJoin)"}
+            expected_params = {
+                "fields": "id,login,fullName,groups(id,name,description,autoJoin,teamAutoJoin,users(id,login))"
+            }
             mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
@@ -521,7 +531,7 @@ class TestUserServiceGroups:
 
             result = await user_service.get_user_groups("user-1", fields="id,name")
 
-            expected_params = {"fields": "groups(id,name)"}
+            expected_params = {"fields": "id,login,fullName,groups(id,name)"}
             mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             assert result["status"] == "success"
 
@@ -586,13 +596,13 @@ class TestUserServiceRoles:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success", "data": []}
+            mock_handle.return_value = {"status": "success", "data": {"roles": []}}
 
             result = await user_service.get_user_roles("user-1")
 
-            # Roles are not directly available, so the method tries permissions first then returns empty
-            expected_params = {}
-            mock_request.assert_called_once_with("GET", "users/user-1/permissions", params=expected_params)
+            # Roles use field expansion now
+            expected_params = {"fields": "id,login,fullName,roles(id,name,description)"}
+            mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             assert result["status"] == "success"
             assert result["data"] == []
 
@@ -604,13 +614,13 @@ class TestUserServiceRoles:
             patch.object(user_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
         ):
             mock_request.return_value = mock_response
-            mock_handle.return_value = {"status": "success", "data": []}
+            mock_handle.return_value = {"status": "success", "data": {"id": "user-1", "login": "user-1", "roles": []}}
 
             result = await user_service.get_user_roles("user-1", fields="id,name")
 
-            # Roles are not directly available, so the method tries permissions first then returns empty
-            expected_params = {}
-            mock_request.assert_called_once_with("GET", "users/user-1/permissions", params=expected_params)
+            # Roles are fetched using field expansion instead of permissions endpoint
+            expected_params = {"fields": "id,login,fullName,roles(id,name)"}
+            mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             assert result["status"] == "success"
             assert result["data"] == []
 
@@ -651,18 +661,17 @@ class TestUserServiceRoles:
     async def test_role_management_error_handling(self, user_service):
         """Test role management error handling."""
         with (
-            patch.object(user_service, "_make_request", new_callable=AsyncMock) as mock_request,
-            patch.object(user_service, "_create_success_response") as mock_success,
+            patch.object(user_service, "get_user", new_callable=AsyncMock) as mock_get_user,
+            patch.object(user_service, "_create_error_response") as mock_error,
         ):
-            mock_request.side_effect = Exception("Network error")
-            mock_success.return_value = {"status": "success", "data": []}
+            mock_get_user.side_effect = Exception("Network error")
+            mock_error.return_value = {"status": "error", "message": "Error getting user roles: Network error"}
 
             result = await user_service.get_user_roles("user-1")
 
-            # Roles method gracefully handles errors by returning empty array
-            mock_success.assert_called_once_with([])
-            assert result["status"] == "success"
-            assert result["data"] == []
+            # Roles method handles errors by returning error response
+            mock_error.assert_called_once_with("Error getting user roles: Network error")
+            assert result["status"] == "error"
 
 
 class TestUserServiceTeams:
@@ -680,7 +689,9 @@ class TestUserServiceTeams:
 
             result = await user_service.get_user_teams("user-1")
 
-            expected_params = {"fields": "teams(id,name,description)"}
+            expected_params = {
+                "fields": "id,login,fullName,teams(id,name,description,project(id,name,shortName)),projectTeams(id,name,description,project(id,name,shortName))"
+            }
             mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             mock_handle.assert_called_once_with(mock_response)
             assert result["status"] == "success"
@@ -697,7 +708,7 @@ class TestUserServiceTeams:
 
             result = await user_service.get_user_teams("user-1", fields="id,name")
 
-            expected_params = {"fields": "teams(id,name)"}
+            expected_params = {"fields": "id,login,fullName,teams(id,name),projectTeams(id,name)"}
             mock_request.assert_called_once_with("GET", "users/user-1", params=expected_params)
             assert result["status"] == "success"
 
