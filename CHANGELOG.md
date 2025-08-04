@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.1] - 2025-08-04
+
+### Added
+- ✨ Remove deprecated admin commands and add i18n list alias (#558)
+  - Remove deprecated admin commands that were causing confusion and maintenance burden
+  - Add i18n list alias for better command discoverability and user experience
+
+### Fixed
+- 🧪 Fix failing user service tests to match new implementation (#564)
+  - Update test fixtures and expectations to align with current user service implementation
+  - Resolve test failures that were preventing CI/CD pipeline success
+
 ## [0.15.0] - 2025-08-03
 
 ### Added
