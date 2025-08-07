@@ -67,7 +67,7 @@ A burndown report is a visual representation of work completed versus time remai
 * **Time Axis:** The timeframe being analyzed (sprint duration or project timeline)
 
 Report Components
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Burndown reports typically include:
 
