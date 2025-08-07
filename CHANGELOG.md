@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- 🔄 Standardize verb consistency: change 'yt alias remove' to 'yt alias delete' (#566)
+  - Changed primary command from `yt alias remove` to `yt alias delete` for consistency with other entity deletion commands
+  - Kept `remove` as a hidden alias for backwards compatibility
+  - Updated all documentation references and error messages to use the new `delete` verb
 - 🔄 Standardize verb consistency: change 'yt alias add' to 'yt alias create' (#565)
   - Changed primary command from `yt alias add` to `yt alias create` for consistency with other entity creation commands
   - Kept `add` as a hidden alias for backwards compatibility

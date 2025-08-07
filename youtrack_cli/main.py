@@ -1849,11 +1849,40 @@ def add_alias(ctx: click.Context, name: str, command: str) -> None:
         raise click.ClickException("Alias creation failed") from e
 
 
-@alias.command("remove")
+@alias.command("delete")
 @click.argument("name")
 @click.pass_context
-def remove_alias(ctx: click.Context, name: str) -> None:
-    """Remove a user-defined alias."""
+def delete_alias(ctx: click.Context, name: str) -> None:
+    """Delete a user-defined alias."""
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        # Check if alias exists
+        if config_manager.get_alias(name) is None:
+            console.print(f"❌ Alias '{name}' not found", style="red")
+            return
+
+        # Remove the alias
+        config_manager.remove_alias(name)
+
+        # Reload aliases in the main group
+        main_group = ctx.find_root().command
+        if hasattr(main_group, "reload_user_aliases"):
+            main_group.reload_user_aliases()
+
+        console.print(f"✅ Alias '{name}' deleted successfully", style="green")
+
+    except Exception as e:
+        console.print(f"❌ Error deleting alias: {e}", style="red")
+        raise click.ClickException("Alias deletion failed") from e
+
+
+@alias.command("remove", hidden=True)
+@click.argument("name")
+@click.pass_context
+def remove_alias_deprecated(ctx: click.Context, name: str) -> None:
+    """Remove a user-defined alias (deprecated, use 'delete' instead)."""
     console = get_console()
     config_manager = ConfigManager(ctx.obj.get("config"))
 
