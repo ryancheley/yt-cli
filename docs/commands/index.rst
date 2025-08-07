@@ -50,12 +50,27 @@ These options are available for all commands:
    * - ``--quiet, -q``
      - flag
      - Suppress all output except errors
-   * - ``--config``
+   * - ``--config, -c``
      - path
      - Path to configuration file
+   * - ``--debug``
+     - flag
+     - Enable debug output
    * - ``--format``
      - choice
      - Output format: table, json, yaml (default: table)
+   * - ``--help-verbose``
+     - flag
+     - Show detailed help information with all options and examples
+   * - ``--no-progress``
+     - flag
+     - Disable progress indicators
+   * - ``--secure``
+     - flag
+     - Enable enhanced security mode (prevents credential logging)
+   * - ``--version``
+     - flag
+     - Show the version and exit
    * - ``--no-color``
      - flag
      - Disable colored output
