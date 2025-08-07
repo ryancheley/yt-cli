@@ -101,7 +101,7 @@ class AliasedGroup(click.Group):
                     f"Alias '{alias_name}' references unknown command '{main_command}'",
                     command_path=f"{root_ctx.info_name} {alias_name}",
                     similar_commands=[],
-                    usage_example=f"{root_ctx.info_name} alias remove {alias_name}",
+                    usage_example=f"{root_ctx.info_name} alias delete {alias_name}",
                 )
                 error_result = handle_error(error, "alias expansion")
                 display_error(error_result)

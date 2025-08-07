@@ -105,8 +105,8 @@ Use the ``yt alias`` command group to manage your custom aliases:
    # Show what an alias does
    yt alias show myissues
 
-   # Remove a custom alias
-   yt alias remove myissues
+   # Delete a custom alias
+   yt alias delete myissues
 
 **Custom Alias Examples:**
 
