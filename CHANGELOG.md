@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- 🔄 Standardize verb consistency: change 'yt alias add' to 'yt alias create' (#565)
+  - Changed primary command from `yt alias add` to `yt alias create` for consistency with other entity creation commands
+  - Kept `add` as a hidden alias for backwards compatibility
+  - Updated all documentation references to use the new `create` verb
+
 ## [0.15.1] - 2025-08-04
 
 ### Added

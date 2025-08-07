@@ -1758,25 +1758,65 @@ def list_aliases(ctx: click.Context) -> None:
             console.print(table)
         else:
             console.print("ℹ️  No aliases found", style="yellow")
-            console.print("💡 Create an alias with: yt alias add <name> <command>", style="dim")
+            console.print("💡 Create an alias with: yt alias create <name> <command>", style="dim")
 
     except Exception as e:
         console.print(f"❌ Error listing aliases: {e}", style="red")
         raise click.ClickException("Alias list failed") from e
 
 
-@alias.command("add")
+@alias.command("create")
+@click.argument("name")
+@click.argument("command")
+@click.pass_context
+def create_alias(ctx: click.Context, name: str, command: str) -> None:
+    """Create a user-defined alias.
+
+    Examples:
+        yt alias create myissues "issues list --assignee me"
+        yt alias create bug "issues create --type Bug"
+        yt alias create il "issues list"
+    """
+    console = get_console()
+    config_manager = ConfigManager(ctx.obj.get("config"))
+
+    try:
+        # Check if alias conflicts with existing command
+        main_group = ctx.find_root().command
+        if hasattr(main_group, "list_commands") and name in main_group.list_commands(ctx):
+            console.print(f"❌ Cannot create alias '{name}': conflicts with existing command", style="red")
+            return
+
+        # Check if alias conflicts with built-in alias
+        if hasattr(main_group, "aliases"):
+            aliases = cast(dict, main_group.aliases)
+            if name in aliases:
+                console.print(f"❌ Cannot create alias '{name}': conflicts with built-in alias", style="red")
+                return
+
+        # Add the alias
+        config_manager.set_alias(name, command)
+
+        # Reload aliases in the main group
+        if hasattr(main_group, "reload_user_aliases"):
+            main_group.reload_user_aliases()
+
+        console.print(f"✅ Alias '{name}' → '{command}' created successfully", style="green")
+        console.print("💡 Use 'yt alias list' to see all aliases", style="dim")
+
+    except Exception as e:
+        console.print(f"❌ Error creating alias: {e}", style="red")
+        raise click.ClickException("Alias creation failed") from e
+
+
+# Backwards compatibility: keep 'add' as a hidden alias
+@alias.command("add", hidden=True)
 @click.argument("name")
 @click.argument("command")
 @click.pass_context
 def add_alias(ctx: click.Context, name: str, command: str) -> None:
-    """Add a user-defined alias.
-
-    Examples:
-        yt alias add myissues "issues list --assignee me"
-        yt alias add bug "issues create --type Bug"
-        yt alias add il "issues list"
-    """
+    """Add a user-defined alias (deprecated, use 'create' instead)."""
+    # Call the same logic as create_alias
     console = get_console()
     config_manager = ConfigManager(ctx.obj.get("config"))
 
