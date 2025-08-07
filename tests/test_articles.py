@@ -950,7 +950,7 @@ class TestArticleIDCommandIntegration:
             temp_file = f.name
 
         try:
-            with patch("youtrack_cli.commands.articles.AuthManager") as mock_auth:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
                 with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
                     # Setup mocks
                     mock_auth_instance = MagicMock()
@@ -1001,7 +1001,7 @@ class TestArticleIDCommandIntegration:
             temp_file = f.name
 
         try:
-            with patch("youtrack_cli.commands.articles.AuthManager") as mock_auth:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
                 with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
                     # Setup mocks
                     mock_auth_instance = MagicMock()
@@ -1053,7 +1053,7 @@ class TestArticleIDCommandIntegration:
             temp_file = f.name
 
         try:
-            with patch("youtrack_cli.commands.articles.AuthManager") as mock_auth:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
                 with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
                     # Setup mocks
                     mock_auth_instance = MagicMock()
