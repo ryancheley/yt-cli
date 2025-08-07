@@ -150,8 +150,12 @@ except ImportError:
     def format_timestamp(timestamp):
         if timestamp is None or timestamp == '':
             return 'N/A'
-        # Mock timestamp formatting to return a predictable pattern
-        return '2022-01-01 00:00:00'
+        # Try to convert to int for timestamp, otherwise return as is
+        try:
+            int(timestamp)
+            return '2022-01-01 00:00:00'
+        except (ValueError, TypeError):
+            return str(timestamp)
 
     def get_display_name(field_type):
         return field_type
