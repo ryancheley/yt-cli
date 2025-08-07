@@ -99,8 +99,8 @@ Use the ``yt alias`` command group to manage your custom aliases:
    # List all aliases (built-in and custom)
    yt alias list
 
-   # Add a custom alias
-   yt alias add myissues "issues list --assignee me"
+   # Create a custom alias
+   yt alias create myissues "issues list --assignee me"
 
    # Show what an alias does
    yt alias show myissues
@@ -113,9 +113,9 @@ Use the ``yt alias`` command group to manage your custom aliases:
 .. code-block:: bash
 
    # Create shortcuts for common workflows
-   yt alias add bugs "issues list --type Bug --state Open"
-   yt alias add mybugs "issues list --type Bug --assignee me"
-   yt alias add quickbug "issues create --type Bug"
+   yt alias create bugs "issues list --type Bug --state Open"
+   yt alias create mybugs "issues list --type Bug --assignee me"
+   yt alias create quickbug "issues create --type Bug"
 
    # Use your custom aliases
    yt bugs                    # List all open bugs
@@ -340,9 +340,9 @@ Custom Alias Workflows:
 .. code-block:: bash
 
    # Set up custom aliases for your workflow
-   yt alias add mywork "issues list --assignee me --state Open"
-   yt alias add sprint "issues list --project DEMO --sprint current"
-   yt alias add bug "issues create --type Bug"
+   yt alias create mywork "issues list --assignee me --state Open"
+   yt alias create sprint "issues list --project DEMO --sprint current"
+   yt alias create bug "issues create --type Bug"
 
    # Use your custom aliases
    yt mywork                           # Check your work
@@ -479,6 +479,6 @@ If aliases don't work as expected:
    - Verify alias syntax with ``yt alias show <alias-name>``
    - Custom aliases are stored in ``~/.config/youtrack-cli/.env`` as ``ALIAS_<name>=<command>``
 
-6. **Alias Not Found**: If a custom alias isn't working, it may have been removed or the configuration file may be corrupted. Use ``yt alias add`` to recreate it.
+6. **Alias Not Found**: If a custom alias isn't working, it may have been removed or the configuration file may be corrupted. Use ``yt alias create`` to recreate it.
 
 For additional help, see the :doc:`troubleshooting` guide or file an issue on GitHub.
