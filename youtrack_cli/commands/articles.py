@@ -50,6 +50,11 @@ def articles() -> None:
     default="public",
     help="Article visibility level",
 )
+@click.option(
+    "--no-article-id",
+    is_flag=True,
+    help="Skip inserting/updating ArticleID comment in markdown file",
+)
 @click.pass_context
 def create(
     ctx: click.Context,
@@ -60,6 +65,7 @@ def create(
     parent_id: Optional[str],
     summary: Optional[str],
     visibility: str,
+    no_article_id: bool,
 ) -> None:
     """Create a new article.
 
@@ -132,7 +138,25 @@ def create(
         if result["status"] == "success":
             console.print(f"✅ {result['message']}", style="green")
             article = result["data"]
-            console.print(f"Article ID: {article.get('id', 'N/A')}", style="blue")
+            article_id = article.get("idReadable", article.get("id", "N/A"))
+            console.print(f"Article ID: {article_id}", style="blue")
+
+            # Update the file with ArticleID if it was provided and not disabled
+            if file and not no_article_id:
+                try:
+                    from ..articles import insert_or_update_article_id
+
+                    # Read current content
+                    current_content = file.read_text(encoding="utf-8")
+
+                    # Update with ArticleID
+                    updated_content = insert_or_update_article_id(current_content, article_id)
+
+                    # Write back to file
+                    file.write_text(updated_content, encoding="utf-8")
+                    console.print(f"📝 Updated '{file}' with ArticleID: {article_id}", style="blue")
+                except Exception as e:
+                    console.print(f"⚠️  Warning: Could not update file with ArticleID: {e}", style="yellow")
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to create article")
@@ -152,7 +176,13 @@ def create(
 @click.option(
     "--content",
     "-c",
-    help="New article content",
+    help="New article content (required if --file not specified)",
+)
+@click.option(
+    "--file",
+    "-f",
+    type=click.Path(exists=True, path_type=Path),
+    help="Path to markdown file containing article content (required if --content not specified)",
 )
 @click.option(
     "--summary",
@@ -169,22 +199,75 @@ def create(
     is_flag=True,
     help="Show detailed article information",
 )
+@click.option(
+    "--no-article-id",
+    is_flag=True,
+    help="Skip inserting/updating ArticleID comment in markdown file",
+)
 @click.pass_context
 def edit(
     ctx: click.Context,
     article_id: str,
     title: Optional[str],
     content: Optional[str],
+    file: Optional[Path],
     summary: Optional[str],
     visibility: Optional[str],
     show_details: bool,
+    no_article_id: bool,
 ) -> None:
-    """Edit an existing article."""
+    """Edit an existing article.
+
+    Edit an existing knowledge base article with updated content.
+    Either --content or --file can be provided for content updates.
+
+    Examples:
+        # Edit article with inline content
+        yt articles edit DOCS-A-1 --content "Updated content..."
+
+        # Edit article from file
+        yt articles edit DOCS-A-1 --file ./updated-docs.md
+
+        # Update title and visibility
+        yt articles edit DOCS-A-1 --title "New Title" --visibility private
+    """
     from ..articles import ArticleManager
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
+
+    # Validate that content and file are not both provided
+    if content and file:
+        console.print("❌ Cannot specify both --content and --file options", style="red")
+        console.print("💡 Use either --content for inline text or --file for file content, not both", style="blue")
+        raise click.ClickException("Use either --content or --file, not both")
+
+    # Read content from file if provided
+    if file:
+        try:
+            console.print(f"📖 Reading content from '{file}'...", style="blue")
+            content = file.read_text(encoding="utf-8")
+            if not content.strip():
+                console.print(f"❌ File '{file}' is empty", style="red")
+                raise click.ClickException("File content cannot be empty")
+
+            # Check for existing ArticleID in the file
+            from ..articles import extract_article_id_from_content
+
+            existing_article_id = extract_article_id_from_content(content)
+            if existing_article_id and existing_article_id != article_id:
+                console.print(
+                    f"⚠️  Warning: File contains ArticleID '{existing_article_id}' "
+                    f"but you're editing article '{article_id}'",
+                    style="yellow",
+                )
+        except UnicodeDecodeError:
+            console.print(f"❌ File '{file}' is not a valid text file", style="red")
+            raise click.ClickException("File must be a valid text file") from None
+        except Exception as e:
+            console.print(f"❌ Error reading file '{file}': {e}", style="red")
+            raise click.ClickException("Failed to read file") from e
 
     if show_details:
         console.print(f"📋 Fetching article '{article_id}' details...", style="blue")
@@ -202,7 +285,7 @@ def edit(
             console.print(f"❌ Error getting article details: {e}", style="red")
             raise click.ClickException("Failed to get article details") from e
     else:
-        if not any([title, content, summary, visibility]):
+        if not any([title, content, summary, visibility, file]):
             console.print("❌ No updates specified.", style="red")
             console.print(
                 "Use --title, --content, --summary, or --visibility options, "
@@ -226,6 +309,23 @@ def edit(
 
             if result["status"] == "success":
                 console.print(f"✅ {result['message']}", style="green")
+
+                # Update the file with ArticleID if it was provided and not disabled
+                if file and not no_article_id:
+                    try:
+                        from ..articles import insert_or_update_article_id
+
+                        # Read current content
+                        current_content = file.read_text(encoding="utf-8")
+
+                        # Update with ArticleID
+                        updated_content = insert_or_update_article_id(current_content, article_id)
+
+                        # Write back to file
+                        file.write_text(updated_content, encoding="utf-8")
+                        console.print(f"📝 Updated '{file}' with ArticleID: {article_id}", style="blue")
+                    except Exception as e:
+                        console.print(f"⚠️  Warning: Could not update file with ArticleID: {e}", style="yellow")
             else:
                 console.print(f"❌ {result['message']}", style="red")
                 raise click.ClickException("Failed to update article")
