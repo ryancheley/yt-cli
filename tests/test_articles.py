@@ -843,3 +843,239 @@ class TestArticleSortFunctions:
 
         # Test edge cases
         assert _sort_articles([], "title", False, False) == []
+
+
+@pytest.mark.unit
+class TestArticleIDManagement:
+    """Test cases for ArticleID comment management in markdown files."""
+
+    def test_extract_article_id_from_content(self):
+        """Test extracting ArticleID from markdown content."""
+        from youtrack_cli.articles import extract_article_id_from_content
+
+        # Test with valid ArticleID
+        content = "<!-- ArticleID: DOCS-A-123 -->\n# My Article\nContent here"
+        assert extract_article_id_from_content(content) == "DOCS-A-123"
+
+        # Test with whitespace variations
+        content = "<!--   ArticleID:   DOCS-A-456   -->\n# Article"
+        assert extract_article_id_from_content(content) == "DOCS-A-456"
+
+        # Test with no ArticleID
+        content = "# My Article\nNo ID here"
+        assert extract_article_id_from_content(content) is None
+
+        # Test with malformed ArticleID
+        content = "<!-- ArticleID: -->\n# Article"
+        assert extract_article_id_from_content(content) is None
+
+        # Test with ArticleID in middle of content
+        content = "# Title\nSome content\n<!-- ArticleID: MID-123 -->\nMore content"
+        assert extract_article_id_from_content(content) == "MID-123"
+
+    def test_insert_or_update_article_id(self):
+        """Test inserting or updating ArticleID in markdown content."""
+        from youtrack_cli.articles import insert_or_update_article_id
+
+        # Test inserting new ArticleID
+        content = "# My Article\nContent here"
+        result = insert_or_update_article_id(content, "NEW-123")
+        assert "<!-- ArticleID: NEW-123 -->" in result
+        assert result.startswith("<!-- ArticleID: NEW-123 -->")
+        assert "# My Article" in result
+
+        # Test updating existing ArticleID
+        content = "<!-- ArticleID: OLD-123 -->\n# My Article\nContent"
+        result = insert_or_update_article_id(content, "NEW-456")
+        assert "<!-- ArticleID: NEW-456 -->" in result
+        assert "<!-- ArticleID: OLD-123 -->" not in result
+        assert "# My Article" in result
+
+        # Test with empty content
+        content = ""
+        result = insert_or_update_article_id(content, "EMPTY-123")
+        assert result == "<!-- ArticleID: EMPTY-123 -->\n"
+
+        # Test with whitespace variations
+        content = "<!--  ArticleID:  OLD-789  -->\n# Title"
+        result = insert_or_update_article_id(content, "NEW-789")
+        assert "<!-- ArticleID: NEW-789 -->" in result
+        assert "OLD-789" not in result
+
+    def test_remove_article_id_comment(self):
+        """Test removing ArticleID comment from markdown content."""
+        from youtrack_cli.articles import remove_article_id_comment
+
+        # Test removing ArticleID at beginning
+        content = "<!-- ArticleID: DOCS-123 -->\n\n# My Article\nContent"
+        result = remove_article_id_comment(content)
+        assert "ArticleID" not in result
+        assert result.startswith("# My Article")
+
+        # Test removing ArticleID in middle
+        content = "# Title\n<!-- ArticleID: MID-456 -->\nContent"
+        result = remove_article_id_comment(content)
+        assert "ArticleID" not in result
+        assert "# Title\nContent" in result
+
+        # Test with no ArticleID
+        content = "# My Article\nNo ID here"
+        result = remove_article_id_comment(content)
+        assert result == content
+
+        # Test with multiple newlines after ArticleID
+        content = "<!-- ArticleID: TEST-789 -->\n\n\n# Title"
+        result = remove_article_id_comment(content)
+        assert result.startswith("# Title")
+
+
+@pytest.mark.unit
+class TestArticleIDCommandIntegration:
+    """Test cases for ArticleID management in create and edit commands."""
+
+    def test_create_command_with_file_and_article_id(self):
+        """Test create command with file and ArticleID insertion."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import create
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Test Article\nThis is test content.")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    # Setup mocks
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful creation
+                    mock_manager.create_article = AsyncMock(
+                        return_value={
+                            "status": "success",
+                            "message": "Article created",
+                            "data": {"id": "123-456", "idReadable": "DOCS-A-789"},
+                        }
+                    )
+
+                    # Run command
+                    runner.invoke(
+                        create, ["Test Article", "--file", temp_file, "--project-id", "TEST"], obj={"config": {}}
+                    )
+
+                    # Check the file was updated with ArticleID
+                    with open(temp_file) as f:
+                        updated_content = f.read()
+
+                    assert "<!-- ArticleID: DOCS-A-789 -->" in updated_content
+                    assert "# Test Article" in updated_content
+
+        finally:
+            Path(temp_file).unlink()
+
+    def test_create_command_with_no_article_id_flag(self):
+        """Test create command with --no-article-id flag."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import create
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            original_content = "# Test Article\nThis is test content."
+            f.write(original_content)
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    # Setup mocks
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful creation
+                    mock_manager.create_article = AsyncMock(
+                        return_value={
+                            "status": "success",
+                            "message": "Article created",
+                            "data": {"id": "123-456", "idReadable": "DOCS-A-789"},
+                        }
+                    )
+
+                    # Run command with --no-article-id
+                    runner.invoke(
+                        create,
+                        ["Test Article", "--file", temp_file, "--project-id", "TEST", "--no-article-id"],
+                        obj={"config": {}},
+                    )
+
+                    # Check the file was NOT updated with ArticleID
+                    with open(temp_file) as f:
+                        content = f.read()
+
+                    assert "<!-- ArticleID:" not in content
+                    assert content == original_content
+
+        finally:
+            Path(temp_file).unlink()
+
+    def test_edit_command_with_file(self):
+        """Test edit command with file option."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import edit
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Updated Article\nUpdated content.")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    # Setup mocks
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful update
+                    mock_manager.update_article = AsyncMock(
+                        return_value={"status": "success", "message": "Article updated"}
+                    )
+
+                    # Run command
+                    runner.invoke(edit, ["DOCS-A-789", "--file", temp_file], obj={"config": {}})
+
+                    # Check the file was updated with ArticleID
+                    with open(temp_file) as f:
+                        updated_content = f.read()
+
+                    assert "<!-- ArticleID: DOCS-A-789 -->" in updated_content
+                    assert "# Updated Article" in updated_content
+
+        finally:
+            Path(temp_file).unlink()

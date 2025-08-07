@@ -71,6 +71,9 @@ Create a new article in YouTrack.
    * - ``--visibility``
      - choice
      - Article visibility: public, private, project (default: public)
+   * - ``--no-article-id``
+     - flag
+     - Skip inserting/updating ArticleID comment in markdown file (only applies when using --file)
 
 **Examples:**
 
@@ -93,6 +96,27 @@ Create a new article in YouTrack.
 
    # Create an article with inline content (traditional approach)
    yt articles create "API Documentation" --content "API usage guide" --project-id FPU
+
+   # Create an article from a file without ArticleID insertion
+   yt articles create "Clean Article" --file clean.md --project-id FPU --no-article-id
+
+**ArticleID Management:**
+
+When creating articles from markdown files, the CLI automatically inserts or updates an ArticleID comment in the file. This helps maintain references between local files and their corresponding YouTrack articles.
+
+.. code-block:: markdown
+
+   <!-- ArticleID: FPU-A-123 -->
+
+   # My Article Title
+   Article content here...
+
+The ArticleID comment:
+
+* Is automatically inserted at the beginning of the file after successful article creation
+* Contains the readable article ID (e.g., ``FPU-A-123``)
+* Allows you to track which local files correspond to which YouTrack articles
+* Can be disabled using the ``--no-article-id`` flag
 
 edit
 ~~~~
@@ -121,7 +145,10 @@ Edit an existing article's properties.
      - New article title
    * - ``--content, -c``
      - string
-     - New article content
+     - New article content (required if --file not specified)
+   * - ``--file, -f``
+     - path
+     - Path to markdown file containing article content (required if --content not specified)
    * - ``--summary, -s``
      - string
      - New article summary
@@ -131,6 +158,9 @@ Edit an existing article's properties.
    * - ``--show-details``
      - flag
      - Show detailed article information
+   * - ``--no-article-id``
+     - flag
+     - Skip inserting/updating ArticleID comment in markdown file (only applies when using --file)
 
 **Examples:**
 
@@ -147,6 +177,21 @@ Edit an existing article's properties.
 
    # View detailed article information
    yt articles edit ARTICLE-123 --show-details
+
+   # Update article from a markdown file
+   yt articles edit ARTICLE-123 --file updated-content.md
+
+   # Update article from file without ArticleID insertion
+   yt articles edit ARTICLE-123 --file updated.md --no-article-id
+
+**ArticleID Management:**
+
+When editing articles with markdown files, the CLI automatically manages ArticleID comments:
+
+* If the file doesn't have an ArticleID comment, one is added
+* If the file has a different ArticleID, a warning is displayed
+* The ArticleID helps track the relationship between local files and YouTrack articles
+* Use ``--no-article-id`` to disable this behavior
 
 publish
 ~~~~~~~

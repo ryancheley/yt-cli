@@ -1240,3 +1240,81 @@ class ArticleManager:
                 }
         except Exception as e:
             return {"status": "error", "message": f"Error deleting attachment: {str(e)}"}
+
+
+# Helper functions for ArticleID management in markdown files
+def extract_article_id_from_content(content: str) -> Optional[str]:
+    """Extract ArticleID from markdown content.
+
+    Looks for a comment in the format: <!-- ArticleID: actual-article-id -->
+
+    Args:
+        content: The markdown content to search
+
+    Returns:
+        The article ID if found, None otherwise
+    """
+    import re
+
+    # Pattern to match <!-- ArticleID: some-id -->
+    pattern = r"<!--\s*ArticleID:\s*([^\s]+)\s*-->"
+    match = re.search(pattern, content)
+
+    if match:
+        return match.group(1)
+    return None
+
+
+def insert_or_update_article_id(content: str, article_id: str) -> str:
+    """Insert or update ArticleID comment in markdown content.
+
+    If an ArticleID comment exists, it will be updated.
+    If not, it will be inserted at the beginning of the file.
+
+    Args:
+        content: The markdown content
+        article_id: The article ID to insert or update
+
+    Returns:
+        The updated content with the ArticleID comment
+    """
+    import re
+
+    # Pattern to match existing ArticleID comment
+    pattern = r"<!--\s*ArticleID:\s*[^\s]+\s*-->"
+    article_id_comment = f"<!-- ArticleID: {article_id} -->"
+
+    # Check if ArticleID already exists
+    if re.search(pattern, content):
+        # Update existing ArticleID
+        updated_content = re.sub(pattern, article_id_comment, content, count=1)
+    else:
+        # Insert ArticleID at the beginning
+        # Check if content starts with a comment or whitespace
+        lines = content.splitlines(keepends=True) if content else []
+
+        # Insert the ArticleID comment at the very beginning
+        if lines:
+            updated_content = article_id_comment + "\n\n" + content
+        else:
+            updated_content = article_id_comment + "\n"
+
+    return updated_content
+
+
+def remove_article_id_comment(content: str) -> str:
+    """Remove ArticleID comment from markdown content.
+
+    Args:
+        content: The markdown content
+
+    Returns:
+        The content with ArticleID comment removed
+    """
+    import re
+
+    # Pattern to match ArticleID comment with optional surrounding whitespace
+    pattern = r"<!--\s*ArticleID:\s*[^\s]+\s*-->\n*"
+    cleaned_content = re.sub(pattern, "", content)
+
+    return cleaned_content
