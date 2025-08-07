@@ -17,6 +17,17 @@ All commands follow a consistent structure and support common options.
    auth
    config
    admin
+   alias
+   audit
+   security
+   setup
+   burndown
+   velocity
+   completion
+   groups
+   ls
+   new
+   tutorial
 
 Global Options
 --------------
@@ -155,6 +166,101 @@ The :doc:`admin` command group provides administrative functions:
 * User and group administration
 * Workflow and field management
 * System maintenance operations
+
+Command Shortcuts and Aliases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :doc:`alias` command group manages command aliases:
+
+* Create custom shortcuts for frequently used commands
+* List built-in and user-defined aliases
+* Delete user-defined aliases
+* Show alias definitions and mappings
+
+The :doc:`ls` command provides a quick shortcut for listing issues:
+
+* Shortcut for the most common list operation
+* Familiar Unix-style command interface
+* Multiple filtering options for issue discovery
+* Support for various output formats
+
+The :doc:`new` command provides a quick shortcut for creating issues:
+
+* Streamlined interface for rapid issue creation
+* Essential options for type, priority, and assignment
+* Tag support and description capabilities
+* Minimal typing for improved productivity
+
+Security and Audit Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :doc:`audit` command provides quick access to audit logs:
+
+* View command execution history and audit trail
+* Monitor CLI usage patterns and security events
+* Export audit data in multiple formats
+* Track commands for compliance and debugging
+
+The :doc:`security` command group offers comprehensive security management:
+
+* Complete audit log management capabilities
+* Authentication token status monitoring
+* Security maintenance and cleanup functions
+* Comprehensive security reporting features
+
+Setup and Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The :doc:`setup` command provides interactive first-time configuration:
+
+* Guided setup wizard for new installations
+* YouTrack server connection configuration
+* Authentication setup and credential management
+* Basic preferences and default value configuration
+
+The :doc:`completion` command generates shell completion scripts:
+
+* Tab completion for commands and options
+* Support for bash, zsh, fish, and PowerShell
+* Automatic installation to system locations
+* Enhanced CLI usability and productivity
+
+Reporting and Analytics
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The :doc:`burndown` command generates burndown reports:
+
+* Project and sprint burndown analysis
+* Work completion tracking over time
+* Sprint goal achievement monitoring
+* Customizable date range analysis
+
+The :doc:`velocity` command generates velocity reports:
+
+* Team performance analysis across sprints
+* Delivery capacity and consistency tracking
+* Trend analysis for sprint planning
+* Predictive insights for future capacity
+
+User and Group Management
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :doc:`groups` command manages user groups and permissions:
+
+* Create and list user groups
+* Organize team members by roles and projects
+* Simplify permission management at scale
+* Support role-based and project-based access control
+
+Learning and Training
+~~~~~~~~~~~~~~~~~~~~~
+
+The :doc:`tutorial` command provides interactive learning experiences:
+
+* Step-by-step guided tutorials for CLI features
+* Progress tracking and resume capabilities
+* Real-world examples and best practices
+* Beginner-friendly explanations and workflows
 
 Common Patterns
 ---------------
