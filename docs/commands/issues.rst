@@ -315,6 +315,38 @@ Manage issue tags.
    # List all tags on an issue
    yt issues tag list PROJ-123
 
+Benchmark Performance
+~~~~~~~~~~~~~~~~~~~~~
+
+Benchmark field selection performance improvements to measure API optimization benefits.
+
+.. code-block:: bash
+
+   yt issues benchmark [OPTIONS]
+
+**Options:**
+  * ``-p, --project-id TEXT`` - Project ID to benchmark with
+  * ``--sample-size INTEGER`` - Number of issues to fetch for benchmarking (default: 50)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Run benchmark with default settings
+   yt issues benchmark
+
+   # Benchmark specific project with custom sample size
+   yt issues benchmark -p FPU --sample-size 100
+
+   # Benchmark with minimal sample for quick testing
+   yt issues benchmark --sample-size 10
+
+.. note::
+   This command runs performance tests comparing minimal, standard, and full
+   field selection profiles to demonstrate the optimization benefits. It helps
+   understand the performance impact of different field selection strategies
+   when working with large datasets.
+
 Comment Management
 ------------------
 
@@ -479,6 +511,44 @@ Display available link types in your YouTrack instance.
 **Options:**
   * ``--format [table|json|csv]`` - Output format
 
+Show Related Issues
+~~~~~~~~~~~~~~~~~~~
+
+Display all issue relationships dynamically based on YouTrack instance configuration.
+
+.. code-block:: bash
+
+   yt issues related ISSUE_ID [OPTIONS]
+
+**Arguments:**
+  * ``ISSUE_ID`` - The ID of the issue to show relationships for
+
+**Options:**
+  * ``--format [tree|table]`` - Output format for related issues display (default: tree)
+  * ``--show-status`` - Show status indicators in tree view (default: true)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Show all relationships in tree format (default)
+   yt issues related DEMO-123
+
+   # Show relationships in table format
+   yt issues related DEMO-123 --format table
+
+   # Hide status indicators in tree view
+   yt issues related DEMO-123 --show-status false
+
+   # Show relationships for complex issues with many links
+   yt issues related PROJ-456 --format tree
+
+.. note::
+   This command shows all relationship types for an issue, not just dependencies.
+   Relationship types are fetched dynamically from the YouTrack instance, so it
+   adapts to custom relationship types in different YouTrack configurations.
+   This provides a comprehensive view of how issues are connected in your project.
+
 Batch Operations
 ----------------
 
@@ -503,7 +573,7 @@ Create multiple issues from a CSV or JSON file.
 **CSV File Format:**
 The CSV file should have the following columns:
 
-.. code-block:: csv
+.. code-block:: text
 
    project_id,summary,description,type,priority,assignee
    FPU,Fix login bug,Login fails on mobile devices,Bug,High,john.doe
@@ -567,7 +637,7 @@ Update multiple issues from a CSV or JSON file.
 **CSV File Format:**
 The CSV file should include ``issue_id`` and any fields to update:
 
-.. code-block:: csv
+.. code-block:: text
 
    issue_id,summary,description,state,type,priority,assignee
    FPU-1,Updated summary,,In Progress,,High,
