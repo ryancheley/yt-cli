@@ -116,7 +116,16 @@ class CommandValidator:
 
 
 def suggest_similar_commands(attempted_command: str, available_commands: List[str]) -> List[str]:
-    """Suggest similar commands from a list of available commands."""
+    """Suggest similar commands from a list of available commands.
+
+    Examples:
+        >>> suggest_similar_commands("issue", ["issues", "articles", "projects"])
+        ['issues']
+        >>> suggest_similar_commands("xyz", ["issues", "projects", "users"])
+        []
+        >>> suggest_similar_commands("isues", ["issues", "projects", "users"])
+        ['issues']
+    """
     return difflib.get_close_matches(attempted_command, available_commands, n=3, cutoff=0.6)
 
 

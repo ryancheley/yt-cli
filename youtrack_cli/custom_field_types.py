@@ -123,5 +123,15 @@ def get_display_name(field_type: str) -> str:
 
     Returns:
         Human-readable display name for the field type
+
+    Examples:
+        >>> get_display_name("SingleEnumIssueCustomField")
+        'Single Enum'
+        >>> get_display_name("TextIssueCustomField")
+        'Text'
+        >>> get_display_name("UnknownFieldType")
+        'UnknownFieldType'
+        >>> get_display_name("")
+        ''
     """
     return FIELD_TYPE_DISPLAY_MAP.get(field_type, field_type)

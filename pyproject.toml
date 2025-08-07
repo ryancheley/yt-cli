@@ -199,6 +199,7 @@ addopts = [
     "--cov-fail-under=50",
     "--maxfail=5",
     "--durations=10",
+    "--doctest-modules",
 ]
 markers = [
     "integration: marks tests as integration tests (require real YouTrack API access)",
