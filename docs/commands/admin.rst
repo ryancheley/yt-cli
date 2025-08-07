@@ -80,6 +80,32 @@ Show detailed license usage statistics and capacity information.
 System Maintenance
 ------------------
 
+maintenance
+~~~~~~~~~~~
+
+Perform system maintenance operations and administrative tasks.
+
+.. code-block:: bash
+
+   yt admin maintenance [OPTIONS] COMMAND [ARGS]...
+
+**Description:**
+
+The maintenance command group provides access to system maintenance operations and administrative utilities for YouTrack instances. This command serves as an entry point for various maintenance tasks that may be available depending on your YouTrack version and configuration.
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Access maintenance operations
+   yt admin maintenance
+
+   # View available maintenance commands
+   yt admin maintenance --help
+
+.. note::
+   Specific maintenance operations may vary depending on your YouTrack version and configuration. Use ``yt admin maintenance --help`` to see all available maintenance commands.
+
 .. note::
    The maintenance clear-cache command has been deprecated and is no longer available.
    Cache management must be performed through:

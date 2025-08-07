@@ -79,6 +79,65 @@ List all projects with filtering and formatting options.
    # List with specific fields
    yt projects list --fields "id,name,shortName,leader,archived"
 
+show
+~~~~
+
+Show detailed information about a specific project including settings, metadata, and configuration.
+
+.. code-block:: bash
+
+   yt projects show PROJECT_ID [OPTIONS]
+
+**Arguments:**
+
+* ``PROJECT_ID`` - The project ID or short name (required)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--fields, -f``
+     - string
+     - Comma-separated list of project fields to return
+   * - ``--format``
+     - choice
+     - Output format: table, json (default: table)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Show basic project information
+   yt projects show PROJECT-ID
+
+   # Show specific project fields
+   yt projects show PROJECT-ID --fields "name,shortName,leader"
+
+   # Show project data in JSON format
+   yt projects show PROJECT-ID --format json
+
+   # Show comprehensive project details
+   yt projects show FPU --fields "id,name,shortName,description,leader(fullName,login),created,archived"
+
+   # Export project information for documentation
+   yt projects show PROJECT-ID --format json > project_details.json
+
+**Common Field Options:**
+
+* ``name`` - Project full name
+* ``shortName`` - Project key/identifier
+* ``description`` - Project description
+* ``leader`` - Project leader information
+* ``created`` - Creation timestamp
+* ``archived`` - Archive status
+* ``template`` - Project template configuration
+* ``customFields`` - Associated custom fields
+
 create
 ~~~~~~
 

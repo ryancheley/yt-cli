@@ -391,6 +391,58 @@ Display teams that a user is a member of.
    # Export team data for organizational chart
    yt users teams manager.user --format json > user_teams.json
 
+assign-role
+~~~~~~~~~~~
+
+Assign a role to a user for access control and permission management.
+
+.. code-block:: bash
+
+   yt users assign-role USER_ID ROLE_ID
+
+**Arguments:**
+
+* ``USER_ID`` - The username or user ID to assign the role to (required)
+* ``ROLE_ID`` - The role identifier to assign to the user (required)
+
+**Description:**
+
+The assign-role command assigns the specified role to the user. Roles in YouTrack are typically project-specific and managed through Hub API. Roles define what permissions and access levels a user has within the system or specific projects.
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Assign a role to a user
+   yt users assign-role john.doe developer-role-id
+
+   # Assign admin role to user
+   yt users assign-role admin system-admin
+
+   # Assign project-specific role
+   yt users assign-role project.manager project-lead-role
+
+   # Assign multiple roles to different users
+   yt users assign-role alice.developer dev-team-lead
+   yt users assign-role bob.tester qa-team-lead
+
+**Role Management:**
+
+* **Project Roles**: Roles specific to individual projects with tailored permissions
+* **System Roles**: Global roles that apply across the entire YouTrack instance
+* **Custom Roles**: Organization-specific roles created for unique access patterns
+* **Temporary Roles**: Roles assigned for specific time periods or projects
+
+**Use Cases:**
+
+* Granting project leadership permissions to team leads
+* Assigning specialized access for quality assurance roles
+* Managing administrative privileges for system administrators
+* Setting up role-based access control for compliance requirements
+
+.. note::
+   Role assignments are managed through the Hub API and may have specific requirements depending on your YouTrack configuration. Ensure the role ID exists and is appropriate for the user's responsibilities.
+
 User Management Features
 ------------------------
 

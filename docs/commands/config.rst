@@ -112,6 +112,109 @@ List all current configuration values with sensitive values masked for security.
    # Output shows all key-value pairs with sensitive data masked
    # Sensitive keys (containing 'token', 'password', 'secret') are masked
 
+theme
+~~~~~
+
+Manage themes for YouTrack CLI appearance and output formatting.
+
+.. code-block:: bash
+
+   yt config theme [OPTIONS] COMMAND [ARGS]...
+
+**Description:**
+
+The theme command group provides comprehensive theme management for customizing YouTrack CLI appearance, colors, and output formatting. Create custom themes, manage existing themes, and switch between different visual configurations.
+
+**Available Subcommands:**
+
+create
+^^^^^^
+
+Create a new custom theme interactively with guided configuration.
+
+.. code-block:: bash
+
+   yt config theme create
+
+current
+^^^^^^^
+
+Show the currently active theme configuration.
+
+.. code-block:: bash
+
+   yt config theme current
+
+delete
+^^^^^^
+
+Delete a custom theme from your configuration.
+
+.. code-block:: bash
+
+   yt config theme delete
+
+export
+^^^^^^
+
+Export a theme configuration to a JSON file for sharing or backup.
+
+.. code-block:: bash
+
+   yt config theme export
+
+import
+^^^^^^
+
+Import a theme from a JSON file into your CLI configuration.
+
+.. code-block:: bash
+
+   yt config theme import
+
+list
+^^^^
+
+List all available themes including built-in and custom themes.
+
+.. code-block:: bash
+
+   yt config theme list
+
+set
+^^^
+
+Set the active theme for YouTrack CLI output and appearance.
+
+.. code-block:: bash
+
+   yt config theme set
+
+**Examples:**
+
+.. code-block:: bash
+
+   # List all available themes
+   yt config theme list
+
+   # Show current active theme
+   yt config theme current
+
+   # Create a new custom theme
+   yt config theme create
+
+   # Switch to a different theme
+   yt config theme set
+
+   # Export current theme to file
+   yt config theme export
+
+   # Import theme from file
+   yt config theme import
+
+   # Delete a custom theme
+   yt config theme delete
+
 Common Configuration Keys
 ------------------------
 

@@ -114,6 +114,75 @@ Clear stored authentication credentials and log out of YouTrack.
 * Requires confirmation to prevent accidental logout
 * Safe to run multiple times (no error if already logged out)
 
+refresh
+~~~~~~~
+
+Manually refresh the current token to maintain authentication validity.
+
+.. code-block:: bash
+
+   yt auth refresh
+
+**Description:**
+
+The refresh command manually updates and refreshes your current authentication token. This is useful for maintaining active authentication sessions and ensuring token validity, especially in long-running automation scripts or when working with tokens that have expiration policies.
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Manually refresh current authentication token
+   yt auth refresh
+
+   # Use in automation to maintain session
+   yt auth refresh && yt issues list
+
+**Use Cases:**
+
+* Maintaining authentication in long-running scripts
+* Refreshing tokens before critical operations
+* Ensuring token validity in automated workflows
+* Troubleshooting authentication issues
+
+status
+~~~~~~
+
+Show authentication status and display current token information.
+
+.. code-block:: bash
+
+   yt auth status
+
+**Description:**
+
+The status command provides detailed information about your current authentication state, including token validity, base URL configuration, and user information. This is useful for verifying authentication setup and troubleshooting connection issues.
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Show current authentication status
+   yt auth status
+
+   # Check authentication before running other commands
+   yt auth status && yt projects list
+
+**Status Information Displayed:**
+
+* Authentication state (authenticated/not authenticated)
+* Current token status (valid/invalid/expired)
+* Base URL configuration
+* Username/user information
+* Token type and permissions
+* SSL verification settings
+
+**Use Cases:**
+
+* Verifying authentication before running scripts
+* Troubleshooting authentication issues
+* Checking token validity and configuration
+* Auditing authentication setup in team environments
+
 token
 ~~~~~
 
