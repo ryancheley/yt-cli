@@ -170,6 +170,226 @@ Include practical examples for complex functions:
         ... except AuthenticationError as e:
         ...     print(f"Auth failed: {e}")
 
+Python Doctests in Function Docstrings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This project uses Python's built-in doctest functionality to ensure that code examples
+in function docstrings remain accurate and working. Doctests are automatically run as
+part of our test suite.
+
+When to Use Doctests
+^^^^^^^^^^^^^^^^^^^^
+
+Use doctests for:
+
+- **Pure functions**: Functions with predictable inputs and outputs
+- **Utility functions**: Helper functions that don't require complex setup
+- **Data transformation**: Functions that format, convert, or process data
+- **Simple validation**: Functions that validate input or perform checks
+
+Avoid doctests for:
+
+- **Async functions**: Unless you can mock them properly
+- **Functions requiring external services**: API calls, database operations
+- **Functions with complex setup**: Those needing multiple dependencies
+- **Functions with unpredictable output**: Current time, random values, etc.
+
+Doctest Examples
+^^^^^^^^^^^^^^^^
+
+**Basic function with simple examples:**
+
+.. code-block:: python
+
+    def format_timestamp(timestamp: Union[int, str, None]) -> str:
+        """Format a timestamp value for display.
+
+        Args:
+            timestamp: Unix timestamp (int), ISO string, or None
+
+        Returns:
+            Formatted timestamp string or "N/A" if None/empty
+
+        Examples:
+            >>> format_timestamp(None)
+            'N/A'
+            >>> format_timestamp('')
+            'N/A'
+            >>> format_timestamp(1640995200000)  # 2022-01-01 00:00:00
+            '2022-01-01 00:00:00'
+            >>> format_timestamp("1640995200000")
+            '2022-01-01 00:00:00'
+        """
+
+**Function with multiple test cases:**
+
+.. code-block:: python
+
+    def optimize_fields(base_params=None, fields=None, exclude_fields=None):
+        """Optimize API request parameters.
+
+        Examples:
+            >>> result = optimize_fields(
+            ...     base_params={"project": "PROJ"},
+            ...     fields=["id", "summary"]
+            ... )
+            >>> result["project"]
+            'PROJ'
+            >>> result["fields"]
+            'id,summary'
+            >>> optimize_fields()
+            {}
+        """
+
+**Class method with doctest:**
+
+.. code-block:: python
+
+    class PaginationConfig:
+        @classmethod
+        def get_pagination_type(cls, endpoint: str) -> PaginationType:
+            """Determine pagination type for endpoint.
+
+            Examples:
+                >>> PaginationConfig.get_pagination_type("/api/issues")
+                <PaginationType.CURSOR: 'cursor'>
+                >>> PaginationConfig.get_pagination_type("/unknown")
+                <PaginationType.OFFSET: 'offset'>
+            """
+
+Doctest Best Practices
+^^^^^^^^^^^^^^^^^^^^^^
+
+**Use predictable data:**
+
+.. code-block:: python
+
+    # Good - predictable output
+    >>> len(['a', 'b', 'c'])
+    3
+
+    # Avoid - unpredictable output
+    >>> import datetime
+    >>> datetime.datetime.now()  # Changes every time
+
+**Handle complex objects:**
+
+.. code-block:: python
+
+    # Good - test specific attributes
+    >>> result = create_user("john")
+    >>> result.name
+    'john'
+    >>> result.active
+    True
+
+    # Avoid - complex object representation
+    >>> create_user("john")  # __repr__ may be unstable
+
+**Use ellipsis for partial matches:**
+
+.. code-block:: python
+
+    >>> big_dict = {"key": "value", "items": [1, 2, 3]}
+    >>> print(big_dict)  # doctest: +ELLIPSIS
+    {'key': 'value', ...}
+
+**Skip problematic examples:**
+
+.. code-block:: python
+
+    >>> complex_async_operation()  # doctest: +SKIP
+    <ComplexResult object at 0x...>
+
+Running Doctests
+^^^^^^^^^^^^^^^^
+
+Doctests run automatically with pytest:
+
+.. code-block:: bash
+
+    # Run all tests including doctests
+    uv run pytest
+
+    # Run only doctests
+    uv run python -m doctest youtrack_cli/utils.py
+
+    # Run doctests with verbose output
+    uv run python -m doctest -v youtrack_cli/utils.py
+
+Configuration
+^^^^^^^^^^^^^
+
+Doctest configuration is set in ``pyproject.toml``:
+
+.. code-block:: toml
+
+    [tool.pytest.ini_options]
+    addopts = [
+        # ... other options ...
+        "--doctest-modules",  # Enable doctest discovery
+    ]
+    doctest_optionflags = [
+        "NORMALIZE_WHITESPACE",      # Ignore whitespace differences
+        "ELLIPSIS",                  # Allow ... in expected output
+        "IGNORE_EXCEPTION_DETAIL",   # Ignore exception detail differences
+    ]
+
+Integration with CI/CD
+^^^^^^^^^^^^^^^^^^^^^^
+
+Doctests run automatically in our CI pipeline:
+
+- **Pull requests**: All doctests must pass before merging
+- **Main branch**: Doctests run on every commit
+- **Release**: Doctests are part of the release verification
+
+Quality Requirements
+^^^^^^^^^^^^^^^^^^^^
+
+For functions with doctests:
+
+- All examples must be runnable and produce expected output
+- Examples should demonstrate typical use cases
+- Edge cases should be covered when relevant
+- Output should be predictable across different environments
+
+Troubleshooting Common Issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Import errors in doctests:**
+
+.. code-block:: python
+
+    # Add necessary imports to the module
+    from typing import Union, Optional
+    from .exceptions import ValidationError
+
+**Whitespace issues:**
+
+.. code-block:: python
+
+    # Use NORMALIZE_WHITESPACE flag (already configured)
+    >>> format_list([1, 2, 3])
+    '1, 2, 3'
+
+**Platform-specific differences:**
+
+.. code-block:: python
+
+    # Use ellipsis for platform-specific parts
+    >>> get_file_path()  # doctest: +ELLIPSIS
+    '/...user/.../config'
+
+**Async function testing:**
+
+.. code-block:: python
+
+    # Generally avoid, but if needed:
+    >>> import asyncio
+    >>> asyncio.run(my_async_function())  # doctest: +SKIP
+    'expected result'
+
 Type Hints Integration
 ~~~~~~~~~~~~~~~~~~~~~~
 

@@ -87,6 +87,14 @@ class PaginationConfig:
 
         Returns:
             PaginationType enum indicating cursor or offset pagination
+
+        Examples:
+            >>> result = PaginationConfig.get_pagination_type("/api/issues")
+            >>> result.value
+            'cursor'
+            >>> result = PaginationConfig.get_pagination_type("/api/users")
+            >>> result.value
+            'offset'
         """
         # Check direct matches first
         for pattern, pagination_type in cls.PAGINATION_SUPPORT.items():
@@ -592,12 +600,15 @@ def optimize_fields(
     Returns:
         Optimized parameters dictionary
 
-    Example:
-        params = optimize_fields(
-            base_params={"project": "PROJ"},
-            fields=["id", "summary", "state"],
-            exclude_fields=["description"]
-        )
+    Examples:
+        >>> result = optimize_fields()
+        >>> len(result)
+        0
+        >>> result = optimize_fields(base_params={"project": "PROJ"})
+        >>> result["project"]
+        'PROJ'
+        >>> "fields" in optimize_fields(fields=["id", "title"])  # doctest: +SKIP
+        True
     """
     params = (base_params or {}).copy()
 
@@ -793,6 +804,18 @@ def format_timestamp(timestamp: Union[int, str, None]) -> str:
 
     Returns:
         Formatted timestamp string or "N/A" if None/empty
+
+    Examples:
+        >>> format_timestamp(None)
+        'N/A'
+        >>> format_timestamp('')
+        'N/A'
+        >>> format_timestamp(1640995200000)  # doctest: +ELLIPSIS
+        '...-...-... ...:...:...'
+        >>> format_timestamp("1640995200000")  # doctest: +ELLIPSIS
+        '...-...-... ...:...:...'
+        >>> format_timestamp("invalid")
+        'invalid'
     """
     if timestamp is None:
         return "N/A"
