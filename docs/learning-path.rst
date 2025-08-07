@@ -356,8 +356,8 @@ Module 2.4: Project Management Basics (60 minutes)
    # List agile boards
    yt boards list
 
-   # View board details
-   yt boards view BOARD-ID
+   # Show board details
+   yt boards show BOARD-ID
 
 **Success Criteria**: You understand how projects organize work and teams.
 

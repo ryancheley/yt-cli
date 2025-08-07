@@ -57,7 +57,7 @@ def list_boards(
         raise click.ClickException("Failed to list boards") from e
 
 
-@boards.command(name="view")
+@boards.command(name="show")
 @click.argument("board_id")
 @click.option(
     "--format",
@@ -66,12 +66,12 @@ def list_boards(
     help="Output format",
 )
 @click.pass_context
-def view_board(
+def show_board(
     ctx: click.Context,
     board_id: str,
     format: str,
 ) -> None:
-    """View details of a specific agile board."""
+    """Show details of a specific agile board."""
     from ..boards import BoardManager
 
     console = get_console()
@@ -93,6 +93,24 @@ def view_board(
     except Exception as e:
         console.print(f"❌ Error: {str(e)}", style="red")
         raise click.ClickException("Failed to view board") from e
+
+
+@boards.command(name="view", hidden=True)
+@click.argument("board_id")
+@click.option(
+    "--format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.pass_context
+def view_board_alias(
+    ctx: click.Context,
+    board_id: str,
+    format: str,
+) -> None:
+    """View details of a specific agile board (deprecated, use 'show' instead)."""
+    ctx.invoke(show_board, board_id=board_id, format=format)
 
 
 @boards.command(name="update")

@@ -69,14 +69,14 @@ List all available agile boards with filtering options.
    # Filter and export project-specific boards
    yt boards list --project-id PROJECT-456 --format json
 
-view
+show
 ~~~~
 
-View detailed information about a specific agile board.
+Show detailed information about a specific agile board.
 
 .. code-block:: bash
 
-   yt boards view BOARD_ID [OPTIONS]
+   yt boards show BOARD_ID [OPTIONS]
 
 **Arguments:**
 
@@ -99,16 +99,16 @@ View detailed information about a specific agile board.
 
 .. code-block:: bash
 
-   # View detailed information about a board
-   yt boards view BOARD-456
+   # Show detailed information about a board
+   yt boards show BOARD-456
 
    # Export board details in JSON format
-   yt boards view BOARD-456 --format json
+   yt boards show BOARD-456 --format json
 
-   # View multiple boards
-   yt boards view BOARD-123
-   yt boards view BOARD-456
-   yt boards view BOARD-789
+   # Show multiple boards
+   yt boards show BOARD-123
+   yt boards show BOARD-456
+   yt boards show BOARD-789
 
 update
 ~~~~~~
@@ -230,14 +230,14 @@ Board Analysis
 .. code-block:: bash
 
    # Analyze board configuration
-   yt boards view SCRUM-BOARD-123
+   yt boards show SCRUM-BOARD-123
 
    # Compare multiple board configurations
-   yt boards view BOARD-A --format json > board_a.json
-   yt boards view BOARD-B --format json > board_b.json
+   yt boards show BOARD-A --format json > board_a.json
+   yt boards show BOARD-B --format json > board_b.json
 
    # Export board details for reporting
-   yt boards view PROJECT-BOARD --format json
+   yt boards show PROJECT-BOARD --format json
 
 Board Maintenance
 ~~~~~~~~~~~~~~~~
@@ -263,7 +263,7 @@ Project Board Management
 
    # Document board configurations
    for board in BOARD-1 BOARD-2 BOARD-3; do
-     yt boards view "$board" --format json > "board_${board}.json"
+     yt boards show "$board" --format json > "board_${board}.json"
    done
 
    # Update board names for project phases
@@ -315,10 +315,10 @@ Configuration Analysis
 .. code-block:: bash
 
    # Analyze board configurations
-   yt boards view BOARD-123 --format json | jq '.columns | length'
+   yt boards show BOARD-123 --format json | jq '.columns | length'
 
    # Compare board settings
-   diff <(yt boards view BOARD-A --format json) <(yt boards view BOARD-B --format json)
+   diff <(yt boards show BOARD-A --format json) <(yt boards show BOARD-B --format json)
 
    # Extract board ownership information
    yt boards list --format json | jq '.[] | {name: .name, owner: .owner}'
@@ -332,7 +332,7 @@ Performance Monitoring
    yt boards list --format json | jq '.[] | {name: .name, lastModified: .lastModified}'
 
    # Track board changes over time
-   yt boards view ACTIVE-BOARD --format json > "board_snapshot_$(date +%Y%m%d).json"
+   yt boards show ACTIVE-BOARD --format json > "board_snapshot_$(date +%Y%m%d).json"
 
 Output Formats
 --------------
@@ -454,7 +454,7 @@ Board Monitoring Script
 
    for board in $BOARDS; do
      echo "Checking board: $board"
-     yt boards view "$board" --format json > "/tmp/board_${board}.json"
+     yt boards show "$board" --format json > "/tmp/board_${board}.json"
 
      # Check for empty boards or configuration issues
      COLUMNS=$(jq '.columns | length' "/tmp/board_${board}.json")
@@ -477,7 +477,7 @@ Board Backup Script
 
    # Export individual board details
    yt boards list --format json | jq -r '.[].id' | while read board_id; do
-     yt boards view "$board_id" --format json > "$BACKUP_DIR/board_${board_id}.json"
+     yt boards show "$board_id" --format json > "$BACKUP_DIR/board_${board_id}.json"
    done
 
    echo "Board backup completed in $BACKUP_DIR"
