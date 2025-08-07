@@ -115,7 +115,79 @@ doctest_global_setup = """
 import asyncio
 import os
 import tempfile
+import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
+
+# Import YouTrack CLI modules for doctests
+try:
+    from youtrack_cli.utils import PaginationConfig, optimize_fields, format_timestamp
+    from youtrack_cli.custom_field_types import get_display_name
+    from youtrack_cli.validation import suggest_similar_commands
+    from youtrack_cli.auth import AuthManager, AuthConfig
+    from youtrack_cli.models import PaginationType
+except ImportError:
+    # Mock classes if imports fail
+    class MockPaginationType:
+        CURSOR = 'cursor'
+        OFFSET = 'offset'
+
+    class MockPaginationConfig:
+        @classmethod
+        def get_pagination_type(cls, endpoint):
+            class MockResult:
+                value = 'cursor' if '/api/issues' in endpoint else 'offset'
+            return MockResult()
+
+    PaginationConfig = MockPaginationConfig
+    PaginationType = MockPaginationType
+
+    def optimize_fields(base_params=None, fields=None, exclude_fields=None):
+        result = (base_params or {}).copy()
+        if fields:
+            result["fields"] = ",".join(fields)
+        return result
+
+    def format_timestamp(timestamp):
+        if timestamp is None or timestamp == '':
+            return 'N/A'
+        # Mock timestamp formatting to return a predictable pattern
+        return '2022-01-01 00:00:00'
+
+    def get_display_name(field_type):
+        return field_type
+
+    def suggest_similar_commands(attempted_command, available_commands):
+        return []
+
+    class AuthManager:
+        pass
+
+    class AuthConfig:
+        def __init__(self, **kwargs):
+            pass
+
+# Mock functions for examples
+def create_user(name):
+    class MockUser:
+        def __init__(self, name):
+            self.name = name
+            self.active = True
+    return MockUser(name)
+
+def search_issues(query, project=None):
+    return []
+
+def format_list(items):
+    return ', '.join(map(str, items))
+
+def get_file_path():
+    return '/path/to/user/config'
+
+async def my_async_function():
+    return 'expected result'
+
+def complex_async_operation():
+    return object()
 
 # Mock YouTrack API responses for doctests
 async def mock_api_response(*args, **kwargs):

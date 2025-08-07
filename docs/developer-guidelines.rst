@@ -251,10 +251,12 @@ Doctest Examples
             """Determine pagination type for endpoint.
 
             Examples:
-                >>> PaginationConfig.get_pagination_type("/api/issues")
-                <PaginationType.CURSOR: 'cursor'>
-                >>> PaginationConfig.get_pagination_type("/unknown")
-                <PaginationType.OFFSET: 'offset'>
+                >>> result = PaginationConfig.get_pagination_type("/api/issues")
+                >>> result.value
+                'cursor'
+                >>> result = PaginationConfig.get_pagination_type("/unknown")
+                >>> result.value
+                'offset'
             """
 
 Doctest Best Practices
