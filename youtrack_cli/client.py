@@ -70,7 +70,7 @@ class HTTPClientManager:
         read_timeout: Optional[float] = None,
         write_timeout: Optional[float] = None,
         pool_timeout: Optional[float] = None,
-        verify_ssl: bool | str = True,
+        verify_ssl: Union[bool, str] = True,
     ):
         """Initialize the HTTP client manager.
 

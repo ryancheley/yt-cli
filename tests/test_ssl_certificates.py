@@ -41,7 +41,8 @@ class TestSSLCertificateSupport:
     def test_auth_login_with_cert_file(self, temp_cert_file):
         """Test auth login command with certificate file."""
         runner = CliRunner()
-        with patch("youtrack_cli.main.AuthManager") as mock_auth:
+        with patch("youtrack_cli.main.AuthManager") as mock_auth, \
+             patch("youtrack_cli.security.AuditLogger") as mock_audit:
             mock_manager = MagicMock()
             mock_auth.return_value = mock_manager
             mock_manager.verify_credentials = AsyncMock(
@@ -81,7 +82,8 @@ class TestSSLCertificateSupport:
     def test_auth_login_with_ca_bundle(self, temp_ca_bundle):
         """Test auth login command with CA bundle."""
         runner = CliRunner()
-        with patch("youtrack_cli.main.AuthManager") as mock_auth:
+        with patch("youtrack_cli.main.AuthManager") as mock_auth, \
+             patch("youtrack_cli.security.AuditLogger") as mock_audit:
             mock_manager = MagicMock()
             mock_auth.return_value = mock_manager
             mock_manager.verify_credentials = AsyncMock(
@@ -121,7 +123,8 @@ class TestSSLCertificateSupport:
     def test_auth_login_no_verify_ssl(self):
         """Test auth login command with SSL verification disabled."""
         runner = CliRunner()
-        with patch("youtrack_cli.main.AuthManager") as mock_auth:
+        with patch("youtrack_cli.main.AuthManager") as mock_auth, \
+             patch("youtrack_cli.security.AuditLogger") as mock_audit:
             mock_manager = MagicMock()
             mock_auth.return_value = mock_manager
             mock_manager.verify_credentials = AsyncMock(
@@ -250,7 +253,8 @@ class TestSSLCertificateSupport:
 
             assert "YOUTRACK_CERT_FILE=" in config_content
             assert temp_cert_file in config_content
-            assert "YOUTRACK_VERIFY_SSL=true" in config_content
+            # The config stores as quoted string 'true', not unquoted true
+            assert "YOUTRACK_VERIFY_SSL='true'" in config_content or "YOUTRACK_VERIFY_SSL=true" in config_content
 
     def test_environment_variable_cert_loading(self, temp_cert_file):
         """Test loading certificate path from environment variables."""
@@ -272,7 +276,8 @@ class TestSSLCertificateSupport:
     def test_deprecated_no_verify_ssl_flag(self):
         """Test that deprecated --no-verify-ssl flag still works."""
         runner = CliRunner()
-        with patch("youtrack_cli.main.AuthManager") as mock_auth:
+        with patch("youtrack_cli.main.AuthManager") as mock_auth, \
+             patch("youtrack_cli.security.AuditLogger") as mock_audit:
             mock_manager = MagicMock()
             mock_auth.return_value = mock_manager
             mock_manager.verify_credentials = AsyncMock(

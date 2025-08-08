@@ -15,7 +15,7 @@ Example:
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import httpx
 from dotenv import load_dotenv
@@ -93,7 +93,7 @@ class AuthManager:
         username: Optional[str] = None,
         token_expiry: Optional[datetime] = None,
         use_keyring: bool = True,
-        verify_ssl: bool | str = True,
+        verify_ssl: Union[bool, str] = True,
         cert_file: Optional[str] = None,
         ca_bundle: Optional[str] = None,
     ) -> None:
@@ -374,7 +374,7 @@ class AuthManager:
         return credentials.username
 
     async def verify_credentials(
-        self, base_url: str, token: str, verify_ssl: bool | str = True
+        self, base_url: str, token: str, verify_ssl: Union[bool, str] = True
     ) -> CredentialVerificationResult:
         """Verify credentials with YouTrack API.
 
