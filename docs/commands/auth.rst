@@ -57,9 +57,18 @@ Authenticate with YouTrack and save credentials for subsequent CLI usage.
    * - ``--username, -n``
      - string
      - Username for reference (optional)
-   * - ``--no-verify-ssl``
+   * - ``--cert-file``
+     - path
+     - Path to SSL certificate file (.crt or .pem format)
+   * - ``--ca-bundle``
+     - path
+     - Path to CA bundle file for custom certificate authorities
+   * - ``--verify-ssl/--no-verify-ssl``
      - flag
-     - Disable SSL certificate verification (use with caution for self-signed certificates)
+     - Enable/disable SSL certificate verification (default: enabled)
+   * - ``--no-verify-ssl`` (deprecated)
+     - flag
+     - Deprecated: Use --no-verify-ssl instead
 
 **Examples:**
 
@@ -77,7 +86,13 @@ Authenticate with YouTrack and save credentials for subsequent CLI usage.
    # Completely non-interactive (not recommended for security)
    yt auth login --base-url https://company.youtrack.cloud --token YOUR_API_TOKEN
 
-   # Login with self-signed SSL certificate
+   # Login with custom SSL certificate file
+   yt auth login --base-url https://internal.youtrack.local --cert-file /path/to/cert.pem
+
+   # Login with custom CA bundle
+   yt auth login --base-url https://company.youtrack.cloud --ca-bundle /path/to/ca-bundle.crt
+
+   # Login without SSL verification (not recommended)
    yt auth login --base-url https://internal.youtrack.local --no-verify-ssl
 
 **Security Notes:**
@@ -277,6 +292,95 @@ Authentication Workflow
    # Step 4: Use CLI normally
    yt issues list --assignee me
 
+SSL Certificate Support
+-----------------------
+
+The YouTrack CLI supports custom SSL certificates for environments using self-signed certificates or custom certificate authorities. This enables secure communication with internal YouTrack instances.
+
+Certificate Options
+~~~~~~~~~~~~~~~~~~
+
+* **Certificate File** (``--cert-file``): Provide a specific SSL certificate file for verification
+* **CA Bundle** (``--ca-bundle``): Provide a custom CA bundle for certificate authority validation
+* **System CA Bundle**: Default behavior uses system's trusted certificate store
+* **Disable Verification** (``--no-verify-ssl``): Disable SSL verification entirely (not recommended)
+
+Certificate Formats
+~~~~~~~~~~~~~~~~~~
+
+Supported certificate file formats:
+
+* ``.pem`` - Privacy Enhanced Mail format (most common)
+* ``.crt`` - Certificate file format
+* CA bundles containing multiple certificates
+
+Certificate Configuration Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Use custom certificate for internal instance
+   yt auth login \
+     --base-url https://youtrack.internal.company.com \
+     --cert-file /etc/ssl/certs/company-cert.pem
+
+   # Use CA bundle for corporate certificate authority
+   yt auth login \
+     --base-url https://secure.youtrack.cloud \
+     --ca-bundle /usr/local/share/ca-certificates/company-ca-bundle.crt
+
+   # Verify certificate is valid
+   openssl x509 -in /path/to/cert.pem -text -noout | grep "Subject:"
+
+   # Test certificate with curl
+   curl --cacert /path/to/cert.pem https://youtrack.internal.company.com/api/admin/projects
+
+Certificate Storage
+~~~~~~~~~~~~~~~~~~
+
+Certificate paths are stored in the configuration file for persistent use:
+
+.. code-block:: bash
+
+   # Configuration with certificate paths
+   YOUTRACK_CERT_FILE=/etc/ssl/certs/company-cert.pem
+   YOUTRACK_CA_BUNDLE=/usr/local/share/ca-certificates/company-ca-bundle.crt
+   YOUTRACK_VERIFY_SSL=true
+
+Once configured, all subsequent CLI commands will use the specified certificate configuration automatically.
+
+Security Considerations
+~~~~~~~~~~~~~~~~~~~~~~
+
+1. **Certificate Validation**: Always verify certificate authenticity before use
+2. **File Permissions**: Ensure certificate files have appropriate read permissions
+3. **Path Security**: Use absolute paths for certificate files
+4. **Regular Updates**: Keep certificates updated before expiration
+5. **Avoid Disabling**: Only disable SSL verification in secure, isolated environments
+
+Troubleshooting Certificate Issues
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Common certificate problems and solutions
+
+   # Problem: Certificate verification failed
+   # Solution: Verify certificate is valid and not expired
+   openssl x509 -in cert.pem -noout -dates
+
+   # Problem: Certificate file not found
+   # Solution: Check file path and permissions
+   ls -la /path/to/cert.pem
+
+   # Problem: Wrong certificate format
+   # Solution: Convert certificate to PEM format
+   openssl x509 -in cert.der -outform PEM -out cert.pem
+
+   # Problem: Certificate chain incomplete
+   # Solution: Use CA bundle with full certificate chain
+   cat intermediate.crt root.crt > ca-bundle.crt
+
 Security Features
 ----------------
 
@@ -421,15 +525,25 @@ SSL Certificate Issues
 
 .. code-block:: bash
 
-   # For self-signed certificates or internal CAs
+   # For self-signed certificates - provide certificate file
+   yt auth login --base-url https://internal.youtrack.local --cert-file /path/to/cert.pem
+
+   # For custom CA certificates - provide CA bundle
+   yt auth login --base-url https://company.youtrack.cloud --ca-bundle /path/to/ca-bundle.crt
+
+   # Verify certificate file exists and is readable
+   ls -la /path/to/cert.pem
+   openssl x509 -in /path/to/cert.pem -text -noout
+
+   # For testing only - disable SSL verification (NOT RECOMMENDED)
    yt auth login --base-url https://internal.youtrack.local --no-verify-ssl
 
-   # Test connectivity with SSL verification disabled
-   curl -k -H "Authorization: Bearer YOUR_TOKEN" \
+   # Test connectivity with certificate
+   curl --cacert /path/to/cert.pem -H "Authorization: Bearer YOUR_TOKEN" \
         "https://internal.youtrack.local/api/admin/projects"
 
-   # Note: SSL verification setting is saved with credentials
-   # All subsequent API calls will use the same SSL verification setting
+   # Note: SSL settings (certificate paths or verification status) are saved with credentials
+   # All subsequent API calls will use the same SSL configuration
 
 Error Handling
 --------------
@@ -457,8 +571,10 @@ Common error scenarios and solutions:
   * Check firewall and proxy settings
 
 **SSL Certificate Errors**
-  * For self-signed certificates: ``yt auth login --no-verify-ssl``
-  * For corporate CAs: Add CA certificate to system trust store
+  * For self-signed certificates: ``yt auth login --cert-file /path/to/cert.pem``
+  * For corporate CAs: ``yt auth login --ca-bundle /path/to/ca-bundle.crt``
+  * For testing only: ``yt auth login --no-verify-ssl`` (insecure)
+  * Certificate formats supported: .pem, .crt
   * Warning: Only disable SSL verification on trusted networks
 
 **Corrupted Credentials**
@@ -491,6 +607,8 @@ The configuration file contains non-sensitive authentication data:
    YOUTRACK_API_KEY=[Stored in keyring]
    YOUTRACK_USERNAME=john.doe
    YOUTRACK_VERIFY_SSL=true
+   YOUTRACK_CERT_FILE=/path/to/cert.pem  # Optional: custom certificate
+   YOUTRACK_CA_BUNDLE=/path/to/ca-bundle.crt  # Optional: CA bundle
 
 Custom Configuration
 ~~~~~~~~~~~~~~~~~~~

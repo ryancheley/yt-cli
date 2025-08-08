@@ -15,7 +15,7 @@ Example:
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import httpx
 from dotenv import load_dotenv
@@ -93,7 +93,9 @@ class AuthManager:
         username: Optional[str] = None,
         token_expiry: Optional[datetime] = None,
         use_keyring: bool = True,
-        verify_ssl: bool = True,
+        verify_ssl: Union[bool, str] = True,
+        cert_file: Optional[str] = None,
+        ca_bundle: Optional[str] = None,
     ) -> None:
         """Save authentication credentials to config file or keyring.
 
@@ -103,7 +105,9 @@ class AuthManager:
             username: Username (optional)
             token_expiry: Token expiration date (optional)
             use_keyring: Whether to use keyring for secure storage
-            verify_ssl: Whether SSL verification is enabled
+            verify_ssl: Whether SSL verification is enabled, or path to certificate
+            cert_file: Path to SSL certificate file (optional)
+            ca_bundle: Path to CA bundle file (optional)
         """
         if use_keyring and self.security_config.enable_credential_encryption:
             # Store in keyring with encryption
@@ -113,15 +117,34 @@ class AuthManager:
                 self.credential_manager.store_credential("youtrack_username", username)
             if token_expiry:
                 self.credential_manager.store_credential("youtrack_token_expiry", token_expiry.isoformat())
-            # Store SSL verification setting
-            self.credential_manager.store_credential("youtrack_verify_ssl", str(verify_ssl))
+
+            # Store SSL verification setting and certificate paths
+            if isinstance(verify_ssl, str):
+                # Certificate path provided
+                self.credential_manager.store_credential("youtrack_verify_ssl", "true")
+                if cert_file:
+                    self.credential_manager.store_credential("youtrack_cert_file", cert_file)
+                elif ca_bundle:
+                    self.credential_manager.store_credential("youtrack_ca_bundle", ca_bundle)
+            else:
+                self.credential_manager.store_credential("youtrack_verify_ssl", str(verify_ssl))
 
             # Also store non-sensitive config to .env file for config list visibility
             config_manager = ConfigManager(self.config_path)
             config_manager.set_config("YOUTRACK_BASE_URL", base_url)
             if username:
                 config_manager.set_config("YOUTRACK_USERNAME", username)
-            config_manager.set_config("YOUTRACK_VERIFY_SSL", str(verify_ssl).lower())
+
+            # Store SSL configuration
+            if isinstance(verify_ssl, str):
+                config_manager.set_config("YOUTRACK_VERIFY_SSL", "true")
+                if cert_file:
+                    config_manager.set_config("YOUTRACK_CERT_FILE", cert_file)
+                elif ca_bundle:
+                    config_manager.set_config("YOUTRACK_CA_BUNDLE", ca_bundle)
+            else:
+                config_manager.set_config("YOUTRACK_VERIFY_SSL", str(verify_ssl).lower())
+
             # Store a reference that token is in keyring
             config_manager.set_config("YOUTRACK_API_KEY", "[Stored in keyring]")
 
@@ -135,8 +158,16 @@ class AuthManager:
                 config_manager.set_config("YOUTRACK_USERNAME", username)
             if token_expiry:
                 config_manager.set_config("YOUTRACK_TOKEN_EXPIRY", token_expiry.isoformat())
-            # Save SSL verification setting
-            config_manager.set_config("YOUTRACK_VERIFY_SSL", str(verify_ssl).lower())
+
+            # Save SSL verification setting and certificate paths
+            if isinstance(verify_ssl, str):
+                config_manager.set_config("YOUTRACK_VERIFY_SSL", "true")
+                if cert_file:
+                    config_manager.set_config("YOUTRACK_CERT_FILE", cert_file)
+                elif ca_bundle:
+                    config_manager.set_config("YOUTRACK_CA_BUNDLE", ca_bundle)
+            else:
+                config_manager.set_config("YOUTRACK_VERIFY_SSL", str(verify_ssl).lower())
 
             self.console.print(
                 "[yellow]⚠[/yellow] Credentials stored in plain text file. Consider using keyring for better security."
@@ -215,6 +246,8 @@ class AuthManager:
             self.credential_manager.delete_credential("youtrack_username")
             self.credential_manager.delete_credential("youtrack_token_expiry")
             self.credential_manager.delete_credential("youtrack_verify_ssl")
+            self.credential_manager.delete_credential("youtrack_cert_file")
+            self.credential_manager.delete_credential("youtrack_ca_bundle")
 
         # Clear from file - use ConfigManager to only clear auth-related keys
         config_manager = ConfigManager(self.config_path)
@@ -223,6 +256,8 @@ class AuthManager:
         config_manager.unset_config("YOUTRACK_USERNAME")
         config_manager.unset_config("YOUTRACK_TOKEN_EXPIRY")
         config_manager.unset_config("YOUTRACK_VERIFY_SSL")
+        config_manager.unset_config("YOUTRACK_CERT_FILE")
+        config_manager.unset_config("YOUTRACK_CA_BUNDLE")
         config_manager.unset_config("YOUTRACK_API_KEY")
 
         # Reset the client manager to pick up new SSL settings
@@ -339,14 +374,14 @@ class AuthManager:
         return credentials.username
 
     async def verify_credentials(
-        self, base_url: str, token: str, verify_ssl: bool = True
+        self, base_url: str, token: str, verify_ssl: Union[bool, str] = True
     ) -> CredentialVerificationResult:
         """Verify credentials with YouTrack API.
 
         Args:
             base_url: YouTrack instance URL
             token: API token
-            verify_ssl: Whether to verify SSL certificates
+            verify_ssl: Whether to verify SSL certificates, or path to certificate file
 
         Returns:
             Dictionary with verification result
@@ -358,8 +393,12 @@ class AuthManager:
 
         # Configure SSL verification
         client_kwargs = {"timeout": 10.0}
-        if not verify_ssl:
+        if isinstance(verify_ssl, str):
+            # Certificate file path provided
+            client_kwargs["verify"] = verify_ssl
+        elif not verify_ssl:
             client_kwargs["verify"] = False
+        # else: use default (True)
 
         async with httpx.AsyncClient(**client_kwargs) as client:
             try:
