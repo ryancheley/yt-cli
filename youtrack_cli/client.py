@@ -70,7 +70,7 @@ class HTTPClientManager:
         read_timeout: Optional[float] = None,
         write_timeout: Optional[float] = None,
         pool_timeout: Optional[float] = None,
-        verify_ssl: bool = True,
+        verify_ssl: bool | str = True,
     ):
         """Initialize the HTTP client manager.
 
@@ -91,8 +91,10 @@ class HTTPClientManager:
                 If None, uses default_timeout.
             pool_timeout: Timeout for acquiring connections from pool in seconds.
                 If None, uses default_timeout.
-            verify_ssl: Whether to verify SSL certificates. Defaults to True.
-                Set to False only for development with self-signed certificates.
+            verify_ssl: Whether to verify SSL certificates, or path to certificate file.
+                - True: Use system CA bundle (default)
+                - False: Disable SSL verification (insecure)
+                - str: Path to certificate file (.crt or .pem)
         """
         self._limits = httpx.Limits(
             max_keepalive_connections=max_keepalive_connections,
@@ -127,11 +129,20 @@ class HTTPClientManager:
 
             async with self._lock:
                 if self._client is None or self._client.is_closed:
+                    # Configure SSL verification
+                    verify_param = self._verify_ssl
+                    if isinstance(self._verify_ssl, str):
+                        # Certificate file path
+                        verify_param = self._verify_ssl
+                    elif self._verify_ssl is False:
+                        verify_param = False
+                    # else: use default (True)
+
                     self._client = httpx.AsyncClient(
                         limits=self._limits,
                         timeout=self._timeout,
                         follow_redirects=True,
-                        verify=self._verify_ssl,
+                        verify=verify_param,
                     )
                     logger.debug(
                         "HTTP client initialized",
@@ -534,8 +545,20 @@ def get_client_manager() -> HTTPClientManager:
 
         from .security import AuditLogger
 
+        # Determine SSL verification configuration
         verify_ssl_str = os.getenv("YOUTRACK_VERIFY_SSL", "true").lower()
-        verify_ssl = verify_ssl_str not in ("false", "0", "no", "off")
+        cert_file = os.getenv("YOUTRACK_CERT_FILE")
+        ca_bundle = os.getenv("YOUTRACK_CA_BUNDLE")
+
+        # Configure SSL verification
+        if cert_file and os.path.exists(cert_file):
+            verify_ssl = cert_file  # Use certificate file
+        elif ca_bundle and os.path.exists(ca_bundle):
+            verify_ssl = ca_bundle  # Use CA bundle
+        elif verify_ssl_str in ("false", "0", "no", "off"):
+            verify_ssl = False  # Disable SSL verification
+        else:
+            verify_ssl = True  # Use system CA bundle (default)
 
         # Get timeout configuration from environment variables
         def _get_timeout_env(env_var: str, default: float) -> float:
@@ -581,18 +604,28 @@ def get_client_manager() -> HTTPClientManager:
         pool_timeout_val = None if pool_timeout is None else _get_timeout_env("YOUTRACK_POOL_TIMEOUT", default_timeout)
 
         # Issue security warning if SSL verification is disabled
-        if not verify_ssl:
+        if verify_ssl is False:
             warnings.warn(
                 "⚠️  SSL verification is DISABLED. This is insecure and should only be used in development.",
                 UserWarning,
                 stacklevel=2,
             )
+        elif isinstance(verify_ssl, str):
+            # Using custom certificate
+            logger.info(f"Using SSL certificate: {verify_ssl}")
 
         # Audit log SSL configuration for security compliance
         audit_logger = AuditLogger()
+        ssl_config_args = [f"YOUTRACK_VERIFY_SSL={verify_ssl_str}"]
+        if cert_file:
+            ssl_config_args.append(f"YOUTRACK_CERT_FILE={cert_file}")
+        if ca_bundle:
+            ssl_config_args.append(f"YOUTRACK_CA_BUNDLE={ca_bundle}")
+        ssl_config_args.append(f"verify_ssl={verify_ssl}")
+
         audit_logger.log_command(
             command="ssl_verification_config",
-            arguments=[f"YOUTRACK_VERIFY_SSL={verify_ssl_str}", f"verify_ssl={verify_ssl}"],
+            arguments=ssl_config_args,
             user=None,  # User not available during client initialization
             success=True,
         )

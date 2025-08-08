@@ -1,6 +1,7 @@
 """Main entry point for the YouTrack CLI."""
 
 import asyncio
+from pathlib import Path
 from typing import Optional, cast
 
 import click
@@ -1167,9 +1168,26 @@ def auth(ctx: click.Context) -> None:
 @click.option("--token", "-t", prompt=True, hide_input=True, help="YouTrack API token")
 @click.option("--username", "-n", help="Username (optional)")
 @click.option(
+    "--cert-file",
+    type=click.Path(exists=True, readable=True, path_type=Path),
+    help="Path to SSL certificate file (.crt or .pem)",
+)
+@click.option(
+    "--ca-bundle",
+    type=click.Path(exists=True, readable=True, path_type=Path),
+    help="Path to CA bundle file",
+)
+@click.option(
+    "--verify-ssl/--no-verify-ssl",
+    default=True,
+    help="Enable/disable SSL certificate verification (default: enabled)",
+)
+@click.option(
     "--no-verify-ssl",
+    "no_verify_ssl_deprecated",
     is_flag=True,
-    help="Disable SSL certificate verification (use with caution)",
+    hidden=True,
+    help="Deprecated: Use --no-verify-ssl instead",
 )
 @click.pass_context
 def login(
@@ -1177,7 +1195,10 @@ def login(
     base_url: str,
     token: str,
     username: Optional[str],
-    no_verify_ssl: bool,
+    cert_file: Optional[Path],
+    ca_bundle: Optional[Path],
+    verify_ssl: bool,
+    no_verify_ssl_deprecated: bool,
 ) -> None:
     """Authenticate with YouTrack.
 
@@ -1189,6 +1210,7 @@ def login(
     - Prompt for API token securely (hidden input)
     - Validate the connection
     - Save credentials for future use
+    - Support custom SSL certificates for self-signed or enterprise CAs
 
     Examples:
         # Interactive login (recommended)
@@ -1197,30 +1219,63 @@ def login(
         # Login with URL specified
         yt auth login --base-url https://company.youtrack.cloud
 
-        # Login with username
-        yt auth login --username john.doe
+        # Login with custom certificate
+        yt auth login --cert-file /path/to/cert.pem
+
+        # Login with CA bundle
+        yt auth login --ca-bundle /path/to/ca-bundle.crt
+
+        # Login without SSL verification (not recommended)
+        yt auth login --no-verify-ssl
     """
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
 
     console.print("🔐 Authenticating with YouTrack...", style="blue")
 
-    if no_verify_ssl:
+    # Handle deprecated --no-verify-ssl flag
+    if no_verify_ssl_deprecated:
+        verify_ssl = False
+        console.print("⚠️  --no-verify-ssl flag is deprecated. Use --no-verify-ssl instead.", style="yellow")
+
+    # Determine SSL verification configuration
+    ssl_verify = True  # Default to True
+    if cert_file:
+        ssl_verify = str(cert_file)
+        console.print(f"🔒 Using SSL certificate: {cert_file}", style="blue")
+    elif ca_bundle:
+        ssl_verify = str(ca_bundle)
+        console.print(f"🔒 Using CA bundle: {ca_bundle}", style="blue")
+    elif not verify_ssl:
+        ssl_verify = False
         console.print("⚠️  SSL certificate verification disabled. Use with caution!", style="yellow")
 
     try:
-        # Verify credentials
-        result = asyncio.run(auth_manager.verify_credentials(base_url, token, verify_ssl=not no_verify_ssl))
+        # Verify credentials with SSL configuration
+        result = asyncio.run(auth_manager.verify_credentials(base_url, token, verify_ssl=ssl_verify))
 
         if result.status == "success":
-            # Save credentials
-            auth_manager.save_credentials(base_url, token, username, verify_ssl=not no_verify_ssl)
+            # Save credentials with certificate paths
+            auth_manager.save_credentials(
+                base_url,
+                token,
+                username,
+                verify_ssl=ssl_verify,
+                cert_file=str(cert_file) if cert_file else None,
+                ca_bundle=str(ca_bundle) if ca_bundle else None,
+            )
 
             console.print("✅ Authentication successful!", style="green")
             console.print(f"Logged in as: {result.username}", style="green")
             console.print(f"Full name: {result.full_name}", style="green")
             if result.email:
                 console.print(f"Email: {result.email}", style="green")
+
+            # Show certificate info if used
+            if cert_file:
+                console.print(f"Certificate file: {cert_file}", style="dim")
+            elif ca_bundle:
+                console.print(f"CA bundle: {ca_bundle}", style="dim")
         else:
             format_and_print_error(CommonErrors.authentication_failed(details=result.message))
             raise click.ClickException("Authentication failed")
