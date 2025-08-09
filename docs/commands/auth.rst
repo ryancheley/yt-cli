@@ -573,6 +573,7 @@ Common error scenarios and solutions:
   * For testing only: ``yt auth login --no-verify-ssl`` (insecure)
   * Certificate formats supported: .pem, .crt
   * Warning: Only disable SSL verification on trusted networks
+  * For detailed SSL troubleshooting, see: :doc:`../ssl-troubleshooting`
 
 **Corrupted Credentials**
   * Clear stored credentials: ``yt auth logout``
