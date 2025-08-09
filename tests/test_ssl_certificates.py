@@ -38,6 +38,58 @@ class TestSSLCertificateSupport:
         yield bundle_path
         os.unlink(bundle_path)
 
+    @pytest.mark.asyncio
+    async def test_auth_manager_with_missing_cert_file(self):
+        """Test AuthManager handles missing certificate files correctly."""
+        auth_manager = AuthManager()
+
+        result = await auth_manager.verify_credentials(
+            "https://example.com", "test-token", verify_ssl="/nonexistent/cert.pem"
+        )
+
+        assert result.status == "error"
+        assert "SSL certificate file not found" in result.message
+
+    @pytest.mark.asyncio
+    async def test_auth_manager_with_cert_file(self, temp_cert_file):
+        """Test AuthManager with valid certificate file path."""
+        auth_manager = AuthManager()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "login": "testuser",
+                "fullName": "Test User",
+                "email": "test@example.com",
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+
+            await auth_manager.verify_credentials("https://example.com", "test-token", verify_ssl=temp_cert_file)
+
+            # Verify SSL verify parameter was set to cert file path
+            mock_client.assert_called_once()
+            call_kwargs = mock_client.call_args[1]
+            assert call_kwargs["verify"] == temp_cert_file
+
+    @pytest.mark.asyncio
+    async def test_auth_manager_ssl_error_handling(self):
+        """Test AuthManager provides helpful SSL error messages."""
+        auth_manager = AuthManager()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            # Simulate SSL certificate verification error
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                side_effect=Exception("certificate verify failed: unable to get local issuer certificate")
+            )
+
+            result = await auth_manager.verify_credentials("https://example.com", "test-token", verify_ssl=True)
+
+            assert result.status == "error"
+            assert "SSL certificate verification failed" in result.message
+            assert "Use --ca-bundle" in result.message
+            assert "Use --cert-file" in result.message
+            assert "--no-verify-ssl" in result.message
+
     @pytest.mark.skip(reason="CLI integration test has complex mocking requirements")
     def test_auth_login_with_cert_file(self, temp_cert_file):
         """Test auth login command with certificate file."""

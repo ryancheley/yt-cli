@@ -381,7 +381,7 @@ class AuthManager:
         Args:
             base_url: YouTrack instance URL
             token: API token
-            verify_ssl: Whether to verify SSL certificates, or path to certificate file
+            verify_ssl: Whether to verify SSL certificates, or path to CA bundle/certificate file
 
         Returns:
             Dictionary with verification result
@@ -393,12 +393,29 @@ class AuthManager:
 
         # Configure SSL verification
         client_kwargs = {"timeout": 10.0}
+
+        # Determine SSL verification configuration
         if isinstance(verify_ssl, str):
-            # Certificate file path provided
+            # Path to CA bundle or certificate file provided
+            if not Path(verify_ssl).exists():
+                return CredentialVerificationResult(
+                    status="error", message=f"SSL certificate file not found: {verify_ssl}"
+                )
             client_kwargs["verify"] = verify_ssl
-        elif not verify_ssl:
+        elif verify_ssl is False:
+            # SSL verification explicitly disabled
             client_kwargs["verify"] = False
-        # else: use default (True)
+        else:
+            # Check environment for CA bundle configuration
+            ca_bundle = os.getenv("YOUTRACK_CA_BUNDLE")
+            cert_file = os.getenv("YOUTRACK_CERT_FILE")
+
+            if ca_bundle and Path(ca_bundle).exists():
+                client_kwargs["verify"] = ca_bundle
+            elif cert_file and Path(cert_file).exists():
+                # Note: cert_file should actually be a CA bundle for verification
+                client_kwargs["verify"] = cert_file
+            # else: use default (True)
 
         async with httpx.AsyncClient(**client_kwargs) as client:
             try:
@@ -415,7 +432,27 @@ class AuthManager:
                     full_name=user_data.get("fullName", "Unknown"),
                     email=user_data.get("email", "Unknown"),
                 )
-            except httpx.HTTPError as e:
-                return CredentialVerificationResult(status="error", message=str(e))
+            except httpx.ConnectError as e:
+                return CredentialVerificationResult(
+                    status="error",
+                    message=f"Connection failed: {str(e)}. Check your YouTrack URL and network connectivity.",
+                )
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 401:
+                    return CredentialVerificationResult(
+                        status="error", message="Invalid API token. Please check your token and try again."
+                    )
+                return CredentialVerificationResult(status="error", message=f"HTTP {e.response.status_code}: {str(e)}")
             except Exception as e:
+                # Handle SSL certificate errors specifically
+                if "certificate verify failed" in str(e).lower():
+                    ca_help = (
+                        "\n\nFor SSL certificate issues:\n"
+                        "- Use --ca-bundle with a file containing CA certificates\n"
+                        "- Use --cert-file with a PEM file containing the full certificate chain\n"
+                        "- Or use --no-verify-ssl to disable verification (not recommended)"
+                    )
+                    return CredentialVerificationResult(
+                        status="error", message=f"SSL certificate verification failed: {str(e)}{ca_help}"
+                    )
                 return CredentialVerificationResult(status="error", message=str(e))

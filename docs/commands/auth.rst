@@ -66,9 +66,6 @@ Authenticate with YouTrack and save credentials for subsequent CLI usage.
    * - ``--verify-ssl/--no-verify-ssl``
      - flag
      - Enable/disable SSL certificate verification (default: enabled)
-   * - ``--no-verify-ssl`` (deprecated)
-     - flag
-     - Deprecated: Use --no-verify-ssl instead
 
 **Examples:**
 
@@ -247,10 +244,10 @@ When using ``--show``, tokens are displayed in masked format for security:
    Username: john.doe
 
 Authentication Process
----------------------
+----------------------
 
 Initial Setup
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 1. **Obtain API Token**: Generate a permanent token in YouTrack web interface
 2. **Run Login Command**: Use ``yt auth login`` to authenticate
@@ -258,7 +255,7 @@ Initial Setup
 4. **Store Securely**: Credentials are stored in local configuration
 
 Token Generation
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 To generate an API token in YouTrack:
 
@@ -276,7 +273,7 @@ Ensure your token has appropriate permissions for CLI operations:
 * Administrative access for admin commands (if needed)
 
 Authentication Workflow
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -298,7 +295,7 @@ SSL Certificate Support
 The YouTrack CLI supports custom SSL certificates for environments using self-signed certificates or custom certificate authorities. This enables secure communication with internal YouTrack instances.
 
 Certificate Options
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 * **Certificate File** (``--cert-file``): Provide a specific SSL certificate file for verification
 * **CA Bundle** (``--ca-bundle``): Provide a custom CA bundle for certificate authority validation
@@ -306,7 +303,7 @@ Certificate Options
 * **Disable Verification** (``--no-verify-ssl``): Disable SSL verification entirely (not recommended)
 
 Certificate Formats
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 Supported certificate file formats:
 
@@ -315,7 +312,7 @@ Supported certificate file formats:
 * CA bundles containing multiple certificates
 
 Certificate Configuration Examples
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -336,7 +333,7 @@ Certificate Configuration Examples
    curl --cacert /path/to/cert.pem https://youtrack.internal.company.com/api/admin/projects
 
 Certificate Storage
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 Certificate paths are stored in the configuration file for persistent use:
 
@@ -350,7 +347,7 @@ Certificate paths are stored in the configuration file for persistent use:
 Once configured, all subsequent CLI commands will use the specified certificate configuration automatically.
 
 Security Considerations
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 1. **Certificate Validation**: Always verify certificate authenticity before use
 2. **File Permissions**: Ensure certificate files have appropriate read permissions
@@ -359,7 +356,7 @@ Security Considerations
 5. **Avoid Disabling**: Only disable SSL verification in secure, isolated environments
 
 Troubleshooting Certificate Issues
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -385,7 +382,7 @@ Security Features
 ----------------
 
 Credential Storage
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 * **Dual Storage**: Sensitive tokens stored in system keyring, configuration in ``~/.config/youtrack-cli/.env``
 * **Encryption**: Tokens encrypted in keyring using Fernet symmetric encryption
@@ -393,7 +390,7 @@ Credential Storage
 * **No Plaintext**: Tokens never stored in plaintext, .env file shows "[Stored in keyring]" placeholder
 
 Token Masking
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 * **Display Security**: Tokens and API keys masked when displayed (``abc123...xyz789``)
 * **Log Safety**: Tokens not exposed in command output or logs
@@ -401,7 +398,7 @@ Token Masking
 * **Config List Safety**: API keys shown as masked or "[Stored in keyring]" in config list
 
 Session Management
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 * **Token Validation**: Automatic verification of token validity
 * **Refresh Handling**: Proper handling of token expiration
@@ -411,7 +408,7 @@ Common Workflows
 ----------------
 
 Initial Setup Workflow
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -430,7 +427,7 @@ Initial Setup Workflow
    echo "Authentication setup complete!"
 
 Token Rotation Workflow
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -448,7 +445,7 @@ Token Rotation Workflow
    echo "Token rotation complete!"
 
 Team Setup Workflow
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -472,10 +469,10 @@ Team Setup Workflow
    fi
 
 Troubleshooting Authentication
------------------------------
+-------------------------------
 
 Authentication Verification
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -489,7 +486,7 @@ Authentication Verification
    yt users list
 
 Token Issues
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -505,7 +502,7 @@ Token Issues
    yt auth login
 
 Connection Problems
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -521,7 +518,7 @@ Connection Problems
    yt auth login --base-url https://correct.youtrack.cloud
 
 SSL Certificate Issues
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -576,6 +573,7 @@ Common error scenarios and solutions:
   * For testing only: ``yt auth login --no-verify-ssl`` (insecure)
   * Certificate formats supported: .pem, .crt
   * Warning: Only disable SSL verification on trusted networks
+  * For detailed SSL troubleshooting, see: :doc:`../ssl-troubleshooting`
 
 **Corrupted Credentials**
   * Clear stored credentials: ``yt auth logout``
@@ -585,7 +583,7 @@ Configuration Files
 ------------------
 
 Credential Storage Location
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -596,7 +594,7 @@ Credential Storage Location
    yt --config /path/to/custom.env auth login
 
 Configuration Format
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 The configuration file contains non-sensitive authentication data:
 
@@ -611,7 +609,7 @@ The configuration file contains non-sensitive authentication data:
    YOUTRACK_CA_BUNDLE=/path/to/ca-bundle.crt  # Optional: CA bundle
 
 Custom Configuration
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -626,7 +624,7 @@ Security Best Practices
 -----------------------
 
 Token Management
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 1. **Regular Rotation**: Rotate tokens periodically for security
 2. **Minimal Permissions**: Use tokens with minimal required permissions
@@ -634,14 +632,14 @@ Token Management
 4. **No Sharing**: Never share tokens between users or systems
 
 Storage Security
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 1. **File Permissions**: Ensure config files have restricted permissions
 2. **Backup Security**: Exclude credential files from backups
 3. **Access Control**: Limit access to credential storage locations
 
 Operational Security
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 1. **Environment Separation**: Use different tokens for different environments
 2. **Audit Trail**: Monitor token usage and access patterns
@@ -652,7 +650,7 @@ Automation and CI/CD
 -------------------
 
 Environment Variables
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -664,7 +662,7 @@ Environment Variables
    yt --config <(echo "YOUTRACK_BASE_URL=$YOUTRACK_BASE_URL"; echo "YOUTRACK_TOKEN=$YOUTRACK_TOKEN") projects list
 
 CI/CD Integration
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: yaml
 
@@ -679,7 +677,7 @@ CI/CD Integration
        yt --config ~/.youtrack-cli.env projects list
 
 Service Account Setup
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -698,7 +696,7 @@ Integration Examples
 -------------------
 
 Script Authentication
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -716,7 +714,7 @@ Script Authentication
    yt projects list
 
 Multi-Environment Setup
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -732,7 +730,7 @@ Multi-Environment Setup
    done
 
 Credential Backup
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

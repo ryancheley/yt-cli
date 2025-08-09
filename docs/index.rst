@@ -21,6 +21,7 @@ users, and more.
    learning-path
    workflows
    troubleshooting
+   ssl-troubleshooting
    tutorial
    error-handling
    performance
