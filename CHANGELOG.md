@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.18.1] - 2025-08-09
 
 ### Changed
 - 🔄 Standardize verb consistency: change 'yt alias remove' to 'yt alias delete' (#566)
@@ -25,11 +25,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced SSL error handling with specific error types (ConnectError, HTTPStatusError)
   - Added comprehensive SSL troubleshooting documentation
   - Updated tests for SSL certificate functionality
-- 📚 Fix confusing SSL verification flag documentation (#587)
+- 📚 Fix confusing SSL verification flag documentation (Fixes #587) (#589)
   - Removed deprecated `--no-verify-ssl` standalone flag from documentation (it remains hidden in CLI)
   - Clarified that only `--verify-ssl/--no-verify-ssl` boolean flag should be used
   - Updated deprecation message to be clearer about the correct usage
   - Fixed documentation formatting issues with section underlines
+
+## [0.18.0] - 2025-08-09
+
+### Added
+- 🔐 Add SSL certificate file support to yt auth login command (Fixes #585) (#586)
+  - Added `--cert-file` option to support custom SSL certificate files during authentication
+  - Enhanced SSL certificate handling for self-signed and custom certificate scenarios
+  - Improved SSL error handling with specific guidance for certificate issues
+
+## [0.17.0] - 2025-08-08
+
+### Added
+- ✨ Implement: Add markdown file article ID insertion (Fixes #583) (#584)
+  - Added functionality to insert article IDs into markdown files
+  - Enhanced article management workflow for documentation teams
+  - Support for automated ID insertion in markdown-based documentation
+
+## [0.16.0] - 2025-08-07
+
+### Added
+- 📚 Add comprehensive documentation for undocumented CLI commands (#579)
+  - Documented missing subcommands across multiple command groups (#582)
+  - Documented missing subcommands in issues command (#581)
+  - Documented missing global CLI options (#580)
+  - Comprehensive documentation coverage for all CLI functionality
+- 📖 Implement doctest support for documentation and code examples (Fixes #571) (#574)
+  - Added automated testing of code examples in documentation
+  - Ensures documentation examples stay current and functional
+  - Enhanced documentation quality and reliability
+
+### Changed
+- 🔄 Standardize verb consistency: change 'yt boards view' to 'yt boards show' (#573)
+  - Changed primary command from `yt boards view` to `yt boards show` for consistency with other show commands
+  - Kept `view` as a hidden alias for backwards compatibility
+  - Updated all documentation references to use the new `show` verb
+
+### Improved
+- ⬆️ ci(deps): bump astral-sh/setup-uv from 6.3.1 to 6.4.3 (#569)
+  - Updated GitHub Actions dependency for improved CI/CD performance
 
 ## [0.15.1] - 2025-08-04
 
