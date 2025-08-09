@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Kept `add` as a hidden alias for backwards compatibility
   - Updated all documentation references to use the new `create` verb
 
+### Fixed
+- 📚 Fix confusing SSL verification flag documentation (#587)
+  - Removed deprecated `--no-verify-ssl` standalone flag from documentation (it remains hidden in CLI)
+  - Clarified that only `--verify-ssl/--no-verify-ssl` boolean flag should be used
+  - Updated deprecation message to be clearer about the correct usage
+  - Fixed documentation formatting issues with section underlines
+
 ## [0.15.1] - 2025-08-04
 
 ### Added

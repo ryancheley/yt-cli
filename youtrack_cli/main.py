@@ -1187,7 +1187,7 @@ def auth(ctx: click.Context) -> None:
     "no_verify_ssl_deprecated",
     is_flag=True,
     hidden=True,
-    help="Deprecated: Use --no-verify-ssl instead",
+    help="Deprecated: Use '--no-verify-ssl' flag option instead of standalone flag",
 )
 @click.pass_context
 def login(
@@ -1236,7 +1236,10 @@ def login(
     # Handle deprecated --no-verify-ssl flag
     if no_verify_ssl_deprecated:
         verify_ssl = False
-        console.print("⚠️  --no-verify-ssl flag is deprecated. Use --no-verify-ssl instead.", style="yellow")
+        console.print(
+            "⚠️  The standalone --no-verify-ssl flag is deprecated. Use '--no-verify-ssl' as a boolean flag option instead.",
+            style="yellow",
+        )
 
     # Determine SSL verification configuration
     ssl_verify = True  # Default to True
