@@ -628,4 +628,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Keep a Changelog](https://keepachangelog.com/)
 - [Semantic Versioning](https://semver.org/)
-- [YouTrack CLI Repository](https://github.com/ryan-murphy/yt-cli)
+- [YouTrack CLI Repository](https://github.com/ryancheley/yt-cli)
