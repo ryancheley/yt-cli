@@ -167,7 +167,7 @@ def create(
 
 
 @articles.command()
-@click.argument("article_id")
+@click.argument("article_id", required=False)
 @click.option(
     "--title",
     "-t",
@@ -207,7 +207,7 @@ def create(
 @click.pass_context
 def edit(
     ctx: click.Context,
-    article_id: str,
+    article_id: Optional[str],
     title: Optional[str],
     content: Optional[str],
     file: Optional[Path],
@@ -220,13 +220,18 @@ def edit(
 
     Edit an existing knowledge base article with updated content.
     Either --content or --file can be provided for content updates.
+    When using --file, the article ID can be provided as an argument or extracted
+    from the file if it contains an ArticleID comment.
 
     Examples:
         # Edit article with inline content
         yt articles edit DOCS-A-1 --content "Updated content..."
 
-        # Edit article from file
+        # Edit article from file with explicit ID
         yt articles edit DOCS-A-1 --file ./updated-docs.md
+
+        # Edit article from file with ID in the file
+        yt articles edit --file ./updated-docs.md
 
         # Update title and visibility
         yt articles edit DOCS-A-1 --title "New Title" --visibility private
@@ -256,7 +261,22 @@ def edit(
             from ..articles import extract_article_id_from_content
 
             existing_article_id = extract_article_id_from_content(content)
-            if existing_article_id and existing_article_id != article_id:
+
+            # If no article_id was provided as argument, try to use the one from the file
+            if not article_id:
+                if existing_article_id:
+                    article_id = existing_article_id
+                    console.print(f"📝 Using ArticleID '{article_id}' from file", style="blue")
+                else:
+                    console.print("❌ No article ID provided and none found in file", style="red")
+                    console.print(
+                        "💡 Provide the article ID as an argument: yt articles edit ARTICLE-ID --file ...", style="blue"
+                    )
+                    console.print(
+                        "💡 Or add an ArticleID comment to the file: <!-- ArticleID: ARTICLE-ID -->", style="blue"
+                    )
+                    raise click.ClickException("Article ID is required")
+            elif existing_article_id and existing_article_id != article_id:
                 console.print(
                     f"⚠️  Warning: File contains ArticleID '{existing_article_id}' "
                     f"but you're editing article '{article_id}'",
@@ -265,9 +285,18 @@ def edit(
         except UnicodeDecodeError:
             console.print(f"❌ File '{file}' is not a valid text file", style="red")
             raise click.ClickException("File must be a valid text file") from None
+        except click.ClickException:
+            # Re-raise click exceptions as-is
+            raise
         except Exception as e:
             console.print(f"❌ Error reading file '{file}': {e}", style="red")
             raise click.ClickException("Failed to read file") from e
+
+    # Validate that article_id is provided if no file is specified
+    if not article_id:
+        console.print("❌ Article ID is required", style="red")
+        console.print("💡 Provide the article ID as an argument: yt articles edit ARTICLE-ID ...", style="blue")
+        raise click.ClickException("Article ID is required")
 
     if show_details:
         console.print(f"📋 Fetching article '{article_id}' details...", style="blue")

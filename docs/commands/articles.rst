@@ -125,11 +125,11 @@ Edit an existing article's properties.
 
 .. code-block:: bash
 
-   yt articles edit ARTICLE_ID [OPTIONS]
+   yt articles edit [ARTICLE_ID] [OPTIONS]
 
 **Arguments:**
 
-* ``ARTICLE_ID`` - The ID of the article to edit (required)
+* ``ARTICLE_ID`` - The ID of the article to edit (optional when using --file with ArticleID comment)
 
 **Options:**
 
@@ -178,20 +178,26 @@ Edit an existing article's properties.
    # View detailed article information
    yt articles edit ARTICLE-123 --show-details
 
-   # Update article from a markdown file
+   # Update article from a markdown file with explicit ID
    yt articles edit ARTICLE-123 --file updated-content.md
 
    # Update article from file without ArticleID insertion
    yt articles edit ARTICLE-123 --file updated.md --no-article-id
 
+   # Update article from file using ArticleID in the file
+   # (file must contain <!-- ArticleID: ARTICLE-123 --> comment)
+   yt articles edit --file updated-content.md
+
 **ArticleID Management:**
 
 When editing articles with markdown files, the CLI automatically manages ArticleID comments:
 
-* If the file doesn't have an ArticleID comment, one is added
-* If the file has a different ArticleID, a warning is displayed
+* The article ID can be provided as an argument or extracted from the file's ArticleID comment
+* If no article ID is provided as an argument, the CLI looks for an ArticleID comment in the file
+* If the file doesn't have an ArticleID comment, one is added after successful update
+* If the file has a different ArticleID than the argument, a warning is displayed
 * The ArticleID helps track the relationship between local files and YouTrack articles
-* Use ``--no-article-id`` to disable this behavior
+* Use ``--no-article-id`` to disable automatic ArticleID insertion/updating
 
 publish
 ~~~~~~~

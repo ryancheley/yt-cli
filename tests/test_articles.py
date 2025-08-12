@@ -1079,3 +1079,134 @@ class TestArticleIDCommandIntegration:
 
         finally:
             Path(temp_file).unlink()
+
+    def test_edit_command_with_file_containing_article_id(self):
+        """Test edit command with file containing ArticleID and no argument."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import edit
+
+        runner = CliRunner()
+
+        # Create a file with ArticleID comment
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("<!-- ArticleID: DOCS-A-123 -->\n# Updated Article\nUpdated content.")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    # Setup mocks
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful update
+                    mock_manager.update_article = AsyncMock(
+                        return_value={"status": "success", "message": "Article updated"}
+                    )
+
+                    # Run command without article ID argument
+                    result = runner.invoke(edit, ["--file", temp_file], obj={"config": {}})
+
+                    # Command should succeed
+                    assert result.exit_code == 0
+
+                    # Check that update_article was called with the extracted ID
+                    mock_manager.update_article.assert_called_once()
+                    call_args = mock_manager.update_article.call_args
+                    assert call_args[1]["article_id"] == "DOCS-A-123"
+
+        finally:
+            Path(temp_file).unlink()
+
+    def test_edit_command_with_file_missing_article_id(self):
+        """Test edit command with file without ArticleID and no argument."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import edit
+
+        runner = CliRunner()
+
+        # Create a file without ArticleID comment
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Updated Article\nUpdated content without ArticleID.")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    # Setup mocks
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Run command without article ID argument
+                    result = runner.invoke(edit, ["--file", temp_file], obj={"config": {}})
+
+                    # Command should fail
+                    assert result.exit_code != 0
+                    assert "No article ID provided and none found in file" in result.output
+
+        finally:
+            Path(temp_file).unlink()
+
+    def test_edit_command_with_conflicting_article_ids(self):
+        """Test edit command with different article IDs in argument and file."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import edit
+
+        runner = CliRunner()
+
+        # Create a file with ArticleID comment
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("<!-- ArticleID: DOCS-A-123 -->\n# Updated Article\nUpdated content.")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    # Setup mocks
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful update
+                    mock_manager.update_article = AsyncMock(
+                        return_value={"status": "success", "message": "Article updated"}
+                    )
+
+                    # Run command with different article ID argument
+                    result = runner.invoke(edit, ["DOCS-A-456", "--file", temp_file], obj={"config": {}})
+
+                    # Command should succeed but show warning
+                    assert result.exit_code == 0
+                    assert "Warning: File contains ArticleID 'DOCS-A-123'" in result.output
+                    assert "DOCS-A-456" in result.output
+
+                    # Check that update_article was called with the argument ID
+                    mock_manager.update_article.assert_called_once()
+                    call_args = mock_manager.update_article.call_args
+                    assert call_args[1]["article_id"] == "DOCS-A-456"
+
+        finally:
+            Path(temp_file).unlink()
