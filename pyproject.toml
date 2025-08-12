@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9, <3.14"
 license = { text = "MIT" }
 authors = [
-    { name = "Ryan Murphy", email = "ryan@example.com" },
+    { name = "Ryan Cheley", email = "rcheley@gmail.com" },
 ]
 keywords = ["youtrack", "cli", "issue-tracking", "jetbrains", "project-management"]
 classifiers = [
@@ -43,11 +43,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ryan-murphy/yt-cli"
+Homepage = "https://github.com/ryancheley/yt-cli"
 Documentation = "https://yt-cli.readthedocs.io/"
-Repository = "https://github.com/ryan-murphy/yt-cli.git"
-Issues = "https://github.com/ryan-murphy/yt-cli/issues"
-Changelog = "https://github.com/ryan-murphy/yt-cli/blob/main/CHANGELOG.md"
+Repository = "https://github.com/ryancheley/yt-cli.git"
+Issues = "https://github.com/ryancheley/yt-cli/issues"
+Changelog = "https://github.com/ryancheley/yt-cli/blob/main/CHANGELOG.md"
 
 [project.scripts]
 yt = "youtrack_cli.main:main"
