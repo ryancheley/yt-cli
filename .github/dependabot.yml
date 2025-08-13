@@ -13,7 +13,7 @@ updates:
     assignees:
       - "@ryan"
     commit-message:
-      prefix: "deps"
+      prefix: ":arrow_up: deps"
       include: "scope"
 
   # Update GitHub Actions weekly
@@ -29,5 +29,5 @@ updates:
     assignees:
       - "@ryan"
     commit-message:
-      prefix: "ci"
+      prefix: ":construction_worker: ci"
       include: "scope"
