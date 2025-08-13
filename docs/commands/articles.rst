@@ -482,7 +482,8 @@ Add tags to an article for better organization and categorization.
 
 When no tag names are provided, the command enters interactive mode where you can:
 
-* View all available tags in the system
+* View all available tags in the system, sorted alphabetically
+* See the visibility state of each tag (public, restricted, etc.)
 * Select multiple tags using numbered indices
 * Confirm your selection before applying
 
@@ -506,11 +507,11 @@ When no tag names are provided, the command enters interactive mode where you ca
    🔍 Fetching available tags...
 
    📋 Available tags:
-     1. bug (ID: 1-0)
-     2. documentation (ID: 2-0)
-     3. feature (ID: 3-0)
-     4. urgent (ID: 4-0)
-     5. review (ID: 5-0)
+     1. bug (public)
+     2. documentation (public)
+     3. feature (restricted to Developers)
+     4. review (public)
+     5. urgent (restricted to Managers, Admins)
 
    💡 Enter tag numbers separated by spaces (e.g., 1 3 5) or 'q' to quit:
    1 2 4
@@ -786,7 +787,7 @@ Common Workflows
 ----------------
 
 Creating Documentation Structure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
