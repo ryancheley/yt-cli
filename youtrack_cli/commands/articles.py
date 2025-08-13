@@ -864,10 +864,28 @@ def tag_article(ctx: click.Context, article_id: str, tags: tuple[str, ...]) -> N
                 console.print("No tags available.", style="yellow")
                 return
 
+            # Sort tags alphabetically by name
+            available_tags = sorted(available_tags, key=lambda x: x.get("name", "").lower())
+
             # Show interactive selection
             console.print("\n📋 Available tags:", style="green")
             for i, tag in enumerate(available_tags, 1):
-                console.print(f"  {i}. {tag.get('name', 'Unknown')} (ID: {tag.get('id', 'N/A')})")
+                # Determine visibility state
+                visible_for = tag.get("visibleFor")
+                if not visible_for or len(visible_for) == 0:
+                    visibility = "public"
+                else:
+                    # Tag has restricted visibility
+                    visibility = "restricted"
+                    if visible_for and len(visible_for) > 0:
+                        # Try to get more specific visibility info
+                        visibility_names = [vf.get("name", "") for vf in visible_for if vf.get("name")]
+                        if visibility_names:
+                            visibility = f"restricted to {', '.join(visibility_names[:2])}"
+                            if len(visibility_names) > 2:
+                                visibility += f" and {len(visibility_names) - 2} more"
+
+                console.print(f"  {i}. {tag.get('name', 'Unknown')} ({visibility})")
 
             # Get user selection
             console.print("\n💡 Enter tag numbers separated by spaces (e.g., 1 3 5) or 'q' to quit:")
@@ -909,6 +927,8 @@ def tag_article(ctx: click.Context, article_id: str, tags: tuple[str, ...]) -> N
                 return
 
             available_tags = tags_result["data"]
+            # Sort tags alphabetically by name
+            available_tags = sorted(available_tags, key=lambda x: x.get("name", "").lower())
             tag_map = {tag.get("name", "").lower(): tag.get("id") for tag in available_tags}
 
             # Find matching tags

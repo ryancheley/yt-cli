@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command now extracts article ID from file's ArticleID comment when no ID is provided
   - Added clear error messages when article ID is missing from both command line and file
   - Shows warning when file contains different ArticleID than the one provided as argument
+- 📋 Improve 'yt a tag' command to display tags alphabetically with visibility state (#594)
+  - Tags are now displayed in alphabetical order for better readability
+  - Each tag now shows its visibility state (public, restricted, etc.)
+  - Enhanced interactive tag selection with clearer visibility information
 
 ## [0.18.1] - 2025-08-09
 
