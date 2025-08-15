@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2025-08-13
+
+### Added
+- ✨ Group related issues under clear relationship type headings in 'yt i related --format table' output (#601)
+  - Replace flat table format with visually grouped sections for each relationship type
+  - Add clear section headers with visual separators using ═ characters
+  - Display direction symbols (→ ←) clearly next to issue IDs for better visual distinction
+  - Improve readability by grouping all related issues under their relationship type
+  - Maintain color coding and proper spacing between different relationship groups
+
+### Changed
+- ✨ Add user's full name to assignee column in 'yt i list' output (#600)
+  - Enhanced assignee display to show full name with login in parentheses (e.g., "John Doe (john.doe)")
+  - Falls back to login only when full name is unavailable
+  - Improved user identification and readability in issue lists
+  - Updated documentation with new assignee display format examples
+
 ## [0.20.0] - 2025-08-12
 
 ### Changed
