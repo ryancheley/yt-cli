@@ -44,12 +44,17 @@ def _format_issues_as_csv(issues):
         # Extract assignee info
         assignee_name = "Unassigned"
         if issue.get("assignee") and isinstance(issue["assignee"], dict):
-            assignee_name = (
-                issue["assignee"].get("fullName")
-                or issue["assignee"].get("name")
-                or issue["assignee"].get("login")
-                or "Unassigned"
-            )
+            fullName = issue["assignee"].get("fullName")
+            name = issue["assignee"].get("name")
+            login = issue["assignee"].get("login")
+
+            # If we have both fullName/name and login, show both
+            if (fullName or name) and login:
+                display_name = fullName or name
+                assignee_name = f"{display_name} ({login})"
+            else:
+                # Otherwise return what we have
+                assignee_name = fullName or name or login or "Unassigned"
 
         # Extract custom field values
         custom_fields = issue.get("customFields", [])

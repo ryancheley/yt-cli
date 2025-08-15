@@ -79,6 +79,11 @@ List and filter issues with advanced options.
   * ``-q, --query TEXT`` - Advanced query filter using YouTrack syntax
   * ``--format [table|json|csv]`` - Output format (default: table)
 
+.. note::
+   The assignee column in table output displays both the user's full name and username
+   in the format "Full Name (username)" when both are available. This helps with user
+   identification when multiple users may share similar names.
+
 **Examples:**
 
 .. code-block:: bash
