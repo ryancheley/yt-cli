@@ -509,7 +509,21 @@ class TestIssueManagerUtilities:
     def test_get_assignee_name_from_regular_field(self, issue_manager, sample_issue):
         """Test getting assignee name from regular field."""
         result = issue_manager._get_assignee_name(sample_issue)
-        assert result == "Test User"
+        assert result == "Test User (testuser)"
+
+    def test_get_assignee_name_only_login(self, issue_manager):
+        """Test getting assignee name when only login is available."""
+        issue = {"assignee": {"login": "testuser"}}
+        with patch.object(issue_manager, "_get_custom_field_value", return_value=None):
+            result = issue_manager._get_assignee_name(issue)
+            assert result == "testuser"
+
+    def test_get_assignee_name_only_fullname(self, issue_manager):
+        """Test getting assignee name when only fullName is available."""
+        issue = {"assignee": {"fullName": "Test User"}}
+        with patch.object(issue_manager, "_get_custom_field_value", return_value=None):
+            result = issue_manager._get_assignee_name(issue)
+            assert result == "Test User"
 
     def test_get_assignee_name_unassigned(self, issue_manager):
         """Test getting assignee name when unassigned."""
