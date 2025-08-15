@@ -783,7 +783,7 @@ class IssueManager:
 
         from collections import defaultdict
 
-        from rich.table import Table
+        from rich.text import Text
 
         # Group links by relationship type and direction
         relationships_by_type = defaultdict(list)
@@ -829,22 +829,36 @@ class IssueManager:
                     }
                 )
 
-        # Create table with relationship type grouping
-        table = Table(title="Issue Relationships")
-        table.add_column("Relationship Type", style="cyan", no_wrap=True)
-        table.add_column("Direction", style="magenta", no_wrap=True)
-        table.add_column("Related Issue", style="green")
-        table.add_column("Summary", style="white")
+        # Display relationships with clear visual grouping
+        self.console.print("\n[bold cyan]Issue Relationships[/bold cyan]\n")
 
-        for relationship_type, related_issues in relationships_by_type.items():
-            for i, related_issue in enumerate(related_issues):
-                # Only show the relationship type for the first issue in each group
-                type_display = relationship_type if i == 0 else ""
+        for i, (relationship_type, related_issues) in enumerate(relationships_by_type.items()):
+            # Add spacing between groups (except for the first one)
+            if i > 0:
+                self.console.print()
+
+            # Display section header with visual separator
+            header_text = f" {relationship_type} "
+            separator = "═" * (len(header_text) + 10)
+            self.console.print(f"[bold blue]{separator}[/bold blue]")
+            self.console.print(f"[bold blue]═════{header_text}═════[/bold blue]")
+            self.console.print(f"[bold blue]{separator}[/bold blue]")
+
+            # Create a simple table for this relationship type
+            for related_issue in related_issues:
                 direction_symbol = "→" if related_issue["direction"] == "OUTWARD" else "←"
 
-                table.add_row(type_display, direction_symbol, related_issue["issue_id"], related_issue["summary"])
+                # Format the output line
+                issue_line = Text()
+                issue_line.append(f"{direction_symbol} ", style="magenta")
+                issue_line.append(f"{related_issue['issue_id']}", style="green")
+                issue_line.append("    ", style="")
+                issue_line.append(f"{related_issue['summary']}", style="white")
 
-        self.console.print(table)
+                self.console.print(issue_line)
+
+        # Add a final newline for better readability
+        self.console.print()
 
     async def move_issue(
         self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
