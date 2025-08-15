@@ -330,6 +330,15 @@ release version:
         exit 1
     fi
 
+    # Check CHANGELOG.md contains the version
+    echo "📝 Checking CHANGELOG.md contains version {{ version }}..."
+    if ! grep -q "## \[{{ version }}\]" CHANGELOG.md; then
+        echo "❌ CHANGELOG.md does not contain version {{ version }}"
+        echo "💡 Please add a section for version {{ version }} in CHANGELOG.md"
+        echo "    Expected format: ## [{{ version }}] - $(date +%Y-%m-%d)"
+        exit 1
+    fi
+
     # Run quality checks
     echo "🔍 Running quality checks..."
     if ! just check; then
