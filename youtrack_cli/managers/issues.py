@@ -55,12 +55,22 @@ class IssueManager:
         # First try the regular assignee field
         assignee = issue.get("assignee")
         if assignee and isinstance(assignee, dict):
-            if assignee.get("fullName"):
-                return assignee["fullName"]
-            if assignee.get("name"):
-                return assignee["name"]
-            if assignee.get("login"):
-                return assignee["login"]
+            fullName = assignee.get("fullName")
+            name = assignee.get("name")
+            login = assignee.get("login")
+
+            # If we have both fullName/name and login, show both
+            if (fullName or name) and login:
+                display_name = fullName or name
+                return f"{display_name} ({login})"
+
+            # Otherwise return what we have
+            if fullName:
+                return fullName
+            if name:
+                return name
+            if login:
+                return login
 
         # If not found, try the Assignee custom field
         custom_assignee = self._get_custom_field_value(issue, "Assignee")
