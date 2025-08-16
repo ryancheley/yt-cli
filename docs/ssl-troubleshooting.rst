@@ -40,7 +40,7 @@ Understanding Certificate Types
 Server Certificate vs CA Bundle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **Server Certificate**: The certificate presented by the YouTrack server (e.g., for \*.mydohc.com)
+- **Server Certificate**: The certificate presented by the YouTrack server (e.g., for \*.example.com)
 - **CA Bundle**: A file containing Certificate Authority certificates needed to verify the server certificate
 - **Certificate Chain**: A file containing both the server certificate and the CA certificates
 
