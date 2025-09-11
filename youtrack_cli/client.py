@@ -20,7 +20,7 @@ import asyncio
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 import httpx
 
@@ -452,7 +452,8 @@ class HTTPClientManager:
         )
 
         tasks = [_bounded_request(req) for req in requests]
-        return await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+        return list(results)
 
     async def make_cached_request(
         self,
@@ -675,8 +676,11 @@ async def reset_client_manager() -> None:
     global _client_manager
     if _client_manager is not None:
         try:
-            # Type assertion: _client_manager is guaranteed not None here
-            await cast(HTTPClientManager, _client_manager).close()
+            # Type assertion: _client_manager is guaranteed not None after if check
+            from typing import cast
+
+            client_manager = cast(HTTPClientManager, _client_manager)
+            await client_manager.close()
             logger.debug("Client manager connections closed during reset")
         except Exception as e:
             logger.warning(

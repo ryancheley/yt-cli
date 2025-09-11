@@ -1923,9 +1923,15 @@ def batch_create(
         console.print(f"✅ Validation successful! Found {len(validated_items)} items to process.", style="green")
 
         # Perform the batch operation
+        from typing import cast
+
+        from youtrack_cli.batch import BatchIssueCreate
+
+        # Type assertion: operation_type="create" guarantees BatchIssueCreate list
+        create_items = cast(list[BatchIssueCreate], validated_items)
         return await batch_manager.batch_create_issues(
-            validated_items, dry_run=dry_run, continue_on_error=continue_on_error
-        )  # type: ignore[arg-type]
+            create_items, dry_run=dry_run, continue_on_error=continue_on_error
+        )
 
     try:
         result = asyncio.run(run_batch_create())
@@ -2019,9 +2025,15 @@ def batch_update(
         console.print(f"✅ Validation successful! Found {len(validated_items)} items to process.", style="green")
 
         # Perform the batch operation
+        from typing import cast
+
+        from youtrack_cli.batch import BatchIssueUpdate
+
+        # Type assertion: operation_type="update" guarantees BatchIssueUpdate list
+        update_items = cast(list[BatchIssueUpdate], validated_items)
         return await batch_manager.batch_update_issues(
-            validated_items, dry_run=dry_run, continue_on_error=continue_on_error
-        )  # type: ignore[arg-type]
+            update_items, dry_run=dry_run, continue_on_error=continue_on_error
+        )
 
     try:
         result = asyncio.run(run_batch_update())
