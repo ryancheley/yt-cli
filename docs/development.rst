@@ -380,11 +380,13 @@ The test suite uses ``pytest-randomly`` to randomize test execution order. Each 
 Multi-version Testing
 ~~~~~~~~~~~~~~~~~~~~~
 
-Test against multiple Python versions using tox:
+Test against multiple Python versions using tox with uv integration for faster environment creation:
 
 .. code-block:: bash
 
    uv run tox
+
+The project uses the tox-uv plugin to leverage uv's speed for creating and managing test environments, significantly reducing test setup time compared to traditional pip-based installation.
 
 Writing Tests
 ~~~~~~~~~~~~~
