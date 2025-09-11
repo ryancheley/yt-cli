@@ -25,17 +25,16 @@ jobs:
       uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v4
       with:
         version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: uv sync --dev
-
-    - name: Run tests
-      run: uv run pytest --cov=youtrack_cli --cov-report=xml
+    - name: Install dependencies and run tests with tox-uv
+      run: uvx --with tox-uv tox -e py$(echo ${{ matrix.python-version }} | tr -d '.')
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v4
@@ -57,20 +56,16 @@ jobs:
       uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v4
       with:
         version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
       with:
         python-version: "3.11"
 
-    - name: Install dependencies
-      run: uv sync --dev
-
-    - name: Run ruff check
-      run: uv run ruff check
-
-    - name: Run ruff format check
-      run: uv run ruff format --check
+    - name: Run lint with tox-uv
+      run: uvx --with tox-uv tox -e lint
 
   type-check:
     runs-on: ubuntu-latest
@@ -83,17 +78,16 @@ jobs:
       uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v4
       with:
         version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
       with:
         python-version: "3.11"
 
-    - name: Install dependencies
-      run: uv sync --dev
-
-    - name: Run ty
-      run: uv run ty check --ignore call-non-callable --ignore unresolved-attribute youtrack_cli
+    - name: Run type check with tox-uv
+      run: uvx --with tox-uv tox -e type
 
   security:
     runs-on: ubuntu-latest
@@ -106,17 +100,18 @@ jobs:
       uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v4
       with:
         version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
       with:
         python-version: "3.11"
 
-    - name: Install dependencies
-      run: uv sync --dev
-
-    - name: Run zizmor
-      run: uv run zizmor .github/workflows/
+    - name: Install dependencies and run security check
+      run: |
+        uv sync --dev
+        uv run zizmor .github/workflows/
 
   documentation:
     runs-on: ubuntu-latest
@@ -129,30 +124,21 @@ jobs:
       uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v4
       with:
         version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
       with:
         python-version: "3.11"
 
-    - name: Install dependencies
-      run: uv sync --dev --group docs
-
-    - name: Verify Sphinx installation
-      run: uv run python -c "import sphinx; print('Sphinx version:', sphinx.__version__)"
-
-    - name: Build documentation
-      run: uv run python -m sphinx -b html docs docs/_build/html --keep-going
-
-    - name: Run doctests
-      run: uv run python -m sphinx -b doctest docs docs/_build/doctest
-
-    - name: Check documentation links
-      run: uv run python -m sphinx -b linkcheck docs docs/_build/linkcheck
-      continue-on-error: true  # Allow link check failures initially
-
-    - name: Validate documentation structure
+    - name: Install dependencies and build documentation
       run: |
+        uv sync --dev --group docs
+        uv run python -c "import sphinx; print('Sphinx version:', sphinx.__version__)"
+        uv run python -m sphinx -b html docs docs/_build/html --keep-going
+        uv run python -m sphinx -b doctest docs docs/_build/doctest
+        uv run python -m sphinx -b linkcheck docs docs/_build/linkcheck || true
         echo "Documentation testing infrastructure is in place"
         echo "RST files found:" && find docs/ -name "*.rst" | wc -l
 

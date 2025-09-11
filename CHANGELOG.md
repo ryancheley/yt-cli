@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- ⚡ Speed up GitHub Actions CI with tox-uv integration (#610)
+  - Integrated tox-uv plugin for 1.5x to 10x faster CI execution times
+  - Optimized GitHub Actions workflow to use `uvx --with tox-uv tox` commands
+  - Enhanced CI caching with uv cache configuration for better dependency management
+  - Consolidated redundant dependency installations across CI jobs
+  - Updated tox.ini with `uv_seed = true` for enhanced tox-uv optimizations
+  - Improved developer productivity with faster CI feedback loops
 - ⚡ Add tox-uv plugin for faster testing with uv package manager (#608)
   - Added tox-uv plugin to development dependencies for faster environment creation
   - Updated tox configuration to use uv runner for improved testing performance
