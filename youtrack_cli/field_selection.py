@@ -6,7 +6,7 @@ by only requesting needed fields based on the command context and user preferenc
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union
 
 from .logging import get_logger
 
@@ -440,4 +440,7 @@ def get_field_selector(config_manager=None) -> FieldSelector:
     if _field_selector is None:
         _field_selector = FieldSelector(config_manager)
     # Type assertion: _field_selector is guaranteed not None after initialization
-    return cast(FieldSelector, _field_selector)
+    from typing import cast
+
+    field_selector = cast(FieldSelector, _field_selector)
+    return field_selector
