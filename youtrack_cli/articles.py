@@ -12,7 +12,12 @@ from .client import get_client_manager
 from .console import get_console
 from .pagination import create_paginated_display
 
-__all__ = ["ArticleManager"]
+__all__ = [
+    "ArticleManager",
+    "extract_article_id_from_content",
+    "insert_or_update_article_id",
+    "find_file_with_article_id",
+]
 
 
 class ArticleManager:
@@ -1241,6 +1246,26 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": f"Error deleting attachment: {str(e)}"}
 
+    async def fetch_article(self, article_id: str) -> dict[str, Any]:
+        """Fetch a specific article's content from YouTrack.
+
+        Args:
+            article_id: The article ID (readable or internal)
+
+        Returns:
+            A dict with status, message, and optionally the article data
+        """
+        credentials = self.auth_manager.load_credentials()
+        if not credentials:
+            return {
+                "status": "error",
+                "message": "Not authenticated. Run 'yt auth login' first.",
+            }
+
+        # Use get_article to fetch with all necessary fields
+        result = await self.get_article(article_id, fields="id,idReadable,content,title,summary")
+        return result
+
 
 # Helper functions for ArticleID management in markdown files
 def extract_article_id_from_content(content: str) -> Optional[str]:
@@ -1318,3 +1343,36 @@ def remove_article_id_comment(content: str) -> str:
     cleaned_content = re.sub(pattern, "", content)
 
     return cleaned_content
+
+
+def find_file_with_article_id(article_id: str, directory: str = ".") -> Optional[str]:
+    """Find a markdown file in the directory that contains the specified ArticleID.
+
+    This function searches for files with markdown extensions (.md, .markdown)
+    that contain an ArticleID comment matching the given article_id.
+
+    Args:
+        article_id: The article ID to search for
+        directory: The directory to search in (default: current directory)
+
+    Returns:
+        Path to the matching file as a string, or None if not found
+    """
+    from pathlib import Path
+
+    search_dir = Path(directory)
+    if not search_dir.is_dir():
+        return None
+
+    # Search for markdown files
+    for md_file in search_dir.glob("*.md"):
+        try:
+            content = md_file.read_text(encoding="utf-8")
+            found_id = extract_article_id_from_content(content)
+            if found_id == article_id:
+                return str(md_file)
+        except (UnicodeDecodeError, OSError):
+            # Skip files that can't be read
+            continue
+
+    return None
