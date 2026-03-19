@@ -48,12 +48,40 @@ Create new issues in YouTrack projects.
   * ``-t, --type TEXT`` - Issue type (e.g., Bug, Feature, Task)
   * ``-p, --priority TEXT`` - Issue priority (e.g., Critical, High, Medium, Low)
   * ``-a, --assignee TEXT`` - Username of the assignee
+  * ``-cf, --custom-field TEXT`` - Custom field in format "FieldName=value" (repeatable)
 
-**Example:**
+**Custom Fields**
+
+The ``--custom-field`` option supports all YouTrack custom field types:
+
+* **Enum fields**: Single and multi-value enum fields (e.g., Priority, Status)
+* **Text fields**: Free-form text fields
+* **Simple fields**: Integer and float numeric fields
+* **User fields**: Single and multi-user fields (use login names)
+* **Version fields**: Version bundle fields
+* **Build fields**: Build bundle fields
+* **Date/DateTime fields**: Date and date-time fields (use Unix timestamps in milliseconds)
+* **Period fields**: Time period fields
+
+The CLI automatically detects the field type from the project configuration. If type discovery fails, it falls back to enum type as a safe default.
+
+**Examples:**
 
 .. code-block:: bash
 
    yt issues create PROJ-1 "Fix login bug" -d "Users cannot login with special characters" -t Bug -p High -a john.doe
+
+   # Using custom fields
+   yt issues create PROJ-1 "New task" -cf "Team=Backend" -cf "Sprint=Sprint 1"
+
+   # Text field
+   yt issues create PROJ-1 "Task" -cf "Notes=Some implementation notes"
+
+   # Integer field
+   yt issues create PROJ-1 "Task" -cf "StoryPoints=5"
+
+   # User field (use login name)
+   yt issues create PROJ-1 "Task" -cf "Reviewer=john.doe"
 
 List Issues
 ~~~~~~~~~~~
@@ -125,7 +153,12 @@ Update existing issues with new field values.
   * ``-p, --priority TEXT`` - New issue priority
   * ``-a, --assignee TEXT`` - New assignee username
   * ``-t, --type TEXT`` - New issue type
+  * ``-cf, --custom-field TEXT`` - Custom field in format "FieldName=value" (repeatable)
   * ``--show-details`` - Show current issue details instead of updating
+
+**Custom Fields**
+
+The ``--custom-field`` option is repeatable and supports all YouTrack custom field types, consistent with the create command. See the Create Issues section for field type details.
 
 **Examples:**
 
@@ -133,6 +166,9 @@ Update existing issues with new field values.
 
    # Update issue priority and assignee
    yt issues update PROJ-123 -p Critical -a jane.smith
+
+   # Update with custom fields
+   yt issues update PROJ-123 -cf "Team=Frontend" -cf "StoryPoints=8"
 
    # View current issue details
    yt issues update PROJ-123 --show-details
