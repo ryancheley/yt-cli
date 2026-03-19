@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-03-18
+
 ### Fixed
 - Fixed custom fields feature to support all field types (Text, Simple, User, Version, Build, etc.), not just Enum types (#638)
 - Custom fields now use dynamic type discovery to query the project's field configuration
