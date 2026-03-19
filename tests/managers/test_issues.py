@@ -198,6 +198,7 @@ class TestIssueManagerUpdate:
             priority=None,
             assignee=None,
             issue_type=None,
+            custom_fields=None,
         )
         assert result == expected_result
 

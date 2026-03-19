@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, Optional
 
+from ..custom_field_manager import CustomFieldManager
 from ..logging import get_logger
 from .base import BaseService
 
@@ -23,6 +24,7 @@ class IssueService(BaseService):
         issue_type: Optional[str] = None,
         priority: Optional[str] = None,
         assignee: Optional[str] = None,
+        custom_fields: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Create a new issue via API.
 
@@ -33,6 +35,7 @@ class IssueService(BaseService):
             issue_type: Issue type name
             priority: Priority name
             assignee: Assignee login
+            custom_fields: Dict of custom field names to values
 
         Returns:
             API response with issue data
@@ -42,14 +45,14 @@ class IssueService(BaseService):
                 "project": {"id": project_id},
                 "summary": summary,
             }
-            custom_fields = []
+            custom_fields_list = []
 
             if description:
                 issue_data["description"] = description
 
             # Handle custom fields - Priority, Type, and Assignee are typically custom fields in YouTrack
             if priority:
-                custom_fields.append(
+                custom_fields_list.append(
                     {
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Priority",
@@ -58,7 +61,7 @@ class IssueService(BaseService):
                 )
 
             if issue_type:
-                custom_fields.append(
+                custom_fields_list.append(
                     {
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Type",
@@ -67,7 +70,7 @@ class IssueService(BaseService):
                 )
 
             if assignee:
-                custom_fields.append(
+                custom_fields_list.append(
                     {
                         "$type": "SingleUserIssueCustomField",
                         "name": "Assignee",
@@ -75,9 +78,14 @@ class IssueService(BaseService):
                     }
                 )
 
-            # Add custom fields if any were specified
+            # Handle generic custom fields - default to enum type
             if custom_fields:
-                issue_data["customFields"] = custom_fields
+                for field_name, field_value in custom_fields.items():
+                    custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
+
+            # Add custom fields if any were specified
+            if custom_fields_list:
+                issue_data["customFields"] = custom_fields_list
 
             response = await self._make_request("POST", "issues", json_data=issue_data)
             return await self._handle_response(response, success_codes=[200, 201])
@@ -126,6 +134,7 @@ class IssueService(BaseService):
         priority: Optional[str] = None,
         assignee: Optional[str] = None,
         issue_type: Optional[str] = None,
+        custom_fields: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Update an existing issue via API.
 
@@ -137,13 +146,14 @@ class IssueService(BaseService):
             priority: New priority name
             assignee: New assignee login
             issue_type: New issue type name
+            custom_fields: Dict of custom field names to values
 
         Returns:
             API response
         """
         try:
             update_data: Dict[str, Any] = {"$type": "Issue"}
-            custom_fields = []
+            custom_fields_list = []
 
             # Handle regular fields
             if summary is not None:
@@ -161,7 +171,7 @@ class IssueService(BaseService):
                         # Discover the correct state field for this project
                         state_field_info = await self._discover_state_field_for_project(project_id)
                         if state_field_info:
-                            custom_fields.append(
+                            custom_fields_list.append(
                                 {
                                     "$type": "SingleEnumIssueCustomField",
                                     "name": state_field_info["field_name"],
@@ -198,7 +208,7 @@ class IssueService(BaseService):
                 # Use fallback only if field discovery didn't work
                 if not state_field_added:
                     # Use StateBundleElement for state-type fields (consistent with move_issue logic)
-                    custom_fields.append(
+                    custom_fields_list.append(
                         {
                             "$type": "SingleEnumIssueCustomField",
                             "name": "State",
@@ -208,7 +218,7 @@ class IssueService(BaseService):
 
             # Handle assignee field (custom field)
             if assignee is not None:
-                custom_fields.append(
+                custom_fields_list.append(
                     {
                         "$type": "SingleUserIssueCustomField",
                         "name": "Assignee",
@@ -218,7 +228,7 @@ class IssueService(BaseService):
 
             # Handle priority field (keep existing logic for now)
             if priority is not None:
-                custom_fields.append(
+                custom_fields_list.append(
                     {
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Priority",
@@ -228,7 +238,7 @@ class IssueService(BaseService):
 
             # Handle issue type field (as custom field, consistent with create_issue)
             if issue_type is not None:
-                custom_fields.append(
+                custom_fields_list.append(
                     {
                         "$type": "SingleEnumIssueCustomField",
                         "name": "Type",
@@ -236,9 +246,14 @@ class IssueService(BaseService):
                     }
                 )
 
-            # Add custom fields if any
+            # Handle generic custom fields - default to enum type
             if custom_fields:
-                update_data["customFields"] = custom_fields
+                for field_name, field_value in custom_fields.items():
+                    custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
+
+            # Add custom fields if any
+            if custom_fields_list:
+                update_data["customFields"] = custom_fields_list
 
             response = await self._make_request("POST", f"issues/{issue_id}", json_data=update_data)
             result = await self._handle_response(response, success_codes=[200, 204])
