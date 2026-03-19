@@ -1210,3 +1210,277 @@ class TestArticleIDCommandIntegration:
 
         finally:
             Path(temp_file).unlink()
+
+
+@pytest.mark.unit
+class TestArticleFetchCommand:
+    """Test cases for article fetch functionality."""
+
+    def test_find_file_with_article_id_found(self, tmp_path):
+        """Test finding a file with matching ArticleID."""
+        from youtrack_cli.articles import find_file_with_article_id
+
+        # Create a test file with ArticleID
+        test_file = tmp_path / "test.md"
+        test_file.write_text("<!-- ArticleID: DOCS-A-123 -->\n# Test Content")
+
+        # Should find the file
+        result = find_file_with_article_id("DOCS-A-123", str(tmp_path))
+        assert result is not None
+        assert "test.md" in result
+
+    def test_find_file_with_article_id_not_found(self, tmp_path):
+        """Test when no file with matching ArticleID exists."""
+        from youtrack_cli.articles import find_file_with_article_id
+
+        # Create a test file without matching ArticleID
+        test_file = tmp_path / "test.md"
+        test_file.write_text("<!-- ArticleID: OTHER-A-456 -->\n# Test Content")
+
+        # Should not find the file
+        result = find_file_with_article_id("DOCS-A-123", str(tmp_path))
+        assert result is None
+
+    def test_find_file_with_article_id_empty_directory(self, tmp_path):
+        """Test finding file in empty directory."""
+        from youtrack_cli.articles import find_file_with_article_id
+
+        # Should return None for empty directory
+        result = find_file_with_article_id("DOCS-A-123", str(tmp_path))
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_fetch_article_success(self, article_manager):
+        """Test successful article fetch."""
+        mock_response = {
+            "id": "123-456",
+            "idReadable": "DOCS-A-789",
+            "content": "# Article Content\n\nThis is the article body.",
+            "title": "Test Article",
+            "summary": "A test article",
+        }
+
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = mock_response
+            mock_resp.text = '{"id": "123-456", "content": "# Article Content"}'
+            mock_resp.headers = {"content-type": "application/json"}
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.fetch_article("DOCS-A-789")
+
+            assert result["status"] == "success"
+            assert result["data"] == mock_response
+
+    @pytest.mark.asyncio
+    async def test_fetch_article_not_found(self, article_manager):
+        """Test fetching non-existent article."""
+        with patch("youtrack_cli.articles.get_client_manager") as mock_get_client:
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(side_effect=Exception("HTTP 404: Not Found"))
+            mock_get_client.return_value = mock_client_manager
+
+            result = await article_manager.fetch_article("NONEXISTENT-ID")
+
+            assert result["status"] == "error"
+
+    def test_fetch_command_with_explicit_file(self):
+        """Test fetch command with explicit --file option."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful fetch
+                    mock_manager.fetch_article = AsyncMock(
+                        return_value={
+                            "status": "success",
+                            "data": {
+                                "id": "123-456",
+                                "idReadable": "DOCS-A-789",
+                                "content": "# Article Content\n\nBody text.",
+                                "title": "Test Article",
+                                "summary": "Summary",
+                            },
+                        }
+                    )
+
+                    # Run command
+                    result = runner.invoke(fetch, ["DOCS-A-789", "--file", temp_file], obj={"config": {}})
+
+                    assert result.exit_code == 0
+                    assert "Article saved" in result.output
+
+                    # Check file was written with ArticleID
+                    with open(temp_file) as f:
+                        content = f.read()
+
+                    assert "<!-- ArticleID: DOCS-A-789 -->" in content
+                    assert "# Article Content" in content
+
+        finally:
+            Path(temp_file).unlink()
+
+    def test_fetch_command_without_file_creates_default(self):
+        """Test fetch command without --file creates default filename."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+            with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                with patch("youtrack_cli.articles.find_file_with_article_id") as mock_find:
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    mock_find.return_value = None  # No existing file found
+
+                    # Mock successful fetch
+                    mock_manager.fetch_article = AsyncMock(
+                        return_value={
+                            "status": "success",
+                            "data": {
+                                "id": "123-456",
+                                "idReadable": "DOCS-A-789",
+                                "content": "# Article Content",
+                                "title": "Test Article",
+                                "summary": "Summary",
+                            },
+                        }
+                    )
+
+                    # Run command without --file
+                    result = runner.invoke(fetch, ["DOCS-A-789"], obj={"config": {}})
+
+                    assert result.exit_code == 0
+                    assert "DOCS-A-789.md" in result.output
+
+    def test_fetch_command_with_show_details(self):
+        """Test fetch command with --show-details flag."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+            with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                with patch("youtrack_cli.articles.find_file_with_article_id") as mock_find:
+                    with patch("pathlib.Path.write_text"):
+                        mock_auth_instance = MagicMock()
+                        mock_auth.return_value = mock_auth_instance
+
+                        mock_manager = MagicMock()
+                        mock_manager_class.return_value = mock_manager
+
+                        mock_find.return_value = None
+
+                        # Mock successful fetch
+                        mock_manager.fetch_article = AsyncMock(
+                            return_value={
+                                "status": "success",
+                                "data": {
+                                    "id": "123-456",
+                                    "idReadable": "DOCS-A-789",
+                                    "content": "# Article Content",
+                                    "title": "My Great Article",
+                                    "summary": "A very informative article",
+                                },
+                            }
+                        )
+
+                        # Run command with --show-details
+                        result = runner.invoke(fetch, ["DOCS-A-789", "--show-details"], obj={"config": {}})
+
+                        assert result.exit_code == 0
+                        assert "My Great Article" in result.output
+                        assert "A very informative article" in result.output
+
+    def test_fetch_command_finds_existing_file(self):
+        """Test fetch command finding existing file with matching ArticleID."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create existing file with matching ArticleID
+            existing_file = Path(temp_dir) / "existing.md"
+            existing_file.write_text("<!-- ArticleID: DOCS-A-789 -->\nOld content")
+
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful fetch
+                    mock_manager.fetch_article = AsyncMock(
+                        return_value={
+                            "status": "success",
+                            "data": {
+                                "id": "123-456",
+                                "idReadable": "DOCS-A-789",
+                                "content": "# New Content",
+                                "title": "Test",
+                                "summary": "Summary",
+                            },
+                        }
+                    )
+
+                    # Change to temp directory for file resolution
+                    import os
+
+                    original_cwd = os.getcwd()
+                    try:
+                        os.chdir(temp_dir)
+
+                        # Run command without --file
+                        result = runner.invoke(fetch, ["DOCS-A-789"], obj={"config": {}})
+
+                        assert result.exit_code == 0
+                        assert "existing.md" in result.output
+                        assert "Found existing file" in result.output
+
+                        # Check file was updated
+                        content = existing_file.read_text()
+                        assert "# New Content" in content
+                        assert "<!-- ArticleID: DOCS-A-789 -->" in content
+                    finally:
+                        os.chdir(original_cwd)
