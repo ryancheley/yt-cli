@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2025-03-18
+
+### Added
+- ✨ Custom field support for issue creation and updates (#634)
+  - Add `--custom-field` / `-cf` repeatable option to `yt issues create` and `yt issues update` commands
+  - Support arbitrary custom field names with intuitive `"FieldName=value"` format
+  - Enable multiple custom fields per command (e.g., `--custom-field "Team=Backend" --custom-field "Sprint=Sprint 1"`)
+  - Extend batch operations to support custom fields in CSV and JSON files
+  - Default to SingleEnumIssueCustomField type for generic custom fields (most common in YouTrack)
+  - Support projects with custom fields like Team, Sprint, Component, etc.
+
 ### Changed
 - ⚡ Speed up GitHub Actions CI with tox-uv integration (#610)
   - Integrated tox-uv plugin for 1.5x to 10x faster CI execution times
