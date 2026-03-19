@@ -366,6 +366,135 @@ def edit(
 
 @articles.command()
 @click.argument("article_id")
+@click.option(
+    "--file",
+    "-f",
+    type=click.Path(path_type=Path),
+    help="Path to save article content (defaults to article ID + .md)",
+)
+@click.option(
+    "--show-details",
+    is_flag=True,
+    help="Show detailed article information",
+)
+@click.pass_context
+def fetch(
+    ctx: click.Context,
+    article_id: str,
+    file: Optional[Path],
+    show_details: bool,
+) -> None:
+    """Fetch an article's content from YouTrack and save to a local file.
+
+    Downloads an article's content from YouTrack and saves it to a markdown file.
+    The article ID is automatically embedded in the file as an HTML comment.
+
+    When no --file is specified, the command searches the current directory for
+    a file containing a matching ArticleID comment. If found, that file is updated.
+    Otherwise, a default filename is used (article-id.md).
+
+    Examples:
+        # Fetch article and save to default filename (DOCS-A-1.md)
+        yt articles fetch DOCS-A-1
+
+        # Fetch article and save to specific file
+        yt articles fetch DOCS-A-1 --file my-article.md
+
+        # Fetch article and show details before saving
+        yt articles fetch DOCS-A-1 --show-details
+
+        # Update existing local file with latest content
+        yt articles fetch DOCS-A-1 --file ./articles/api-guide.md
+    """
+    from ..articles import ArticleManager, find_file_with_article_id, insert_or_update_article_id
+
+    console = get_console()
+    auth_manager = AuthManager(ctx.obj.get("config"))
+    article_manager = ArticleManager(auth_manager)
+
+    try:
+        console.print(f"📥 Fetching article '{article_id}'...", style="blue")
+
+        result = asyncio.run(article_manager.fetch_article(article_id))
+
+        if result["status"] != "success":
+            console.print(f"❌ {result['message']}", style="red")
+            raise click.ClickException("Failed to fetch article")
+
+        article = result["data"]
+        readable_id = article.get("idReadable", article.get("id", article_id))
+        content = article.get("content", "")
+
+        if show_details:
+            console.print("\n📋 Article Details:", style="blue")
+            console.print(f"  ID: {readable_id}", style="white")
+            if article.get("title"):
+                console.print(f"  Title: {article['title']}", style="white")
+            if article.get("summary"):
+                console.print(f"  Summary: {article['summary']}", style="white")
+            console.print()
+
+        # Determine the target file
+        target_file = None
+
+        if file:
+            # Explicit file provided
+            target_file = file
+            console.print(f"💾 Will save to: {target_file}", style="blue")
+        else:
+            # Check for existing file with matching ArticleID in current directory
+            existing_file = find_file_with_article_id(readable_id, ".")
+            if existing_file:
+                target_file = Path(existing_file)
+                console.print(f"📁 Found existing file: {target_file}", style="blue")
+            else:
+                # Use default filename
+                target_file = Path(f"{readable_id}.md")
+                console.print(f"💾 Will save to: {target_file}", style="blue")
+
+        # Check if target file exists and has different ArticleID
+        if target_file.exists():
+            try:
+                existing_content = target_file.read_text(encoding="utf-8")
+                from ..articles import extract_article_id_from_content
+
+                existing_id = extract_article_id_from_content(existing_content)
+                if existing_id and existing_id != readable_id:
+                    console.print(
+                        f"⚠️  Warning: File contains ArticleID '{existing_id}' but fetching article '{readable_id}'",
+                        style="yellow",
+                    )
+            except UnicodeDecodeError:
+                console.print(
+                    f"⚠️  Warning: Could not read existing file '{target_file}' to check ArticleID",
+                    style="yellow",
+                )
+            except Exception as e:
+                console.print(
+                    f"⚠️  Warning: Error checking existing file: {e}",
+                    style="yellow",
+                )
+
+        # Insert/update ArticleID comment in content
+        updated_content = insert_or_update_article_id(content, readable_id)
+
+        # Write to file
+        try:
+            target_file.write_text(updated_content, encoding="utf-8")
+            console.print(f"✅ Article saved to '{target_file}'", style="green")
+        except Exception as e:
+            console.print(f"❌ Error writing file '{target_file}': {e}", style="red")
+            raise click.ClickException("Failed to write file") from e
+
+    except click.ClickException:
+        raise
+    except Exception as e:
+        console.print(f"❌ Error fetching article: {e}", style="red")
+        raise click.ClickException("Failed to fetch article") from e
+
+
+@articles.command()
+@click.argument("article_id")
 @click.pass_context
 def publish(ctx: click.Context, article_id: str) -> None:
     """Publish a draft article."""
