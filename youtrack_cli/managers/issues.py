@@ -99,6 +99,7 @@ class IssueManager:
         issue_type: Optional[str] = None,
         priority: Optional[str] = None,
         assignee: Optional[str] = None,
+        custom_fields: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Create a new issue with business logic and validation."""
         # Resolve project short name to internal ID if needed
@@ -133,6 +134,7 @@ class IssueManager:
             issue_type=issue_type,
             priority=priority,
             assignee=assignee,
+            custom_fields=custom_fields,
         )
 
         # Add business logic for follow-up operations if needed
@@ -167,6 +169,7 @@ class IssueManager:
         priority: Optional[str] = None,
         assignee: Optional[str] = None,
         issue_type: Optional[str] = None,
+        custom_fields: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Update an existing issue with validation."""
         return await self.issue_service.update_issue(
@@ -177,6 +180,7 @@ class IssueManager:
             priority=priority,
             assignee=assignee,
             issue_type=issue_type,
+            custom_fields=custom_fields,
         )
 
     async def delete_issue(self, issue_id: str) -> Dict[str, Any]:

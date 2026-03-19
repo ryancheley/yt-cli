@@ -212,6 +212,31 @@ def show_issues_verbose_help(ctx):
     console.print("")
 
 
+def _parse_custom_fields(custom_field_tuples: tuple) -> dict:
+    """Parse custom field tuples into dict.
+
+    Args:
+        custom_field_tuples: Tuple of strings in format "FieldName=value"
+
+    Returns:
+        Dict mapping field names to values
+
+    Raises:
+        click.BadParameter: If format is invalid
+    """
+    parsed = {}
+    for field_spec in custom_field_tuples:
+        if "=" not in field_spec:
+            raise click.BadParameter(f'Custom field must be in format "FieldName=value", got: {field_spec}')
+        name, value = field_spec.split("=", 1)
+        name = name.strip()
+        value = value.strip()
+        if not name or not value:
+            raise click.BadParameter(f"Field name and value cannot be empty: {field_spec}")
+        parsed[name] = value
+    return parsed
+
+
 def add_help_verbose_option(func):
     """Decorator to add --help-verbose option to issues commands."""
 
@@ -278,6 +303,12 @@ def issues() -> None:
     "-a",
     help="Assignee username",
 )
+@click.option(
+    "--custom-field",
+    "-cf",
+    multiple=True,
+    help='Custom field in format "FieldName=value" (can be used multiple times)',
+)
 @click.pass_context
 def create(
     ctx: click.Context,
@@ -287,12 +318,13 @@ def create(
     type: Optional[str],
     priority: Optional[str],
     assignee: Optional[str],
+    custom_field: tuple,
 ) -> None:
     r"""Create a new issue.
 
     Create a new issue in the specified project with the given summary.
     You can optionally specify additional fields like description, type,
-    priority, and assignee.
+    priority, assignee, and custom fields.
 
     Common Examples:
         # Create a simple bug report
@@ -303,9 +335,10 @@ def create(
             --description "Need OAuth2 support for mobile app" \
             --type Feature --priority High --assignee john.doe
 
-        # Create a task with priority
-        yt issues create INFRA-789 "Update server certificates" \
-            --type Task --priority Medium
+        # Create with custom fields
+        yt issues create INFRA-789 "Update certificates" \
+            --type Task --priority Medium \
+            --custom-field "Team=Infrastructure" --custom-field "Sprint=Sprint 1"
 
     Tip: Issue types and priorities are project-specific. Use values that exist in your YouTrack project.
     """
@@ -316,6 +349,15 @@ def create(
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
+
+    # Parse custom fields
+    custom_fields = {}
+    if custom_field:
+        try:
+            custom_fields = _parse_custom_fields(custom_field)
+        except click.BadParameter as e:
+            console.print(f"❌ {e.message}", style="red")
+            raise
 
     console.print(f"🐛 Creating issue '{summary}' in project '{project_id}'...", style="blue")
 
@@ -328,6 +370,7 @@ def create(
                 issue_type=type,
                 priority=priority,
                 assignee=assignee,
+                custom_fields=custom_fields,
             )
         )
 
@@ -623,6 +666,12 @@ def list_issues(
     help="New issue type",
 )
 @click.option(
+    "--custom-field",
+    "-cf",
+    multiple=True,
+    help='Custom field in format "FieldName=value" (can be used multiple times)',
+)
+@click.option(
     "--show-details",
     is_flag=True,
     help="Show detailed issue information",
@@ -643,6 +692,7 @@ def update(
     priority: Optional[str],
     assignee: Optional[str],
     type: Optional[str],
+    custom_field: tuple,
     show_details: bool,
     format: str,
 ) -> None:
@@ -669,6 +719,15 @@ def update(
             console.print(f"❌ Error getting issue details: {e}", style="red")
             raise click.ClickException("Failed to get issue details") from e
     else:
+        # Parse custom fields
+        custom_fields = {}
+        if custom_field:
+            try:
+                custom_fields = _parse_custom_fields(custom_field)
+            except click.BadParameter as e:
+                console.print(f"❌ {e.message}", style="red")
+                raise
+
         if not any(
             [
                 summary is not None,
@@ -677,12 +736,13 @@ def update(
                 priority is not None,
                 assignee is not None,
                 type is not None,
+                custom_fields,
             ]
         ):
             console.print("❌ No updates specified.", style="red")
             console.print(
-                "Use --summary, --description, --state, --priority, --assignee, "
-                "or --type options, or --show-details to view current issue.",
+                "Use --summary, --description, --state, --priority, --assignee, --type, "
+                "--custom-field options, or --show-details to view current issue.",
                 style="blue",
             )
             return
@@ -699,6 +759,7 @@ def update(
                     priority=priority,
                     assignee=assignee,
                     issue_type=type,
+                    custom_fields=custom_fields,
                 )
             )
 

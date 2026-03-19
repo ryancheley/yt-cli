@@ -44,7 +44,7 @@ class BatchIssueCreate(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        extra = "forbid"  # Reject any extra fields
+        extra = "allow"  # Allow extra fields for custom fields
 
 
 class BatchIssueUpdate(BaseModel):
@@ -61,7 +61,7 @@ class BatchIssueUpdate(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        extra = "forbid"  # Reject any extra fields
+        extra = "allow"  # Allow extra fields for custom fields
 
 
 class BatchOperationResult(BaseModel):
@@ -501,6 +501,12 @@ class BatchOperationManager:
                         result.successful += 1
                         logger.info(f"[DRY RUN] Would create issue: {item.summary} in {item.project_id}")
                     else:
+                        # Extract custom fields from item (all fields except built-in ones)
+                        built_in_fields = {"project_id", "summary", "description", "type", "priority", "assignee"}
+                        custom_fields = {
+                            k: v for k, v in item.dict().items() if k not in built_in_fields and v is not None
+                        }
+
                         # Actually create the issue
                         create_result = await self.issue_manager.create_issue(
                             project_id=item.project_id,
@@ -509,6 +515,7 @@ class BatchOperationManager:
                             issue_type=item.type,
                             priority=item.priority,
                             assignee=item.assignee,
+                            custom_fields=custom_fields if custom_fields else None,
                         )
 
                         if create_result["status"] == "success":
@@ -592,6 +599,20 @@ class BatchOperationManager:
                         updates = [f"{k}={v}" for k, v in item.dict().items() if v is not None and k != "issue_id"]
                         logger.info(f"[DRY RUN] Would update issue {item.issue_id}: {', '.join(updates)}")
                     else:
+                        # Extract custom fields from item (all fields except built-in ones)
+                        built_in_fields = {
+                            "issue_id",
+                            "summary",
+                            "description",
+                            "state",
+                            "type",
+                            "priority",
+                            "assignee",
+                        }
+                        custom_fields = {
+                            k: v for k, v in item.dict().items() if k not in built_in_fields and v is not None
+                        }
+
                         # Actually update the issue
                         update_result = await self.issue_manager.update_issue(
                             issue_id=item.issue_id,
@@ -601,6 +622,7 @@ class BatchOperationManager:
                             priority=item.priority,
                             assignee=item.assignee,
                             issue_type=item.type,
+                            custom_fields=custom_fields if custom_fields else None,
                         )
 
                         if update_result["status"] == "success":
