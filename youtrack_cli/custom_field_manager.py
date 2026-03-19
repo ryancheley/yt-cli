@@ -331,3 +331,125 @@ class CustomFieldManager:
             ProjectCustomFieldTypes.MULTI_OWN_BUILD,
         }
         return field_type in multi_value_types
+
+    @staticmethod
+    def create_simple_field(name: str, value: Union[int, float, str]) -> Dict[str, Any]:
+        """
+        Create a simple (integer/float) custom field.
+
+        Args:
+            name: The field name
+            value: The numeric value
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        # Convert to appropriate numeric type
+        try:
+            if isinstance(value, (int, float)):
+                numeric_value = value
+            else:
+                # Try int first, then float
+                numeric_value = int(value) if str(value).isdigit() else float(value)
+        except (ValueError, TypeError):
+            # Fallback to string representation if conversion fails
+            numeric_value = str(value)
+
+        return {
+            "$type": IssueCustomFieldTypes.INTEGER,
+            "name": name,
+            "value": numeric_value,
+        }
+
+    @staticmethod
+    def create_date_field(name: str, value: str) -> Dict[str, Any]:
+        """
+        Create a date custom field.
+
+        Args:
+            name: The field name
+            value: The date value (Unix timestamp in milliseconds)
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        try:
+            timestamp = int(value)
+        except (ValueError, TypeError):
+            timestamp = int(value)  # Will raise if invalid
+
+        return {
+            "$type": IssueCustomFieldTypes.DATE,
+            "name": name,
+            "value": timestamp,
+        }
+
+    @staticmethod
+    def create_single_version_field(name: str, value: str) -> Dict[str, Any]:
+        """
+        Create a single version custom field.
+
+        Args:
+            name: The field name
+            value: The version name
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.SINGLE_VERSION,
+            "name": name,
+            "value": {"$type": CustomFieldValueTypes.VERSION_BUNDLE_ELEMENT, "name": value},
+        }
+
+    @staticmethod
+    def create_single_build_field(name: str, value: str) -> Dict[str, Any]:
+        """
+        Create a single build custom field.
+
+        Args:
+            name: The field name
+            value: The build name
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.SINGLE_BUILD,
+            "name": name,
+            "value": {"$type": CustomFieldValueTypes.BUILD_BUNDLE_ELEMENT, "name": value},
+        }
+
+    @staticmethod
+    def create_field_by_type(field_info: Dict[str, Any], name: str, value: str) -> Dict[str, Any]:
+        """
+        Create a custom field using discovered type information.
+
+        Args:
+            field_info: Field information from discover_custom_field
+            name: Field name
+            value: Field value (as string from CLI)
+
+        Returns:
+            Formatted custom field dictionary
+        """
+        issue_field_type = field_info.get("issue_field_type")
+
+        # Map issue field types to creation methods
+        if issue_field_type == IssueCustomFieldTypes.TEXT:
+            return CustomFieldManager.create_text_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.INTEGER:
+            return CustomFieldManager.create_simple_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.SINGLE_USER:
+            return CustomFieldManager.create_single_user_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.SINGLE_VERSION:
+            return CustomFieldManager.create_single_version_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.SINGLE_BUILD:
+            return CustomFieldManager.create_single_build_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.SINGLE_ENUM:
+            return CustomFieldManager.create_single_enum_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.STATE:
+            return CustomFieldManager.create_state_field(name, value)
+        else:
+            # Fallback to enum for unknown types
+            return CustomFieldManager.create_single_enum_field(name, value)

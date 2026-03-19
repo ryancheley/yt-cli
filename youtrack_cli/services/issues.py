@@ -78,10 +78,37 @@ class IssueService(BaseService):
                     }
                 )
 
-            # Handle generic custom fields - default to enum type
+            # Handle generic custom fields with field type discovery
             if custom_fields:
                 for field_name, field_value in custom_fields.items():
-                    custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
+                    try:
+                        # Discover field type from project configuration
+                        from .projects import ProjectService
+
+                        project_service = ProjectService(self.auth_manager)
+                        field_info_result = await project_service.discover_custom_field(project_id, field_name)
+
+                        if field_info_result["status"] == "success":
+                            # Use discovered field type
+                            field_info = field_info_result["data"]
+                            custom_fields_list.append(
+                                CustomFieldManager.create_field_by_type(field_info, field_name, field_value)
+                            )
+                        else:
+                            # Fallback to enum type with helpful error message
+                            logger.warning(
+                                f"Could not discover type for field '{field_name}', "
+                                f"falling back to enum type. Error: {field_info_result.get('message')}"
+                            )
+                            custom_fields_list.append(
+                                CustomFieldManager.create_single_enum_field(field_name, field_value)
+                            )
+                    except Exception as e:
+                        # Fallback to enum type on any error
+                        logger.warning(
+                            f"Error discovering field type for '{field_name}': {str(e)}, falling back to enum type"
+                        )
+                        custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
 
             # Add custom fields if any were specified
             if custom_fields_list:
@@ -246,10 +273,37 @@ class IssueService(BaseService):
                     }
                 )
 
-            # Handle generic custom fields - default to enum type
+            # Handle generic custom fields with field type discovery
             if custom_fields:
                 for field_name, field_value in custom_fields.items():
-                    custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
+                    try:
+                        # Discover field type from project configuration
+                        from .projects import ProjectService
+
+                        project_service = ProjectService(self.auth_manager)
+                        field_info_result = await project_service.discover_custom_field(project_id, field_name)
+
+                        if field_info_result["status"] == "success":
+                            # Use discovered field type
+                            field_info = field_info_result["data"]
+                            custom_fields_list.append(
+                                CustomFieldManager.create_field_by_type(field_info, field_name, field_value)
+                            )
+                        else:
+                            # Fallback to enum type with helpful error message
+                            logger.warning(
+                                f"Could not discover type for field '{field_name}', "
+                                f"falling back to enum type. Error: {field_info_result.get('message')}"
+                            )
+                            custom_fields_list.append(
+                                CustomFieldManager.create_single_enum_field(field_name, field_value)
+                            )
+                    except Exception as e:
+                        # Fallback to enum type on any error
+                        logger.warning(
+                            f"Error discovering field type for '{field_name}': {str(e)}, falling back to enum type"
+                        )
+                        custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
 
             # Add custom fields if any
             if custom_fields_list:

@@ -593,3 +593,118 @@ class ProjectService(BaseService):
             return self._create_error_response(str(e))
         except Exception as e:
             return self._create_error_response(f"Error discovering state field: {str(e)}")
+
+    async def discover_custom_field(self, project_id: str, field_name: str) -> Dict[str, Any]:
+        """Discover custom field type information for a specific field.
+
+        Args:
+            project_id: Project ID or short name
+            field_name: Name of the custom field to discover
+
+        Returns:
+            Dict with field information including type, bundle info, etc.
+        """
+        try:
+            # Check cache first
+            cache = get_field_cache()
+            cache_key = f"custom_field:{field_name}"
+            cached_result = cache.get(project_id, cache_key)
+            if cached_result is not None:
+                return {"status": "success", "data": cached_result}
+
+            # Get all custom fields for the project
+            fields_response = await self.get_project_custom_fields(
+                project_id,
+                fields="id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name,$type)",
+            )
+
+            if fields_response["status"] != "success":
+                return fields_response
+
+            custom_fields = fields_response["data"]
+            if not isinstance(custom_fields, list):
+                return self._create_error_response("Invalid custom fields response format")
+
+            # Find the field by name (case-insensitive)
+            discovered_field = None
+            for field in custom_fields:
+                actual_field_name = field.get("field", {}).get("name", "")
+                if actual_field_name.lower() == field_name.lower():
+                    discovered_field = field
+                    break
+
+            if not discovered_field:
+                return {
+                    "status": "error",
+                    "message": f"Custom field '{field_name}' not found in project '{project_id}'",
+                    "available_fields": [
+                        f.get("field", {}).get("name", "") for f in custom_fields if f.get("field", {}).get("name")
+                    ],
+                }
+
+            # Get detailed information about the field
+            field_details = await self.get_custom_field_details(project_id, discovered_field["id"], include_bundle=True)
+
+            if field_details["status"] != "success":
+                return field_details
+
+            field_data = field_details["data"]
+
+            # Determine the issue field type from project field type
+            project_field_type = field_data.get("$type", "")
+            issue_field_type = self._project_to_issue_field_type(project_field_type)
+
+            # Determine bundle element type if applicable
+            bundle_element_type = None
+            if "bundle" in field_data and "values" in field_data["bundle"]:
+                bundle_values = field_data["bundle"]["values"]
+                if isinstance(bundle_values, list) and len(bundle_values) > 0:
+                    bundle_element_type = bundle_values[0].get("$type")
+
+            result_data = {
+                "field_name": field_name,
+                "field_id": discovered_field["id"],
+                "project_field_type": project_field_type,
+                "issue_field_type": issue_field_type,
+                "bundle_element_type": bundle_element_type,
+                "is_multi_value": "Multi" in project_field_type,
+                "field_details": field_data,
+            }
+
+            # Cache the result
+            cache.set(project_id, result_data, cache_key)
+
+            return {"status": "success", "data": result_data}
+
+        except ValueError as e:
+            return self._create_error_response(str(e))
+        except Exception as e:
+            return self._create_error_response(f"Error discovering custom field '{field_name}': {str(e)}")
+
+    def _project_to_issue_field_type(self, project_field_type: str) -> str:
+        """Convert project field type to issue field type.
+
+        Args:
+            project_field_type: The project field type string
+
+        Returns:
+            The corresponding issue field type string
+        """
+        from ..custom_field_types import IssueCustomFieldTypes, ProjectCustomFieldTypes
+
+        mapping = {
+            ProjectCustomFieldTypes.ENUM: IssueCustomFieldTypes.SINGLE_ENUM,
+            ProjectCustomFieldTypes.MULTI_ENUM: IssueCustomFieldTypes.MULTI_ENUM,
+            ProjectCustomFieldTypes.STATE: IssueCustomFieldTypes.STATE,
+            ProjectCustomFieldTypes.SINGLE_USER: IssueCustomFieldTypes.SINGLE_USER,
+            ProjectCustomFieldTypes.MULTI_USER: IssueCustomFieldTypes.MULTI_USER,
+            ProjectCustomFieldTypes.TEXT: IssueCustomFieldTypes.TEXT,
+            ProjectCustomFieldTypes.INTEGER: IssueCustomFieldTypes.INTEGER,
+            ProjectCustomFieldTypes.SINGLE_VERSION: IssueCustomFieldTypes.SINGLE_VERSION,
+            ProjectCustomFieldTypes.MULTI_VERSION: IssueCustomFieldTypes.MULTI_VERSION,
+            ProjectCustomFieldTypes.SINGLE_BUILD: IssueCustomFieldTypes.SINGLE_BUILD,
+            ProjectCustomFieldTypes.MULTI_BUILD: IssueCustomFieldTypes.MULTI_BUILD,
+            ProjectCustomFieldTypes.SINGLE_OWN_BUILD: IssueCustomFieldTypes.SINGLE_OWN_BUILD,
+            ProjectCustomFieldTypes.MULTI_OWN_BUILD: IssueCustomFieldTypes.MULTI_OWN_BUILD,
+        }
+        return mapping.get(project_field_type, IssueCustomFieldTypes.SINGLE_ENUM)
