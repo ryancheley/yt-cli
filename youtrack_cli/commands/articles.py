@@ -365,7 +365,7 @@ def edit(
 
 
 @articles.command()
-@click.argument("article_id")
+@click.argument("article_id", required=False)
 @click.option(
     "--file",
     "-f",
@@ -380,7 +380,7 @@ def edit(
 @click.pass_context
 def fetch(
     ctx: click.Context,
-    article_id: str,
+    article_id: Optional[str],
     file: Optional[Path],
     show_details: bool,
 ) -> None:
@@ -389,9 +389,14 @@ def fetch(
     Downloads an article's content from YouTrack and saves it to a markdown file.
     The article ID is automatically embedded in the file as an HTML comment.
 
-    When no --file is specified, the command searches the current directory for
-    a file containing a matching ArticleID comment. If found, that file is updated.
-    Otherwise, a default filename is used (article-id.md).
+    The article ID can be provided as an argument or auto-detected from a markdown file
+    containing an ArticleID comment (<!-- ArticleID: DOCS-A-1 -->).
+
+    When no article ID is provided:
+    - If a --file is specified and contains an ArticleID comment, that ID is used
+    - Otherwise, the command searches the current directory for a file containing
+      a matching ArticleID comment. If found, that file is updated.
+    - If no file with ArticleID is found, an error is raised.
 
     Examples:
         # Fetch article and save to default filename (DOCS-A-1.md)
@@ -400,17 +405,50 @@ def fetch(
         # Fetch article and save to specific file
         yt articles fetch DOCS-A-1 --file my-article.md
 
+        # Auto-detect article ID from file
+        yt articles fetch --file my-article.md
+
         # Fetch article and show details before saving
         yt articles fetch DOCS-A-1 --show-details
 
         # Update existing local file with latest content
         yt articles fetch DOCS-A-1 --file ./articles/api-guide.md
     """
-    from ..articles import ArticleManager, find_file_with_article_id, insert_or_update_article_id
+    from ..articles import (
+        ArticleManager,
+        extract_article_id_from_content,
+        find_file_with_article_id,
+        insert_or_update_article_id,
+    )
 
     console = get_console()
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
+
+    # Auto-detect article ID from file if not provided
+    if not article_id:
+        if file and file.exists():
+            try:
+                file_content = file.read_text(encoding="utf-8")
+                extracted_id = extract_article_id_from_content(file_content)
+                if extracted_id:
+                    article_id = extracted_id
+                    console.print(f"🔍 Auto-detected article ID from file: {article_id}", style="blue")
+                else:
+                    console.print(
+                        f"❌ No ArticleID comment found in '{file}'. Please provide an article ID.",
+                        style="red",
+                    )
+                    raise click.ClickException("Article ID not found in file")
+            except UnicodeDecodeError as e:
+                console.print(f"❌ Could not read file '{file}'", style="red")
+                raise click.ClickException("Failed to read file") from e
+        else:
+            console.print(
+                "❌ Please provide an article ID as an argument or specify a file with --file",
+                style="red",
+            )
+            raise click.ClickException("Article ID required")
 
     try:
         console.print(f"📥 Fetching article '{article_id}'...", style="blue")

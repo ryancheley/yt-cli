@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- ✨ Auto-detect ArticleID from markdown files in `yt articles fetch` command (#641)
+  - The `article_id` argument is now optional
+  - When not provided, the command auto-detects the article ID from the markdown file's `<!-- ArticleID: XXX -->` comment
+  - Improves UX by reducing required flags and making the workflow more ergonomic
+  - Examples:
+    - `yt articles fetch --file my-article.md` (auto-detects from file)
+    - `yt articles fetch ARTICLE-123 --file my-article.md` (explicit ID)
+
 ## [0.22.1] - 2026-03-18 [YANKED]
 
 **YANKED** - This version was yanked from PyPI due to a bug in the custom fields feature.
