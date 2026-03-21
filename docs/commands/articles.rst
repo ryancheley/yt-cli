@@ -199,6 +199,69 @@ When editing articles with markdown files, the CLI automatically manages Article
 * The ArticleID helps track the relationship between local files and YouTrack articles
 * Use ``--no-article-id`` to disable automatic ArticleID insertion/updating
 
+fetch
+~~~~~
+
+Fetch an article's content from YouTrack and save it to a local markdown file.
+
+.. code-block:: bash
+
+   yt articles fetch [ARTICLE_ID] [OPTIONS]
+
+**Arguments:**
+
+* ``ARTICLE_ID`` - The ID of the article to fetch (optional when using --file with ArticleID comment)
+
+**Options:**
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Option
+     - Type
+     - Description
+   * - ``--file, -f``
+     - path
+     - Path to save article content (defaults to article ID + .md, or auto-detected from file)
+   * - ``--show-details``
+     - flag
+     - Show detailed article information
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Fetch article and save to default filename (DOCS-A-1.md)
+   yt articles fetch DOCS-A-1
+
+   # Fetch article and save to specific file
+   yt articles fetch DOCS-A-1 --file my-article.md
+
+   # Auto-detect article ID from file
+   yt articles fetch --file my-article.md
+
+   # Fetch article and show details before saving
+   yt articles fetch DOCS-A-1 --show-details
+
+   # Update existing local file with latest content
+   yt articles fetch DOCS-A-1 --file ./articles/api-guide.md
+
+**ArticleID Auto-detection:**
+
+When the ``article_id`` argument is not provided, the fetch command automatically detects it from the markdown file:
+
+* If a ``--file`` is specified and contains an ``<!-- ArticleID: DOCS-A-1 -->`` comment, that ID is used
+* Otherwise, the command searches the current directory for a file containing an ArticleID comment
+* If no file with ArticleID is found, an error is raised
+
+This auto-detection feature allows you to fetch article content by simply specifying the local markdown file, without needing to remember the article ID:
+
+.. code-block:: bash
+
+   # File contains: <!-- ArticleID: DOCS-A-789 -->
+   yt articles fetch --file my-article.md  # Auto-detects DOCS-A-789
+
 publish
 ~~~~~~~
 

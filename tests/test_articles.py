@@ -1484,3 +1484,120 @@ class TestArticleFetchCommand:
                         assert "<!-- ArticleID: DOCS-A-789 -->" in content
                     finally:
                         os.chdir(original_cwd)
+
+    def test_fetch_command_auto_detects_article_id_from_file(self):
+        """Test fetch command auto-detects article ID from file content."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("<!-- ArticleID: DOCS-A-789 -->\n# Original Content\n")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Mock successful fetch
+                    mock_manager.fetch_article = AsyncMock(
+                        return_value={
+                            "status": "success",
+                            "data": {
+                                "id": "123-456",
+                                "idReadable": "DOCS-A-789",
+                                "content": "# Updated Article Content\n\nNew body text.",
+                                "title": "Test Article",
+                                "summary": "Summary",
+                            },
+                        }
+                    )
+
+                    # Run command without article_id argument, only with --file
+                    result = runner.invoke(fetch, ["--file", temp_file], obj={"config": {}})
+
+                    assert result.exit_code == 0
+                    assert "Auto-detected article ID from file: DOCS-A-789" in result.output
+                    assert "Article saved" in result.output
+
+                    # Check that the correct article was fetched
+                    mock_manager.fetch_article.assert_called_once_with("DOCS-A-789")
+
+                    # Check file was updated with new content
+                    with open(temp_file) as f:
+                        content = f.read()
+
+                    assert "<!-- ArticleID: DOCS-A-789 -->" in content
+                    assert "# Updated Article Content" in content
+
+        finally:
+            Path(temp_file).unlink()
+
+    def test_fetch_command_fails_without_article_id(self):
+        """Test fetch command fails when no article ID is provided or found."""
+        from unittest.mock import MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+            with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                mock_auth_instance = MagicMock()
+                mock_auth.return_value = mock_auth_instance
+
+                mock_manager = MagicMock()
+                mock_manager_class.return_value = mock_manager
+
+                # Run command without article_id and without --file
+                result = runner.invoke(fetch, [], obj={"config": {}})
+
+                assert result.exit_code != 0
+                assert "Article ID required" in result.output
+
+    def test_fetch_command_fails_if_file_has_no_article_id(self):
+        """Test fetch command fails when file has no ArticleID comment."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock, patch
+
+        from click.testing import CliRunner
+
+        from youtrack_cli.commands.articles import fetch
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Article without ID comment\n\nSome content\n")
+            temp_file = f.name
+
+        try:
+            with patch("youtrack_cli.auth.AuthManager") as mock_auth:
+                with patch("youtrack_cli.articles.ArticleManager") as mock_manager_class:
+                    mock_auth_instance = MagicMock()
+                    mock_auth.return_value = mock_auth_instance
+
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+
+                    # Run command without article_id, only with --file
+                    result = runner.invoke(fetch, ["--file", temp_file], obj={"config": {}})
+
+                    assert result.exit_code != 0
+                    assert "No ArticleID comment found" in result.output
+
+        finally:
+            Path(temp_file).unlink()
