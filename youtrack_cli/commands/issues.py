@@ -9,7 +9,6 @@ and validation to ensure data integrity.
 
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -314,10 +313,10 @@ def create(
     ctx: click.Context,
     project_id: str,
     summary: str,
-    description: Optional[str],
-    type: Optional[str],
-    priority: Optional[str],
-    assignee: Optional[str],
+    description: str | None,
+    type: str | None,
+    priority: str | None,
+    assignee: str | None,
     custom_field: tuple,
 ) -> None:
     r"""Create a new issue.
@@ -516,18 +515,18 @@ def create(
 @click.pass_context
 def list_issues(
     ctx: click.Context,
-    project_id: Optional[str],
-    state: Optional[str],
-    assignee: Optional[str],
-    fields: Optional[str],
-    profile: Optional[str],
-    top: Optional[int],
+    project_id: str | None,
+    state: str | None,
+    assignee: str | None,
+    fields: str | None,
+    profile: str | None,
+    top: int | None,
     page_size: int,
-    after_cursor: Optional[str],
-    before_cursor: Optional[str],
+    after_cursor: str | None,
+    before_cursor: str | None,
     all: bool,
-    max_results: Optional[int],
-    query: Optional[str],
+    max_results: int | None,
+    query: str | None,
     format: str,
     paginated: bool,
     display_page_size: int,
@@ -686,12 +685,12 @@ def list_issues(
 def update(
     ctx: click.Context,
     issue_id: str,
-    summary: Optional[str],
-    description: Optional[str],
-    state: Optional[str],
-    priority: Optional[str],
-    assignee: Optional[str],
-    type: Optional[str],
+    summary: str | None,
+    description: str | None,
+    state: str | None,
+    priority: str | None,
+    assignee: str | None,
+    type: str | None,
     custom_field: tuple,
     show_details: bool,
     format: str,
@@ -870,15 +869,15 @@ def delete(ctx: click.Context, issue_id: str, force: bool) -> None:
 def search(
     ctx: click.Context,
     query: str,
-    project_id: Optional[str],
-    fields: Optional[str],
-    profile: Optional[str],
-    top: Optional[int],
+    project_id: str | None,
+    fields: str | None,
+    profile: str | None,
+    top: int | None,
     page_size: int,
-    after_cursor: Optional[str],
-    before_cursor: Optional[str],
+    after_cursor: str | None,
+    before_cursor: str | None,
     all: bool,
-    max_results: Optional[int],
+    max_results: int | None,
     format: str,
 ) -> None:
     """Advanced issue search."""
@@ -1040,8 +1039,8 @@ def assign(ctx: click.Context, issue_id: str, assignee: str) -> None:
 def move(
     ctx: click.Context,
     issue_id: str,
-    state: Optional[str],
-    project_id: Optional[str],
+    state: str | None,
+    project_id: str | None,
 ) -> None:
     """Move an issue between states or projects.
 
@@ -1465,7 +1464,7 @@ def upload(ctx: click.Context, issue_id: str, file_path: str) -> None:
     help="Output file path",
 )
 @click.pass_context
-def download(ctx: click.Context, issue_id: str, attachment_id: str, output: Optional[str]) -> None:
+def download(ctx: click.Context, issue_id: str, attachment_id: str, output: str | None) -> None:
     """Download an attachment from an issue."""
     from ..managers.issues import IssueManager
 
@@ -1882,7 +1881,7 @@ def related(ctx: click.Context, issue_id: str, format: str, show_status: bool) -
     help="Number of issues to fetch for benchmarking (default: 50)",
 )
 @click.pass_context
-def benchmark(ctx: click.Context, project_id: Optional[str], sample_size: int) -> None:
+def benchmark(ctx: click.Context, project_id: str | None, sample_size: int) -> None:
     """Benchmark field selection performance improvements.
 
     This command runs performance tests comparing minimal, standard, and full
@@ -1948,7 +1947,7 @@ def batch_create(
     file_path: Path,
     dry_run: bool,
     continue_on_error: bool,
-    save_failed: Optional[Path],
+    save_failed: Path | None,
     rollback_on_error: bool,
 ) -> None:
     r"""Batch create issues from CSV or JSON file.
@@ -2054,7 +2053,7 @@ def batch_update(
     file_path: Path,
     dry_run: bool,
     continue_on_error: bool,
-    save_failed: Optional[Path],
+    save_failed: Path | None,
 ) -> None:
     r"""Batch update issues from CSV or JSON file.
 

@@ -1,6 +1,6 @@
 """Issue service for YouTrack API operations."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..custom_field_manager import CustomFieldManager
 from ..logging import get_logger
@@ -20,12 +20,12 @@ class IssueService(BaseService):
         self,
         project_id: str,
         summary: str,
-        description: Optional[str] = None,
-        issue_type: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee: Optional[str] = None,
-        custom_fields: Optional[Dict[str, str]] = None,
-    ) -> Dict[str, Any]:
+        description: str | None = None,
+        issue_type: str | None = None,
+        priority: str | None = None,
+        assignee: str | None = None,
+        custom_fields: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Create a new issue via API.
 
         Args:
@@ -122,7 +122,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error creating issue: {str(e)}")
 
-    async def get_issue(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_issue(self, issue_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get issue details via API.
 
         Args:
@@ -155,14 +155,14 @@ class IssueService(BaseService):
     async def update_issue(
         self,
         issue_id: str,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        state: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee: Optional[str] = None,
-        issue_type: Optional[str] = None,
-        custom_fields: Optional[Dict[str, str]] = None,
-    ) -> Dict[str, Any]:
+        summary: str | None = None,
+        description: str | None = None,
+        state: str | None = None,
+        priority: str | None = None,
+        assignee: str | None = None,
+        issue_type: str | None = None,
+        custom_fields: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Update an existing issue via API.
 
         Args:
@@ -179,7 +179,7 @@ class IssueService(BaseService):
             API response
         """
         try:
-            update_data: Dict[str, Any] = {"$type": "Issue"}
+            update_data: dict[str, Any] = {"$type": "Issue"}
             custom_fields_list = []
 
             # Handle regular fields
@@ -370,7 +370,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error updating issue: {str(e)}")
 
-    async def _get_project_id_from_issue(self, issue_id: str) -> Optional[str]:
+    async def _get_project_id_from_issue(self, issue_id: str) -> str | None:
         """Get the project ID from an issue by fetching minimal issue data."""
         try:
             response = await self._make_request("GET", f"issues/{issue_id}", params={"fields": "project(id,shortName)"})
@@ -385,7 +385,7 @@ class IssueService(BaseService):
         except Exception:
             return None
 
-    async def _discover_state_field_for_project(self, project_id: str) -> Optional[Dict[str, Any]]:
+    async def _discover_state_field_for_project(self, project_id: str) -> dict[str, Any] | None:
         """Discover state field information for a project."""
         try:
             # Import ProjectService here to avoid circular imports
@@ -401,7 +401,7 @@ class IssueService(BaseService):
         except Exception:
             return None
 
-    async def _resolve_project_database_id(self, project_id_or_short_name: str) -> Optional[str]:
+    async def _resolve_project_database_id(self, project_id_or_short_name: str) -> str | None:
         """Resolve a project short name to database ID for move operations.
 
         Args:
@@ -423,7 +423,7 @@ class IssueService(BaseService):
         except Exception:
             return None
 
-    async def _move_issue_to_project(self, issue_id: str, target_project_id: str) -> Dict[str, Any]:
+    async def _move_issue_to_project(self, issue_id: str, target_project_id: str) -> dict[str, Any]:
         """Move an issue to a different project using YouTrack API.
 
         Args:
@@ -482,7 +482,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error moving issue to project: {str(e)}")
 
-    async def delete_issue(self, issue_id: str) -> Dict[str, Any]:
+    async def delete_issue(self, issue_id: str) -> dict[str, Any]:
         """Delete an issue via API.
 
         Args:
@@ -503,10 +503,10 @@ class IssueService(BaseService):
     async def search_issues(
         self,
         query: str,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
-        skip: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        fields: str | None = None,
+        top: int | None = None,
+        skip: int | None = None,
+    ) -> dict[str, Any]:
         """Search issues via API.
 
         Args:
@@ -544,7 +544,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error searching issues: {str(e)}")
 
-    async def assign_issue(self, issue_id: str, assignee: str) -> Dict[str, Any]:
+    async def assign_issue(self, issue_id: str, assignee: str) -> dict[str, Any]:
         """Assign an issue to a user via API.
 
         Args:
@@ -570,8 +570,8 @@ class IssueService(BaseService):
             return self._create_error_response(f"Error assigning issue: {str(e)}")
 
     async def move_issue(
-        self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, issue_id: str, state: str | None = None, project_id: str | None = None
+    ) -> dict[str, Any]:
         """Move an issue to a different state or project via API.
 
         Args:
@@ -713,7 +713,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error moving issue: {str(e)}")
 
-    async def add_tag(self, issue_id: str, tag_name: str) -> Dict[str, Any]:
+    async def add_tag(self, issue_id: str, tag_name: str) -> dict[str, Any]:
         """Add a tag to an issue via API.
 
         Args:
@@ -742,7 +742,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error adding tag: {str(e)}")
 
-    async def remove_tag(self, issue_id: str, tag_name: str) -> Dict[str, Any]:
+    async def remove_tag(self, issue_id: str, tag_name: str) -> dict[str, Any]:
         """Remove a tag from an issue via API.
 
         Args:
@@ -768,7 +768,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error removing tag: {str(e)}")
 
-    async def list_tags(self, issue_id: str) -> Dict[str, Any]:
+    async def list_tags(self, issue_id: str) -> dict[str, Any]:
         """List tags for an issue via API.
 
         Args:
@@ -787,7 +787,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error listing tags: {str(e)}")
 
-    async def add_comment(self, issue_id: str, text: str) -> Dict[str, Any]:
+    async def add_comment(self, issue_id: str, text: str) -> dict[str, Any]:
         """Add a comment to an issue via API.
 
         Args:
@@ -807,7 +807,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error adding comment: {str(e)}")
 
-    async def list_comments(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def list_comments(self, issue_id: str, fields: str | None = None) -> dict[str, Any]:
         """List comments for an issue via API.
 
         Args:
@@ -832,7 +832,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error listing comments: {str(e)}")
 
-    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> Dict[str, Any]:
+    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> dict[str, Any]:
         """Update a comment via API.
 
         Args:
@@ -855,7 +855,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error updating comment: {str(e)}")
 
-    async def delete_comment(self, issue_id: str, comment_id: str) -> Dict[str, Any]:
+    async def delete_comment(self, issue_id: str, comment_id: str) -> dict[str, Any]:
         """Delete a comment via API.
 
         Args:
@@ -874,7 +874,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error deleting comment: {str(e)}")
 
-    async def upload_attachment(self, issue_id: str, file_path: str, file_data: bytes) -> Dict[str, Any]:
+    async def upload_attachment(self, issue_id: str, file_path: str, file_data: bytes) -> dict[str, Any]:
         """Upload an attachment to an issue via API.
 
         Args:
@@ -922,7 +922,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error uploading attachment: {str(e)}")
 
-    async def download_attachment(self, issue_id: str, attachment_id: str) -> Dict[str, Any]:
+    async def download_attachment(self, issue_id: str, attachment_id: str) -> dict[str, Any]:
         """Download an attachment from an issue via API.
 
         Args:
@@ -1007,7 +1007,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error downloading attachment: {str(e)}")
 
-    async def list_attachments(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def list_attachments(self, issue_id: str, fields: str | None = None) -> dict[str, Any]:
         """List attachments for an issue via API.
 
         Args:
@@ -1032,7 +1032,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error listing attachments: {str(e)}")
 
-    async def delete_attachment(self, issue_id: str, attachment_id: str) -> Dict[str, Any]:
+    async def delete_attachment(self, issue_id: str, attachment_id: str) -> dict[str, Any]:
         """Delete an attachment via API.
 
         Args:
@@ -1051,7 +1051,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error deleting attachment: {str(e)}")
 
-    async def get_custom_field_value(self, issue_id: str, field_name: str) -> Dict[str, Any]:
+    async def get_custom_field_value(self, issue_id: str, field_name: str) -> dict[str, Any]:
         """Get a custom field value for an issue via API.
 
         Args:
@@ -1071,7 +1071,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error getting custom field: {str(e)}")
 
-    async def find_tag_by_name(self, tag_name: str) -> Dict[str, Any]:
+    async def find_tag_by_name(self, tag_name: str) -> dict[str, Any]:
         """Find a tag by name via API.
 
         Args:
@@ -1098,7 +1098,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error finding tag: {str(e)}")
 
-    async def create_tag(self, tag_name: str) -> Dict[str, Any]:
+    async def create_tag(self, tag_name: str) -> dict[str, Any]:
         """Create a new tag via API.
 
         Args:
@@ -1117,7 +1117,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error creating tag: {str(e)}")
 
-    async def list_links(self, issue_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def list_links(self, issue_id: str, fields: str | None = None) -> dict[str, Any]:
         """List links for an issue via API.
 
         Args:
@@ -1163,7 +1163,7 @@ class IssueService(BaseService):
             # If we can't resolve it, return original and let the API handle the error
             return issue_id
 
-    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type_id: str) -> Dict[str, Any]:
+    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type_id: str) -> dict[str, Any]:
         """Create a link between two issues via API.
 
         Args:
@@ -1234,7 +1234,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error creating link: {str(e)}")
 
-    async def delete_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
+    async def delete_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> dict[str, Any]:
         """Delete a specific link between two issues via API.
 
         Args:
@@ -1307,7 +1307,7 @@ class IssueService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error deleting link: {str(e)}")
 
-    async def list_link_types(self, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def list_link_types(self, fields: str | None = None) -> dict[str, Any]:
         """List available issue link types via API.
 
         Args:

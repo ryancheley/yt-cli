@@ -3,7 +3,6 @@
 import re
 import socket
 import time
-from typing import Optional, Tuple
 
 import docker
 from docker.errors import DockerException, NotFound
@@ -91,7 +90,7 @@ def pull_youtrack_image() -> None:
         raise DockerError(f"Failed to pull YouTrack image: {e}") from e
 
 
-def start_youtrack_container(port: int = DEFAULT_PORT) -> Tuple[str, str]:
+def start_youtrack_container(port: int = DEFAULT_PORT) -> tuple[str, str]:
     """Start YouTrack container.
 
     Args:
@@ -177,7 +176,7 @@ def wait_for_youtrack_ready(port: int = DEFAULT_PORT, timeout: int = 300) -> Non
     raise YouTrackStartupError(f"YouTrack did not become ready within {timeout} seconds")
 
 
-def get_container_status() -> Optional[str]:
+def get_container_status() -> str | None:
     """Get the status of the YouTrack tutorial container.
 
     Returns:
@@ -281,7 +280,7 @@ def get_youtrack_url(port: int = DEFAULT_PORT) -> str:
     return f"http://localhost:{port}"
 
 
-def get_container_logs(container_name: str = CONTAINER_NAME, lines: int = 100) -> Optional[str]:
+def get_container_logs(container_name: str = CONTAINER_NAME, lines: int = 100) -> str | None:
     """Get logs from the YouTrack container.
 
     Args:
@@ -300,7 +299,7 @@ def get_container_logs(container_name: str = CONTAINER_NAME, lines: int = 100) -
         return None
 
 
-def extract_wizard_token(logs: str) -> Optional[str]:
+def extract_wizard_token(logs: str) -> str | None:
     """Extract the wizard token from YouTrack container logs.
 
     Args:
@@ -337,7 +336,7 @@ def get_wizard_url(port: int = DEFAULT_PORT, container_name: str = CONTAINER_NAM
     return get_youtrack_url(port)
 
 
-def get_setup_instructions(port: int = DEFAULT_PORT, wizard_url: Optional[str] = None) -> list[str]:
+def get_setup_instructions(port: int = DEFAULT_PORT, wizard_url: str | None = None) -> list[str]:
     """Get step-by-step setup instructions for YouTrack.
 
     Args:

@@ -5,7 +5,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import keyring
 from cryptography.fernet import Fernet
@@ -42,15 +42,15 @@ class AuditEntry(BaseModel):
     timestamp: datetime
     command: str
     arguments: list[str]
-    user: Optional[str] = None
+    user: str | None = None
     success: bool = True
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class AuditLogger:
     """Manages command audit logging."""
 
-    def __init__(self, config: Optional[SecurityConfig] = None):
+    def __init__(self, config: SecurityConfig | None = None):
         """Initialize audit logger.
 
         Args:
@@ -75,9 +75,9 @@ class AuditLogger:
         self,
         command: str,
         arguments: list[str],
-        user: Optional[str] = None,
+        user: str | None = None,
         success: bool = True,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """Log a command execution.
 
@@ -167,7 +167,7 @@ class AuditLogger:
 
         return entries
 
-    def get_audit_log(self, limit: Optional[int] = None) -> list[AuditEntry]:
+    def get_audit_log(self, limit: int | None = None) -> list[AuditEntry]:
         """Get audit log entries.
 
         Args:
@@ -204,7 +204,7 @@ class CredentialManager:
     KEYRING_USERNAME = "default"
     ENCRYPTION_KEY_NAME = "encryption-key"
 
-    def __init__(self, config: Optional[SecurityConfig] = None):
+    def __init__(self, config: SecurityConfig | None = None):
         """Initialize credential manager.
 
         Args:
@@ -295,7 +295,7 @@ class CredentialManager:
             self.logger.error("Failed to store credential", key=key, error=str(e))
             return False
 
-    def retrieve_credential(self, key: str) -> Optional[str]:
+    def retrieve_credential(self, key: str) -> str | None:
         """Retrieve and decrypt a credential from the keyring.
 
         Args:
@@ -339,7 +339,7 @@ class CredentialManager:
 class TokenManager:
     """Manages token expiration checking and warnings."""
 
-    def __init__(self, config: Optional[SecurityConfig] = None):
+    def __init__(self, config: SecurityConfig | None = None):
         """Initialize token manager.
 
         Args:
@@ -348,7 +348,7 @@ class TokenManager:
         self.config = config or SecurityConfig()
         self.logger = get_logger("youtrack_cli.security.tokens")
 
-    def check_token_expiration(self, token_expiry: Optional[datetime]) -> dict[str, Any]:
+    def check_token_expiration(self, token_expiry: datetime | None) -> dict[str, Any]:
         """Check if a token is expired or expiring soon.
 
         Args:
@@ -375,7 +375,7 @@ class TokenManager:
 
         return {"status": "valid", "message": None, "days": days_until_expiry}
 
-    def should_refresh_token(self, token_expiry: Optional[datetime]) -> bool:
+    def should_refresh_token(self, token_expiry: datetime | None) -> bool:
         """Check if a token should be proactively refreshed.
 
         Args:
@@ -411,7 +411,7 @@ class TokenManager:
         # This would need to be enhanced based on actual YouTrack token types
         return True
 
-    async def request_new_token(self, base_url: str, old_token: str, verify_ssl: bool = True) -> Optional[str]:
+    async def request_new_token(self, base_url: str, old_token: str, verify_ssl: bool = True) -> str | None:
         """Request a new token from YouTrack API.
 
         Args:
@@ -458,7 +458,7 @@ class TokenManager:
             self.logger.error("Token refresh request failed", error=str(e))
             return None
 
-    def estimate_token_expiry(self, token: str) -> Optional[datetime]:
+    def estimate_token_expiry(self, token: str) -> datetime | None:
         """Estimate token expiry from token format (if possible).
 
         Args:

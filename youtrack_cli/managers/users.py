@@ -1,6 +1,6 @@
 """User manager for YouTrack CLI business logic."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.table import Table
 from rich.text import Text
@@ -33,16 +33,16 @@ class UserManager:
 
     async def list_users(
         self,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
-        query: Optional[str] = None,
+        fields: str | None = None,
+        top: int | None = None,
+        query: str | None = None,
         active_only: bool = False,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        max_results: int | None = None,
+    ) -> dict[str, Any]:
         """List all users with enhanced filtering and pagination.
 
         Args:
@@ -118,7 +118,7 @@ class UserManager:
 
             return result
 
-    async def get_user(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user(self, user_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get a specific user with enhanced error handling.
 
         Args:
@@ -135,9 +135,9 @@ class UserManager:
         login: str,
         full_name: str,
         email: str,
-        password: Optional[str] = None,
+        password: str | None = None,
         force_change_password: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a new user with business validation.
 
         Args:
@@ -177,12 +177,12 @@ class UserManager:
     async def update_user(
         self,
         user_id: str,
-        full_name: Optional[str] = None,
-        email: Optional[str] = None,
-        banned: Optional[bool] = None,
-        password: Optional[str] = None,
-        force_change_password: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        full_name: str | None = None,
+        email: str | None = None,
+        banned: bool | None = None,
+        password: str | None = None,
+        force_change_password: bool | None = None,
+    ) -> dict[str, Any]:
         """Update an existing user with validation.
 
         Args:
@@ -219,7 +219,7 @@ class UserManager:
 
         return result
 
-    async def delete_user(self, user_id: str) -> Dict[str, Any]:
+    async def delete_user(self, user_id: str) -> dict[str, Any]:
         """Delete a user with confirmation logic.
 
         Args:
@@ -236,7 +236,7 @@ class UserManager:
 
         return result
 
-    async def ban_user(self, user_id: str) -> Dict[str, Any]:
+    async def ban_user(self, user_id: str) -> dict[str, Any]:
         """Ban a user.
 
         Args:
@@ -253,7 +253,7 @@ class UserManager:
 
         return result
 
-    async def unban_user(self, user_id: str) -> Dict[str, Any]:
+    async def unban_user(self, user_id: str) -> dict[str, Any]:
         """Unban a user.
 
         Args:
@@ -270,7 +270,7 @@ class UserManager:
 
         return result
 
-    async def get_user_groups(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_groups(self, user_id: str) -> dict[str, Any]:
         """Get groups that a user belongs to.
 
         Args:
@@ -281,7 +281,7 @@ class UserManager:
         """
         return await self.user_service.get_user_groups(user_id)
 
-    async def add_user_to_group(self, user_id: str, group_id: str) -> Dict[str, Any]:
+    async def add_user_to_group(self, user_id: str, group_id: str) -> dict[str, Any]:
         """Add user to a group.
 
         Args:
@@ -299,7 +299,7 @@ class UserManager:
 
         return result
 
-    async def remove_user_from_group(self, user_id: str, group_id: str) -> Dict[str, Any]:
+    async def remove_user_from_group(self, user_id: str, group_id: str) -> dict[str, Any]:
         """Remove user from a group.
 
         Args:
@@ -317,7 +317,7 @@ class UserManager:
 
         return result
 
-    async def get_user_roles(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_roles(self, user_id: str) -> dict[str, Any]:
         """Get user's roles.
 
         Args:
@@ -328,7 +328,7 @@ class UserManager:
         """
         return await self.user_service.get_user_roles(user_id)
 
-    async def assign_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
+    async def assign_user_role(self, user_id: str, role_id: str) -> dict[str, Any]:
         """Assign a role to user.
 
         Args:
@@ -346,7 +346,7 @@ class UserManager:
 
         return result
 
-    async def remove_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
+    async def remove_user_role(self, user_id: str, role_id: str) -> dict[str, Any]:
         """Remove a role from user.
 
         Args:
@@ -364,7 +364,7 @@ class UserManager:
 
         return result
 
-    async def get_user_teams(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_teams(self, user_id: str) -> dict[str, Any]:
         """Get user's teams.
 
         Args:
@@ -375,7 +375,7 @@ class UserManager:
         """
         return await self.user_service.get_user_teams(user_id)
 
-    async def add_user_to_team(self, user_id: str, team_id: str) -> Dict[str, Any]:
+    async def add_user_to_team(self, user_id: str, team_id: str) -> dict[str, Any]:
         """Add user to a team.
 
         Args:
@@ -393,7 +393,7 @@ class UserManager:
 
         return result
 
-    async def remove_user_from_team(self, user_id: str, team_id: str) -> Dict[str, Any]:
+    async def remove_user_from_team(self, user_id: str, team_id: str) -> dict[str, Any]:
         """Remove user from a team.
 
         Args:
@@ -411,7 +411,7 @@ class UserManager:
 
         return result
 
-    async def change_user_password(self, user_id: str, new_password: str, force_change: bool = False) -> Dict[str, Any]:
+    async def change_user_password(self, user_id: str, new_password: str, force_change: bool = False) -> dict[str, Any]:
         """Change user password.
 
         Args:
@@ -433,7 +433,7 @@ class UserManager:
 
         return result
 
-    async def get_user_permissions(self, user_id: str, project_id: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user_permissions(self, user_id: str, project_id: str | None = None) -> dict[str, Any]:
         """Get user permissions.
 
         Args:
@@ -446,8 +446,8 @@ class UserManager:
         return await self.user_service.get_user_permissions(user_id, project_id)
 
     async def manage_user_permissions(
-        self, user_id: str, action: str, group_id: Optional[str] = None, role_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, user_id: str, action: str, group_id: str | None = None, role_id: str | None = None
+    ) -> dict[str, Any]:
         """Manage user permissions by adding/removing from groups or roles.
 
         Args:
@@ -470,7 +470,7 @@ class UserManager:
         else:
             return {"status": "error", "message": f"Invalid action '{action}' or missing required parameters"}
 
-    def display_users_table(self, users: List[Dict[str, Any]]) -> None:
+    def display_users_table(self, users: list[dict[str, Any]]) -> None:
         """Display users in a simple table format.
 
         Args:
@@ -517,7 +517,7 @@ class UserManager:
         self.console.print(table)
 
     def display_users_table_paginated(
-        self, users: List[Dict[str, Any]], page_size: int = 50, show_all: bool = False, start_page: int = 1
+        self, users: list[dict[str, Any]], page_size: int = 50, show_all: bool = False, start_page: int = 1
     ) -> None:
         """Display users in a paginated table format.
 
@@ -531,7 +531,7 @@ class UserManager:
             self.console.print("No users found.", style="yellow")
             return
 
-        def build_users_table(user_subset: List[Dict[str, Any]]) -> Table:
+        def build_users_table(user_subset: list[dict[str, Any]]) -> Table:
             """Build a Rich table for the given subset of users."""
             table = Table(title="YouTrack Users")
             table.add_column("Login", style="cyan", no_wrap=True)
@@ -575,7 +575,7 @@ class UserManager:
             users, build_users_table, "Users", show_all=show_all, start_page=start_page
         )
 
-    def display_user_details(self, user: Dict[str, Any]) -> None:
+    def display_user_details(self, user: dict[str, Any]) -> None:
         """Display detailed user information with rich formatting.
 
         Args:
@@ -634,7 +634,7 @@ class UserManager:
 
         self.console.print()  # Add spacing
 
-    def display_user_groups(self, groups: List[Dict[str, Any]], user_id: str) -> None:
+    def display_user_groups(self, groups: list[dict[str, Any]], user_id: str) -> None:
         """Display user groups in a table format.
 
         Args:
@@ -659,7 +659,7 @@ class UserManager:
 
         self.console.print(table)
 
-    def display_user_roles(self, roles: List[Dict[str, Any]], user_id: str) -> None:
+    def display_user_roles(self, roles: list[dict[str, Any]], user_id: str) -> None:
         """Display user roles in a table format.
 
         Args:
@@ -686,7 +686,7 @@ class UserManager:
 
         self.console.print(table)
 
-    def display_user_teams(self, teams: List[Dict[str, Any]], user_id: str) -> None:
+    def display_user_teams(self, teams: list[dict[str, Any]], user_id: str) -> None:
         """Display user teams in a table format.
 
         Args:

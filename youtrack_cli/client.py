@@ -20,7 +20,7 @@ import asyncio
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -66,11 +66,11 @@ class HTTPClientManager:
         max_connections: int = 100,
         keepalive_expiry: float = 30.0,
         default_timeout: float = 30.0,
-        connect_timeout: Optional[float] = None,
-        read_timeout: Optional[float] = None,
-        write_timeout: Optional[float] = None,
-        pool_timeout: Optional[float] = None,
-        verify_ssl: Union[bool, str] = True,
+        connect_timeout: float | None = None,
+        read_timeout: float | None = None,
+        write_timeout: float | None = None,
+        pool_timeout: float | None = None,
+        verify_ssl: bool | str = True,
     ):
         """Initialize the HTTP client manager.
 
@@ -110,8 +110,8 @@ class HTTPClientManager:
         )
         self._default_timeout = default_timeout
         self._verify_ssl = verify_ssl
-        self._client: Optional[httpx.AsyncClient] = None
-        self._lock: Optional[asyncio.Lock] = None
+        self._client: httpx.AsyncClient | None = None
+        self._lock: asyncio.Lock | None = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure the HTTP client is initialized.
@@ -182,10 +182,10 @@ class HTTPClientManager:
         self,
         method: str,
         url: str,
-        headers: Optional[dict[str, str]] = None,
-        params: Optional[dict[str, Any]] = None,
-        json_data: Optional[dict[str, Any]] = None,
-        timeout: Optional[float] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
+        timeout: float | None = None,
         max_retries: int = 3,
         attempt_token_refresh: bool = True,
     ) -> httpx.Response:
@@ -459,14 +459,14 @@ class HTTPClientManager:
         self,
         method: str,
         url: str,
-        headers: Optional[dict[str, str]] = None,
-        params: Optional[dict[str, Any]] = None,
-        json_data: Optional[dict[str, Any]] = None,
-        timeout: Optional[float] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
+        timeout: float | None = None,
         max_retries: int = 3,
-        cache_ttl: Optional[float] = None,
+        cache_ttl: float | None = None,
         cache_key_prefix: str = "",
-    ) -> Union[httpx.Response, CachedResponse]:
+    ) -> httpx.Response | CachedResponse:
         """Make a cached HTTP request for GET operations.
 
         Args:
@@ -533,7 +533,7 @@ class HTTPClientManager:
 
 
 # Global client manager instance
-_client_manager: Optional[HTTPClientManager] = None
+_client_manager: HTTPClientManager | None = None
 
 
 def get_client_manager() -> HTTPClientManager:

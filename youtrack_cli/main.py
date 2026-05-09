@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 import click
 from rich.prompt import Prompt
@@ -107,7 +107,7 @@ class MainGroup(AliasedGroup):
 @click.pass_context
 def main(
     ctx: click.Context,
-    config: Optional[str],
+    config: str | None,
     verbose: bool,
     debug: bool,
     no_progress: bool,
@@ -234,9 +234,9 @@ main.add_alias("login", "auth")
 def burndown(
     ctx: click.Context,
     project_id: str,
-    sprint: Optional[str],
-    start_date: Optional[str],
-    end_date: Optional[str],
+    sprint: str | None,
+    start_date: str | None,
+    end_date: str | None,
 ) -> None:
     """Generate a burndown report for a project or sprint.
 
@@ -357,7 +357,7 @@ def groups_list(ctx: click.Context) -> None:
 @click.argument("name")
 @click.option("--description", "-d", help="Group description")
 @click.pass_context
-def groups_create(ctx: click.Context, name: str, description: Optional[str]) -> None:
+def groups_create(ctx: click.Context, name: str, description: str | None) -> None:
     """Create a new user group."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
@@ -918,12 +918,12 @@ def setup(ctx: click.Context, skip_validation: bool) -> None:
 @click.pass_context
 def ls(
     ctx: click.Context,
-    assignee: Optional[str],
-    project: Optional[str],
-    state: Optional[str],
-    type: Optional[str],
-    priority: Optional[str],
-    tag: Optional[str],
+    assignee: str | None,
+    project: str | None,
+    state: str | None,
+    type: str | None,
+    priority: str | None,
+    tag: str | None,
     limit: int,
     format: str,
 ) -> None:
@@ -1002,11 +1002,11 @@ def new(
     ctx: click.Context,
     project: str,
     title: str,
-    description: Optional[str],
-    type: Optional[str],
-    priority: Optional[str],
-    assignee: Optional[str],
-    tag: Optional[str],
+    description: str | None,
+    type: str | None,
+    priority: str | None,
+    assignee: str | None,
+    tag: str | None,
 ) -> None:
     """Create a new issue (shortcut for 'yt issues create').
 
@@ -1055,9 +1055,9 @@ def reports() -> None:
 def reports_burndown(
     ctx: click.Context,
     project_id: str,
-    sprint: Optional[str],
-    start_date: Optional[str],
-    end_date: Optional[str],
+    sprint: str | None,
+    start_date: str | None,
+    end_date: str | None,
 ) -> None:
     """Generate a burndown report for a project or sprint.
 
@@ -1194,9 +1194,9 @@ def login(
     ctx: click.Context,
     base_url: str,
     token: str,
-    username: Optional[str],
-    cert_file: Optional[Path],
-    ca_bundle: Optional[Path],
+    username: str | None,
+    cert_file: Path | None,
+    ca_bundle: Path | None,
     verify_ssl: bool,
     no_verify_ssl_deprecated: bool,
 ) -> None:
@@ -1649,7 +1649,7 @@ def set_theme(ctx: click.Context, name: str) -> None:
 @click.argument("name")
 @click.option("--base", help="Base theme to copy from")
 @click.pass_context
-def create_theme(ctx: click.Context, name: str, base: Optional[str] = None) -> None:
+def create_theme(ctx: click.Context, name: str, base: str | None = None) -> None:
     """Create a new custom theme interactively."""
     console = get_console()
 
@@ -1719,7 +1719,7 @@ def delete_theme(ctx: click.Context, name: str, force: bool = False) -> None:
 @click.argument("name")
 @click.argument("output_file", required=False)
 @click.pass_context
-def export_theme(ctx: click.Context, name: str, output_file: Optional[str] = None) -> None:
+def export_theme(ctx: click.Context, name: str, output_file: str | None = None) -> None:
     """Export a theme to a JSON file."""
     console = get_console()
 
@@ -1751,7 +1751,7 @@ def export_theme(ctx: click.Context, name: str, output_file: Optional[str] = Non
 @click.argument("file_path")
 @click.argument("name", required=False)
 @click.pass_context
-def import_theme(ctx: click.Context, file_path: str, name: Optional[str] = None) -> None:
+def import_theme(ctx: click.Context, file_path: str, name: str | None = None) -> None:
     """Import a theme from a JSON file."""
     console = get_console()
 
@@ -2259,7 +2259,7 @@ def list_groups(ctx: click.Context) -> None:
 @click.argument("name")
 @click.option("--description", "-d", help="Group description")
 @click.pass_context
-def create(ctx: click.Context, name: str, description: Optional[str]) -> None:
+def create(ctx: click.Context, name: str, description: str | None) -> None:
     """Create a new user group."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)
@@ -2440,7 +2440,7 @@ def list_i18n(ctx: click.Context) -> None:
     help="Date format to set (Note: Not implemented in this version)",
 )
 @click.pass_context
-def set_i18n(ctx: click.Context, language: Optional[str], timezone: Optional[str], date_format: Optional[str]) -> None:
+def set_i18n(ctx: click.Context, language: str | None, timezone: str | None, date_format: str | None) -> None:
     """Set internationalization settings."""
     auth_manager = AuthManager(ctx.obj.get("config"))
     admin_manager = AdminManager(auth_manager)

@@ -14,7 +14,7 @@ import asyncio
 import csv
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     pass
@@ -36,10 +36,10 @@ class BatchIssueCreate(BaseModel):
 
     project_id: str = Field(..., description="Project ID where issue will be created")
     summary: str = Field(..., description="Issue summary/title")
-    description: Optional[str] = Field(None, description="Issue description")
-    type: Optional[str] = Field(None, description="Issue type (Bug, Feature, Task, etc.)")
-    priority: Optional[str] = Field(None, description="Issue priority (Critical, High, Medium, Low)")
-    assignee: Optional[str] = Field(None, description="Assignee username")
+    description: str | None = Field(None, description="Issue description")
+    type: str | None = Field(None, description="Issue type (Bug, Feature, Task, etc.)")
+    priority: str | None = Field(None, description="Issue priority (Critical, High, Medium, Low)")
+    assignee: str | None = Field(None, description="Assignee username")
 
     class Config:
         """Pydantic configuration."""
@@ -51,12 +51,12 @@ class BatchIssueUpdate(BaseModel):
     """Model for batch issue update data."""
 
     issue_id: str = Field(..., description="Issue ID to update")
-    summary: Optional[str] = Field(None, description="New issue summary/title")
-    description: Optional[str] = Field(None, description="New issue description")
-    state: Optional[str] = Field(None, description="New issue state")
-    type: Optional[str] = Field(None, description="New issue type")
-    priority: Optional[str] = Field(None, description="New issue priority")
-    assignee: Optional[str] = Field(None, description="New assignee username")
+    summary: str | None = Field(None, description="New issue summary/title")
+    description: str | None = Field(None, description="New issue description")
+    state: str | None = Field(None, description="New issue state")
+    type: str | None = Field(None, description="New issue type")
+    priority: str | None = Field(None, description="New issue priority")
+    assignee: str | None = Field(None, description="New assignee username")
 
     class Config:
         """Pydantic configuration."""
@@ -71,8 +71,8 @@ class BatchOperationResult(BaseModel):
     total_items: int = Field(..., description="Total number of items processed")
     successful: int = Field(default=0, description="Number of successful operations")
     failed: int = Field(default=0, description="Number of failed operations")
-    errors: List[Dict[str, Any]] = Field(default_factory=list, description="List of errors encountered")
-    created_items: List[str] = Field(default_factory=list, description="List of created item IDs")
+    errors: list[dict[str, Any]] = Field(default_factory=list, description="List of errors encountered")
+    created_items: list[str] = Field(default_factory=list, description="List of created item IDs")
     duration_seconds: float = Field(default=0.0, description="Operation duration in seconds")
     dry_run: bool = Field(default=False, description="Whether this was a dry run")
 
@@ -80,7 +80,7 @@ class BatchOperationResult(BaseModel):
 class BatchValidationError(Exception):
     """Exception raised when batch file validation fails."""
 
-    def __init__(self, message: str, errors: List[Dict[str, Any]]):
+    def __init__(self, message: str, errors: list[dict[str, Any]]):
         self.message = message
         self.errors = errors
         super().__init__(message)
@@ -94,9 +94,7 @@ class BatchOperationManager:
         self.issue_manager = IssueManager(auth_manager)
         self.console = get_console()
 
-    def validate_csv_file(
-        self, file_path: Path, operation_type: str
-    ) -> List[Union[BatchIssueCreate, BatchIssueUpdate]]:
+    def validate_csv_file(self, file_path: Path, operation_type: str) -> list[BatchIssueCreate | BatchIssueUpdate]:
         """Validate a CSV file for batch operations.
 
         Args:
@@ -154,9 +152,7 @@ class BatchOperationManager:
 
         return validated_items
 
-    def validate_json_file(
-        self, file_path: Path, operation_type: str
-    ) -> List[Union[BatchIssueCreate, BatchIssueUpdate]]:
+    def validate_json_file(self, file_path: Path, operation_type: str) -> list[BatchIssueCreate | BatchIssueUpdate]:
         """Validate a JSON file for batch operations.
 
         Args:
@@ -216,7 +212,7 @@ class BatchOperationManager:
 
         return validated_items
 
-    async def validate_api_compatibility_create(self, items: List[BatchIssueCreate]) -> List[Dict[str, Any]]:
+    async def validate_api_compatibility_create(self, items: list[BatchIssueCreate]) -> list[dict[str, Any]]:
         """Validate API compatibility for batch create items.
 
         This method tests whether the field values in the batch items
@@ -296,7 +292,7 @@ class BatchOperationManager:
 
         return errors
 
-    async def validate_api_compatibility(self, items: List[BatchIssueUpdate]) -> List[Dict[str, Any]]:
+    async def validate_api_compatibility(self, items: list[BatchIssueUpdate]) -> list[dict[str, Any]]:
         """Validate API compatibility for batch update items.
 
         This method tests whether the field values in the batch items
@@ -398,9 +394,7 @@ class BatchOperationManager:
 
         return errors
 
-    def validate_file(
-        self, file_path: Path, operation_type: str
-    ) -> Union[List[BatchIssueCreate], List[BatchIssueUpdate]]:
+    def validate_file(self, file_path: Path, operation_type: str) -> list[BatchIssueCreate] | list[BatchIssueUpdate]:
         """Validate a batch operation file (CSV or JSON).
 
         Args:
@@ -422,12 +416,12 @@ class BatchOperationManager:
 
         # Cast the result to the appropriate type based on operation_type
         if operation_type == "create":
-            return cast(List[BatchIssueCreate], result)
-        return cast(List[BatchIssueUpdate], result)
+            return cast(list[BatchIssueCreate], result)
+        return cast(list[BatchIssueUpdate], result)
 
     async def validate_file_with_api_check(
         self, file_path: Path, operation_type: str
-    ) -> Union[List[BatchIssueCreate], List[BatchIssueUpdate]]:
+    ) -> list[BatchIssueCreate] | list[BatchIssueUpdate]:
         """Validate a batch operation file with API compatibility checking.
 
         Args:
@@ -445,13 +439,13 @@ class BatchOperationManager:
 
         # Check API compatibility for both create and update operations
         if operation_type == "create":
-            api_errors = await self.validate_api_compatibility_create(cast(List[BatchIssueCreate], result))
+            api_errors = await self.validate_api_compatibility_create(cast(list[BatchIssueCreate], result))
             if api_errors:
                 raise BatchValidationError(
                     f"API compatibility validation failed with {len(api_errors)} errors", api_errors
                 )
         elif operation_type == "update":
-            api_errors = await self.validate_api_compatibility(cast(List[BatchIssueUpdate], result))
+            api_errors = await self.validate_api_compatibility(cast(list[BatchIssueUpdate], result))
             if api_errors:
                 raise BatchValidationError(
                     f"API compatibility validation failed with {len(api_errors)} errors", api_errors
@@ -460,7 +454,7 @@ class BatchOperationManager:
         return result
 
     async def batch_create_issues(
-        self, items: List[BatchIssueCreate], dry_run: bool = False, continue_on_error: bool = True
+        self, items: list[BatchIssueCreate], dry_run: bool = False, continue_on_error: bool = True
     ) -> BatchOperationResult:
         """Batch create issues from validated data.
 
@@ -557,7 +551,7 @@ class BatchOperationManager:
         return result
 
     async def batch_update_issues(
-        self, items: List[BatchIssueUpdate], dry_run: bool = False, continue_on_error: bool = True
+        self, items: list[BatchIssueUpdate], dry_run: bool = False, continue_on_error: bool = True
     ) -> BatchOperationResult:
         """Batch update issues from validated data.
 
@@ -661,7 +655,7 @@ class BatchOperationManager:
         result.duration_seconds = time.time() - start_time
         return result
 
-    async def rollback_created_issues(self, issue_ids: List[str]) -> int:
+    async def rollback_created_issues(self, issue_ids: list[str]) -> int:
         """Rollback (delete) created issues.
 
         Args:
@@ -700,7 +694,7 @@ class BatchOperationManager:
 
         return deleted_count
 
-    def display_validation_errors(self, errors: List[Dict[str, Any]]) -> None:
+    def display_validation_errors(self, errors: list[dict[str, Any]]) -> None:
         """Display validation errors in a formatted table.
 
         Args:

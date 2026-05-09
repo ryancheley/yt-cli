@@ -1,6 +1,6 @@
 """User management for YouTrack CLI."""
 
-from typing import Any, Optional
+from typing import Any
 
 from rich.table import Table
 from rich.text import Text
@@ -27,15 +27,15 @@ class UserManager:
 
     async def list_users(
         self,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
-        query: Optional[str] = None,
+        fields: str | None = None,
+        top: int | None = None,
+        query: str | None = None,
         active_only: bool = False,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
+        max_results: int | None = None,
     ) -> dict[str, Any]:
         """List all users.
 
@@ -147,7 +147,7 @@ class UserManager:
         login: str,
         full_name: str,
         email: str,
-        password: Optional[str] = None,
+        password: str | None = None,
         banned: bool = False,
         force_change_password: bool = False,
     ) -> dict[str, Any]:
@@ -218,7 +218,7 @@ class UserManager:
             # HTTPClientManager already handles specific HTTP errors
             return {"status": "error", "message": str(e)}
 
-    async def get_user(self, user_id: str, fields: Optional[str] = None) -> dict[str, Any]:
+    async def get_user(self, user_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get a specific user.
 
         Args:
@@ -266,11 +266,11 @@ class UserManager:
     async def update_user(
         self,
         user_id: str,
-        full_name: Optional[str] = None,
-        email: Optional[str] = None,
-        banned: Optional[bool] = None,
-        password: Optional[str] = None,
-        force_change_password: Optional[bool] = None,
+        full_name: str | None = None,
+        email: str | None = None,
+        banned: bool | None = None,
+        password: str | None = None,
+        force_change_password: bool | None = None,
     ) -> dict[str, Any]:
         """Update a user.
 
@@ -340,9 +340,9 @@ class UserManager:
         self,
         user_id: str,
         action: str,
-        group_id: Optional[str] = None,
-        role_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        group_id: str | None = None,
+        role_id: str | None = None,
+        project_id: str | None = None,
     ) -> dict[str, Any]:
         """Manage user permissions and group memberships.
 

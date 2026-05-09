@@ -1,7 +1,5 @@
 """Common utilities for command modules."""
 
-from typing import Optional
-
 import click
 
 from ..console import get_console
@@ -15,7 +13,7 @@ def handle_api_error(error: Exception, ctx: click.Context) -> None:
     ctx.exit(1)
 
 
-def format_output(data: Optional[dict], format_type: str = "table") -> None:
+def format_output(data: dict | None, format_type: str = "table") -> None:
     """Common output formatting."""
     if not data:
         console.print("[yellow]No data found[/yellow]")

@@ -2,7 +2,6 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -59,11 +58,11 @@ def articles() -> None:
 def create(
     ctx: click.Context,
     title: str,
-    content: Optional[str],
-    file: Optional[Path],
+    content: str | None,
+    file: Path | None,
     project_id: str,
-    parent_id: Optional[str],
-    summary: Optional[str],
+    parent_id: str | None,
+    summary: str | None,
     visibility: str,
     no_article_id: bool,
 ) -> None:
@@ -207,12 +206,12 @@ def create(
 @click.pass_context
 def edit(
     ctx: click.Context,
-    article_id: Optional[str],
-    title: Optional[str],
-    content: Optional[str],
-    file: Optional[Path],
-    summary: Optional[str],
-    visibility: Optional[str],
+    article_id: str | None,
+    title: str | None,
+    content: str | None,
+    file: Path | None,
+    summary: str | None,
+    visibility: str | None,
     show_details: bool,
     no_article_id: bool,
 ) -> None:
@@ -380,8 +379,8 @@ def edit(
 @click.pass_context
 def fetch(
     ctx: click.Context,
-    article_id: Optional[str],
-    file: Optional[Path],
+    article_id: str | None,
+    file: Path | None,
     show_details: bool,
 ) -> None:
     """Fetch an article's content from YouTrack and save to a local file.
@@ -617,17 +616,17 @@ def publish(ctx: click.Context, article_id: str) -> None:
 @click.pass_context
 def list_articles(
     ctx: click.Context,
-    project_id: Optional[str],
-    parent_id: Optional[str],
-    fields: Optional[str],
-    top: Optional[int],
-    query: Optional[str],
+    project_id: str | None,
+    parent_id: str | None,
+    fields: str | None,
+    top: int | None,
+    query: str | None,
     format: str,
     page_size: int,
-    after_cursor: Optional[str],
-    before_cursor: Optional[str],
+    after_cursor: str | None,
+    before_cursor: str | None,
     all: bool,
-    max_results: Optional[int],
+    max_results: int | None,
 ) -> None:
     """List articles with filtering."""
     from ..articles import ArticleManager
@@ -718,9 +717,9 @@ def list_articles(
 @click.pass_context
 def tree(
     ctx: click.Context,
-    project_id: Optional[str],
-    fields: Optional[str],
-    top: Optional[int],
+    project_id: str | None,
+    fields: str | None,
+    top: int | None,
     show_metadata: bool,
     enhanced: bool,
 ) -> None:
@@ -788,8 +787,8 @@ def tree(
 def search(
     ctx: click.Context,
     query: str,
-    project_id: Optional[str],
-    top: Optional[int],
+    project_id: str | None,
+    top: int | None,
     format: str,
 ) -> None:
     """Search articles."""
@@ -844,7 +843,7 @@ def search(
 @click.pass_context
 def draft(
     ctx: click.Context,
-    project_id: Optional[str],
+    project_id: str | None,
     format: str,
 ) -> None:
     """Manage article drafts."""
@@ -1370,7 +1369,7 @@ def upload(ctx: click.Context, article_id: str, file_path: str) -> None:
     help="Overwrite existing files",
 )
 @click.pass_context
-def download(ctx: click.Context, article_id: str, attachment_id: str, output: Optional[str], overwrite: bool) -> None:
+def download(ctx: click.Context, article_id: str, attachment_id: str, output: str | None, overwrite: bool) -> None:
     """Download an attachment from an article."""
     from pathlib import Path
 

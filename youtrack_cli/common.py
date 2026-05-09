@@ -1,7 +1,7 @@
 """Common CLI options and decorators for YouTrack CLI."""
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable
 
 import click
 

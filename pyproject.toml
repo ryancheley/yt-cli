@@ -3,7 +3,7 @@ name = "youtrack-cli"
 version = "0.22.2"
 description = "YouTrack CLI - Command line interface for JetBrains YouTrack issue tracking system"
 readme = "README.md"
-requires-python = ">=3.9, <3.14"
+requires-python = ">=3.10, <3.14"
 license = { text = "MIT" }
 authors = [
     { name = "Ryan Cheley", email = "rcheley@gmail.com" },
@@ -16,7 +16,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -64,7 +63,7 @@ packages = ["youtrack_cli"]
 "youtrack_cli/py.typed" = "youtrack_cli/py.typed"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 120
 extend-exclude = [
     "migrations",
@@ -101,12 +100,6 @@ select = [
     # "FURB",  # refurb
 ]
 ignore = [
-    # Python 3.9 compatibility
-    "UP045",  # Use `X | None` for type annotations
-    "UP007",  # Use `X | Y` for type annotations
-    "UP006",  # Use `dict` instead of `Dict`
-    "UP035",  # `typing.Dict` is deprecated
-
     # Security exceptions for CLI tools
     "S101",   # Use of assert (common in tests)
     "S603",   # subprocess call without shell=True

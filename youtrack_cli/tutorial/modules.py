@@ -1,7 +1,5 @@
 """Built-in tutorial modules for YouTrack CLI."""
 
-from typing import List, Optional
-
 from .core import TutorialModule, TutorialStep
 from .docker_utils import (
     DockerNotAvailableError,
@@ -30,7 +28,7 @@ class SetupTutorial(TutorialModule):
             description="Learn how to authenticate and configure YouTrack CLI for first use.",
         )
 
-    def create_steps(self) -> List[TutorialStep]:
+    def create_steps(self) -> list[TutorialStep]:
         """Create tutorial steps."""
         return [
             TutorialStep(
@@ -107,7 +105,7 @@ class IssuesTutorial(TutorialModule):
             description="Learn how to create, update, and manage YouTrack issues using the CLI.",
         )
 
-    def create_steps(self) -> List[TutorialStep]:
+    def create_steps(self) -> list[TutorialStep]:
         """Create tutorial steps."""
         return [
             TutorialStep(
@@ -199,7 +197,7 @@ class ProjectsTutorial(TutorialModule):
             description="Learn how to work with YouTrack projects and their configurations.",
         )
 
-    def create_steps(self) -> List[TutorialStep]:
+    def create_steps(self) -> list[TutorialStep]:
         """Create tutorial steps."""
         return [
             TutorialStep(
@@ -274,7 +272,7 @@ class TimeTutorial(TutorialModule):
             description="Learn how to log work time and track effort on issues.",
         )
 
-    def create_steps(self) -> List[TutorialStep]:
+    def create_steps(self) -> list[TutorialStep]:
         """Create tutorial steps."""
         return [
             TutorialStep(
@@ -329,14 +327,14 @@ class DockerTutorial(TutorialModule):
     """Tutorial for setting up a local YouTrack instance with Docker."""
 
     def __init__(self):
-        self._wizard_url: Optional[str] = None
+        self._wizard_url: str | None = None
         super().__init__(
             module_id="docker",
             title="Local YouTrack with Docker",
             description="Set up a local YouTrack instance using Docker for hands-on learning.",
         )
 
-    def create_steps(self) -> List[TutorialStep]:
+    def create_steps(self) -> list[TutorialStep]:
         """Create tutorial steps."""
         return [
             TutorialStep(
@@ -469,7 +467,7 @@ class DockerTutorial(TutorialModule):
             ),
         ]
 
-    def _get_docker_check_instructions(self) -> List[str]:
+    def _get_docker_check_instructions(self) -> list[str]:
         """Get instructions for Docker availability check."""
         try:
             check_docker_available()
@@ -486,7 +484,7 @@ class DockerTutorial(TutorialModule):
                 "Restart this tutorial after Docker is ready",
             ]
 
-    def _get_port_check_instructions(self) -> List[str]:
+    def _get_port_check_instructions(self) -> list[str]:
         """Get instructions for port availability check."""
         try:
             check_port_available()
@@ -503,7 +501,7 @@ class DockerTutorial(TutorialModule):
                 "Common culprits: Jenkins, other web servers",
             ]
 
-    def _get_image_pull_instructions(self) -> List[str]:
+    def _get_image_pull_instructions(self) -> list[str]:
         """Get instructions for pulling YouTrack image."""
         try:
             pull_youtrack_image()
@@ -520,7 +518,7 @@ class DockerTutorial(TutorialModule):
                 "You may need to retry this step",
             ]
 
-    def _get_container_start_instructions(self) -> List[str]:
+    def _get_container_start_instructions(self) -> list[str]:
         """Get instructions for starting YouTrack container."""
         try:
             container_id, wizard_url = start_youtrack_container()
@@ -544,11 +542,11 @@ class DockerTutorial(TutorialModule):
                 "You may need to retry this step",
             ]
 
-    def _get_web_setup_instructions(self) -> List[str]:
+    def _get_web_setup_instructions(self) -> list[str]:
         """Get web setup instructions."""
         return get_setup_instructions(wizard_url=self._wizard_url)
 
-    def _get_cli_config_instructions(self) -> List[str]:
+    def _get_cli_config_instructions(self) -> list[str]:
         """Get CLI configuration instructions."""
         return [
             "Now let's configure the CLI to use your local YouTrack:",
@@ -559,7 +557,7 @@ class DockerTutorial(TutorialModule):
             f"5. Use base URL: {get_youtrack_url()}",
         ]
 
-    def _get_cleanup_instructions(self) -> List[str]:
+    def _get_cleanup_instructions(self) -> list[str]:
         """Get cleanup instructions."""
         return [
             "What would you like to do with your local YouTrack instance?",
@@ -711,7 +709,7 @@ class DockerTutorial(TutorialModule):
             return False
 
 
-def get_default_modules() -> List[TutorialModule]:
+def get_default_modules() -> list[TutorialModule]:
     """Get the default set of tutorial modules."""
     return [
         SetupTutorial(),

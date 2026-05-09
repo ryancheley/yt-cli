@@ -3,8 +3,8 @@
 import asyncio
 import asyncio.subprocess
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
 
 from rich import box
 from rich.panel import Panel
@@ -23,15 +23,15 @@ class TutorialStep:
 
     title: str
     description: str
-    instructions: List[str]
-    command_example: Optional[str] = None
-    validation_command: Optional[str] = None
-    tips: Optional[List[str]] = None
-    execute_action: Optional[Callable] = None
-    validation_check: Optional[Callable] = None
-    cleanup_action: Optional[Callable] = None
-    custom_prompt_choices: Optional[List[str]] = None
-    custom_prompt_handler: Optional[Callable] = None
+    instructions: list[str]
+    command_example: str | None = None
+    validation_command: str | None = None
+    tips: list[str] | None = None
+    execute_action: Callable | None = None
+    validation_check: Callable | None = None
+    cleanup_action: Callable | None = None
+    custom_prompt_choices: list[str] | None = None
+    custom_prompt_handler: Callable | None = None
 
 
 @dataclass
@@ -40,9 +40,9 @@ class TutorialProgress:
 
     module_id: str
     current_step: int = 0
-    completed_steps: Optional[List[int]] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    completed_steps: list[int] | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
 
     def __post_init__(self):
         if self.completed_steps is None:
@@ -56,11 +56,11 @@ class TutorialModule(ABC):
         self.module_id = module_id
         self.title = title
         self.description = description
-        self.steps: List[TutorialStep] = []
+        self.steps: list[TutorialStep] = []
         self.console = get_console()
 
     @abstractmethod
-    def create_steps(self) -> List[TutorialStep]:
+    def create_steps(self) -> list[TutorialStep]:
         """Create and return the tutorial steps."""
         pass
 
@@ -68,7 +68,7 @@ class TutorialModule(ABC):
         """Add a step to this tutorial module."""
         self.steps.append(step)
 
-    def get_steps(self) -> List[TutorialStep]:
+    def get_steps(self) -> list[TutorialStep]:
         """Get all tutorial steps."""
         if not self.steps:
             self.steps = self.create_steps()
@@ -127,18 +127,18 @@ class TutorialEngine:
     def __init__(self, progress_tracker, config_manager=None):
         self.console = get_console()
         self.progress_tracker = progress_tracker
-        self.modules: Dict[str, TutorialModule] = {}
+        self.modules: dict[str, TutorialModule] = {}
         self.command_executor = ClickCommandExecutor(config_manager)
 
     def register_module(self, module: TutorialModule) -> None:
         """Register a tutorial module."""
         self.modules[module.module_id] = module
 
-    def list_modules(self) -> List[TutorialModule]:
+    def list_modules(self) -> list[TutorialModule]:
         """Get all registered tutorial modules."""
         return list(self.modules.values())
 
-    def get_module(self, module_id: str) -> Optional[TutorialModule]:
+    def get_module(self, module_id: str) -> TutorialModule | None:
         """Get a specific tutorial module."""
         return self.modules.get(module_id)
 
@@ -172,7 +172,7 @@ class TutorialEngine:
 
         self.console.print(table)
 
-    async def run_module(self, module_id: str, start_step: Optional[int] = None) -> bool:
+    async def run_module(self, module_id: str, start_step: int | None = None) -> bool:
         """Run a specific tutorial module."""
         module = self.get_module(module_id)
         if not module:

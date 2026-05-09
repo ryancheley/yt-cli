@@ -1,7 +1,6 @@
 """Performance benchmarking utilities for field selection optimization."""
 
 import time
-from typing import Dict, Optional
 
 from .auth import AuthManager
 from .field_selection import get_field_selector
@@ -22,8 +21,8 @@ class FieldSelectionBenchmark:
         self.field_selector = get_field_selector()
 
     async def benchmark_profile_performance(
-        self, project_id: Optional[str] = None, query: Optional[str] = None, sample_size: int = 100
-    ) -> Dict[str, Dict[str, float]]:
+        self, project_id: str | None = None, query: str | None = None, sample_size: int = 100
+    ) -> dict[str, dict[str, float]]:
         """Benchmark performance across different field selection profiles.
 
         Args:
@@ -72,7 +71,7 @@ class FieldSelectionBenchmark:
         return results
 
     async def _run_single_benchmark(
-        self, project_id: Optional[str], query: Optional[str], profile: str, sample_size: int
+        self, project_id: str | None, query: str | None, profile: str, sample_size: int
     ) -> float:
         """Run a single benchmark iteration.
 
@@ -93,7 +92,7 @@ class FieldSelectionBenchmark:
 
         return duration
 
-    def analyze_performance_gains(self, results: Dict[str, Dict[str, float]]) -> Dict[str, float]:
+    def analyze_performance_gains(self, results: dict[str, dict[str, float]]) -> dict[str, float]:
         """Analyze performance improvements from using optimized field selection.
 
         Args:
@@ -134,7 +133,7 @@ class FieldSelectionBenchmark:
 
         return improvements
 
-    def print_benchmark_report(self, results: Dict[str, Dict[str, float]]) -> None:
+    def print_benchmark_report(self, results: dict[str, dict[str, float]]) -> None:
         """Print a formatted benchmark report.
 
         Args:
@@ -178,7 +177,7 @@ class FieldSelectionBenchmark:
         print("=" * 60)
 
 
-async def run_benchmark(auth_manager: AuthManager, project_id: Optional[str] = None, sample_size: int = 50) -> None:
+async def run_benchmark(auth_manager: AuthManager, project_id: str | None = None, sample_size: int = 50) -> None:
     """Run a complete field selection benchmark.
 
     Args:

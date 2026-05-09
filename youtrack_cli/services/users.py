@@ -1,6 +1,6 @@
 """User service for YouTrack API operations."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..logging import get_logger
 from .base import BaseService
@@ -17,11 +17,11 @@ class UserService(BaseService):
 
     async def list_users(
         self,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
-        skip: Optional[int] = None,
-        query: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        fields: str | None = None,
+        top: int | None = None,
+        skip: int | None = None,
+        query: str | None = None,
+    ) -> dict[str, Any]:
         """List all users via API.
 
         Args:
@@ -58,7 +58,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error listing users: {str(e)}")
 
-    async def get_user(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user(self, user_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get a specific user via API.
 
         Args:
@@ -92,9 +92,9 @@ class UserService(BaseService):
         login: str,
         full_name: str,
         email: str,
-        password: Optional[str] = None,
+        password: str | None = None,
         force_change_password: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a new user via API.
 
         Args:
@@ -149,12 +149,12 @@ class UserService(BaseService):
     async def update_user(
         self,
         user_id: str,
-        full_name: Optional[str] = None,
-        email: Optional[str] = None,
-        banned: Optional[bool] = None,
-        password: Optional[str] = None,
-        force_change_password: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        full_name: str | None = None,
+        email: str | None = None,
+        banned: bool | None = None,
+        password: str | None = None,
+        force_change_password: bool | None = None,
+    ) -> dict[str, Any]:
         """Update an existing user via API.
 
         Args:
@@ -169,7 +169,7 @@ class UserService(BaseService):
             API response with updated user data
         """
         try:
-            update_data: Dict[str, Any] = {}
+            update_data: dict[str, Any] = {}
 
             if full_name is not None:
                 update_data["fullName"] = full_name
@@ -251,7 +251,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error updating user: {str(e)}")
 
-    async def delete_user(self, user_id: str) -> Dict[str, Any]:
+    async def delete_user(self, user_id: str) -> dict[str, Any]:
         """Delete a user via API.
 
         Args:
@@ -269,7 +269,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error deleting user: {str(e)}")
 
-    async def ban_user(self, user_id: str) -> Dict[str, Any]:
+    async def ban_user(self, user_id: str) -> dict[str, Any]:
         """Ban a user via API.
 
         Args:
@@ -298,7 +298,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error banning user: {str(e)}")
 
-    async def unban_user(self, user_id: str) -> Dict[str, Any]:
+    async def unban_user(self, user_id: str) -> dict[str, Any]:
         """Unban a user via API.
 
         Args:
@@ -327,7 +327,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error unbanning user: {str(e)}")
 
-    async def get_user_groups(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user_groups(self, user_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get user's groups via API.
 
         Args:
@@ -368,7 +368,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error getting user groups: {str(e)}")
 
-    async def add_user_to_group(self, user_id: str, group_id: str) -> Dict[str, Any]:
+    async def add_user_to_group(self, user_id: str, group_id: str) -> dict[str, Any]:
         """Add user to a group via API.
 
         Args:
@@ -388,7 +388,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error adding user to group: {str(e)}")
 
-    async def remove_user_from_group(self, user_id: str, group_id: str) -> Dict[str, Any]:
+    async def remove_user_from_group(self, user_id: str, group_id: str) -> dict[str, Any]:
         """Remove user from a group via API.
 
         Args:
@@ -407,7 +407,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error removing user from group: {str(e)}")
 
-    async def get_user_roles(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user_roles(self, user_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get user's roles via API.
 
         Note: Roles in YouTrack are typically project-specific and managed through permissions.
@@ -448,7 +448,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error getting user roles: {str(e)}")
 
-    async def assign_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
+    async def assign_user_role(self, user_id: str, role_id: str) -> dict[str, Any]:
         """Assign a role to user via API.
 
         Args:
@@ -468,7 +468,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error assigning user role: {str(e)}")
 
-    async def remove_user_role(self, user_id: str, role_id: str) -> Dict[str, Any]:
+    async def remove_user_role(self, user_id: str, role_id: str) -> dict[str, Any]:
         """Remove a role from user via API.
 
         Args:
@@ -487,7 +487,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error removing user role: {str(e)}")
 
-    async def get_user_teams(self, user_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user_teams(self, user_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get user's teams via API.
 
         Args:
@@ -530,7 +530,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error getting user teams: {str(e)}")
 
-    async def add_user_to_team(self, user_id: str, team_id: str) -> Dict[str, Any]:
+    async def add_user_to_team(self, user_id: str, team_id: str) -> dict[str, Any]:
         """Add user to a team via API.
 
         Args:
@@ -550,7 +550,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error adding user to team: {str(e)}")
 
-    async def remove_user_from_team(self, user_id: str, team_id: str) -> Dict[str, Any]:
+    async def remove_user_from_team(self, user_id: str, team_id: str) -> dict[str, Any]:
         """Remove user from a team via API.
 
         Args:
@@ -569,7 +569,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error removing user from team: {str(e)}")
 
-    async def change_user_password(self, user_id: str, new_password: str, force_change: bool = False) -> Dict[str, Any]:
+    async def change_user_password(self, user_id: str, new_password: str, force_change: bool = False) -> dict[str, Any]:
         """Change user password via API.
 
         Args:
@@ -604,7 +604,7 @@ class UserService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error changing user password: {str(e)}")
 
-    async def get_user_permissions(self, user_id: str, project_id: Optional[str] = None) -> Dict[str, Any]:
+    async def get_user_permissions(self, user_id: str, project_id: str | None = None) -> dict[str, Any]:
         """Get user permissions via API.
 
         Args:

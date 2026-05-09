@@ -1,7 +1,6 @@
 """Global test configuration and fixtures."""
 
 import os
-from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +13,7 @@ def isolate_environment():
     youtrack_env_vars = ["YOUTRACK_BASE_URL", "YOUTRACK_TOKEN", "YOUTRACK_USERNAME", "YOUTRACK_VERIFY_SSL"]
 
     # Store original values
-    original_env: dict[str, Optional[str]] = {}
+    original_env: dict[str, str | None] = {}
     for key in youtrack_env_vars:
         original_env[key] = os.environ.get(key)
 

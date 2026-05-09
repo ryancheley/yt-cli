@@ -1,6 +1,6 @@
 """Administrative operations for YouTrack CLI."""
 
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -71,7 +71,7 @@ class AdminManager:
             return value
 
     # Global Settings Management
-    async def get_global_settings(self, setting_key: Optional[str] = None) -> dict[str, Any]:
+    async def get_global_settings(self, setting_key: str | None = None) -> dict[str, Any]:
         """Get global YouTrack settings.
 
         Args:
@@ -486,7 +486,7 @@ class AdminManager:
         }
 
     # User Groups Management
-    async def list_user_groups(self, fields: Optional[str] = None) -> dict[str, Any]:
+    async def list_user_groups(self, fields: str | None = None) -> dict[str, Any]:
         """List all user groups.
 
         Args:
@@ -537,7 +537,7 @@ class AdminManager:
         except Exception as e:
             return {"status": "error", "message": f"Unexpected error: {e}"}
 
-    async def create_user_group(self, name: str, description: Optional[str] = None) -> dict[str, Any]:
+    async def create_user_group(self, name: str, description: str | None = None) -> dict[str, Any]:
         """Create a new user group.
 
         Args:
@@ -599,7 +599,7 @@ class AdminManager:
             return {"status": "error", "message": f"Unexpected error: {e}"}
 
     # Custom Fields Management
-    async def list_custom_fields(self, fields: Optional[str] = None) -> dict[str, Any]:
+    async def list_custom_fields(self, fields: str | None = None) -> dict[str, Any]:
         """List all custom fields.
 
         Args:
@@ -883,7 +883,7 @@ class AdminManager:
                 display_name = CustomFieldManager.format_field_type_for_display(field_type)
                 return f"[{display_name}]"
             return str(value)
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             return str(value)
         if value is None:
             return "N/A"
@@ -1098,7 +1098,7 @@ class AdminManager:
 
         self.console.print(table)
 
-    def display_available_locales(self, locales: list[dict[str, Any]], message: Optional[str] = None) -> None:
+    def display_available_locales(self, locales: list[dict[str, Any]], message: str | None = None) -> None:
         """Display available locales in a formatted table.
 
         Args:

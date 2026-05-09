@@ -5,7 +5,7 @@ with support for quiet mode and programmatic error handling.
 """
 
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -74,9 +74,9 @@ class StandardizedError:
         self,
         code: ErrorCode,
         message: str,
-        details: Optional[str] = None,
+        details: str | None = None,
         severity: ErrorSeverity = ErrorSeverity.ERROR,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ):
         self.code = code
         self.message = message
@@ -88,7 +88,7 @@ class StandardizedError:
 class ErrorFormatter:
     """Centralized error formatting utility."""
 
-    def __init__(self, console: Optional[Console] = None, quiet: Optional[bool] = None):
+    def __init__(self, console: Console | None = None, quiet: bool | None = None):
         self.console = console or Console()
         # If quiet mode is not explicitly specified, use global console setting
         self.quiet = quiet if quiet is not None else is_quiet_mode()
@@ -144,7 +144,7 @@ class CommonErrors:
     """Factory for common error patterns."""
 
     @staticmethod
-    def authentication_failed(details: Optional[str] = None) -> StandardizedError:
+    def authentication_failed(details: str | None = None) -> StandardizedError:
         """Create authentication failed error."""
         return StandardizedError(code=ErrorCode.AUTH_FAILED, message="Authentication failed", details=details)
 
@@ -154,7 +154,7 @@ class CommonErrors:
         return StandardizedError(code=ErrorCode.AUTH_NO_CREDENTIALS, message="No authentication credentials found")
 
     @staticmethod
-    def connection_failed(details: Optional[str] = None) -> StandardizedError:
+    def connection_failed(details: str | None = None) -> StandardizedError:
         """Create connection failed error."""
         return StandardizedError(code=ErrorCode.NET_CONNECTION_FAILED, message="Connection failed", details=details)
 
@@ -164,7 +164,7 @@ class CommonErrors:
         return StandardizedError(code=ErrorCode.RES_NOT_FOUND, message=f"{resource_type} '{identifier}' not found")
 
     @staticmethod
-    def invalid_input(field: str, details: Optional[str] = None) -> StandardizedError:
+    def invalid_input(field: str, details: str | None = None) -> StandardizedError:
         """Create invalid input error."""
         return StandardizedError(
             code=ErrorCode.VAL_INVALID_INPUT, message=f"Invalid input for {field}", details=details
@@ -176,17 +176,17 @@ class CommonErrors:
         return StandardizedError(code=ErrorCode.PERM_ACCESS_DENIED, message=f"Permission denied: {action}")
 
     @staticmethod
-    def configuration_error(details: Optional[str] = None) -> StandardizedError:
+    def configuration_error(details: str | None = None) -> StandardizedError:
         """Create configuration error."""
         return StandardizedError(code=ErrorCode.CFG_INVALID_FORMAT, message="Configuration error", details=details)
 
     @staticmethod
-    def operation_failed(operation: str, details: Optional[str] = None) -> StandardizedError:
+    def operation_failed(operation: str, details: str | None = None) -> StandardizedError:
         """Create operation failed error."""
         return StandardizedError(code=ErrorCode.RES_OPERATION_FAILED, message=f"{operation} failed", details=details)
 
 
-def get_error_formatter(console: Optional[Console] = None, quiet: Optional[bool] = None) -> ErrorFormatter:
+def get_error_formatter(console: Console | None = None, quiet: bool | None = None) -> ErrorFormatter:
     """Get or create error formatter instance."""
     # Auto-detect quiet mode if not specified
     effective_quiet = quiet if quiet is not None else is_quiet_mode()
@@ -195,16 +195,14 @@ def get_error_formatter(console: Optional[Console] = None, quiet: Optional[bool]
     return ErrorFormatter(console=console, quiet=effective_quiet)
 
 
-def format_and_print_error(
-    error: StandardizedError, console: Optional[Console] = None, quiet: Optional[bool] = None
-) -> None:
+def format_and_print_error(error: StandardizedError, console: Console | None = None, quiet: bool | None = None) -> None:
     """Convenience function to format and print an error."""
     formatter = get_error_formatter(console=console, quiet=quiet)
     formatter.print_error(error)
 
 
 # Legacy compatibility functions for gradual migration
-def print_legacy_error(message: str, console: Optional[Console] = None, quiet: Optional[bool] = None) -> None:
+def print_legacy_error(message: str, console: Console | None = None, quiet: bool | None = None) -> None:
     """Print error using legacy format for backward compatibility."""
     error = StandardizedError(code=ErrorCode.GEN_UNKNOWN_ERROR, message=message)
     format_and_print_error(error, console=console, quiet=quiet)

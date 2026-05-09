@@ -5,8 +5,8 @@ operations using Rich progress bars and spinners.
 """
 
 import contextlib
-from collections.abc import Generator
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable, Generator
+from typing import Any, TypeVar
 
 from rich.console import Console
 from rich.progress import (
@@ -28,7 +28,7 @@ T = TypeVar("T")
 class ProgressManager:
     """Manages progress indicators for the YouTrack CLI."""
 
-    def __init__(self, console: Optional[Console] = None, enabled: bool = True):
+    def __init__(self, console: Console | None = None, enabled: bool = True):
         """Initialize the progress manager.
 
         Args:
@@ -65,7 +65,7 @@ class ProgressManager:
     def progress_bar(
         self,
         description: str,
-        total: Optional[int] = None,
+        total: int | None = None,
         show_percentage: bool = True,
         show_time: bool = True,
     ) -> Generator["ProgressTracker", None, None]:
@@ -166,9 +166,9 @@ class ProgressTracker:
 
     def update(
         self,
-        completed: Optional[int] = None,
-        total: Optional[int] = None,
-        description: Optional[str] = None,
+        completed: int | None = None,
+        total: int | None = None,
+        description: str | None = None,
     ) -> None:
         """Update progress information.
 
@@ -198,16 +198,16 @@ class _DummyTracker:
 
     def update(
         self,
-        completed: Optional[int] = None,
-        total: Optional[int] = None,
-        description: Optional[str] = None,
+        completed: int | None = None,
+        total: int | None = None,
+        description: str | None = None,
     ) -> None:
         """No-op update method."""
         pass
 
 
 # Global progress manager instance
-_progress_manager: Optional[ProgressManager] = None
+_progress_manager: ProgressManager | None = None
 
 
 def get_progress_manager() -> ProgressManager:
