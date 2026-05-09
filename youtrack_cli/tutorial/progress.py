@@ -4,7 +4,6 @@ import json
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .core import TutorialProgress
 
@@ -12,7 +11,7 @@ from .core import TutorialProgress
 class ProgressTracker:
     """Tracks and persists tutorial progress."""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         if config_dir:
             self.config_dir = Path(config_dir)
         else:
@@ -21,7 +20,7 @@ class ProgressTracker:
         self.progress_file = self.config_dir / "tutorial_progress.json"
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
-        self._progress_cache: Dict[str, TutorialProgress] = {}
+        self._progress_cache: dict[str, TutorialProgress] = {}
         self._load_progress()
 
     def _load_progress(self) -> None:
@@ -63,7 +62,7 @@ class ProgressTracker:
             # Handle write errors gracefully
             pass
 
-    def get_progress(self, module_id: str) -> Optional[TutorialProgress]:
+    def get_progress(self, module_id: str) -> TutorialProgress | None:
         """Get progress for a specific module."""
         return self._progress_cache.get(module_id)
 
@@ -83,15 +82,15 @@ class ProgressTracker:
             return True
         return False
 
-    def get_all_progress(self) -> Dict[str, TutorialProgress]:
+    def get_all_progress(self) -> dict[str, TutorialProgress]:
         """Get progress for all modules."""
         return self._progress_cache.copy()
 
-    def get_completed_modules(self) -> List[str]:
+    def get_completed_modules(self) -> list[str]:
         """Get list of completed module IDs."""
         return [module_id for module_id, progress in self._progress_cache.items() if progress.completed_at is not None]
 
-    def get_in_progress_modules(self) -> List[str]:
+    def get_in_progress_modules(self) -> list[str]:
         """Get list of modules that are in progress."""
         return [
             module_id
@@ -104,7 +103,7 @@ class ProgressTracker:
         """Get current timestamp as ISO string."""
         return datetime.now().isoformat()
 
-    def get_completion_stats(self) -> Dict[str, int]:
+    def get_completion_stats(self) -> dict[str, int]:
         """Get completion statistics."""
         completed = len(self.get_completed_modules())
         in_progress = len(self.get_in_progress_modules())

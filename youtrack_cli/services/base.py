@@ -1,6 +1,6 @@
 """Base service class for YouTrack API communication."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -58,7 +58,7 @@ class BaseService:
                 f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers for API requests.
 
         Returns:
@@ -92,9 +92,9 @@ class BaseService:
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
-        additional_headers: Optional[Dict[str, str]] = None,
+        params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
+        additional_headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """Make an authenticated API request.
 
@@ -130,7 +130,7 @@ class BaseService:
             json_data=json_data,
         )
 
-    def _create_success_response(self, data: Any) -> Dict[str, Any]:
+    def _create_success_response(self, data: Any) -> dict[str, Any]:
         """Create a standardized success response.
 
         Args:
@@ -141,7 +141,7 @@ class BaseService:
         """
         return {"status": "success", "data": data}
 
-    def _create_error_response(self, message: str) -> Dict[str, Any]:
+    def _create_error_response(self, message: str) -> dict[str, Any]:
         """Create a standardized error response.
 
         Args:
@@ -153,8 +153,8 @@ class BaseService:
         return {"status": "error", "message": message}
 
     async def _handle_response(
-        self, response: httpx.Response, success_codes: Optional[List[int]] = None
-    ) -> Dict[str, Any]:
+        self, response: httpx.Response, success_codes: list[int] | None = None
+    ) -> dict[str, Any]:
         """Handle API response with standardized error handling.
 
         Args:

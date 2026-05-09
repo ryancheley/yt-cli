@@ -10,7 +10,7 @@ handling, and user feedback with proper error handling and logging.
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -121,10 +121,10 @@ class PaginationConfig:
 async def make_request(
     method: str,
     url: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    json_data: Optional[Dict[str, Any]] = None,
-    timeout: Optional[float] = None,
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    json_data: dict[str, Any] | None = None,
+    timeout: float | None = None,
     max_retries: int = 3,
 ) -> httpx.Response:
     """Make an HTTP request with retry logic and proper error handling.
@@ -162,14 +162,14 @@ async def make_request(
 
 async def paginate_results(
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    page_size: Optional[int] = None,
-    max_results: Optional[int] = None,
-    after_cursor: Optional[str] = None,
-    before_cursor: Optional[str] = None,
-    use_cursor_pagination: Optional[bool] = None,
-) -> Dict[str, Any]:
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    page_size: int | None = None,
+    max_results: int | None = None,
+    after_cursor: str | None = None,
+    before_cursor: str | None = None,
+    use_cursor_pagination: bool | None = None,
+) -> dict[str, Any]:
     """Efficiently paginate through large result sets with automatic pagination type detection.
 
     This function automatically detects whether to use cursor-based or offset-based
@@ -348,13 +348,13 @@ async def paginate_results(
 
 async def paginate_issues(
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    page_size: Optional[int] = None,
-    max_results: Optional[int] = None,
-    after_cursor: Optional[str] = None,
-    before_cursor: Optional[str] = None,
-) -> Dict[str, Any]:
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    page_size: int | None = None,
+    max_results: int | None = None,
+    after_cursor: str | None = None,
+    before_cursor: str | None = None,
+) -> dict[str, Any]:
     """Paginate through issues using cursor-based pagination.
 
     This is a convenience wrapper around paginate_results specifically for issues,
@@ -388,11 +388,11 @@ async def paginate_issues(
 
 async def paginate_projects(
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    page_size: Optional[int] = None,
-    max_results: Optional[int] = None,
-) -> Dict[str, Any]:
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    page_size: int | None = None,
+    max_results: int | None = None,
+) -> dict[str, Any]:
     """Paginate through projects using offset-based pagination.
 
     This is a convenience wrapper around paginate_results specifically for projects,
@@ -422,11 +422,11 @@ async def paginate_projects(
 
 async def paginate_users(
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    page_size: Optional[int] = None,
-    max_results: Optional[int] = None,
-) -> Dict[str, Any]:
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    page_size: int | None = None,
+    max_results: int | None = None,
+) -> dict[str, Any]:
     """Paginate through users using offset-based pagination.
 
     This is a convenience wrapper around paginate_results specifically for users,
@@ -456,11 +456,11 @@ async def paginate_users(
 
 async def paginate_articles(
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    page_size: Optional[int] = None,
-    max_results: Optional[int] = None,
-) -> Dict[str, Any]:
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    page_size: int | None = None,
+    max_results: int | None = None,
+) -> dict[str, Any]:
     """Paginate through articles using offset-based pagination.
 
     This is a convenience wrapper around paginate_results specifically for articles,
@@ -489,7 +489,7 @@ async def paginate_articles(
 
 
 async def batch_requests(
-    requests: List[Dict[str, Any]],
+    requests: list[dict[str, Any]],
     max_concurrent: int = 10,
 ) -> list[httpx.Response]:
     """Execute multiple HTTP requests concurrently.
@@ -509,9 +509,9 @@ async def batch_requests(
 async def batch_get_resources(
     base_url: str,
     resource_ids: list[str],
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     max_concurrent: int = 10,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Batch fetch multiple resources by ID.
 
     Args:
@@ -586,10 +586,10 @@ async def batch_get_resources(
 
 
 def optimize_fields(
-    base_params: Optional[Dict[str, Any]] = None,
-    fields: Optional[list[str]] = None,
-    exclude_fields: Optional[list[str]] = None,
-) -> Dict[str, Any]:
+    base_params: dict[str, Any] | None = None,
+    fields: list[str] | None = None,
+    exclude_fields: list[str] | None = None,
+) -> dict[str, Any]:
     """Optimize API request parameters by selecting only needed fields.
 
     Args:
@@ -630,8 +630,8 @@ def optimize_fields(
 
 async def stream_large_response(
     url: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
     chunk_size: int = 8192,
 ) -> AsyncGenerator[bytes, None]:
     """Stream a large response to avoid memory issues.
@@ -676,7 +676,7 @@ async def stream_large_response(
             logger.debug("Streaming download complete", total_bytes=total_bytes)
 
 
-def handle_error(error: Exception, operation: str = "operation") -> Dict[str, Any]:
+def handle_error(error: Exception, operation: str = "operation") -> dict[str, Any]:
     """Handle and format errors for CLI output.
 
     Args:
@@ -727,7 +727,7 @@ def handle_error(error: Exception, operation: str = "operation") -> Dict[str, An
     }
 
 
-def display_error(error_result: Dict[str, Any]) -> None:
+def display_error(error_result: dict[str, Any]) -> None:
     """Display an error message to the user.
 
     Args:
@@ -796,7 +796,7 @@ def display_warning(message: str) -> None:
     console.print(f"[yellow]Warning:[/yellow] {message}")
 
 
-def format_timestamp(timestamp: Union[int, str, None]) -> str:
+def format_timestamp(timestamp: int | str | None) -> str:
     """Format a timestamp value for display.
 
     Args:

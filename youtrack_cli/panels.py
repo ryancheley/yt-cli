@@ -1,6 +1,6 @@
 """Panel utilities and display components for YouTrack CLI."""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from rich.console import Group, RenderableType
 from rich.panel import Panel
@@ -12,7 +12,7 @@ from .custom_field_manager import CustomFieldManager
 from .utils import format_timestamp
 
 
-def _get_assignee_from_issue_data(issue_data: Dict[str, Any]) -> str:
+def _get_assignee_from_issue_data(issue_data: dict[str, Any]) -> str:
     """Get assignee name from either regular field or custom field."""
     # First try the regular assignee field
     assignee = issue_data.get("assignee")
@@ -39,8 +39,8 @@ class PanelFactory:
     @staticmethod
     def create_info_panel(
         title: str,
-        content: Union[str, RenderableType],
-        subtitle: Optional[str] = None,
+        content: str | RenderableType,
+        subtitle: str | None = None,
         expand: bool = True,
         padding: tuple = (0, 1),
     ) -> Panel:
@@ -69,8 +69,8 @@ class PanelFactory:
     @staticmethod
     def create_details_panel(
         title: str,
-        data: Dict[str, Any],
-        subtitle: Optional[str] = None,
+        data: dict[str, Any],
+        subtitle: str | None = None,
         expand: bool = True,
     ) -> Panel:
         """Create a details panel displaying key-value pairs.
@@ -112,8 +112,8 @@ class PanelFactory:
         title: str,
         status: str,
         status_color: str = "success",
-        details: Optional[Dict[str, Any]] = None,
-        subtitle: Optional[str] = None,
+        details: dict[str, Any] | None = None,
+        subtitle: str | None = None,
     ) -> Panel:
         """Create a status panel with colored status indicator.
 
@@ -150,8 +150,8 @@ class PanelFactory:
     @staticmethod
     def create_warning_panel(
         title: str,
-        content: Union[str, RenderableType],
-        subtitle: Optional[str] = None,
+        content: str | RenderableType,
+        subtitle: str | None = None,
     ) -> Panel:
         """Create a warning panel with warning styling.
 
@@ -176,8 +176,8 @@ class PanelFactory:
     @staticmethod
     def create_error_panel(
         title: str,
-        content: Union[str, RenderableType],
-        subtitle: Optional[str] = None,
+        content: str | RenderableType,
+        subtitle: str | None = None,
     ) -> Panel:
         """Create an error panel with error styling.
 
@@ -203,14 +203,14 @@ class PanelFactory:
 class PanelGroup:
     """Container for managing multiple related panels."""
 
-    def __init__(self, title: Optional[str] = None):
+    def __init__(self, title: str | None = None):
         """Initialize panel group.
 
         Args:
             title: Optional group title
         """
         self.title = title
-        self.panels: List[Panel] = []
+        self.panels: list[Panel] = []
 
     def add_panel(self, panel: Panel) -> None:
         """Add a panel to the group.
@@ -223,8 +223,8 @@ class PanelGroup:
     def add_info_panel(
         self,
         title: str,
-        content: Union[str, RenderableType],
-        subtitle: Optional[str] = None,
+        content: str | RenderableType,
+        subtitle: str | None = None,
     ) -> None:
         """Add an info panel to the group.
 
@@ -239,8 +239,8 @@ class PanelGroup:
     def add_details_panel(
         self,
         title: str,
-        data: Dict[str, Any],
-        subtitle: Optional[str] = None,
+        data: dict[str, Any],
+        subtitle: str | None = None,
     ) -> None:
         """Add a details panel to the group.
 
@@ -277,7 +277,7 @@ class PanelGroup:
         return self.render()
 
 
-def create_issue_overview_panel(issue_data: Dict[str, Any]) -> Panel:
+def create_issue_overview_panel(issue_data: dict[str, Any]) -> Panel:
     """Create an issue overview panel with key information.
 
     Args:
@@ -301,7 +301,7 @@ def create_issue_overview_panel(issue_data: Dict[str, Any]) -> Panel:
     )
 
 
-def create_issue_details_panel(issue_data: Dict[str, Any]) -> Panel:
+def create_issue_details_panel(issue_data: dict[str, Any]) -> Panel:
     """Create an issue details panel with comprehensive information.
 
     Args:
@@ -325,7 +325,7 @@ def create_issue_details_panel(issue_data: Dict[str, Any]) -> Panel:
     )
 
 
-def create_custom_fields_panel(custom_fields: List[Dict[str, Any]]) -> Panel:
+def create_custom_fields_panel(custom_fields: list[dict[str, Any]]) -> Panel:
     """Create a custom fields panel.
 
     Args:
@@ -357,7 +357,7 @@ def create_custom_fields_panel(custom_fields: List[Dict[str, Any]]) -> Panel:
     )
 
 
-def create_project_overview_panel(project_data: Dict[str, Any]) -> Panel:
+def create_project_overview_panel(project_data: dict[str, Any]) -> Panel:
     """Create a project overview panel.
 
     Args:

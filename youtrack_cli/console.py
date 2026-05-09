@@ -1,13 +1,13 @@
 """Centralized console management for YouTrack CLI."""
 
-from typing import Dict, Optional
+from typing import Optional
 
 from rich.console import Console
 from rich.theme import Theme
 
 from .config import ConfigManager
 
-THEMES: Dict[str, Theme] = {
+THEMES: dict[str, Theme] = {
     "default": Theme(
         {
             "info": "cyan",
@@ -101,7 +101,7 @@ def get_default_theme() -> Theme:
     return THEMES["default"]
 
 
-def get_theme_by_name(name: str) -> Optional[Theme]:
+def get_theme_by_name(name: str) -> Theme | None:
     """Get a theme by its name.
 
     Args:
@@ -129,8 +129,8 @@ class ConsoleManager:
     """Manages console instances and theming for YouTrack CLI."""
 
     _instance: Optional["ConsoleManager"] = None
-    _console: Optional[Console] = None
-    _theme: Optional[Theme] = None
+    _console: Console | None = None
+    _theme: Theme | None = None
     _quiet_mode: bool = False
 
     def __new__(cls) -> "ConsoleManager":
@@ -139,7 +139,7 @@ class ConsoleManager:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, theme: Optional[Theme] = None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize the ConsoleManager.
 
         Args:
@@ -183,7 +183,7 @@ class ConsoleManager:
         """Reset the console theme to the default."""
         self.set_theme(get_default_theme())
 
-    def get_theme(self) -> Optional[Theme]:
+    def get_theme(self) -> Theme | None:
         """Get the current theme.
 
         Returns:
@@ -235,7 +235,7 @@ def reset_console_theme() -> None:
     _console_manager.reset_theme()
 
 
-def get_console_theme() -> Optional[Theme]:
+def get_console_theme() -> Theme | None:
     """Get the current console theme.
 
     Returns:

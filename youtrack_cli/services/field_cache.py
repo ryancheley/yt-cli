@@ -1,7 +1,7 @@
 """Simple caching mechanism for project field metadata."""
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class FieldCache:
@@ -17,20 +17,20 @@ class FieldCache:
         Args:
             ttl_seconds: Time-to-live for cache entries in seconds
         """
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         self._ttl = ttl_seconds
 
     def _get_cache_key(self, project_id: str, field_type: str = "state") -> str:
         """Generate cache key for project field metadata."""
         return f"{project_id}:{field_type}"
 
-    def _is_expired(self, entry: Dict[str, Any]) -> bool:
+    def _is_expired(self, entry: dict[str, Any]) -> bool:
         """Check if cache entry has expired."""
         if "timestamp" not in entry:
             return True
         return time.time() - entry["timestamp"] > self._ttl
 
-    def get(self, project_id: str, field_type: str = "state") -> Optional[Dict[str, Any]]:
+    def get(self, project_id: str, field_type: str = "state") -> dict[str, Any] | None:
         """Get cached field metadata for a project.
 
         Args:
@@ -52,7 +52,7 @@ class FieldCache:
 
         return entry.get("data")
 
-    def set(self, project_id: str, field_data: Dict[str, Any], field_type: str = "state") -> None:
+    def set(self, project_id: str, field_data: dict[str, Any], field_type: str = "state") -> None:
         """Cache field metadata for a project.
 
         Args:
@@ -63,7 +63,7 @@ class FieldCache:
         cache_key = self._get_cache_key(project_id, field_type)
         self._cache[cache_key] = {"data": field_data, "timestamp": time.time()}
 
-    def clear(self, project_id: Optional[str] = None) -> None:
+    def clear(self, project_id: str | None = None) -> None:
         """Clear cache entries.
 
         Args:
@@ -78,7 +78,7 @@ class FieldCache:
             for key in keys_to_remove:
                 del self._cache[key]
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics for debugging."""
         total_entries = len(self._cache)
         expired_entries = sum(1 for entry in self._cache.values() if self._is_expired(entry))

@@ -2,7 +2,6 @@
 
 import os
 import uuid
-from typing import List
 
 import pytest
 
@@ -89,7 +88,7 @@ def test_issue_data(test_project_id):
 @pytest.fixture(scope="function")
 async def cleanup_test_issues(integration_issue_manager, test_project_id):
     """Track and cleanup test issues created during integration tests."""
-    created_issues: List[str] = []
+    created_issues: list[str] = []
 
     def track_issue(issue_id: str):
         """Track an issue for cleanup."""

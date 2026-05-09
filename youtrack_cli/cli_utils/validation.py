@@ -1,7 +1,8 @@
 """Click validation utilities for better error messages."""
 
 import functools
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 import click
 
@@ -9,7 +10,7 @@ from ..exceptions import ParameterError, UsageError
 from ..utils import display_error, handle_error
 
 
-def validate_choices_with_suggestions(choices: List[str], case_sensitive: bool = False, suggestion_cutoff: float = 0.6):
+def validate_choices_with_suggestions(choices: list[str], case_sensitive: bool = False, suggestion_cutoff: float = 0.6):
     """Create a Click option validator that suggests similar choices on error."""
 
     def validator(ctx: click.Context, param: click.Parameter, value: str) -> str:
@@ -165,9 +166,7 @@ def validate_issue_id_format(ctx: click.Context, param: click.Parameter, value: 
 class EnhancedOption(click.Option):
     """Enhanced Click option with better error messages."""
 
-    def __init__(
-        self, *args, suggestions: Optional[List[str]] = None, usage_examples: Optional[List[str]] = None, **kwargs
-    ):
+    def __init__(self, *args, suggestions: list[str] | None = None, usage_examples: list[str] | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.suggestions = suggestions or []
         self.usage_examples = usage_examples or []

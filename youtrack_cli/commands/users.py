@@ -1,7 +1,6 @@
 """Users command group for YouTrack CLI."""
 
 import asyncio
-from typing import Optional
 
 import click
 from rich.prompt import Prompt
@@ -161,16 +160,16 @@ def users() -> None:
 @click.pass_context
 def list_users(
     ctx: click.Context,
-    fields: Optional[str],
-    top: Optional[int],
-    query: Optional[str],
+    fields: str | None,
+    top: int | None,
+    query: str | None,
     active_only: bool,
     format: str,
     page_size: int,
-    after_cursor: Optional[str],
-    before_cursor: Optional[str],
+    after_cursor: str | None,
+    before_cursor: str | None,
     all: bool,
-    max_results: Optional[int],
+    max_results: int | None,
 ) -> None:
     """List all users."""
     from ..managers.users import UserManager
@@ -255,7 +254,7 @@ def create_user(
     login: str,
     full_name: str,
     email: str,
-    password: Optional[str],
+    password: str | None,
     banned: bool,
     force_change_password: bool,
 ) -> None:
@@ -359,10 +358,10 @@ def create_user(
 def users_update(
     ctx: click.Context,
     user_id: str,
-    full_name: Optional[str],
-    email: Optional[str],
-    password: Optional[str],
-    banned: Optional[bool],
+    full_name: str | None,
+    email: str | None,
+    password: str | None,
+    banned: bool | None,
     force_change_password: bool,
     show_details: bool,
 ) -> None:
@@ -447,7 +446,7 @@ def permissions(
     ctx: click.Context,
     user_id: str,
     action: str,
-    group_id: Optional[str],
+    group_id: str | None,
 ) -> None:
     """Manage user permissions.
 

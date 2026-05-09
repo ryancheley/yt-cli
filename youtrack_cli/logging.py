@@ -6,7 +6,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from rich.logging import RichHandler
@@ -142,7 +142,7 @@ def setup_logging(
     verbose: bool = False,
     debug: bool = False,
     log_file: bool = True,
-    log_level: Optional[str] = None,
+    log_level: str | None = None,
 ) -> None:
     """Setup comprehensive logging with structlog and rich formatting.
 
@@ -203,7 +203,7 @@ def setup_logging(
         logger.debug("Logging system initialized", extra={"level": logging.getLevelName(level)})
 
 
-def get_logger(name: Optional[str] = None) -> structlog.stdlib.BoundLogger:
+def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     """Get a structured logger instance for the YouTrack CLI.
 
     Args:
@@ -235,8 +235,8 @@ def log_operation(operation: str, **kwargs: Any) -> None:
 def log_api_call(
     method: str,
     url: str,
-    status_code: Optional[int] = None,
-    duration: Optional[float] = None,
+    status_code: int | None = None,
+    duration: float | None = None,
     **kwargs: Any,
 ) -> None:
     """Log API calls with structured context.

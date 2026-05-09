@@ -435,7 +435,7 @@ class TestTimeTrackingWorkflows:
                 if result.output.strip():
                     try:
                         summary_data = json.loads(result.output)
-                        assert isinstance(summary_data, (list, dict))
+                        assert isinstance(summary_data, list | dict)
                     except json.JSONDecodeError:
                         # Output might not be JSON if no data
                         pass

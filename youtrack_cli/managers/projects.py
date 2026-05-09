@@ -1,6 +1,6 @@
 """Project manager for YouTrack CLI business logic."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.table import Table
 
@@ -31,7 +31,7 @@ class ProjectManager:
         self.project_service = ProjectService(auth_manager)
         self.user_manager = UserManager(auth_manager)
 
-    async def _resolve_user_id(self, username_or_id: str) -> tuple[str, Optional[str]]:
+    async def _resolve_user_id(self, username_or_id: str) -> tuple[str, str | None]:
         """Resolve a username or ID to a YouTrack user ID.
 
         Args:
@@ -80,15 +80,15 @@ class ProjectManager:
 
     async def list_projects(
         self,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
+        fields: str | None = None,
+        top: int | None = None,
         show_archived: bool = False,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        max_results: int | None = None,
+    ) -> dict[str, Any]:
         """List all projects with enhanced pagination and filtering.
 
         Args:
@@ -150,7 +150,7 @@ class ProjectManager:
 
             return result
 
-    async def get_project(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_project(self, project_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get a specific project with enhanced error handling.
 
         Args:
@@ -166,10 +166,10 @@ class ProjectManager:
         self,
         short_name: str,
         name: str,
-        description: Optional[str] = None,
-        leader_login: Optional[str] = None,
-        template: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        description: str | None = None,
+        leader_login: str | None = None,
+        template: str | None = None,
+    ) -> dict[str, Any]:
         """Create a new project with business validation.
 
         Args:
@@ -208,11 +208,11 @@ class ProjectManager:
     async def update_project(
         self,
         project_id: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        leader_login: Optional[str] = None,
-        archived: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        name: str | None = None,
+        description: str | None = None,
+        leader_login: str | None = None,
+        archived: bool | None = None,
+    ) -> dict[str, Any]:
         """Update a project configuration with user resolution.
 
         Args:
@@ -253,7 +253,7 @@ class ProjectManager:
 
         return result
 
-    async def delete_project(self, project_id: str) -> Dict[str, Any]:
+    async def delete_project(self, project_id: str) -> dict[str, Any]:
         """Delete a project with confirmation logic.
 
         Args:
@@ -264,7 +264,7 @@ class ProjectManager:
         """
         return await self.project_service.delete_project(project_id)
 
-    async def archive_project(self, project_id: str) -> Dict[str, Any]:
+    async def archive_project(self, project_id: str) -> dict[str, Any]:
         """Archive a project.
 
         Args:
@@ -281,7 +281,7 @@ class ProjectManager:
 
         return result
 
-    async def unarchive_project(self, project_id: str) -> Dict[str, Any]:
+    async def unarchive_project(self, project_id: str) -> dict[str, Any]:
         """Unarchive a project.
 
         Args:
@@ -298,7 +298,7 @@ class ProjectManager:
 
         return result
 
-    async def get_project_team(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_project_team(self, project_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get project team members.
 
         Args:
@@ -310,7 +310,7 @@ class ProjectManager:
         """
         return await self.project_service.get_project_team(project_id, fields)
 
-    async def add_team_member(self, project_id: str, user_login: str) -> Dict[str, Any]:
+    async def add_team_member(self, project_id: str, user_login: str) -> dict[str, Any]:
         """Add a user to project team with validation.
 
         Args:
@@ -333,7 +333,7 @@ class ProjectManager:
 
         return result
 
-    async def remove_team_member(self, project_id: str, user_login: str) -> Dict[str, Any]:
+    async def remove_team_member(self, project_id: str, user_login: str) -> dict[str, Any]:
         """Remove a user from project team.
 
         Args:
@@ -351,7 +351,7 @@ class ProjectManager:
 
         return result
 
-    async def get_project_custom_fields(self, project_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
+    async def get_project_custom_fields(self, project_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get project custom fields.
 
         Args:
@@ -364,8 +364,8 @@ class ProjectManager:
         return await self.project_service.get_project_custom_fields(project_id, fields)
 
     async def list_custom_fields(
-        self, project_id: str, fields: Optional[str] = None, top: Optional[int] = None
-    ) -> Dict[str, Any]:
+        self, project_id: str, fields: str | None = None, top: int | None = None
+    ) -> dict[str, Any]:
         """List custom fields for a project.
 
         Args:
@@ -392,11 +392,11 @@ class ProjectManager:
         self,
         project_id: str,
         field_id: str,
-        field_type: Optional[str] = None,
-        can_be_empty: Optional[bool] = None,
-        empty_field_text: Optional[str] = None,
-        is_public: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        field_type: str | None = None,
+        can_be_empty: bool | None = None,
+        empty_field_text: str | None = None,
+        is_public: bool | None = None,
+    ) -> dict[str, Any]:
         """Attach a custom field to a project.
 
         Args:
@@ -418,7 +418,7 @@ class ProjectManager:
 
         return result
 
-    async def detach_custom_field(self, project_id: str, field_id: str) -> Dict[str, Any]:
+    async def detach_custom_field(self, project_id: str, field_id: str) -> dict[str, Any]:
         """Detach a custom field from a project.
 
         Args:
@@ -440,10 +440,10 @@ class ProjectManager:
         self,
         project_id: str,
         field_id: str,
-        can_be_empty: Optional[bool] = None,
-        empty_field_text: Optional[str] = None,
-        is_public: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        can_be_empty: bool | None = None,
+        empty_field_text: str | None = None,
+        is_public: bool | None = None,
+    ) -> dict[str, Any]:
         """Update custom field settings in a project.
 
         Args:
@@ -460,7 +460,7 @@ class ProjectManager:
         # For now, return a placeholder
         return {"status": "error", "message": "Custom field update not yet implemented in service layer"}
 
-    def display_custom_fields_table(self, custom_fields: List[Dict[str, Any]]) -> None:
+    def display_custom_fields_table(self, custom_fields: list[dict[str, Any]]) -> None:
         """Display custom fields in a table format.
 
         Args:
@@ -496,7 +496,7 @@ class ProjectManager:
 
     def display_project_list(
         self,
-        projects: List[Dict[str, Any]],
+        projects: list[dict[str, Any]],
         format_output: str = "table",
         show_archived: bool = False,
     ) -> None:
@@ -540,7 +540,7 @@ class ProjectManager:
             # For other formats, just print the data
             self.console.print(projects)
 
-    def display_project_details(self, project: Dict[str, Any]) -> None:
+    def display_project_details(self, project: dict[str, Any]) -> None:
         """Display detailed project information with rich formatting.
 
         Args:

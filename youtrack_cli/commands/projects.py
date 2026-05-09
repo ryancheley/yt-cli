@@ -5,7 +5,6 @@ and managing YouTrack projects including their metadata and configuration.
 """
 
 import asyncio
-from typing import Optional
 
 import click
 
@@ -158,15 +157,15 @@ def projects() -> None:
 @click.pass_context
 def projects_list(
     ctx: click.Context,
-    fields: Optional[str],
-    top: Optional[int],
+    fields: str | None,
+    top: int | None,
     show_archived: bool,
     format: str,
     page_size: int,
-    after_cursor: Optional[str],
-    before_cursor: Optional[str],
+    after_cursor: str | None,
+    before_cursor: str | None,
     all: bool,
-    max_results: Optional[int],
+    max_results: int | None,
 ) -> None:
     """List all projects."""
     from ..managers.projects import ProjectManager
@@ -241,7 +240,7 @@ def projects_list(
 def projects_show(
     ctx: click.Context,
     project_id: str,
-    fields: Optional[str],
+    fields: str | None,
     format: str,
 ) -> None:
     """Show detailed project information.
@@ -312,9 +311,9 @@ def projects_create(
     ctx: click.Context,
     name: str,
     short_name: str,
-    leader: Optional[str],
-    description: Optional[str],
-    template: Optional[str],
+    leader: str | None,
+    description: str | None,
+    template: str | None,
 ) -> None:
     """Create a new project.
 
@@ -396,9 +395,9 @@ def projects_create(
 def configure(
     ctx: click.Context,
     project_id: str,
-    name: Optional[str],
-    description: Optional[str],
-    leader: Optional[str],
+    name: str | None,
+    description: str | None,
+    leader: str | None,
     show_details: bool,
 ) -> None:
     """Configure project settings."""
@@ -526,8 +525,8 @@ def archive(
 def fields_command(
     ctx: click.Context,
     project_id: str,
-    fields: Optional[str],
-    top: Optional[int],
+    fields: str | None,
+    top: int | None,
     format: str,
 ) -> None:
     """List custom fields for a project.

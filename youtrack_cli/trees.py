@@ -1,14 +1,14 @@
 """Enhanced tree display components for YouTrack CLI."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.tree import Tree
 
 from .console import get_console
 
 
-def _get_assignee_name_from_issue(issue: Dict[str, Any]) -> str:
+def _get_assignee_name_from_issue(issue: dict[str, Any]) -> str:
     """Get assignee name from either regular field or custom field."""
     # First try the regular assignee field
     assignee = issue.get("assignee")
@@ -54,7 +54,7 @@ class EnhancedTreeBuilder:
         self,
         parent_node: Any,
         label: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
         style: str = "white",
         dim_metadata: bool = True,
     ) -> Any:
@@ -93,7 +93,7 @@ class EnhancedTreeBuilder:
         label: str,
         status: str,
         status_color: str = "green",
-        additional_info: Optional[Dict[str, Any]] = None,
+        additional_info: dict[str, Any] | None = None,
     ) -> Any:
         """Add a node with status indicator.
 
@@ -139,8 +139,8 @@ class EnhancedTreeBuilder:
 
 
 def create_issue_dependencies_tree(
-    issue: Dict[str, Any],
-    dependencies: List[Dict[str, Any]],
+    issue: dict[str, Any],
+    dependencies: list[dict[str, Any]],
     show_status: bool = True,
 ) -> Tree:
     """Create a tree view of issue dependencies (legacy function - kept for compatibility).
@@ -220,9 +220,9 @@ def create_issue_dependencies_tree(
 
 
 def create_issue_relationships_tree(
-    issue: Dict[str, Any],
-    links: List[Dict[str, Any]],
-    link_types: List[Dict[str, Any]],
+    issue: dict[str, Any],
+    links: list[dict[str, Any]],
+    link_types: list[dict[str, Any]],
     show_status: bool = True,
 ) -> Tree:
     """Create a tree view of all issue relationships dynamically.
@@ -348,7 +348,7 @@ def create_issue_relationships_tree(
     return builder.get_tree()
 
 
-def _extract_status_from_issue(issue: Dict[str, Any]) -> Optional[str]:
+def _extract_status_from_issue(issue: dict[str, Any]) -> str | None:
     """Extract status from issue data, checking multiple possible locations."""
     # Try state field first
     if "state" in issue and isinstance(issue["state"], dict):
@@ -368,7 +368,7 @@ def _extract_status_from_issue(issue: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def create_project_hierarchy_tree(projects: List[Dict[str, Any]]) -> Tree:
+def create_project_hierarchy_tree(projects: list[dict[str, Any]]) -> Tree:
     """Create a tree view of project hierarchy.
 
     Args:
@@ -381,7 +381,7 @@ def create_project_hierarchy_tree(projects: List[Dict[str, Any]]) -> Tree:
 
     # Group projects by parent
     root_projects = []
-    child_projects: Dict[str, List[Dict[str, Any]]] = {}
+    child_projects: dict[str, list[dict[str, Any]]] = {}
 
     for project in projects:
         parent_id = project.get("parent", {}).get("id")
@@ -392,7 +392,7 @@ def create_project_hierarchy_tree(projects: List[Dict[str, Any]]) -> Tree:
         else:
             root_projects.append(project)
 
-    def add_project_to_tree(parent_node: Any, project: Dict[str, Any]) -> None:
+    def add_project_to_tree(parent_node: Any, project: dict[str, Any]) -> None:
         project_id = project.get("shortName", project.get("id", "unknown"))
         project_name = project.get("name", "Unnamed Project")
 
@@ -430,7 +430,7 @@ def create_project_hierarchy_tree(projects: List[Dict[str, Any]]) -> Tree:
 
 
 def create_enhanced_articles_tree(
-    articles: List[Dict[str, Any]],
+    articles: list[dict[str, Any]],
     show_metadata: bool = True,
     expand_all: bool = False,
 ) -> Tree:
@@ -448,7 +448,7 @@ def create_enhanced_articles_tree(
 
     # Group articles by parent
     root_articles = []
-    child_articles: Dict[str, List[Dict[str, Any]]] = {}
+    child_articles: dict[str, list[dict[str, Any]]] = {}
 
     for article in articles:
         parent_article = article.get("parentArticle")
@@ -460,7 +460,7 @@ def create_enhanced_articles_tree(
         else:
             root_articles.append(article)
 
-    def add_article_to_tree(parent_node: Any, article: Dict[str, Any]) -> None:
+    def add_article_to_tree(parent_node: Any, article: dict[str, Any]) -> None:
         article_id = str(article.get("idReadable", article.get("id", "unknown")))
         title = str(article.get("summary", "Untitled"))
 
@@ -518,7 +518,7 @@ def create_enhanced_articles_tree(
 def _add_dependency_node(
     builder: EnhancedTreeBuilder,
     parent_node: Any,
-    dependency: Dict[str, Any],
+    dependency: dict[str, Any],
     show_status: bool,
 ) -> None:
     """Helper function to add a dependency node to the tree."""

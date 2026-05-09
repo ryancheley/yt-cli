@@ -15,7 +15,6 @@ Example:
 
 import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import dotenv_values, load_dotenv, set_key, unset_key
 
@@ -33,7 +32,7 @@ class ConfigManager:
     and are compatible with standard dotenv format.
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """Initialize the config manager.
 
         Args:
@@ -87,7 +86,7 @@ class ConfigManager:
             # Ignore errors loading dotenv after setting
             pass
 
-    def get_config(self, key: str) -> Optional[str]:
+    def get_config(self, key: str) -> str | None:
         """Get a configuration value.
 
         Args:
@@ -218,7 +217,7 @@ class ConfigManager:
         """
         self.set_config(f"ALIAS_{alias}", command)
 
-    def get_alias(self, alias: str) -> Optional[str]:
+    def get_alias(self, alias: str) -> str | None:
         """Get a user-defined alias command.
 
         Args:

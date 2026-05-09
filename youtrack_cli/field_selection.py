@@ -6,8 +6,6 @@ by only requesting needed fields based on the command context and user preferenc
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Union
-
 from .logging import get_logger
 
 __all__ = [
@@ -21,7 +19,7 @@ logger = get_logger(__name__)
 
 
 # Predefined field profiles for common use cases
-FIELD_PROFILES: Dict[str, Dict[str, List[str]]] = {
+FIELD_PROFILES: dict[str, dict[str, list[str]]] = {
     "issues": {
         "minimal": [
             "id",
@@ -190,7 +188,7 @@ FIELD_PROFILES: Dict[str, Dict[str, List[str]]] = {
 class FieldProfile:
     """Represents a field selection profile for a specific entity type."""
 
-    def __init__(self, entity_type: str, profile_name: str, fields: List[str]):
+    def __init__(self, entity_type: str, profile_name: str, fields: list[str]):
         self.entity_type = entity_type
         self.profile_name = profile_name
         self.fields = fields
@@ -199,7 +197,7 @@ class FieldProfile:
         """Get the fields as a comma-separated string for API calls."""
         return ",".join(self.fields)
 
-    def get_fields_list(self) -> List[str]:
+    def get_fields_list(self) -> list[str]:
         """Get the fields as a list."""
         return self.fields.copy()
 
@@ -267,7 +265,7 @@ class FieldSelector:
             logger.error("Failed to save default profile to config", error=str(e))
             return False
 
-    def get_profile(self, entity_type: str, profile_name: str) -> Optional[FieldProfile]:
+    def get_profile(self, entity_type: str, profile_name: str) -> FieldProfile | None:
         """Get a specific field profile.
 
         Args:
@@ -296,9 +294,9 @@ class FieldSelector:
     def get_fields(
         self,
         entity_type: str,
-        profile: Optional[str] = None,
-        custom_fields: Optional[Union[str, List[str]]] = None,
-        exclude_fields: Optional[List[str]] = None,
+        profile: str | None = None,
+        custom_fields: str | list[str] | None = None,
+        exclude_fields: list[str] | None = None,
     ) -> str:
         """Get optimized field selection for an entity type.
 
@@ -356,11 +354,11 @@ class FieldSelector:
 
         return result
 
-    def get_available_profiles(self, entity_type: str) -> List[str]:
+    def get_available_profiles(self, entity_type: str) -> list[str]:
         """Get available profiles for an entity type."""
         return list(self._profiles.get(entity_type, {}).keys())
 
-    def get_supported_entities(self) -> List[str]:
+    def get_supported_entities(self) -> list[str]:
         """Get list of supported entity types."""
         return list(self._profiles.keys())
 
@@ -424,7 +422,7 @@ class FieldSelector:
 
 
 # Global field selector instance
-_field_selector: Optional[FieldSelector] = None
+_field_selector: FieldSelector | None = None
 
 
 def get_field_selector(config_manager=None) -> FieldSelector:

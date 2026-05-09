@@ -1,7 +1,5 @@
 """Custom exceptions and error handling for YouTrack CLI."""
 
-from typing import List, Optional
-
 __all__ = [
     "YouTrackError",
     "AuthenticationError",
@@ -23,7 +21,7 @@ __all__ = [
 class YouTrackError(Exception):
     """Base exception for YouTrack CLI errors."""
 
-    def __init__(self, message: str, suggestion: Optional[str] = None):
+    def __init__(self, message: str, suggestion: str | None = None):
         super().__init__(message)
         self.message = message
         self.suggestion = suggestion
@@ -46,7 +44,7 @@ class ConnectionError(YouTrackError):
 class ValidationError(YouTrackError):
     """Input validation errors."""
 
-    def __init__(self, message: str, field: Optional[str] = None):
+    def __init__(self, message: str, field: str | None = None):
         if field:
             message = f"Invalid {field}: {message}"
         super().__init__(message)
@@ -66,7 +64,7 @@ class NotFoundError(YouTrackError):
 class PermissionError(YouTrackError):
     """Permission denied errors."""
 
-    def __init__(self, action: str, resource: Optional[str] = None):
+    def __init__(self, action: str, resource: str | None = None):
         if resource:
             message = f"Permission denied to {action} {resource}"
         else:
@@ -77,7 +75,7 @@ class PermissionError(YouTrackError):
 class RateLimitError(YouTrackError):
     """Rate limit exceeded errors."""
 
-    def __init__(self, retry_after: Optional[int] = None):
+    def __init__(self, retry_after: int | None = None):
         message = "Rate limit exceeded"
         if retry_after:
             message += f". Retry after {retry_after} seconds"
@@ -97,7 +95,7 @@ class YouTrackNetworkError(YouTrackError):
 class YouTrackServerError(YouTrackError):
     """Server-side errors that may be retryable."""
 
-    def __init__(self, message: str = "Server error occurred", status_code: Optional[int] = None):
+    def __init__(self, message: str = "Server error occurred", status_code: int | None = None):
         if status_code:
             message = f"Server error (HTTP {status_code}): {message}"
         super().__init__(message, suggestion="The server may be temporarily unavailable. Try again later")
@@ -110,9 +108,9 @@ class CommandValidationError(YouTrackError):
     def __init__(
         self,
         message: str,
-        command_path: Optional[str] = None,
-        usage_example: Optional[str] = None,
-        similar_commands: Optional[List[str]] = None,
+        command_path: str | None = None,
+        usage_example: str | None = None,
+        similar_commands: list[str] | None = None,
     ):
         suggestion_parts = []
         if similar_commands:
@@ -133,10 +131,10 @@ class ParameterError(YouTrackError):
     def __init__(
         self,
         message: str,
-        parameter_name: Optional[str] = None,
-        expected_type: Optional[str] = None,
-        usage_example: Optional[str] = None,
-        valid_choices: Optional[List[str]] = None,
+        parameter_name: str | None = None,
+        expected_type: str | None = None,
+        usage_example: str | None = None,
+        valid_choices: list[str] | None = None,
     ):
         suggestion_parts = []
         if expected_type:
@@ -162,8 +160,8 @@ class UsageError(YouTrackError):
         message: str,
         command_path: str,
         usage_syntax: str,
-        examples: Optional[List[str]] = None,
-        common_mistakes: Optional[List[str]] = None,
+        examples: list[str] | None = None,
+        common_mistakes: list[str] | None = None,
     ):
         suggestion_parts = [f"Usage: {usage_syntax}"]
 

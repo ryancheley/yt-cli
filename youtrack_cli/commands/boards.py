@@ -1,7 +1,6 @@
 """Boards command group for YouTrack CLI."""
 
 import asyncio
-from typing import Optional
 
 import click
 
@@ -30,7 +29,7 @@ def boards() -> None:
 @click.pass_context
 def list_boards(
     ctx: click.Context,
-    project_id: Optional[str],
+    project_id: str | None,
     format: str,
 ) -> None:
     """List all agile boards."""
@@ -124,7 +123,7 @@ def view_board_alias(
 def update_board(
     ctx: click.Context,
     board_id: str,
-    name: Optional[str],
+    name: str | None,
 ) -> None:
     """Update an agile board configuration."""
     from ..boards import BoardManager

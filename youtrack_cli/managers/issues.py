@@ -1,7 +1,7 @@
 """Issue manager for YouTrack CLI business logic."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.table import Table
 
@@ -38,7 +38,7 @@ class IssueManager:
         self.issue_service = IssueService(auth_manager)
         self.project_service = ProjectService(auth_manager)
 
-    def _get_custom_field_value(self, issue: Dict[str, Any], field_name: str) -> Optional[str]:
+    def _get_custom_field_value(self, issue: dict[str, Any], field_name: str) -> str | None:
         """Extract value from custom fields by field name using CustomFieldManager.
 
         Supports all YouTrack custom field types including:
@@ -50,7 +50,7 @@ class IssueManager:
         result = CustomFieldManager.extract_field_value(custom_fields, field_name)
         return str(result) if result is not None else None
 
-    def _get_assignee_name(self, issue: Dict[str, Any]) -> str:
+    def _get_assignee_name(self, issue: dict[str, Any]) -> str:
         """Get assignee name from either regular field or custom field."""
         # First try the regular assignee field
         assignee = issue.get("assignee")
@@ -79,7 +79,7 @@ class IssueManager:
 
         return "Unassigned"
 
-    def _get_state_field_value(self, issue: Dict[str, Any]) -> str:
+    def _get_state_field_value(self, issue: dict[str, Any]) -> str:
         """Get state field value, trying common field names."""
         # Try common state field names in order of preference
         state_field_names = ["State", "Status", "Stage", "Workflow State"]
@@ -95,12 +95,12 @@ class IssueManager:
         self,
         project_id: str,
         summary: str,
-        description: Optional[str] = None,
-        issue_type: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee: Optional[str] = None,
-        custom_fields: Optional[Dict[str, str]] = None,
-    ) -> Dict[str, Any]:
+        description: str | None = None,
+        issue_type: str | None = None,
+        priority: str | None = None,
+        assignee: str | None = None,
+        custom_fields: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Create a new issue with business logic and validation."""
         # Resolve project short name to internal ID if needed
         resolved_project_id = await self._resolve_project_id(project_id)
@@ -156,21 +156,21 @@ class IssueManager:
 
         return result
 
-    async def get_issue(self, issue_id: str) -> Dict[str, Any]:
+    async def get_issue(self, issue_id: str) -> dict[str, Any]:
         """Get issue details with enhanced presentation data."""
         return await self.issue_service.get_issue(issue_id)
 
     async def update_issue(
         self,
         issue_id: str,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        state: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee: Optional[str] = None,
-        issue_type: Optional[str] = None,
-        custom_fields: Optional[Dict[str, str]] = None,
-    ) -> Dict[str, Any]:
+        summary: str | None = None,
+        description: str | None = None,
+        state: str | None = None,
+        priority: str | None = None,
+        assignee: str | None = None,
+        issue_type: str | None = None,
+        custom_fields: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Update an existing issue with validation."""
         return await self.issue_service.update_issue(
             issue_id=issue_id,
@@ -183,27 +183,27 @@ class IssueManager:
             custom_fields=custom_fields,
         )
 
-    async def delete_issue(self, issue_id: str) -> Dict[str, Any]:
+    async def delete_issue(self, issue_id: str) -> dict[str, Any]:
         """Delete an issue."""
         return await self.issue_service.delete_issue(issue_id)
 
     async def search_issues(
         self,
         query: str,
-        project_id: Optional[str] = None,
-        fields: Optional[str] = None,
-        field_profile: Optional[str] = None,
-        top: Optional[int] = None,
-        skip: Optional[int] = None,
+        project_id: str | None = None,
+        fields: str | None = None,
+        field_profile: str | None = None,
+        top: int | None = None,
+        skip: int | None = None,
         format_output: str = "table",
         no_pagination: bool = False,
         use_cached_fields: bool = False,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        max_results: int | None = None,
+    ) -> dict[str, Any]:
         """Search issues with enhanced formatting and pagination."""
         # Handle field_profile parameter (legacy)
         if field_profile and not fields:
@@ -236,11 +236,11 @@ class IssueManager:
 
         return result
 
-    async def assign_issue(self, issue_id: str, assignee: str) -> Dict[str, Any]:
+    async def assign_issue(self, issue_id: str, assignee: str) -> dict[str, Any]:
         """Assign an issue to a user."""
         return await self.issue_service.assign_issue(issue_id, assignee)
 
-    async def add_tag(self, issue_id: str, tag: str, create_if_missing: bool = False) -> Dict[str, Any]:
+    async def add_tag(self, issue_id: str, tag: str, create_if_missing: bool = False) -> dict[str, Any]:
         """Add a tag to an issue with optional tag creation.
 
         Args:
@@ -265,31 +265,31 @@ class IssueManager:
 
         return result
 
-    async def remove_tag(self, issue_id: str, tag: str) -> Dict[str, Any]:
+    async def remove_tag(self, issue_id: str, tag: str) -> dict[str, Any]:
         """Remove a tag from an issue."""
         return await self.issue_service.remove_tag(issue_id, tag)
 
-    async def list_tags(self, issue_id: str) -> Dict[str, Any]:
+    async def list_tags(self, issue_id: str) -> dict[str, Any]:
         """List tags for an issue."""
         return await self.issue_service.list_tags(issue_id)
 
-    async def add_comment(self, issue_id: str, text: str) -> Dict[str, Any]:
+    async def add_comment(self, issue_id: str, text: str) -> dict[str, Any]:
         """Add a comment to an issue."""
         return await self.issue_service.add_comment(issue_id, text)
 
-    async def list_comments(self, issue_id: str) -> Dict[str, Any]:
+    async def list_comments(self, issue_id: str) -> dict[str, Any]:
         """List comments for an issue."""
         return await self.issue_service.list_comments(issue_id)
 
-    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> Dict[str, Any]:
+    async def update_comment(self, issue_id: str, comment_id: str, text: str) -> dict[str, Any]:
         """Update a comment."""
         return await self.issue_service.update_comment(issue_id, comment_id, text)
 
-    async def delete_comment(self, issue_id: str, comment_id: str) -> Dict[str, Any]:
+    async def delete_comment(self, issue_id: str, comment_id: str) -> dict[str, Any]:
         """Delete a comment."""
         return await self.issue_service.delete_comment(issue_id, comment_id)
 
-    async def upload_attachment(self, issue_id: str, file_path: str) -> Dict[str, Any]:
+    async def upload_attachment(self, issue_id: str, file_path: str) -> dict[str, Any]:
         """Upload an attachment to an issue."""
         try:
             # Read file data
@@ -300,15 +300,15 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Error reading file: {str(e)}"}
 
-    async def list_attachments(self, issue_id: str) -> Dict[str, Any]:
+    async def list_attachments(self, issue_id: str) -> dict[str, Any]:
         """List attachments for an issue."""
         return await self.issue_service.list_attachments(issue_id)
 
-    async def delete_attachment(self, issue_id: str, attachment_id: str) -> Dict[str, Any]:
+    async def delete_attachment(self, issue_id: str, attachment_id: str) -> dict[str, Any]:
         """Delete an attachment."""
         return await self.issue_service.delete_attachment(issue_id, attachment_id)
 
-    async def get_or_create_tag(self, tag_name: str) -> Dict[str, Any]:
+    async def get_or_create_tag(self, tag_name: str) -> dict[str, Any]:
         """Get an existing tag or create it if it doesn't exist."""
         # First try to find the tag
         result = await self.issue_service.find_tag_by_name(tag_name)
@@ -321,7 +321,7 @@ class IssueManager:
         return await self.issue_service.create_tag(tag_name)
 
     def _format_issues_for_display(
-        self, issues: List[Dict[str, Any]], format_type: str, no_pagination: bool = False
+        self, issues: list[dict[str, Any]], format_type: str, no_pagination: bool = False
     ) -> str:
         """Format issues for CLI display."""
         if not issues:
@@ -334,7 +334,7 @@ class IssueManager:
         else:
             return str(issues)
 
-    def _format_issues_as_csv(self, issues: List[Dict[str, Any]]) -> str:
+    def _format_issues_as_csv(self, issues: list[dict[str, Any]]) -> str:
         """Format issues data as CSV."""
         import csv
         import io
@@ -379,7 +379,7 @@ class IssueManager:
 
         return output.getvalue()
 
-    def _format_issues_as_table(self, issues: List[Dict[str, Any]], no_pagination: bool = False) -> str:
+    def _format_issues_as_table(self, issues: list[dict[str, Any]], no_pagination: bool = False) -> str:
         """Format issues as a Rich table."""
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("ID", style="cyan", no_wrap=True)
@@ -407,7 +407,7 @@ class IssueManager:
 
         return capture.get()
 
-    async def _resolve_project_id(self, project_id_or_short_name: str) -> Optional[str]:
+    async def _resolve_project_id(self, project_id_or_short_name: str) -> str | None:
         """Resolve a project ID or short name to internal project ID.
 
         Args:
@@ -431,7 +431,7 @@ class IssueManager:
             logger.error(f"Error resolving project ID '{project_id_or_short_name}': {e}")
             return None
 
-    async def _validate_custom_field_value(self, project_id: str, field_name: str, value: str) -> Dict[str, Any]:
+    async def _validate_custom_field_value(self, project_id: str, field_name: str, value: str) -> dict[str, Any]:
         """Validate that a custom field value exists for the project.
 
         Args:
@@ -519,7 +519,7 @@ class IssueManager:
 
     async def _find_field_by_heuristics(
         self, custom_fields: list, field_name: str, value: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Find a custom field using heuristics when field names are not available.
 
         This method attempts to identify fields by examining their bundle values and types.
@@ -587,7 +587,7 @@ class IssueManager:
         return None
 
     def display_issue_details(
-        self, issue: Dict[str, Any], show_comments: bool = False, format_type: str = "table"
+        self, issue: dict[str, Any], show_comments: bool = False, format_type: str = "table"
     ) -> None:
         """Display issue details with rich formatting."""
         if not issue:
@@ -615,27 +615,27 @@ class IssueManager:
 
     async def list_issues(
         self,
-        project_id: Optional[str] = None,
-        query: Optional[str] = None,
-        fields: Optional[str] = None,
-        field_profile: Optional[str] = None,
-        top: Optional[int] = None,
-        skip: Optional[int] = None,
+        project_id: str | None = None,
+        query: str | None = None,
+        fields: str | None = None,
+        field_profile: str | None = None,
+        top: int | None = None,
+        skip: int | None = None,
         format_output: str = "table",
         no_pagination: bool = False,
         use_cached_fields: bool = False,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
+        max_results: int | None = None,
         paginated: bool = False,
         show_all: bool = False,
         start_page: int = 1,
         display_page_size: int = 50,
-        state: Optional[str] = None,
-        assignee: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        state: str | None = None,
+        assignee: str | None = None,
+    ) -> dict[str, Any]:
         """List issues with enhanced filtering and pagination."""
         # Handle field_profile parameter (legacy)
         if field_profile and not fields:
@@ -664,7 +664,7 @@ class IssueManager:
             use_cached_fields=use_cached_fields,
         )
 
-    def display_issues_table(self, issues: List[Dict[str, Any]]) -> None:
+    def display_issues_table(self, issues: list[dict[str, Any]]) -> None:
         """Display issues in a simple table format."""
         if not issues:
             self.console.print("[yellow]No issues found.[/yellow]")
@@ -696,7 +696,7 @@ class IssueManager:
 
     def display_issues_table_paginated(
         self,
-        issues: List[Dict[str, Any]],
+        issues: list[dict[str, Any]],
         page_size: int = 50,
         show_all: bool = False,
         start_page: int = 1,
@@ -706,7 +706,7 @@ class IssueManager:
             self.console.print("[yellow]No issues found.[/yellow]")
             return
 
-        def build_issues_table(issue_subset: List[Dict[str, Any]]) -> Any:
+        def build_issues_table(issue_subset: list[dict[str, Any]]) -> Any:
             """Build a Rich table for the given subset of issues."""
             from rich.table import Table
 
@@ -738,11 +738,11 @@ class IssueManager:
             issues, build_issues_table, "Issues", show_all=show_all, start_page=start_page
         )
 
-    async def list_links(self, issue_id: str) -> Dict[str, Any]:
+    async def list_links(self, issue_id: str) -> dict[str, Any]:
         """List links for an issue."""
         return await self.issue_service.list_links(issue_id)
 
-    def display_links_table(self, links: List[Dict[str, Any]]) -> None:
+    def display_links_table(self, links: list[dict[str, Any]]) -> None:
         """Display links in a table format."""
         if not links:
             self.console.print("[yellow]No links found.[/yellow]")
@@ -774,7 +774,7 @@ class IssueManager:
 
         self.console.print(table)
 
-    def display_relationships_table(self, links: List[Dict[str, Any]], link_types: List[Dict[str, Any]]) -> None:
+    def display_relationships_table(self, links: list[dict[str, Any]], link_types: list[dict[str, Any]]) -> None:
         """Display relationships in a table format grouped by relationship type.
 
         Args:
@@ -865,12 +865,12 @@ class IssueManager:
         self.console.print()
 
     async def move_issue(
-        self, issue_id: str, state: Optional[str] = None, project_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, issue_id: str, state: str | None = None, project_id: str | None = None
+    ) -> dict[str, Any]:
         """Move an issue to a different state or project."""
         return await self.issue_service.move_issue(issue_id, state=state, project_id=project_id)
 
-    def display_comments_table(self, comments: List[Dict[str, Any]]) -> None:
+    def display_comments_table(self, comments: list[dict[str, Any]]) -> None:
         """Display comments in a table format with comment IDs for delete/update operations."""
         if not comments:
             self.console.print("[yellow]No comments found.[/yellow]")
@@ -898,9 +898,7 @@ class IssueManager:
 
         self.console.print(table)
 
-    async def download_attachment(
-        self, issue_id: str, attachment_id: str, output: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def download_attachment(self, issue_id: str, attachment_id: str, output: str | None = None) -> dict[str, Any]:
         """Download an attachment from an issue."""
         try:
             # Call the service layer to download the attachment
@@ -937,7 +935,7 @@ class IssueManager:
         except Exception as e:
             return {"status": "error", "message": f"Failed to download attachment: {str(e)}"}
 
-    def display_attachments_table(self, attachments: List[Dict[str, Any]]) -> None:
+    def display_attachments_table(self, attachments: list[dict[str, Any]]) -> None:
         """Display attachments in a table format."""
         if not attachments:
             self.console.print("[yellow]No attachments found.[/yellow]")
@@ -963,19 +961,19 @@ class IssueManager:
 
         self.console.print(table)
 
-    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
+    async def create_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> dict[str, Any]:
         """Create a link between two issues."""
         return await self.issue_service.create_link(source_issue_id, target_issue_id, link_type)
 
-    async def delete_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> Dict[str, Any]:
+    async def delete_link(self, source_issue_id: str, target_issue_id: str, link_type: str) -> dict[str, Any]:
         """Delete a link between issues."""
         return await self.issue_service.delete_link(source_issue_id, target_issue_id, link_type)
 
-    async def list_link_types(self) -> Dict[str, Any]:
+    async def list_link_types(self) -> dict[str, Any]:
         """List available link types."""
         return await self.issue_service.list_link_types()
 
-    def display_link_types_table(self, link_types: List[Dict[str, Any]]) -> None:
+    def display_link_types_table(self, link_types: list[dict[str, Any]]) -> None:
         """Display link types in a table format."""
         if not link_types:
             self.console.print("[yellow]No link types found.[/yellow]")
@@ -999,7 +997,7 @@ class IssueManager:
 
     def display_issue_list(
         self,
-        issues: List[Dict[str, Any]],
+        issues: list[dict[str, Any]],
         format_output: str = "table",
         no_pagination: bool = False,
     ) -> None:

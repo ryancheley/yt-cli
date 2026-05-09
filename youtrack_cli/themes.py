@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
 
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -14,7 +13,7 @@ from .console import THEMES, get_console
 class ThemeManager:
     """Manages custom themes for YouTrack CLI."""
 
-    def __init__(self, themes_dir: Optional[str] = None):
+    def __init__(self, themes_dir: str | None = None):
         """Initialize the theme manager.
 
         Args:
@@ -38,7 +37,7 @@ class ThemeManager:
         """
         return self.themes_dir / f"{name}.json"
 
-    def list_all_themes(self) -> Dict[str, str]:
+    def list_all_themes(self) -> dict[str, str]:
         """List all available themes (built-in + custom).
 
         Returns:
@@ -58,7 +57,7 @@ class ThemeManager:
 
         return themes
 
-    def get_custom_theme(self, name: str) -> Optional[Theme]:
+    def get_custom_theme(self, name: str) -> Theme | None:
         """Load a custom theme from file.
 
         Args:
@@ -82,7 +81,7 @@ class ThemeManager:
         except (json.JSONDecodeError, Exception):
             return None
 
-    def save_custom_theme(self, name: str, theme_data: Dict) -> bool:
+    def save_custom_theme(self, name: str, theme_data: dict) -> bool:
         """Save a custom theme to file.
 
         Args:
@@ -128,7 +127,7 @@ class ThemeManager:
         except Exception:
             return False
 
-    def export_theme(self, name: str, output_file: Optional[str] = None) -> bool:
+    def export_theme(self, name: str, output_file: str | None = None) -> bool:
         """Export a theme to a JSON file.
 
         Args:
@@ -201,7 +200,7 @@ class ThemeManager:
         except Exception:
             return False
 
-    def import_theme(self, file_path: str, name: Optional[str] = None) -> Optional[str]:
+    def import_theme(self, file_path: str, name: str | None = None) -> str | None:
         """Import a theme from a JSON file.
 
         Args:
@@ -231,7 +230,7 @@ class ThemeManager:
             return theme_name
         return None
 
-    def create_theme_interactively(self, name: str, base_theme: Optional[str] = None) -> bool:
+    def create_theme_interactively(self, name: str, base_theme: str | None = None) -> bool:
         """Create a custom theme interactively.
 
         Args:
@@ -323,7 +322,7 @@ class ThemeManager:
             console.print(f"❌ Failed to save theme '{name}'", style="error")
             return False
 
-    def _validate_theme_data(self, theme_data: Dict) -> bool:
+    def _validate_theme_data(self, theme_data: dict) -> bool:
         """Validate theme data structure.
 
         Args:

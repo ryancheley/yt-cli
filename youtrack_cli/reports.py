@@ -1,6 +1,6 @@
 """Report generation for YouTrack CLI."""
 
-from typing import Any, Optional
+from typing import Any
 
 from rich.table import Table
 
@@ -27,9 +27,9 @@ class ReportManager:
     async def generate_burndown_report(
         self,
         project_id: str,
-        sprint_id: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        sprint_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> dict[str, Any]:
         """Generate a burndown report for a project or sprint.
 

@@ -1,7 +1,6 @@
 """Utilities for command aliases support."""
 
 import difflib
-from typing import Optional
 
 import click
 
@@ -36,7 +35,7 @@ class AliasedGroup(click.Group):
         """Reload user-defined aliases from configuration."""
         self._load_user_aliases()
 
-    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         """Override to support aliases and provide helpful error messages."""
         # Check user-defined aliases first (they take precedence)
         if cmd_name in self.user_aliases:
@@ -60,7 +59,7 @@ class AliasedGroup(click.Group):
 
         return command
 
-    def _create_alias_command(self, alias_name: str, alias_command: str) -> Optional[click.Command]:
+    def _create_alias_command(self, alias_name: str, alias_command: str) -> click.Command | None:
         """Create a dynamic command that executes the alias."""
         import shlex
 

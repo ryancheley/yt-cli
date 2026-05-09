@@ -6,7 +6,7 @@ custom fields across the YouTrack CLI application, reducing code duplication and
 improving maintainability.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .custom_field_types import CustomFieldValueTypes, IssueCustomFieldTypes, ProjectCustomFieldTypes, get_display_name
 
@@ -15,7 +15,7 @@ class CustomFieldManager:
     """Centralized manager for YouTrack custom field operations."""
 
     @staticmethod
-    def create_single_enum_field(name: str, value: str) -> Dict[str, Any]:
+    def create_single_enum_field(name: str, value: str) -> dict[str, Any]:
         """
         Create a single enum custom field dictionary.
 
@@ -33,7 +33,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_multi_enum_field(name: str, values: List[str]) -> Dict[str, Any]:
+    def create_multi_enum_field(name: str, values: list[str]) -> dict[str, Any]:
         """
         Create a multi enum custom field dictionary.
 
@@ -51,7 +51,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_state_field(name: str, value: str) -> Dict[str, Any]:
+    def create_state_field(name: str, value: str) -> dict[str, Any]:
         """
         Create a state custom field dictionary.
 
@@ -69,7 +69,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_single_user_field(name: str, user_login: str) -> Dict[str, Any]:
+    def create_single_user_field(name: str, user_login: str) -> dict[str, Any]:
         """
         Create a single user custom field dictionary.
 
@@ -87,7 +87,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_multi_user_field(name: str, user_logins: List[str]) -> Dict[str, Any]:
+    def create_multi_user_field(name: str, user_logins: list[str]) -> dict[str, Any]:
         """
         Create a multi user custom field dictionary.
 
@@ -105,7 +105,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_text_field(name: str, text: str) -> Dict[str, Any]:
+    def create_text_field(name: str, text: str) -> dict[str, Any]:
         """
         Create a text custom field dictionary.
 
@@ -123,7 +123,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def extract_field_value(custom_fields: List[Dict[str, Any]], field_name: str) -> Any:
+    def extract_field_value(custom_fields: list[dict[str, Any]], field_name: str) -> Any:
         """
         Extract a custom field value by field name.
 
@@ -153,7 +153,7 @@ class CustomFieldManager:
         return None
 
     @staticmethod
-    def _extract_dict_value(value: Union[Dict, List, str, int, float]) -> Any:
+    def _extract_dict_value(value: dict | list | str | int | float) -> Any:
         """
         Extract value from a custom field value dictionary or list.
 
@@ -207,7 +207,7 @@ class CustomFieldManager:
         return value
 
     @staticmethod
-    def get_field_id(custom_fields: List[Dict[str, Any]], field_name: str) -> Optional[str]:
+    def get_field_id(custom_fields: list[dict[str, Any]], field_name: str) -> str | None:
         """
         Get the ID of a custom field by name.
 
@@ -241,7 +241,7 @@ class CustomFieldManager:
         return get_display_name(field_type)
 
     @staticmethod
-    def get_field_with_fallback(issue: Dict[str, Any], primary_field: str, fallback_field: str) -> Any:
+    def get_field_with_fallback(issue: dict[str, Any], primary_field: str, fallback_field: str) -> Any:
         """
         Get a field value with fallback to custom fields.
 
@@ -265,7 +265,7 @@ class CustomFieldManager:
     @staticmethod
     def create_project_enum_field_config(
         field_type: str, can_be_empty: bool = True, empty_field_text: str = "No value", is_public: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create configuration for attaching an enum field to a project.
 
@@ -286,7 +286,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def extract_user_field_info(user_value: Dict[str, Any]) -> Dict[str, str]:
+    def extract_user_field_info(user_value: dict[str, Any]) -> dict[str, str]:
         """
         Extract comprehensive user information from a user field value.
 
@@ -333,7 +333,7 @@ class CustomFieldManager:
         return field_type in multi_value_types
 
     @staticmethod
-    def create_simple_field(name: str, value: Union[int, float, str]) -> Dict[str, Any]:
+    def create_simple_field(name: str, value: int | float | str) -> dict[str, Any]:
         """
         Create a simple (integer/float) custom field.
 
@@ -346,7 +346,7 @@ class CustomFieldManager:
         """
         # Convert to appropriate numeric type
         try:
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 numeric_value = value
             else:
                 # Try int first, then float
@@ -362,7 +362,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_date_field(name: str, value: str) -> Dict[str, Any]:
+    def create_date_field(name: str, value: str) -> dict[str, Any]:
         """
         Create a date custom field.
 
@@ -385,7 +385,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_single_version_field(name: str, value: str) -> Dict[str, Any]:
+    def create_single_version_field(name: str, value: str) -> dict[str, Any]:
         """
         Create a single version custom field.
 
@@ -403,7 +403,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_single_build_field(name: str, value: str) -> Dict[str, Any]:
+    def create_single_build_field(name: str, value: str) -> dict[str, Any]:
         """
         Create a single build custom field.
 
@@ -421,7 +421,7 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_field_by_type(field_info: Dict[str, Any], name: str, value: str) -> Dict[str, Any]:
+    def create_field_by_type(field_info: dict[str, Any], name: str, value: str) -> dict[str, Any]:
         """
         Create a custom field using discovered type information.
 

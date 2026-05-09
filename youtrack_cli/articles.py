@@ -1,7 +1,7 @@
 """Article management for YouTrack CLI."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from rich.table import Table
@@ -137,8 +137,8 @@ class ArticleManager:
         title: str,
         content: str,
         project_id: str,
-        parent_id: Optional[str] = None,
-        summary: Optional[str] = None,
+        parent_id: str | None = None,
+        summary: str | None = None,
         visibility: str = "public",
     ) -> dict[str, Any]:
         """Create a new article."""
@@ -206,16 +206,16 @@ class ArticleManager:
 
     async def list_articles(
         self,
-        project_id: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
-        query: Optional[str] = None,
+        project_id: str | None = None,
+        parent_id: str | None = None,
+        fields: str | None = None,
+        top: int | None = None,
+        query: str | None = None,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
+        max_results: int | None = None,
     ) -> dict[str, Any]:
         """List articles with optional filtering and pagination support.
 
@@ -367,7 +367,7 @@ class ArticleManager:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    async def get_article(self, article_id: str, fields: Optional[str] = None) -> dict[str, Any]:  # noqa: E501
+    async def get_article(self, article_id: str, fields: str | None = None) -> dict[str, Any]:  # noqa: E501
         """Get a specific article."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -403,10 +403,10 @@ class ArticleManager:
     async def update_article(
         self,
         article_id: str,
-        title: Optional[str] = None,
-        content: Optional[str] = None,
-        summary: Optional[str] = None,
-        visibility: Optional[str] = None,
+        title: str | None = None,
+        content: str | None = None,
+        summary: str | None = None,
+        visibility: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing article."""
         credentials = self.auth_manager.load_credentials()
@@ -509,8 +509,8 @@ class ArticleManager:
     async def search_articles(
         self,
         query: str,
-        project_id: Optional[str] = None,
-        top: Optional[int] = None,
+        project_id: str | None = None,
+        top: int | None = None,
     ) -> dict[str, Any]:
         """Search articles."""
         credentials = self.auth_manager.load_credentials()
@@ -780,7 +780,7 @@ class ArticleManager:
             if created_timestamp:
                 try:
                     # Handle both numeric timestamps (from API) and string timestamps (from tests)
-                    if isinstance(created_timestamp, (int, float)):
+                    if isinstance(created_timestamp, int | float):
                         created_date = datetime.fromtimestamp(created_timestamp / 1000).strftime("%Y-%m-%d %H:%M")
                     else:
                         # For string timestamps, just use as-is (test data)
@@ -857,7 +857,7 @@ class ArticleManager:
                 if created_timestamp:
                     try:
                         # Handle both numeric timestamps (from API) and string timestamps (from tests)
-                        if isinstance(created_timestamp, (int, float)):
+                        if isinstance(created_timestamp, int | float):
                             created_date = datetime.fromtimestamp(created_timestamp / 1000).strftime("%Y-%m-%d %H:%M")
                         else:
                             # For string timestamps, just use as-is (test data)
@@ -954,7 +954,7 @@ class ArticleManager:
         if created_timestamp:
             try:
                 # Handle both numeric timestamps (from API) and string timestamps (from tests)
-                if isinstance(created_timestamp, (int, float)):
+                if isinstance(created_timestamp, int | float):
                     created_date = datetime.fromtimestamp(created_timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 else:
                     # For string timestamps, just use as-is (test data)
@@ -968,7 +968,7 @@ class ArticleManager:
         if updated_timestamp:
             try:
                 # Handle both numeric timestamps (from API) and string timestamps (from tests)
-                if isinstance(updated_timestamp, (int, float)):
+                if isinstance(updated_timestamp, int | float):
                     updated_date = datetime.fromtimestamp(updated_timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 else:
                     # For string timestamps, just use as-is (test data)
@@ -1268,7 +1268,7 @@ class ArticleManager:
 
 
 # Helper functions for ArticleID management in markdown files
-def extract_article_id_from_content(content: str) -> Optional[str]:
+def extract_article_id_from_content(content: str) -> str | None:
     """Extract ArticleID from markdown content.
 
     Looks for a comment in the format: <!-- ArticleID: actual-article-id -->
@@ -1345,7 +1345,7 @@ def remove_article_id_comment(content: str) -> str:
     return cleaned_content
 
 
-def find_file_with_article_id(article_id: str, directory: str = ".") -> Optional[str]:
+def find_file_with_article_id(article_id: str, directory: str = ".") -> str | None:
     """Find a markdown file in the directory that contains the specified ArticleID.
 
     This function searches for files with markdown extensions (.md, .markdown)

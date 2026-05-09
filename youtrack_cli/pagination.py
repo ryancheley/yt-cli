@@ -8,7 +8,8 @@ navigation through multiple pages of data.
 """
 
 import math
-from typing import Any, Callable, List
+from collections.abc import Callable
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -36,8 +37,8 @@ class PaginatedTableDisplay:
 
     def display_paginated_table(
         self,
-        data: List[Any],
-        table_builder: Callable[[List[Any]], Table],
+        data: list[Any],
+        table_builder: Callable[[list[Any]], Table],
         title: str = "Results",
         show_all: bool = False,
         start_page: int = 1,

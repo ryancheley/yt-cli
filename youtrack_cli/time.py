@@ -1,7 +1,7 @@
 """Time tracking management for YouTrack CLI."""
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from rich.table import Table
 
@@ -39,9 +39,9 @@ class TimeManager:
         self,
         issue_id: str,
         duration: str,
-        date: Optional[str] = None,
-        description: Optional[str] = None,
-        work_type: Optional[str] = None,
+        date: str | None = None,
+        description: str | None = None,
+        work_type: str | None = None,
     ) -> dict[str, Any]:
         """Log work time to an issue."""
         credentials = self.auth_manager.load_credentials()
@@ -108,11 +108,11 @@ class TimeManager:
 
     async def get_time_entries(
         self,
-        issue_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        fields: Optional[str] = None,
+        issue_id: str | None = None,
+        user_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        fields: str | None = None,
     ) -> dict[str, Any]:
         """Get time entries with optional filtering."""
         credentials = self.auth_manager.load_credentials()
@@ -175,9 +175,9 @@ class TimeManager:
 
     async def get_time_summary(
         self,
-        user_id: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        user_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         group_by: str = "user",
     ) -> dict[str, Any]:
         """Get time tracking summary with aggregation."""
@@ -209,7 +209,7 @@ class TimeManager:
             "total_entries": len(time_entries),
         }
 
-    def _parse_duration(self, duration: str) -> Optional[int]:
+    def _parse_duration(self, duration: str) -> int | None:
         """Parse duration string to minutes."""
         duration = duration.lower().strip()
 
@@ -429,7 +429,7 @@ class TimeManager:
 
             self.console.print(table)
 
-    async def get_work_types(self, issue_id: Optional[str] = None) -> dict[str, Any]:
+    async def get_work_types(self, issue_id: str | None = None) -> dict[str, Any]:
         """Get available work item types.
 
         Args:
@@ -501,7 +501,7 @@ class TimeManager:
                 "message": f"Error getting work types: {str(e)}",
             }
 
-    async def _resolve_work_type_id(self, issue_id: str, work_type_name: str) -> Optional[str]:
+    async def _resolve_work_type_id(self, issue_id: str, work_type_name: str) -> str | None:
         """Resolve work type name to ID.
 
         Args:

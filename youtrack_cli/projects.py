@@ -1,6 +1,6 @@
 """Project management for YouTrack CLI."""
 
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from rich.table import Table
@@ -48,7 +48,7 @@ class ProjectManager:
                 f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
-    async def _resolve_user_id(self, username_or_id: str) -> tuple[str, Optional[str]]:
+    async def _resolve_user_id(self, username_or_id: str) -> tuple[str, str | None]:
         """Resolve a username or ID to a YouTrack user ID.
 
         Args:
@@ -76,14 +76,14 @@ class ProjectManager:
 
     async def list_projects(
         self,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
+        fields: str | None = None,
+        top: int | None = None,
         show_archived: bool = False,
         page_size: int = 100,
-        after_cursor: Optional[str] = None,
-        before_cursor: Optional[str] = None,
+        after_cursor: str | None = None,
+        before_cursor: str | None = None,
         use_pagination: bool = False,
-        max_results: Optional[int] = None,
+        max_results: int | None = None,
     ) -> dict[str, Any]:
         """List all projects.
 
@@ -214,8 +214,8 @@ class ProjectManager:
         name: str,
         short_name: str,
         leader_id: str,
-        description: Optional[str] = None,
-        template: Optional[str] = None,
+        description: str | None = None,
+        template: str | None = None,
     ) -> dict[str, Any]:
         """Create a new project.
 
@@ -298,7 +298,7 @@ class ProjectManager:
         except Exception as e:
             return {"status": "error", "message": f"Unexpected error: {e}"}
 
-    async def get_project(self, project_id: str, fields: Optional[str] = None) -> dict[str, Any]:
+    async def get_project(self, project_id: str, fields: str | None = None) -> dict[str, Any]:
         """Get a specific project.
 
         Args:
@@ -360,10 +360,10 @@ class ProjectManager:
     async def update_project(
         self,
         project_id: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        leader_id: Optional[str] = None,
-        archived: Optional[bool] = None,
+        name: str | None = None,
+        description: str | None = None,
+        leader_id: str | None = None,
+        archived: bool | None = None,
     ) -> dict[str, Any]:
         """Update a project configuration.
 
@@ -576,8 +576,8 @@ class ProjectManager:
     async def list_custom_fields(
         self,
         project_id: str,
-        fields: Optional[str] = None,
-        top: Optional[int] = None,
+        fields: str | None = None,
+        top: int | None = None,
     ) -> dict[str, Any]:
         """List custom fields for a specific project.
 
@@ -656,9 +656,9 @@ class ProjectManager:
         project_id: str,
         field_id: str,
         field_type: str,
-        can_be_empty: Optional[bool] = None,
-        empty_field_text: Optional[str] = None,
-        is_public: Optional[bool] = None,
+        can_be_empty: bool | None = None,
+        empty_field_text: str | None = None,
+        is_public: bool | None = None,
     ) -> dict[str, Any]:
         """Attach an existing custom field to a project.
 
@@ -741,9 +741,9 @@ class ProjectManager:
         self,
         project_id: str,
         field_id: str,
-        can_be_empty: Optional[bool] = None,
-        empty_field_text: Optional[str] = None,
-        is_public: Optional[bool] = None,
+        can_be_empty: bool | None = None,
+        empty_field_text: str | None = None,
+        is_public: bool | None = None,
     ) -> dict[str, Any]:
         """Update settings of a custom field in a project.
 

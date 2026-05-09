@@ -1,6 +1,6 @@
 """Board management for YouTrack CLI."""
 
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from rich.table import Table
@@ -54,7 +54,7 @@ class BoardManager:
                 f"Failed to parse JSON response (status {status_code}): {str(e)}. Response preview: {preview}"
             ) from e
 
-    async def list_boards(self, project_id: Optional[str] = None) -> dict[str, Any]:
+    async def list_boards(self, project_id: str | None = None) -> dict[str, Any]:
         """List all agile boards."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:
@@ -185,7 +185,7 @@ class BoardManager:
             self.console.print(f"❌ Error viewing board: {error_msg}", style="red")
             return {"status": "error", "message": error_msg}
 
-    async def update_board(self, board_id: str, name: Optional[str] = None, **kwargs: Any) -> dict[str, Any]:
+    async def update_board(self, board_id: str, name: str | None = None, **kwargs: Any) -> dict[str, Any]:
         """Update an agile board configuration."""
         credentials = self.auth_manager.load_credentials()
         if not credentials:

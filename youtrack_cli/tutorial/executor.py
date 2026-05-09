@@ -3,7 +3,6 @@
 import asyncio
 import asyncio.subprocess
 import shlex
-from typing import List, Optional
 
 import click
 from rich.panel import Panel
@@ -17,7 +16,7 @@ from ..console import get_console
 class ClickCommandExecutor:
     """Execute YouTrack CLI commands directly through Click context instead of shell."""
 
-    def __init__(self, config_manager: Optional[ConfigManager] = None):
+    def __init__(self, config_manager: ConfigManager | None = None):
         """Initialize the executor with configuration.
 
         Args:
@@ -91,7 +90,7 @@ class ClickCommandExecutor:
 
         return False
 
-    def parse_command(self, command: str) -> List[str]:
+    def parse_command(self, command: str) -> list[str]:
         """Parse command string into arguments.
 
         Args:

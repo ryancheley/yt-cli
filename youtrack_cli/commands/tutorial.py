@@ -5,7 +5,6 @@ through guided, hands-on experiences covering common workflows and best practice
 """
 
 import asyncio
-from typing import Optional
 
 import click
 from rich.prompt import Confirm
@@ -92,7 +91,7 @@ def list(ctx: click.Context, show_progress: bool) -> None:
 @click.option("--step", type=int, help="Start from a specific step number")
 @click.option("--reset", is_flag=True, help="Reset progress and start from the beginning")
 @click.pass_context
-def run(ctx: click.Context, module_id: str, step: Optional[int], reset: bool) -> None:
+def run(ctx: click.Context, module_id: str, step: int | None, reset: bool) -> None:
     """Run a specific tutorial module.
 
     MODULE_ID is the tutorial identifier (e.g., 'setup', 'issues', 'projects').
@@ -138,7 +137,7 @@ def run(ctx: click.Context, module_id: str, step: Optional[int], reset: bool) ->
 @tutorial.command()
 @click.argument("module_id", required=False)
 @click.option("--all", "reset_all", is_flag=True, help="Reset progress for all tutorials")
-def reset(module_id: Optional[str], reset_all: bool) -> None:
+def reset(module_id: str | None, reset_all: bool) -> None:
     """Reset tutorial progress.
 
     MODULE_ID is the tutorial to reset. Use --all to reset all tutorials.

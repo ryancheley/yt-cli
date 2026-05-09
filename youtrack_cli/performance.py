@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from statistics import mean, median
-from typing import Any, Optional
+from typing import Any
 
 from .logging import get_logger
 
@@ -82,7 +82,7 @@ class PerformanceMonitor:
 
     def get_metrics(
         self,
-        operation: Optional[str] = None,
+        operation: str | None = None,
         success_only: bool = False,
     ) -> list[PerformanceMetrics]:
         """Get collected metrics.
@@ -110,7 +110,7 @@ class PerformanceMonitor:
         self._metrics.clear()
         logger.debug("Performance metrics cleared", count=count)
 
-    def summary(self, operation: Optional[str] = None) -> dict[str, Any]:
+    def summary(self, operation: str | None = None) -> dict[str, Any]:
         """Get a summary of performance metrics.
 
         Args:
@@ -155,7 +155,7 @@ _monitor = PerformanceMonitor()
 
 @asynccontextmanager
 async def performance_timer(
-    operation: str, monitor: Optional[PerformanceMonitor] = None, **metadata
+    operation: str, monitor: PerformanceMonitor | None = None, **metadata
 ) -> AsyncGenerator[None, None]:
     """Context manager for timing operations.
 

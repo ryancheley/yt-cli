@@ -1,7 +1,6 @@
 """Time tracking command group for YouTrack CLI."""
 
 import asyncio
-from typing import Optional
 
 import click
 
@@ -26,9 +25,9 @@ def log(
     ctx: click.Context,
     issue_id: str,
     duration: str,
-    date: Optional[str],
-    description: Optional[str],
-    work_type: Optional[str],
+    date: str | None,
+    description: str | None,
+    work_type: str | None,
 ) -> None:
     """Log work time to an issue."""
     from ..time import TimeManager
@@ -67,10 +66,10 @@ def log(
 @click.pass_context
 def list(
     ctx: click.Context,
-    issue: Optional[str],
-    user_id: Optional[str],
-    start_date: Optional[str],
-    end_date: Optional[str],
+    issue: str | None,
+    user_id: str | None,
+    start_date: str | None,
+    end_date: str | None,
     format: str,
 ) -> None:
     """List time entries with filtering options."""
@@ -119,7 +118,7 @@ def list(
 @click.pass_context
 def work_types(
     ctx: click.Context,
-    issue: Optional[str],
+    issue: str | None,
     format: str,
 ) -> None:
     """List available work types for time tracking."""
@@ -169,9 +168,9 @@ def work_types(
 @click.pass_context
 def summary(
     ctx: click.Context,
-    user_id: Optional[str],
-    start_date: Optional[str],
-    end_date: Optional[str],
+    user_id: str | None,
+    start_date: str | None,
+    end_date: str | None,
     group_by: str,
     format: str,
 ) -> None:

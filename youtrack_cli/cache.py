@@ -1,12 +1,13 @@
 """Caching layer for frequently accessed YouTrack resources."""
 
 import asyncio
+import builtins
 import fnmatch
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from functools import wraps
-from typing import Any, Optional, Set
+from typing import Any
 
 from .logging import get_logger
 
@@ -31,7 +32,7 @@ class CacheEntry:
     value: Any
     timestamp: float
     ttl: float
-    tags: Set[str] = field(default_factory=set)
+    tags: set[str] = field(default_factory=set)
     access_count: int = field(default=0)
     last_accessed: float = field(default_factory=time.time)
 
@@ -49,7 +50,7 @@ class CacheEntry:
 class Cache:
     """In-memory cache with TTL support and advanced invalidation strategies for YouTrack API responses."""
 
-    def __init__(self, default_ttl: float = 300.0, max_size: Optional[int] = None):
+    def __init__(self, default_ttl: float = 300.0, max_size: int | None = None):
         """Initialize the cache.
 
         Args:
@@ -59,7 +60,7 @@ class Cache:
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self._default_ttl = default_ttl
         self._max_size = max_size
-        self._lock: Optional[asyncio.Lock] = None
+        self._lock: asyncio.Lock | None = None
         self._hits = 0
         self._misses = 0
         self._evictions = 0
@@ -71,7 +72,7 @@ class Cache:
             self._lock = asyncio.Lock()
         return self._lock
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get a value from the cache.
 
         Args:
@@ -100,7 +101,7 @@ class Cache:
             logger.debug("Cache hit", key=key, age=time.time() - entry.timestamp)
             return entry.value
 
-    async def set(self, key: str, value: Any, ttl: Optional[float] = None, tags: Optional[Set[str]] = None) -> None:
+    async def set(self, key: str, value: Any, ttl: float | None = None, tags: set[str] | None = None) -> None:
         """Set a value in the cache.
 
         Args:
@@ -220,7 +221,7 @@ class Cache:
             return len(matching_keys)
 
     async def set_many(
-        self, items: dict[str, Any], ttl: Optional[float] = None, tags: Optional[Set[str]] = None
+        self, items: dict[str, Any], ttl: float | None = None, tags: builtins.set[str] | None = None
     ) -> None:
         """Set multiple values in the cache efficiently.
 
@@ -308,7 +309,7 @@ class Cache:
 
 
 # Global cache instance
-_cache: Optional[Cache] = None
+_cache: Cache | None = None
 
 
 def get_cache() -> Cache:
@@ -326,7 +327,7 @@ async def clear_cache() -> None:
     await cache.clear()
 
 
-def cached(ttl: Optional[float] = None, key_prefix: str = "", tags: Optional[Set[str]] = None):
+def cached(ttl: float | None = None, key_prefix: str = "", tags: set[str] | None = None):
     """Decorator to cache function results.
 
     Args:

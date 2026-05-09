@@ -5,7 +5,7 @@ for typos and mistakes, and providing helpful error messages with usage examples
 """
 
 import difflib
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import click
 
@@ -24,8 +24,8 @@ class CommandValidator:
     """Validates commands and provides helpful suggestions for corrections."""
 
     def __init__(self):
-        self._command_registry: Dict[str, Dict[str, str]] = {}
-        self._common_mistakes: Dict[str, str] = {
+        self._command_registry: dict[str, dict[str, str]] = {}
+        self._common_mistakes: dict[str, str] = {
             "version": "--version",
             "help": "--help",
             "issues comments create": "issues comments add",
@@ -35,7 +35,7 @@ class CommandValidator:
             "project list": "projects list",
             "user list": "users list",
         }
-        self._parameter_patterns: Dict[str, List[str]] = {
+        self._parameter_patterns: dict[str, list[str]] = {
             "assignee_options": ["--assignee", "-a"],
             "project_options": ["--project", "--project-id", "-p"],
             "type_options": ["--type", "-t"],
@@ -50,7 +50,7 @@ class CommandValidator:
             "description": description,
         }
 
-    def suggest_similar_command(self, attempted_command: str, max_suggestions: int = 3) -> List[str]:
+    def suggest_similar_command(self, attempted_command: str, max_suggestions: int = 3) -> list[str]:
         """Suggest similar commands based on string similarity."""
         if attempted_command in self._common_mistakes:
             return [self._common_mistakes[attempted_command]]
@@ -73,7 +73,7 @@ class CommandValidator:
 
         return suggestions[:max_suggestions]
 
-    def validate_command_structure(self, command_path: str) -> Optional[CommandValidationError]:
+    def validate_command_structure(self, command_path: str) -> CommandValidationError | None:
         """Validate command structure and return error if invalid."""
         if command_path in self._command_registry:
             return None
@@ -97,9 +97,9 @@ class CommandValidator:
         self,
         param_name: str,
         param_value: str,
-        valid_choices: Optional[List[str]] = None,
-        expected_type: Optional[str] = None,
-    ) -> Optional[ParameterError]:
+        valid_choices: list[str] | None = None,
+        expected_type: str | None = None,
+    ) -> ParameterError | None:
         """Validate a parameter value and return error if invalid."""
         if valid_choices and param_value not in valid_choices:
             # Suggest similar valid choices
@@ -115,7 +115,7 @@ class CommandValidator:
         return None
 
 
-def suggest_similar_commands(attempted_command: str, available_commands: List[str]) -> List[str]:
+def suggest_similar_commands(attempted_command: str, available_commands: list[str]) -> list[str]:
     """Suggest similar commands from a list of available commands.
 
     Examples:
@@ -130,10 +130,10 @@ def suggest_similar_commands(attempted_command: str, available_commands: List[st
 
 
 def validate_parameter_combination(
-    params: Dict[str, Any],
-    mutually_exclusive: Optional[List[Tuple[str, ...]]] = None,
-    required_together: Optional[List[Tuple[str, ...]]] = None,
-) -> Optional[ParameterError]:
+    params: dict[str, Any],
+    mutually_exclusive: list[tuple[str, ...]] | None = None,
+    required_together: list[tuple[str, ...]] | None = None,
+) -> ParameterError | None:
     """Validate parameter combinations for mutual exclusion and required together constraints."""
     if mutually_exclusive:
         for exclusive_group in mutually_exclusive:
@@ -161,8 +161,8 @@ def create_usage_error(
     message: str,
     command_path: str,
     usage_syntax: str,
-    examples: Optional[List[str]] = None,
-    common_mistakes: Optional[List[str]] = None,
+    examples: list[str] | None = None,
+    common_mistakes: list[str] | None = None,
 ) -> UsageError:
     """Create a comprehensive usage error with examples and guidance."""
     return UsageError(
@@ -174,7 +174,7 @@ def create_usage_error(
     )
 
 
-def get_command_suggestions(ctx: click.Context) -> List[str]:
+def get_command_suggestions(ctx: click.Context) -> list[str]:
     """Get command suggestions based on the current Click context."""
     suggestions = []
 
