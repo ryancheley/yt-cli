@@ -28,7 +28,7 @@ class CachedResponse(BaseModel):
     data: dict[str, Any]
     status_code: int = 200
 
-    def json(self) -> dict[str, Any]:  # type: ignore[override]
+    def json(self) -> dict[str, Any]:
         """Return JSON data, mimicking httpx.Response interface.
 
         Returns:
