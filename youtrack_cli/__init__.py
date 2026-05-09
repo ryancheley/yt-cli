@@ -16,9 +16,9 @@ except Exception:
         from pathlib import Path
 
         try:
-            import tomllib  # type: ignore[import-not-found]
+            import tomllib  # type: ignore[import]
         except ImportError:
-            import tomli as tomllib  # type: ignore[import-not-found]
+            import tomli as tomllib  # type: ignore[import,no-redef]
 
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         if pyproject_path.exists():

@@ -189,8 +189,12 @@ class ProgressTracker:
             self.progress.update(self.task_id, **kwargs)
 
 
-class _DummyTracker:
+class _DummyTracker(ProgressTracker):
     """Dummy progress tracker that does nothing when progress is disabled."""
+
+    def __init__(self) -> None:
+        """Initialize without a Progress instance."""
+        pass
 
     def advance(self, step: int = 1) -> None:
         """No-op advance method."""
