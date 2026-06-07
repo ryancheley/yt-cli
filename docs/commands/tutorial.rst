@@ -93,7 +93,7 @@ Run a specific tutorial module with interactive guidance.
    yt tutorial run time
 
 Show Tutorial Progress
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Show detailed progress information for all tutorials.
 
@@ -111,7 +111,7 @@ Show detailed progress information for all tutorials.
    # Displays completion percentage, current step, and next actions
 
 Reset Tutorial Progress
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Reset progress for specific tutorials to start over.
 
@@ -160,7 +160,7 @@ Available Tutorial Modules
 ---------------------------
 
 Setup Tutorial
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 Learn authentication and configuration fundamentals:
 
@@ -184,7 +184,7 @@ Learn authentication and configuration fundamentals:
   * Troubleshoot common setup issues
 
 Issues Tutorial
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Master issue management workflows:
 
@@ -208,7 +208,7 @@ Master issue management workflows:
   * Collaborate effectively using comments and attachments
 
 Projects Tutorial
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Learn project management and configuration:
 
@@ -232,7 +232,7 @@ Learn project management and configuration:
   * Generate useful project reports and insights
 
 Time Tracking Tutorial
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Master time tracking and reporting workflows:
 
@@ -259,7 +259,7 @@ Tutorial Features and Benefits
 ------------------------------
 
 Interactive Learning Experience
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tutorials provide hands-on, interactive learning:
 
@@ -276,7 +276,7 @@ Tutorials provide hands-on, interactive learning:
   * Include troubleshooting tips for common issues
 
 Progress Tracking and Resume
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Advanced progress management features:
 
@@ -293,7 +293,7 @@ Advanced progress management features:
   * Bookmark important sections for future reference
 
 Beginner-Friendly Design
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tutorials are designed for users at all skill levels:
 
@@ -313,7 +313,7 @@ Using Tutorials Effectively
 ---------------------------
 
 Getting Started
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Begin your learning journey with the tutorials:
 
@@ -335,7 +335,7 @@ Begin your learning journey with the tutorials:
   4. **Time Tutorial** - Advanced productivity and reporting features
 
 Maximizing Learning Value
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Get the most from your tutorial experience:
 
@@ -352,7 +352,7 @@ Get the most from your tutorial experience:
   * Share tutorial insights with team members
 
 Troubleshooting Learning Issues
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you encounter problems during tutorials:
 
@@ -377,7 +377,7 @@ Team and Enterprise Usage
 --------------------------
 
 Team Onboarding
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Use tutorials for consistent team training:
 
@@ -397,7 +397,7 @@ Use tutorials for consistent team training:
   * Self-service learning reduces training overhead
 
 Enterprise Training Programs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Integrate tutorials into larger training initiatives:
 
@@ -416,7 +416,7 @@ Feedback and Continuous Improvement
 -----------------------------------
 
 Providing Feedback
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Help improve tutorials through feedback:
 
@@ -439,7 +439,7 @@ Help improve tutorials through feedback:
   * Include error messages or unexpected behavior
 
 Community Contributions
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Contribute to tutorial improvement:
 
@@ -480,7 +480,7 @@ Troubleshooting
 ---------------
 
 Common Tutorial Issues
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 **Tutorial Won't Start:**
   * Verify you have authentication configured properly
@@ -498,7 +498,7 @@ Common Tutorial Issues
   * Check that you have appropriate data and permissions in YouTrack
 
 Recovery and Reset
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 If tutorials become corrupted or stuck:
 

@@ -53,13 +53,13 @@ List all global YouTrack settings.
    yt admin global-settings list
 
 License Management
------------------
+------------------
 
 .. note::
    The license show command has been deprecated and is no longer available.
 
 license usage
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Show detailed license usage statistics and capacity information.
 
@@ -120,7 +120,7 @@ System Health Monitoring
 ------------------------
 
 health check
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 Run comprehensive system health diagnostics and display system status.
 
@@ -142,10 +142,10 @@ Run comprehensive system health diagnostics and display system status.
    yt admin health check
 
 User Groups Management
----------------------
+----------------------
 
 user-groups list
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 List all user groups in the YouTrack system with filtering options.
 
@@ -180,7 +180,7 @@ List all user groups in the YouTrack system with filtering options.
    yt admin user-groups list --fields "id,name,description,users(fullName)"
 
 user-groups create
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Create a new user group with specified settings.
 
@@ -222,7 +222,7 @@ Custom Fields Management
 ------------------------
 
 fields list
-~~~~~~~~~~
+~~~~~~~~~~~
 
 List all custom fields configured across YouTrack projects.
 
@@ -370,10 +370,10 @@ Set the system language locale.
    yt admin locale set --language fr_FR
 
 Administrative Features
-----------------------
+-----------------------
 
 Global Settings
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 **System Configuration**
   Manage server-wide settings including performance, security, and feature configurations.
@@ -388,7 +388,7 @@ Global Settings
   Adjust system performance parameters and resource limits.
 
 License Management
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 **License Information**
   View license details including expiration dates, feature limits, and user capacity.
@@ -400,7 +400,7 @@ License Management
   Monitor license compliance and usage patterns.
 
 System Maintenance
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 **Cache Management**
   Note: Cache clearing is not available through the REST API. Use the YouTrack administrative UI or server-side tools for cache management.
@@ -412,7 +412,7 @@ System Maintenance
   Tools for system performance analysis and optimization.
 
 User and Group Management
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **User Groups**
   Create and manage user groups for permission and access control.
@@ -424,7 +424,7 @@ User and Group Management
   Set up user groups that reflect organizational hierarchy.
 
 Custom Fields
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 **Field Management**
   View and manage custom fields across all projects.
@@ -436,10 +436,10 @@ Custom Fields
   Ensure custom field consistency across projects.
 
 Common Administrative Workflows
-------------------------------
+-------------------------------
 
 System Health Monitoring
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -462,7 +462,7 @@ System Health Monitoring
    yt admin license usage
 
 Regular Maintenance
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -480,7 +480,7 @@ Regular Maintenance
    echo "Maintenance completed at $(date)"
 
 User Group Management
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -501,7 +501,7 @@ User Group Management
    yt admin user-groups list --fields "name,description"
 
 System Configuration
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -516,7 +516,7 @@ System Configuration
    yt admin global-settings list
 
 License Monitoring
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -562,10 +562,10 @@ Best Practices
 10. **Capacity Planning**: Monitor usage trends for capacity planning and license management.
 
 Security Considerations
-----------------------
+-----------------------
 
 Administrative Access
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 * **Limited Access**: Restrict administrative access to authorized personnel only
 * **Audit Trail**: Maintain audit logs of administrative actions
@@ -573,7 +573,7 @@ Administrative Access
 * **Regular Review**: Regularly review and update administrative permissions
 
 System Security
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 * **Setting Validation**: Validate all configuration changes for security implications
 * **Secure Defaults**: Use secure default values for system settings
@@ -581,10 +581,10 @@ System Security
 * **Access Monitoring**: Monitor administrative access and actions
 
 Troubleshooting
---------------
+---------------
 
 Common Issues and Solutions
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Permission Denied Errors**
   Verify administrative privileges and check authentication status.
@@ -611,7 +611,7 @@ Common Issues and Solutions
   The command will automatically try fallback endpoints and provide specific guidance based on the error type.
 
 System Diagnostics
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -638,7 +638,7 @@ System Diagnostics
    echo "Diagnostics completed"
 
 Error Recovery
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -658,10 +658,10 @@ Error Recovery
    yt admin global-settings list
 
 Integration Examples
--------------------
+--------------------
 
 Monitoring Integration
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -680,7 +680,7 @@ Monitoring Integration
    echo "youtrack_license_usage_percent 75"
 
 Backup Integration
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -702,7 +702,7 @@ Backup Integration
    echo "Administrative backup completed: $BACKUP_DIR"
 
 Automation Scripts
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

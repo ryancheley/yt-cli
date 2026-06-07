@@ -411,7 +411,7 @@ Project Setup
    yt projects list
 
 Project Maintenance
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -425,7 +425,7 @@ Project Maintenance
    yt projects configure PROJECT_KEY --show-details
 
 Project Lifecycle Management
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -442,7 +442,7 @@ Project Lifecycle Management
    yt projects list --format json > projects_report.json
 
 Project Discovery and Reporting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -477,10 +477,10 @@ Best Practices
 9. **Lifecycle Planning**: Plan for project phases including creation, active development, and archival.
 
 Project Templates
-----------------
+-----------------
 
 Scrum Template
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 The Scrum template configures projects for Scrum methodology:
 
@@ -499,7 +499,7 @@ The Scrum template configures projects for Scrum methodology:
      --description "Agile development using Scrum methodology"
 
 Kanban Template
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 The Kanban template configures projects for Kanban workflow:
 
@@ -581,7 +581,7 @@ Common error scenarios and solutions:
   Some projects may have restrictions preventing archival. Check project dependencies.
 
 Integration Examples
--------------------
+--------------------
 
 Scripting and Automation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -605,7 +605,7 @@ Scripting and Automation
    yt projects configure "$PROJECT_KEY" --show-details
 
 Project Reporting
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -619,7 +619,7 @@ Project Reporting
      jq '.[] | select(.archived == true)'
 
 Bulk Operations
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

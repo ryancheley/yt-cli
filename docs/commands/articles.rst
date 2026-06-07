@@ -904,7 +904,7 @@ Draft to Publication Workflow
    yt articles publish ARTICLE-123
 
 Content Management
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

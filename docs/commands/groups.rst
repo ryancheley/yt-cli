@@ -30,7 +30,7 @@ Group Management Commands
 -------------------------
 
 Create User Groups
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Create a new user group for organizing users and permissions.
 
@@ -56,7 +56,7 @@ Create a new user group for organizing users and permissions.
    yt groups create --name "Web Project Contributors" --description "Contributors to web development project"
 
 List User Groups
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 List all user groups in your YouTrack instance.
 
@@ -139,7 +139,7 @@ Use Cases and Applications
 --------------------------
 
 Team Organization
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Organize users by functional teams and roles:
 
@@ -157,7 +157,7 @@ Organize users by functional teams and roles:
   * Streamlined onboarding for new team members
 
 Project Access Control
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Create project-specific groups for access management:
 
@@ -174,7 +174,7 @@ Create project-specific groups for access management:
   * Support for project-based team structures
 
 Permission Management
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 Organize users by permission levels and access requirements:
 
@@ -269,7 +269,7 @@ Automation and Integration
 --------------------------
 
 Automated Group Management
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Automate group creation for consistent organizational structures:
 
@@ -309,7 +309,7 @@ Generate reports on group structure and membership:
    ' > groups-report.csv
 
 Integration with User Management
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Combine group management with user operations:
 
@@ -322,7 +322,7 @@ Combine group management with user operations:
    # This demonstrates the integration pattern even if specific commands aren't implemented yet
 
 Directory Services Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For enterprise environments, groups often integrate with directory services:
 

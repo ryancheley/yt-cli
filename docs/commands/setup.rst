@@ -108,7 +108,7 @@ First-Time Setup Workflow
 --------------------------
 
 Initial Installation
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 After installing YouTrack CLI, start with the setup command:
 
@@ -163,7 +163,7 @@ Configuration Storage
 ---------------------
 
 Secure Credential Storage
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The setup wizard ensures secure handling of your credentials:
 
@@ -208,7 +208,7 @@ The wizard will:
 * **Validate Changes:** Test new configuration before saving
 
 Partial Reconfiguration
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 For specific configuration changes, consider these alternatives to full setup:
 
@@ -227,7 +227,7 @@ Integration with Other Commands
 -------------------------------
 
 Authentication Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Setup works seamlessly with authentication commands:
 
