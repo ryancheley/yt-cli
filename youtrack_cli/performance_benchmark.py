@@ -22,7 +22,7 @@ class FieldSelectionBenchmark:
 
     async def benchmark_profile_performance(
         self, project_id: str | None = None, query: str | None = None, sample_size: int = 100
-    ) -> dict[str, dict[str, float]]:
+    ) -> dict[str, dict[str, float | list[float]]]:
         """Benchmark performance across different field selection profiles.
 
         Args:

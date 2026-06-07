@@ -511,7 +511,7 @@ async def batch_get_resources(
     resource_ids: list[str],
     headers: dict[str, str] | None = None,
     max_concurrent: int = 10,
-) -> list[dict[str, Any]]:
+) -> list[dict[str, Any] | None]:
     """Batch fetch multiple resources by ID.
 
     Args:
