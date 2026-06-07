@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed the Sphinx `linkcheck` step from per-push CI (it made outbound
     requests to external sites, including readthedocs.io, on every run) and
     moved it to a new weekly scheduled workflow with manual dispatch
+- ⚡ Run the full CI suite on pull requests only, with a lightweight coverage
+  baseline on push (#679)
+  - The full matrix plus lint/type-check/security/documentation now run on
+    pull requests, which already gate merges (branch protection requires
+    up-to-date branches)
+  - Post-merge pushes run only a single-version coverage job to keep the
+    Codecov default-branch baseline fresh, avoiding a redundant second run of
+    the entire suite on every merge
 
 ## [0.23.0] - 2026-06-07
 
