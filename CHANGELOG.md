@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-06-07
+
 ### Removed
 - 🔥 Removed the unused `selenium` dependency (#677)
   - It was added for a browser-automation article-reordering feature that was
@@ -68,6 +70,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     --show-file` → the default `~/.config/youtrack-cli/.env` path
   - Replaced the fictional `yt settings` / `admin global-settings get`/`set`
     examples in the command-aliases doc with the real `admin global-settings list`
+- 📝 Fixed broken documentation links and made the docs build warning-free
+  (#684, #685, #688, #689)
+  - Fixed dead links: the `api.com` placeholder URL in a docstring and the
+    GitHub Discussions link (Discussions isn't enabled), and corrected a
+    `:doc:` cross-reference so `just docs-check` reports no broken links
+  - Cleared all Sphinx build warnings (~200 short RST title underlines plus the
+    remaining `cmd` code-block lexer, inline-literal, autosummary, and docstring
+    warnings) so a clean docs build is warning-free
 
 ## [0.23.0] - 2026-06-07
 
