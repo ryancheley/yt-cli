@@ -154,3 +154,6 @@ test_runner.py
 
 # Claude configuration
 .claude/settings.local.json
+
+# Scratch article files
+DOCS-A-789.md
