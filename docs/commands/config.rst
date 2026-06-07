@@ -224,10 +224,10 @@ Set the active theme for YouTrack CLI output and appearance.
    yt config theme delete
 
 Common Configuration Keys
-------------------------
+-------------------------
 
 Project Settings
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. list-table::
    :widths: 30 20 50
@@ -247,7 +247,7 @@ Project Settings
      - Default project filter for searches
 
 Display Settings
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. list-table::
    :widths: 30 20 50
@@ -270,7 +270,7 @@ Display Settings
      - Default timezone for date displays
 
 Issue Management
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. list-table::
    :widths: 30 20 50
@@ -313,7 +313,7 @@ Time Tracking
      - Round time entries to nearest X minutes
 
 Connection Settings
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
    :widths: 30 20 50
@@ -333,10 +333,10 @@ Connection Settings
      - Enable response caching
 
 Configuration Examples
----------------------
+----------------------
 
 Basic Setup
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -350,7 +350,7 @@ Basic Setup
    yt config list
 
 Development Environment
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -366,7 +366,7 @@ Development Environment
    yt config set ROUND_TIME "15"
 
 Team Lead Configuration
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -381,7 +381,7 @@ Team Lead Configuration
    yt config set GROUP_BY_ASSIGNEE "true"
 
 Project Manager Setup
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -399,7 +399,7 @@ Environment-Specific Configuration
 ----------------------------------
 
 Multiple Environments
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -416,7 +416,7 @@ Multiple Environments
    yt --config ~/.config/yt-prod.env config set BASE_URL "https://youtrack.company.com"
 
 Project-Specific Settings
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -434,7 +434,7 @@ Configuration Workflows
 -----------------------
 
 Initial Setup
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -458,7 +458,7 @@ Initial Setup
    yt config list
 
 Team Onboarding
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -488,7 +488,7 @@ Team Onboarding
    echo "Team configuration applied!"
 
 Configuration Migration
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -538,10 +538,10 @@ Best Practices
 10. **Testing**: Test configuration changes in non-production environments first.
 
 Configuration File Management
-----------------------------
+-----------------------------
 
 File Locations
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -557,7 +557,7 @@ File Locations
    ~/.config/youtrack-cli/production.env
 
 File Format
-~~~~~~~~~~
+~~~~~~~~~~~
 
 Configuration files use environment variable format:
 
@@ -572,7 +572,7 @@ Configuration files use environment variable format:
    DEFAULT_WORK_TYPE=Development
 
 Backup and Restore
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -586,10 +586,10 @@ Backup and Restore
    yt config list | grep -v "token\|password\|secret" > team_config.txt
 
 Advanced Configuration
----------------------
+----------------------
 
 Custom Configuration Templates
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -613,7 +613,7 @@ Custom Configuration Templates
    echo "Configuration template created: $TEMPLATE_FILE"
 
 Configuration Validation
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -642,7 +642,7 @@ Configuration Validation
    fi
 
 Dynamic Configuration
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -685,10 +685,10 @@ Common error scenarios and solutions:
   CLI will create directory automatically on first use.
 
 Integration Examples
--------------------
+--------------------
 
 Shell Integration
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -705,7 +705,7 @@ Shell Integration
    }
 
 Configuration Scripts
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -727,7 +727,7 @@ Configuration Scripts
    echo "Configuration deployment complete"
 
 Monitoring and Auditing
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

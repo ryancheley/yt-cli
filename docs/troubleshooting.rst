@@ -1150,7 +1150,7 @@ Version Management Issues
    uv sync --dev
 
 CI/CD Integration Issues
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Problem**: GitHub Actions workflow not triggering.
 

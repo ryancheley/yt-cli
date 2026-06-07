@@ -1,5 +1,5 @@
 Learning Path Guide
-==================
+===================
 
 This guide provides a structured approach to learning YouTrack CLI, from complete beginner to advanced user.
 

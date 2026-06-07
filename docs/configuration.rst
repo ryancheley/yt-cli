@@ -5,7 +5,7 @@ YouTrack CLI can be configured through multiple methods, allowing you to customi
 its behavior to match your workflow.
 
 Configuration Sources
---------------------
+---------------------
 
 YouTrack CLI reads configuration from multiple sources in this order (later sources override earlier ones):
 

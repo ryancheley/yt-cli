@@ -56,7 +56,7 @@ Supported Shells
 ----------------
 
 Bash Completion
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Generate and install bash completion:
 
@@ -84,7 +84,7 @@ After installation, restart your shell or run:
    source ~/.bashrc
 
 Zsh Completion
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 Generate and install zsh completion:
 
@@ -116,7 +116,7 @@ Add to your ``~/.zshrc``:
    fpath=(~/.zsh/completions $fpath)
 
 Fish Completion
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Generate and install fish completion:
 
@@ -140,7 +140,7 @@ Fish automatically loads completions from the completions directory. Restart you
    fish_config reload
 
 PowerShell Completion
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 Generate PowerShell completion:
 
@@ -167,7 +167,7 @@ Completion Features
 -------------------
 
 Command Completion
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Tab completion works for all CLI commands and subcommands:
 
@@ -179,7 +179,7 @@ Tab completion works for all CLI commands and subcommands:
    yt pro<TAB>       # Completes to: yt projects
 
 Option Completion
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Complete option names and flags:
 
@@ -191,7 +191,7 @@ Complete option names and flags:
    yt config set --h<TAB>       # Completes to: --help
 
 Context-Aware Completion
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Advanced completion based on YouTrack data (when implemented):
 
@@ -206,7 +206,7 @@ Installation Methods
 --------------------
 
 Automatic Installation
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Use the ``--install`` flag for automatic installation:
 
@@ -294,7 +294,7 @@ Include completion setup in container environments:
    RUN echo "source /etc/bash_completion.d/yt" >> /etc/bash.bashrc
 
 CI/CD Integration
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Include completion setup in development environment automation:
 
@@ -315,7 +315,7 @@ Troubleshooting
 ---------------
 
 Common Installation Issues
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Permission Denied:**
   * Try manual installation to user directories instead of system-wide
@@ -382,7 +382,7 @@ For advanced users, completion scripts can be customized:
    # Then source or install the customized version
 
 Multiple CLI Tool Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Integrate YouTrack CLI completion with other development tools:
 
@@ -397,7 +397,7 @@ Performance Considerations
 --------------------------
 
 Completion Performance
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Large projects or extensive command histories might affect completion performance:
 
@@ -406,7 +406,7 @@ Large projects or extensive command histories might affect completion performanc
 * **Filtering:** Completion results are filtered based on current input
 
 Optimization Tips
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 * Restart shells periodically to clear completion caches
 * Update completion scripts when CLI is updated
