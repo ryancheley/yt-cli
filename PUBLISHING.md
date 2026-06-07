@@ -20,6 +20,27 @@ This project uses trusted publishers for secure PyPI publishing without API toke
 - Workflow: `release.yml`
 - Environment: TestPyPI
 
+## Pre-Release Checklist
+
+Run through this checklist before cutting a release. The `just release` command
+enforces each of these automatically and will abort if any check fails, but
+verifying them up front avoids a failed run partway through.
+
+- [ ] You are on the `main` branch (`git checkout main`)
+- [ ] Working directory is clean — no uncommitted or staged changes (`git status`)
+- [ ] Local `main` is up to date with `origin/main` (`git pull origin main`)
+- [ ] GitHub CLI is authenticated (`gh auth status`)
+- [ ] `CHANGELOG.md` has a section header matching the version being released,
+      in the format `## [X.Y.Z] - YYYY-MM-DD` (e.g. `## [0.23.0] - 2026-06-07`)
+- [ ] The new version is a valid semantic-version increment over the current
+      version in `pyproject.toml` (and no `vX.Y.Z` tag already exists)
+- [ ] All quality checks pass locally (`just check` — linting, formatting,
+      type checking, tests, security)
+
+Tip: run `just release-check X.Y.Z` to validate the version format and increment,
+and `just release-status` to see whether there are unreleased changes, before
+running the full release.
+
 ## Creating a Release
 
 **Automated Release Process (Recommended)**
