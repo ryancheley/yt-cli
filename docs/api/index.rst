@@ -12,17 +12,6 @@ is the command-line tool, the underlying Python modules can be used programmatic
    exceptions
    utils
 
-Core Modules
-------------
-
-.. autosummary::
-   :toctree: _autosummary
-
-   youtrack_cli.client
-   youtrack_cli.models
-   youtrack_cli.exceptions
-   youtrack_cli.utils
-
 Client API
 ----------
 

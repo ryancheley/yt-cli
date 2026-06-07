@@ -523,11 +523,12 @@ async def batch_get_resources(
     Returns:
         List of resource data in the same order as input IDs
 
-    Example:
+    Example::
+
         resources = await batch_get_resources(
             "https://youtrack.example.com/api/issues/{id}",
             ["PROJ-1", "PROJ-2", "PROJ-3"],
-            headers=auth_headers
+            headers=auth_headers,
         )
     """
     if "{id}" not in base_url:

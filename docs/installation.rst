@@ -20,14 +20,14 @@ Windows
 
 2. **Verify Python installation**:
 
-   .. code-block:: cmd
+   .. code-block:: bash
 
       python --version
       pip --version
 
 3. **Install YouTrack CLI**:
 
-   .. code-block:: cmd
+   .. code-block:: bash
 
       pip install youtrack-cli
 
@@ -240,9 +240,9 @@ Verification
 To verify that shell completion is working:
 
 1. Start a new shell session
-2. Type ``yt `` and press Tab twice
+2. Type ``yt`` followed by a space and press Tab twice
 3. You should see available commands like ``issues``, ``articles``, ``projects``, etc.
-4. Try typing ``yt issues `` and press Tab to see subcommands
+4. Try typing ``yt issues`` followed by a space and press Tab to see subcommands
 
 **Example completion behavior:**
 
