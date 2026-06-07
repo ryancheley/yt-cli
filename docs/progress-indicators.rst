@@ -1,5 +1,5 @@
 Progress Indicators
-==================
+===================
 
 The YouTrack CLI provides visual progress indicators for long-running operations to improve user experience and provide feedback during bulk operations.
 
@@ -55,6 +55,29 @@ You can disable progress indicators globally using the ``--no-progress`` flag:
 
    # Disable for all subcommands
    yt --no-progress issues list --project PROJECT-1
+
+Machine-Readable Output (JSON and CSV)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a machine-readable output format is requested with ``--format json`` or
+``--format csv``, status and progress messages (for example
+``🔍 Fetching issues...``) are written to **stderr** instead of stdout. This
+guarantees that stdout contains only the structured payload, so the output can
+be piped or parsed directly without any manual filtering:
+
+.. code-block:: bash
+
+   # stdout contains only valid JSON; the status line goes to stderr
+   yt issues list --query "project:FOO type: Epic" --format json | jq '.[].id'
+
+   # Discard the status messages entirely by redirecting stderr
+   yt issues list --format json 2>/dev/null > issues.json
+
+To suppress the status messages on stderr as well, combine with ``--quiet``:
+
+.. code-block:: bash
+
+   yt --quiet issues list --format json
 
 Environment Compatibility
 ~~~~~~~~~~~~~~~~~~~~~~~~~

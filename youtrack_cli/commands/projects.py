@@ -9,7 +9,7 @@ import asyncio
 import click
 
 from ..auth import AuthManager
-from ..console import get_console
+from ..console import get_console, print_status
 
 
 def show_projects_verbose_help(ctx):
@@ -174,7 +174,7 @@ def projects_list(
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
-    console.print("📋 Fetching projects...", style="blue")
+    print_status("📋 Fetching projects...", output_format=format)
 
     try:
         # Determine pagination settings
@@ -264,7 +264,7 @@ def projects_show(
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
-    console.print(f"📋 Fetching project '{project_id}' details...", style="blue")
+    print_status(f"📋 Fetching project '{project_id}' details...", output_format=format)
 
     try:
         result = asyncio.run(project_manager.get_project(project_id, fields=fields))
@@ -556,7 +556,7 @@ def fields_command(
     auth_manager = AuthManager(ctx.obj.get("config"))
     project_manager = ProjectManager(auth_manager)
 
-    console.print(f"📋 Fetching custom fields for project '{project_id}'...", style="blue")
+    print_status(f"📋 Fetching custom fields for project '{project_id}'...", output_format=format)
 
     try:
         result = asyncio.run(project_manager.list_custom_fields(project_id=project_id, fields=fields, top=top))
