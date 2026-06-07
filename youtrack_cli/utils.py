@@ -515,7 +515,7 @@ async def batch_get_resources(
     """Batch fetch multiple resources by ID.
 
     Args:
-        base_url: Base URL pattern with {id} placeholder (e.g., "https://api.com/issues/{id}")
+        base_url: Base URL pattern with {id} placeholder (e.g., "https://youtrack.example.com/api/issues/{id}")
         resource_ids: List of resource IDs to fetch
         headers: Optional request headers
         max_concurrent: Maximum number of concurrent requests

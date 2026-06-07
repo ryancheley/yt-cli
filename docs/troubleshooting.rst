@@ -1201,7 +1201,6 @@ If this guide doesn't resolve your issue:
 
 1. **Check existing issues**: `GitHub Issues <https://github.com/ryancheley/yt-cli/issues>`_
 2. **Create new issue**: Include error messages, command used, and system info
-3. **Join discussions**: `GitHub Discussions <https://github.com/ryancheley/yt-cli/discussions>`_
 
 When reporting issues, include:
 
