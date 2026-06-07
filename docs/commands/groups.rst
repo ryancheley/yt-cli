@@ -36,24 +36,26 @@ Create a new user group for organizing users and permissions.
 
 .. code-block:: bash
 
-   yt groups create [OPTIONS]
+   yt groups create [OPTIONS] NAME
+
+**Arguments:**
+  * ``NAME`` - Name of the group to create (required)
 
 **Options:**
-  * ``--name TEXT`` - Name of the group to create (required)
-  * ``--description TEXT`` - Optional description of the group's purpose
+  * ``-d, --description TEXT`` - Optional description of the group's purpose
 
 **Examples:**
 
 .. code-block:: bash
 
    # Create a basic user group
-   yt groups create --name "Development Team"
+   yt groups create "Development Team"
 
    # Create a group with description
-   yt groups create --name "QA Engineers" --description "Quality Assurance team members"
+   yt groups create "QA Engineers" --description "Quality Assurance team members"
 
    # Create project-specific groups
-   yt groups create --name "Web Project Contributors" --description "Contributors to web development project"
+   yt groups create "Web Project Contributors" --description "Contributors to web development project"
 
 List User Groups
 ~~~~~~~~~~~~~~~~
@@ -123,12 +125,12 @@ The ``yt groups`` command is functionally identical to ``yt admin user-groups``.
 .. code-block:: bash
 
    # These commands are equivalent:
-   yt groups create --name "New Team"
-   yt admin user-groups create --name "New Team"
+   yt groups create "New Team"
+   yt admin user-groups create "New Team"
 
    # These commands are equivalent:
-   yt groups list --format json
-   yt admin user-groups list --format json
+   yt groups list
+   yt admin user-groups list
 
 Choose the command style that fits your workflow:
 
@@ -146,9 +148,9 @@ Organize users by functional teams and roles:
 .. code-block:: bash
 
    # Create functional team groups
-   yt groups create --name "Frontend Developers" --description "UI and frontend development team"
-   yt groups create --name "Backend Developers" --description "API and backend development team"
-   yt groups create --name "DevOps Engineers" --description "Infrastructure and deployment team"
+   yt groups create "Frontend Developers" --description "UI and frontend development team"
+   yt groups create "Backend Developers" --description "API and backend development team"
+   yt groups create "DevOps Engineers" --description "Infrastructure and deployment team"
 
 **Benefits:**
   * Clear team structure and responsibilities
@@ -164,8 +166,8 @@ Create project-specific groups for access management:
 .. code-block:: bash
 
    # Create project-specific access groups
-   yt groups create --name "Project Phoenix Contributors" --description "All contributors to Project Phoenix"
-   yt groups create --name "Project Phoenix Reviewers" --description "Code and issue reviewers for Project Phoenix"
+   yt groups create "Project Phoenix Contributors" --description "All contributors to Project Phoenix"
+   yt groups create "Project Phoenix Reviewers" --description "Code and issue reviewers for Project Phoenix"
 
 **Applications:**
   * Granular control over project access and visibility
@@ -181,9 +183,9 @@ Organize users by permission levels and access requirements:
 .. code-block:: bash
 
    # Create permission-based groups
-   yt groups create --name "Issue Reporters" --description "Users who can create and comment on issues"
-   yt groups create --name "Issue Resolvers" --description "Users who can resolve and close issues"
-   yt groups create --name "Project Administrators" --description "Users with full project management access"
+   yt groups create "Issue Reporters" --description "Users who can create and comment on issues"
+   yt groups create "Issue Resolvers" --description "Users who can resolve and close issues"
+   yt groups create "Project Administrators" --description "Users with full project management access"
 
 **Use Cases:**
   * Hierarchical permission structures
@@ -199,8 +201,8 @@ Organize external stakeholders and client representatives:
 .. code-block:: bash
 
    # Create stakeholder groups
-   yt groups create --name "Client Stakeholders" --description "External client representatives"
-   yt groups create --name "Business Analysts" --description "Internal business analysis team"
+   yt groups create "Client Stakeholders" --description "External client representatives"
+   yt groups create "Business Analysts" --description "Internal business analysis team"
 
 **Benefits:**
   * Clear separation between internal team members and external stakeholders
@@ -226,14 +228,14 @@ Establish consistent naming patterns for groups:
 .. code-block:: bash
 
    # Team-based naming pattern
-   yt groups create --name "Frontend Development Team"
-   yt groups create --name "Backend Development Team"
-   yt groups create --name "Quality Assurance Team"
+   yt groups create "Frontend Development Team"
+   yt groups create "Backend Development Team"
+   yt groups create "Quality Assurance Team"
 
    # Project-based naming pattern
-   yt groups create --name "Project Alpha - Contributors"
-   yt groups create --name "Project Alpha - Reviewers"
-   yt groups create --name "Project Alpha - Stakeholders"
+   yt groups create "Project Alpha - Contributors"
+   yt groups create "Project Alpha - Reviewers"
+   yt groups create "Project Alpha - Stakeholders"
 
 Group Structure and Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -286,9 +288,9 @@ Automate group creation for consistent organizational structures:
    fi
 
    # Create standard project groups
-   yt groups create --name "$PROJECT_NAME - Contributors" --description "All contributors to $PROJECT_NAME"
-   yt groups create --name "$PROJECT_NAME - Reviewers" --description "Code and issue reviewers for $PROJECT_NAME"
-   yt groups create --name "$PROJECT_NAME - Stakeholders" --description "Business stakeholders for $PROJECT_NAME"
+   yt groups create "$PROJECT_NAME - Contributors" --description "All contributors to $PROJECT_NAME"
+   yt groups create "$PROJECT_NAME - Reviewers" --description "Code and issue reviewers for $PROJECT_NAME"
+   yt groups create "$PROJECT_NAME - Stakeholders" --description "Business stakeholders for $PROJECT_NAME"
 
    echo "Groups created for project: $PROJECT_NAME"
 
@@ -300,7 +302,7 @@ Generate reports on group structure and membership:
 .. code-block:: bash
 
    # Export group information for analysis
-   yt groups list --format json > groups-export.json
+   yt groups list > groups-export.txt
 
    # Create group summary report
    cat groups-export.json | jq -r '
@@ -316,7 +318,7 @@ Combine group management with user operations:
 .. code-block:: bash
 
    # Create groups and add users in batch operations
-   yt groups create --name "New Project Team"
+   yt groups create "New Project Team"
 
    # Add multiple users to the group (would require additional user management commands)
    # This demonstrates the integration pattern even if specific commands aren't implemented yet
@@ -332,7 +334,7 @@ For enterprise environments, groups often integrate with directory services:
    # (Implementation would depend on specific directory service)
 
    # Export current groups for comparison with directory groups
-   yt groups list --format json > youtrack-groups.json
+   yt groups list > youtrack-groups.txt
 
    # Process directory information to maintain group synchronization
    # (This would be part of a larger integration solution)

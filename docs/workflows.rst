@@ -478,7 +478,7 @@ JIRA Migration Workflow
    # This is a simplified example
 
    # 2. Create corresponding projects in YouTrack
-   yt projects create --name "Web Frontend" --key "WEB" \
+   yt projects create "Web Frontend" WEB \
      --description "Migrated from JIRA project WEBFRONT"
 
    # 3. Process JIRA export file

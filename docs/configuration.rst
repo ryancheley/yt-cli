@@ -454,11 +454,12 @@ Troubleshooting
 Configuration File Location
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you're unsure where your configuration file is located:
+If you're unsure where your configuration file is located, it defaults to
+``~/.config/youtrack-cli/.env``:
 
 .. code-block:: bash
 
-   yt config list --show-file
+   ls ~/.config/youtrack-cli/
 
 Permission Issues
 ~~~~~~~~~~~~~~~~~
@@ -477,7 +478,7 @@ Test your configuration by running:
 
 .. code-block:: bash
 
-   yt auth login --test
+   yt auth status
 
 Configuration Examples
 -----------------------

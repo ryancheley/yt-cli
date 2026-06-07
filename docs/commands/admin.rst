@@ -154,17 +154,7 @@ List all user groups in the YouTrack system with filtering options.
    yt admin user-groups list [OPTIONS]
 
 **Options:**
-
-.. list-table::
-   :widths: 20 20 60
-   :header-rows: 1
-
-   * - Option
-     - Type
-     - Description
-   * - ``--fields, -f``
-     - string
-     - Comma-separated list of fields to return
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 **Examples:**
 
@@ -172,12 +162,6 @@ List all user groups in the YouTrack system with filtering options.
 
    # List all user groups
    yt admin user-groups list
-
-   # List groups with specific fields
-   yt admin user-groups list --fields "id,name,description,users(login)"
-
-   # List groups with user information
-   yt admin user-groups list --fields "id,name,description,users(fullName)"
 
 user-groups create
 ~~~~~~~~~~~~~~~~~~
@@ -231,17 +215,7 @@ List all custom fields configured across YouTrack projects.
    yt admin fields list [OPTIONS]
 
 **Options:**
-
-.. list-table::
-   :widths: 20 20 60
-   :header-rows: 1
-
-   * - Option
-     - Type
-     - Description
-   * - ``--fields, -f``
-     - string
-     - Comma-separated list of fields to return
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 **Examples:**
 
@@ -249,12 +223,6 @@ List all custom fields configured across YouTrack projects.
 
    # List all custom fields
    yt admin fields list
-
-   # List fields with specific information
-   yt admin fields list --fields "id,name,fieldType(presentation),isPrivate"
-
-   # List field types and usage
-   yt admin fields list --fields "name,fieldType(presentation),projects(name)"
 
 Internationalization (i18n) Management
 --------------------------------------
@@ -498,7 +466,7 @@ User Group Management
      --description "Project managers for ${PROJECT_NAME} project"
 
    # List created groups
-   yt admin user-groups list --fields "name,description"
+   yt admin user-groups list
 
 System Configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -694,7 +662,7 @@ Backup Integration
    yt admin global-settings list > "$BACKUP_DIR/global_settings.txt"
 
    # Export user groups
-   yt admin user-groups list --fields "id,name,description" > "$BACKUP_DIR/user_groups.txt"
+   yt admin user-groups list > "$BACKUP_DIR/user_groups.txt"
 
    # Export custom fields
    yt admin fields list > "$BACKUP_DIR/custom_fields.txt"

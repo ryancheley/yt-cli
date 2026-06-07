@@ -148,7 +148,7 @@ The ``yt ls`` command is functionally identical to ``yt issues list``. Both comm
 
    # These commands are equivalent:
    yt ls --project DEMO --format json
-   yt issues list --project DEMO --format json
+   yt issues list --project-id DEMO --format json
 
 Choose the command style that fits your workflow:
 
