@@ -6,7 +6,7 @@ import click
 from rich.prompt import Prompt
 
 from ..auth import AuthManager
-from ..console import get_console
+from ..console import get_console, print_status
 
 
 def show_users_verbose_help(ctx):
@@ -178,7 +178,7 @@ def list_users(
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
-    console.print("👥 Fetching users...", style="blue")
+    print_status("👥 Fetching users...", output_format=format)
 
     try:
         # Determine pagination settings
@@ -518,7 +518,7 @@ def users_groups(ctx: click.Context, user_id: str, format: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
-    console.print(f"👥 Fetching groups for user '{user_id}'...", style="blue")
+    print_status(f"👥 Fetching groups for user '{user_id}'...", output_format=format)
 
     try:
         result = asyncio.run(user_manager.get_user_groups(user_id))
@@ -570,7 +570,7 @@ def users_roles(ctx: click.Context, user_id: str, format: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
-    console.print(f"🔐 Fetching roles for user '{user_id}'...", style="blue")
+    print_status(f"🔐 Fetching roles for user '{user_id}'...", output_format=format)
 
     try:
         result = asyncio.run(user_manager.get_user_roles(user_id))
@@ -661,7 +661,7 @@ def users_teams(ctx: click.Context, user_id: str, format: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     user_manager = UserManager(auth_manager)
 
-    console.print(f"🏆 Fetching teams for user '{user_id}'...", style="blue")
+    print_status(f"🏆 Fetching teams for user '{user_id}'...", output_format=format)
 
     try:
         result = asyncio.run(user_manager.get_user_teams(user_id))

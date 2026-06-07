@@ -14,7 +14,7 @@ import click
 
 from ..auth import AuthManager
 from ..cli_utils import AliasedGroup, validate_issue_id_format, validate_project_id_format
-from ..console import get_console
+from ..console import get_console, print_status
 
 
 def _format_issues_as_csv(issues):
@@ -560,7 +560,7 @@ def list_issues(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print("🔍 Fetching issues...", style="blue")
+    print_status("🔍 Fetching issues...", output_format=format)
 
     try:
         # Determine pagination settings
@@ -568,8 +568,9 @@ def list_issues(
 
         # Handle conflicting parameters
         if top and page_size != 100:
-            console.print(
+            print_status(
                 "⚠️  Warning: Both --top and --page-size specified. Using --top for backward compatibility.",
+                output_format=format,
                 style="yellow",
             )
 
@@ -887,7 +888,7 @@ def search(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(f"🔍 Searching issues for '{query}'...", style="blue")
+    print_status(f"🔍 Searching issues for '{query}'...", output_format=format)
 
     try:
         # Determine pagination settings
@@ -895,8 +896,9 @@ def search(
 
         # Handle conflicting parameters
         if top and page_size != 100:
-            console.print(
+            print_status(
                 "⚠️  Warning: Both --top and --page-size specified. Using --top for backward compatibility.",
+                output_format=format,
                 style="yellow",
             )
 
@@ -1317,7 +1319,7 @@ def list_issue_comments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(f"💬 Fetching comments for issue '{issue_id}'...", style="blue")
+    print_status(f"💬 Fetching comments for issue '{issue_id}'...", output_format=format)
 
     try:
         result = asyncio.run(issue_manager.list_comments(issue_id))
@@ -1512,16 +1514,7 @@ def list_attachments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    # Print progress message to stderr when JSON format is used to avoid polluting JSON output
-    if format == "json":
-        import sys
-
-        from rich.console import Console
-
-        stderr_console = Console(file=sys.stderr)
-        stderr_console.print(f"📎 Fetching attachments for issue '{issue_id}'...", style="blue")
-    else:
-        console.print(f"📎 Fetching attachments for issue '{issue_id}'...", style="blue")
+    print_status(f"📎 Fetching attachments for issue '{issue_id}'...", output_format=format)
 
     try:
         result = asyncio.run(issue_manager.list_attachments(issue_id))
@@ -1644,7 +1637,7 @@ def list_links(
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print(f"🔗 Fetching links for issue '{issue_id}'...", style="blue")
+    print_status(f"🔗 Fetching links for issue '{issue_id}'...", output_format=format)
 
     try:
         result = asyncio.run(issue_manager.list_links(issue_id))
@@ -1726,7 +1719,7 @@ def types(ctx: click.Context, format: str) -> None:
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    console.print("🔗 Fetching available link types...", style="blue")
+    print_status("🔗 Fetching available link types...", output_format=format)
 
     try:
         result = asyncio.run(issue_manager.list_link_types())

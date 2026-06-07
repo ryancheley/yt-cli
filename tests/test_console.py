@@ -5,15 +5,19 @@ from rich.console import Console
 from rich.theme import Theme
 
 from youtrack_cli.console import (
+    MACHINE_READABLE_FORMATS,
     THEMES,
     ConsoleManager,
     get_available_themes,
     get_console,
     get_console_theme,
     get_default_theme,
+    get_error_console,
     get_theme_by_name,
+    print_status,
     reset_console_theme,
     set_console_theme,
+    set_quiet_mode,
     set_theme_by_name,
 )
 
@@ -275,3 +279,66 @@ class TestThemeContent:
         for theme_name, theme in THEMES.items():
             theme_keys = set(theme.styles.keys())
             assert theme_keys == default_keys, f"Theme '{theme_name}' has different keys than default"
+
+
+@pytest.mark.unit
+class TestPrintStatus:
+    """Test the print_status helper and stderr console routing."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_quiet_mode(self):
+        """Ensure quiet mode does not leak between tests."""
+        set_quiet_mode(False)
+        yield
+        set_quiet_mode(False)
+
+    def test_machine_readable_formats(self):
+        """JSON and CSV are treated as machine-readable formats."""
+        assert "json" in MACHINE_READABLE_FORMATS
+        assert "csv" in MACHINE_READABLE_FORMATS
+        assert "table" not in MACHINE_READABLE_FORMATS
+
+    def test_error_console_writes_to_stderr(self):
+        """The error console writes to stderr."""
+        error_console = get_error_console()
+        assert error_console.stderr is True
+
+    def test_error_console_is_not_stdout_console(self):
+        """The error console is a distinct instance from the stdout console."""
+        assert get_error_console() is not get_console()
+
+    def test_status_goes_to_stdout_for_table(self, capsys):
+        """Status messages go to stdout for human-readable formats."""
+        print_status("fetching", output_format="table")
+
+        captured = capsys.readouterr()
+        assert "fetching" in captured.out
+        assert "fetching" not in captured.err
+
+    def test_status_goes_to_stdout_when_no_format(self, capsys):
+        """Status messages default to stdout when no format is given."""
+        print_status("fetching")
+
+        captured = capsys.readouterr()
+        assert "fetching" in captured.out
+        assert "fetching" not in captured.err
+
+    @pytest.mark.parametrize("output_format", ["json", "csv"])
+    def test_status_goes_to_stderr_for_machine_formats(self, capsys, output_format):
+        """Status messages go to stderr for machine-readable formats."""
+        print_status("fetching", output_format=output_format)
+
+        captured = capsys.readouterr()
+        assert "fetching" not in captured.out
+        assert "fetching" in captured.err
+
+    def test_quiet_mode_suppresses_status(self, capsys):
+        """In quiet mode nothing is printed to stdout or stderr."""
+        set_quiet_mode(True)
+
+        print_status("fetching", output_format="table")
+        print_status("fetching", output_format="json")
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""

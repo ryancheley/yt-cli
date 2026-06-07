@@ -5,7 +5,7 @@ import asyncio
 import click
 
 from ..auth import AuthManager
-from ..console import get_console
+from ..console import get_console, print_status
 
 
 @click.group()
@@ -79,7 +79,7 @@ def list(
     auth_manager = AuthManager(ctx.obj.get("config"))
     time_manager = TimeManager(auth_manager)
 
-    console.print("📋 Listing time entries...", style="blue")
+    print_status("📋 Listing time entries...", output_format=format)
 
     try:
         result = asyncio.run(
@@ -128,7 +128,7 @@ def work_types(
     auth_manager = AuthManager(ctx.obj.get("config"))
     time_manager = TimeManager(auth_manager)
 
-    console.print("📋 Fetching work types...", style="blue")
+    print_status("📋 Fetching work types...", output_format=format)
 
     try:
         result = asyncio.run(time_manager.get_work_types(issue_id=issue))
@@ -181,7 +181,7 @@ def summary(
     auth_manager = AuthManager(ctx.obj.get("config"))
     time_manager = TimeManager(auth_manager)
 
-    console.print("📋 Generating time summary...", style="blue")
+    print_status("📋 Generating time summary...", output_format=format)
 
     try:
         result = asyncio.run(

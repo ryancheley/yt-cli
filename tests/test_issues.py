@@ -1370,6 +1370,29 @@ class TestIssuesCLI:
             assert result.exit_code == 0
             assert "fetching issues" in result.output.lower()
 
+    def test_issues_list_json_does_not_pollute_stdout(self):
+        """`issues list --format json` keeps status off stdout (issue #648)."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner(mix_stderr=False)
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {
+                "status": "success",
+                "data": [{"id": "PROJ-123", "summary": "Test"}],
+                "count": 1,
+            }
+
+            result = runner.invoke(main, ["issues", "list", "-p", "PROJ", "--format", "json"])
+
+        assert result.exit_code == 0
+        # The progress message must not pollute the JSON payload on stdout.
+        assert "fetching issues" not in result.stdout.lower()
+        # It is still emitted, but on stderr so stdout can be piped/parsed.
+        assert "fetching issues" in result.stderr.lower()
+        # The actual data is written to stdout.
+        assert "PROJ-123" in result.stdout
+
     def test_issues_update_command(self):
         """Test the issues update CLI command."""
         from youtrack_cli.main import main

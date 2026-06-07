@@ -134,7 +134,8 @@ class TestListUsersCommand:
         assert result.exit_code == 0
         mock_manager.list_users.assert_called_once()
         mock_manager.display_users_table.assert_called_once_with(sample_users)
-        assert "👥 Fetching users..." in result.output
+        # For table format the status message is routed to stdout via the console.
+        mock_console_instance.print.assert_any_call("👥 Fetching users...", style="blue")
 
     @patch("youtrack_cli.managers.users.UserManager")
     @patch("youtrack_cli.auth.AuthManager")

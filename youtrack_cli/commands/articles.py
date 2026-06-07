@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from ..auth import AuthManager
-from ..console import get_console
+from ..console import get_console, print_status
 
 
 @click.group()
@@ -635,7 +635,7 @@ def list_articles(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print("📚 Fetching articles...", style="blue")
+    print_status("📚 Fetching articles...", output_format=format)
 
     try:
         # Determine pagination settings
@@ -798,7 +798,7 @@ def search(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print(f"🔍 Searching articles for '{query}'...", style="blue")
+    print_status(f"🔍 Searching articles for '{query}'...", output_format=format)
 
     try:
         result = asyncio.run(
@@ -853,7 +853,7 @@ def draft(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print("📝 Fetching draft articles...", style="blue")
+    print_status("📝 Fetching draft articles...", output_format=format)
 
     try:
         result = asyncio.run(
@@ -1192,7 +1192,7 @@ def list_comments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print(f"💬 Fetching comments for article '{article_id}'...", style="blue")
+    print_status(f"💬 Fetching comments for article '{article_id}'...", output_format=format)
 
     try:
         result = asyncio.run(article_manager.get_article_comments(article_id))
@@ -1445,7 +1445,7 @@ def list_attachments(
     auth_manager = AuthManager(ctx.obj.get("config"))
     article_manager = ArticleManager(auth_manager)
 
-    console.print(f"📎 Fetching attachments for article '{article_id}'...", style="blue")
+    print_status(f"📎 Fetching attachments for article '{article_id}'...", output_format=format)
 
     try:
         result = asyncio.run(article_manager.get_article_attachments(article_id))

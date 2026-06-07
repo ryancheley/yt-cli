@@ -130,6 +130,7 @@ class ConsoleManager:
 
     _instance: Optional["ConsoleManager"] = None
     _console: Console | None = None
+    _error_console: Console | None = None
     _theme: Theme | None = None
     _quiet_mode: bool = False
 
@@ -170,6 +171,22 @@ class ConsoleManager:
             self._console = Console(theme=self._theme)
         return self._console
 
+    @property
+    def error_console(self) -> Console:
+        """Get the console instance that writes to stderr.
+
+        Used for status/progress messages that must not pollute machine-readable
+        output (e.g. JSON or CSV) written to stdout.
+
+        Returns:
+            Console: A Rich console writing to stderr using the active theme
+        """
+        if self._error_console is None:
+            if self._theme is None:
+                self._theme = get_default_theme()
+            self._error_console = Console(stderr=True, theme=self._theme)
+        return self._error_console
+
     def set_theme(self, theme: Theme) -> None:
         """Set a new theme for the console.
 
@@ -178,6 +195,7 @@ class ConsoleManager:
         """
         self._theme = theme
         self._console = Console(theme=self._theme)
+        self._error_console = Console(stderr=True, theme=self._theme)
 
     def reset_theme(self) -> None:
         """Reset the console theme to the default."""
@@ -219,6 +237,43 @@ def get_console() -> Console:
         Console: The configured Rich console instance
     """
     return _console_manager.console
+
+
+def get_error_console() -> Console:
+    """Get the global console instance that writes to stderr.
+
+    Returns:
+        Console: A Rich console writing to stderr using the active theme
+    """
+    return _console_manager.error_console
+
+
+#: Output formats that are intended to be consumed by other programs. Status and
+#: progress messages must not be written to stdout for these formats.
+MACHINE_READABLE_FORMATS = frozenset({"json", "csv"})
+
+
+def print_status(message: str, *, output_format: str | None = None, style: str = "blue") -> None:
+    """Print a status/progress message without corrupting machine-readable output.
+
+    Behavior:
+        * In quiet mode, nothing is printed.
+        * When ``output_format`` is a machine-readable format (``json`` or ``csv``),
+          the message is written to stderr so that stdout contains only the
+          structured payload and can be piped/parsed directly.
+        * Otherwise the message is written to stdout via the themed console.
+
+    Args:
+        message: The status message to display.
+        output_format: The output format selected for the command, if any.
+        style: The Rich style to apply to the message.
+    """
+    if is_quiet_mode():
+        return
+    if output_format in MACHINE_READABLE_FORMATS:
+        get_error_console().print(message, style=style)
+    else:
+        get_console().print(message, style=style)
 
 
 def set_console_theme(theme: Theme) -> None:

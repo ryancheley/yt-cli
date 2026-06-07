@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 `--format json` (and `--format csv`) no longer pollute stdout with status messages (#648)
+  - Progress/status lines such as `🔍 Fetching issues...` are now written to stderr
+    when a machine-readable format is selected, so stdout contains only the structured
+    payload and can be piped or parsed directly (e.g. `yt issues list --format json | jq`)
+  - Applies consistently across `issues`, `articles`, `users`, `projects`, `boards`,
+    and `time` list/search commands
+  - Combine with `--quiet` to suppress the stderr status messages as well
+
 ### Added
 - 👷 Test against Python 3.14 free-threaded (`3.14t`) in CI and tox (#616)
   - Note: Python 3.13 free-threaded (`3.13t`) is intentionally not supported,

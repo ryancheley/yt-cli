@@ -5,7 +5,7 @@ import asyncio
 import click
 
 from ..auth import AuthManager
-from ..console import get_console
+from ..console import get_console, print_status
 
 
 @click.group()
@@ -39,7 +39,7 @@ def list_boards(
     auth_manager = AuthManager(ctx.obj.get("config"))
     board_manager = BoardManager(auth_manager)
 
-    console.print("📋 Listing boards...", style="blue")
+    print_status("📋 Listing boards...", output_format=format)
 
     try:
         result = asyncio.run(board_manager.list_boards(project_id=project_id))
@@ -77,7 +77,7 @@ def show_board(
     auth_manager = AuthManager(ctx.obj.get("config"))
     board_manager = BoardManager(auth_manager)
 
-    console.print(f"👀 Viewing board {board_id}...", style="blue")
+    print_status(f"👀 Viewing board {board_id}...", output_format=format)
 
     try:
         result = asyncio.run(board_manager.view_board(board_id))
