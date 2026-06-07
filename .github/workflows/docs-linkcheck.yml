@@ -1,0 +1,41 @@
+name: Docs Link Check
+
+# Validates external links in the documentation (including readthedocs.io).
+# Runs on a weekly schedule instead of on every push/PR so regular CI does not
+# make outbound network requests on each run. Can also be triggered manually.
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays at 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linkcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
+      with:
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v5
+      with:
+        python-version: "3.11"
+
+    - name: Check documentation links
+      run: |
+        uv sync --no-default-groups --group docs
+        uv run python -m sphinx -b linkcheck docs docs/_build/linkcheck
