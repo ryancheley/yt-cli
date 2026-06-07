@@ -389,4 +389,4 @@ See Also
 * :doc:`auth` - Authentication management and login
 * :doc:`config` - CLI configuration and settings management
 * Getting Started guide for complete setup instructions
-* :doc:`troubleshooting` - Common issues and solutions
+* :doc:`/troubleshooting` - Common issues and solutions
