@@ -71,7 +71,7 @@ Team velocity measures the amount of work a development team completes in a give
   * **Capacity Utilization:** How much of planned work is actually completed
 
 Velocity Report Components
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A comprehensive velocity report typically includes:
 
@@ -96,7 +96,7 @@ Report Analysis and Interpretation
 -----------------------------------
 
 Sprint Count Selection
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Choose the appropriate number of sprints to analyze based on your needs:
 
@@ -137,7 +137,7 @@ Choose the appropriate number of sprints to analyze based on your needs:
   * Provides statistically significant data for predictions
 
 Velocity Trend Analysis
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Understanding velocity trends helps inform planning decisions:
 
@@ -211,7 +211,7 @@ Track team performance and identify improvement opportunities:
   * Celebrate team growth and increasing effectiveness
 
 Release and Portfolio Planning
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use velocity data for higher-level planning activities:
 
@@ -310,7 +310,7 @@ Integrate velocity data into sprint planning workflows:
    echo "Recommended sprint capacity: $(echo "$CURRENT_VELOCITY * 0.8" | bc)"
 
 Performance Dashboard Creation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Export velocity data for team dashboards and visualization:
 
@@ -391,7 +391,7 @@ Common Issues
   * Verify you have appropriate read permissions for project data
 
 Data Quality Issues
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 **Velocity Anomalies:**
   * Review sprint scope changes and mid-sprint adjustments

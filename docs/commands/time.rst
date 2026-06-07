@@ -240,7 +240,7 @@ Duration Formats
 The time tracking system supports flexible duration input formats:
 
 Hours Format
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -250,7 +250,7 @@ Hours Format
    yt time log ISSUE-123 "0.25h"     # 15 minutes
 
 Minutes Format
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -260,7 +260,7 @@ Minutes Format
    yt time log ISSUE-123 "120m"      # 2 hours
 
 Combined Format
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -270,7 +270,7 @@ Combined Format
    yt time log ISSUE-123 "0h 45m"    # 45 minutes
 
 Numeric Format
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -293,7 +293,7 @@ ISO Format
    yt time log ISSUE-123 "1h" --date "2024-12-31"
 
 US Format
-~~~~~~~~
+~~~~~~~~~
 
 .. code-block:: bash
 
@@ -302,7 +302,7 @@ US Format
    yt time log ISSUE-123 "1h" --date "12/31/2024"
 
 European Format
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -311,7 +311,7 @@ European Format
    yt time log ISSUE-123 "1h" --date "31.12.2024"
 
 Relative Dates
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -342,7 +342,7 @@ Listing Available Work Types
    yt time work-types --format json > available_work_types.json
 
 Development Work
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -352,7 +352,7 @@ Development Work
    yt time log ISSUE-123 "1h" --work-type "Code Review" --description "PR review"
 
 Testing Activities
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -362,7 +362,7 @@ Testing Activities
    yt time log ISSUE-123 "30m" --work-type "Automation" --description "Test automation"
 
 Documentation
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -371,7 +371,7 @@ Documentation
    yt time log ISSUE-123 "45m" --work-type "Writing" --description "User guide updates"
 
 Analysis and Planning
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -384,7 +384,7 @@ Common Workflows
 ----------------
 
 Daily Time Logging
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -397,7 +397,7 @@ Daily Time Logging
    yt time log ISSUE-123 "4h" --date "yesterday" --description "Feature completion"
 
 Historical Time Entry
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -407,7 +407,7 @@ Historical Time Entry
    yt time log ISSUE-123 "2h" --date "2024-01-17" --description "Documentation"
 
 Time Reporting and Analysis
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -424,7 +424,7 @@ Time Reporting and Analysis
    yt time summary --user-id john.doe --group-by type --start-date "2024-01-01"
 
 Sprint Time Tracking
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -439,7 +439,7 @@ Sprint Time Tracking
    yt time list --start-date "2024-01-15" --end-date "2024-01-29" --format json
 
 Billing and Client Reporting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -476,10 +476,10 @@ Best Practices
 10. **Integration**: Use time data for sprint planning and capacity estimation.
 
 Reporting and Analytics
-----------------------
+-----------------------
 
 Time Summary Reports
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -493,7 +493,7 @@ Time Summary Reports
    yt time summary --group-by type --start-date "2024-01-01" --end-date "2024-01-31"
 
 Detailed Time Reports
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -507,7 +507,7 @@ Detailed Time Reports
    yt time list --start-date "2024-01-15" --end-date "2024-01-21" --format json
 
 Export and Integration
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -562,7 +562,7 @@ JSON Format
    ]
 
 Summary Format
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: text
 
@@ -602,7 +602,7 @@ Common error scenarios and solutions:
   The CLI will show available work types when an invalid type is provided. Use ``yt time work-types`` to list all available work types beforehand.
 
 Performance Optimization
------------------------
+------------------------
 
 .. code-block:: bash
 

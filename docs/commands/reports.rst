@@ -121,10 +121,10 @@ Generate velocity reports analyzing team performance across recent sprints.
    yt reports velocity PROJECT-BETA --sprints 5
 
 Report Features and Concepts
----------------------------
+----------------------------
 
 Burndown Reports
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 **Purpose**
   Track project or sprint progress by showing how work is being completed over time.
@@ -148,7 +148,7 @@ Burndown Reports
   * Stakeholder reporting
 
 Velocity Reports
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 **Purpose**
   Analyze team performance and capacity across multiple sprints for planning.
@@ -173,10 +173,10 @@ Velocity Reports
   * Seasonal or cyclical patterns
 
 Report Output and Visualization
-------------------------------
+-------------------------------
 
 Burndown Report Format
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: text
 
@@ -206,7 +206,7 @@ Burndown Report Format
    └────────────┴─────────────┴─────────────┴─────────────────┘
 
 Velocity Report Format
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: text
 
@@ -238,7 +238,7 @@ Common Workflows
 ----------------
 
 Sprint Monitoring
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -254,7 +254,7 @@ Sprint Monitoring
      --start-date "2024-01-01" --end-date "2024-01-14"
 
 Project Tracking
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -268,7 +268,7 @@ Project Tracking
    yt reports burndown PROJECT-GAMMA --start-date "2024-02-15" --end-date "2024-03-15"
 
 Team Performance Analysis
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -286,7 +286,7 @@ Team Performance Analysis
    yt reports velocity TEAM-B-PROJECT --sprints 5
 
 Release Planning
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -300,7 +300,7 @@ Release Planning
    yt reports burndown MILESTONE-PROJECT --sprint "Milestone 1"
 
 Stakeholder Reporting
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -340,7 +340,7 @@ Report Analysis Guidelines
 --------------------------
 
 Burndown Analysis
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 **Healthy Patterns**
   * Steady, consistent progress toward completion
@@ -358,7 +358,7 @@ Burndown Analysis
   * Adjust resources or timeline if needed
 
 Velocity Analysis
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 **Positive Indicators**
   * Consistent delivery across sprints
@@ -376,10 +376,10 @@ Velocity Analysis
   * Adjust sprint planning based on actual capacity
 
 Performance Metrics
-------------------
+-------------------
 
 Burndown Metrics
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 **Completion Rate**
   Percentage of planned work completed within the timeframe.
@@ -394,7 +394,7 @@ Burndown Metrics
   Projected completion date based on current progress.
 
 Velocity Metrics
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 **Average Velocity**
   Mean completion rate across analyzed sprints.
@@ -435,7 +435,7 @@ Integration and Automation
 --------------------------
 
 Automated Reporting
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -452,7 +452,7 @@ Automated Reporting
    mail -s "Daily Burndown Report" stakeholders@company.com < daily_burndown.txt
 
 Weekly Reporting
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -469,7 +469,7 @@ Weekly Reporting
    done
 
 Data Export for Analysis
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -492,7 +492,7 @@ Limitations
 * Real-time reporting may have data refresh delays
 
 Future Enhancements
-------------------
+-------------------
 
 * Additional report types (cycle time, lead time, etc.)
 * Custom report templates and configurations

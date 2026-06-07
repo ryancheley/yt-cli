@@ -379,7 +379,7 @@ Troubleshooting Certificate Issues
    cat intermediate.crt root.crt > ca-bundle.crt
 
 Security Features
-----------------
+-----------------
 
 Credential Storage
 ~~~~~~~~~~~~~~~~~~
@@ -580,7 +580,7 @@ Common error scenarios and solutions:
   * Re-authenticate: ``yt auth login``
 
 Configuration Files
-------------------
+-------------------
 
 Credential Storage Location
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -647,7 +647,7 @@ Operational Security
 4. **Team Guidelines**: Establish team standards for authentication
 
 Automation and CI/CD
--------------------
+--------------------
 
 Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -693,7 +693,7 @@ Service Account Setup
    yt projects list
 
 Integration Examples
--------------------
+--------------------
 
 Script Authentication
 ~~~~~~~~~~~~~~~~~~~~~

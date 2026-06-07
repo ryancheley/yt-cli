@@ -123,7 +123,7 @@ The system automatically detects which pagination type to use based on the endpo
    print(f"Has more results: {result['has_after']}")
 
 Entity-Specific Pagination Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For convenience, use entity-specific pagination functions that automatically apply the correct configuration:
 

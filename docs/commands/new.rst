@@ -80,7 +80,7 @@ Rapidly create bug reports with essential information:
        --description "User profile data is being corrupted when updated via API endpoint"
 
 Feature Requests
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Create feature requests and enhancement issues:
 
@@ -99,7 +99,7 @@ Create feature requests and enhancement issues:
    yt new WEB "Improve search performance" --type Enhancement --tag "performance,search"
 
 Task Management
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Create task and maintenance issues:
 
@@ -115,7 +115,7 @@ Create task and maintenance issues:
    yt new API "Refactor authentication module" --type Task --tag "refactor,security,tech-debt"
 
 Sprint and Project Planning
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create issues for sprint and project planning activities:
 
@@ -177,7 +177,7 @@ Create issues with comprehensive information:
        --tag "security,biometric,enhancement"
 
 Batch Issue Creation
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 While not directly supported, combine with shell scripting for batch creation:
 
@@ -196,7 +196,7 @@ While not directly supported, combine with shell scripting for batch creation:
    done
 
 Template-Based Creation
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Create standardized issues using templates:
 
@@ -231,7 +231,7 @@ Workflow Integration
 --------------------
 
 Development Workflow
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 Integrate issue creation into development processes:
 
@@ -252,7 +252,7 @@ Integrate issue creation into development processes:
        --tag "dashboard,widget,ui"
 
 Customer Support Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create issues from customer feedback and support requests:
 
@@ -273,7 +273,7 @@ Create issues from customer feedback and support requests:
        --tag "customer-request,export"
 
 CI/CD and Automation
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 Integrate issue creation into automated workflows:
 
@@ -344,7 +344,7 @@ Automation and Integration
 --------------------------
 
 Shell Integration
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Create shell functions for common issue creation patterns:
 
@@ -377,7 +377,7 @@ Create shell functions for common issue creation patterns:
    }
 
 Git Integration
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Integrate issue creation with git workflows:
 
@@ -399,7 +399,7 @@ Integrate issue creation with git workflows:
    }
 
 IDE and Editor Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Integrate with development tools:
 
