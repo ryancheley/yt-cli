@@ -93,10 +93,10 @@ Module 1.2: Understanding YouTrack Concepts (45 minutes)
       yt projects list
 
       # Look at issues in a project (replace PROJECT-KEY with actual project)
-      yt issues list --project PROJECT-KEY --limit 5
+      yt issues list --project-id PROJECT-KEY --top 5
 
       # Examine one issue in detail
-      yt issues get ISSUE-ID
+      yt issues show ISSUE-ID
 
 2. **Understand the data structure**:
 
@@ -276,11 +276,11 @@ Module 2.2: Time Tracking and Reporting (45 minutes)
 
 .. code-block:: bash
 
-   # Personal time report
-   yt time report --from "2024-01-01" --to "2024-01-07" --assignee me
+   # Personal time summary
+   yt time summary --start-date "2024-01-01" --end-date "2024-01-07" --user-id me
 
-   # Project time report
-   yt time report --project PROJECT-KEY --from "this-week"
+   # Time summary grouped by issue
+   yt time summary --start-date "2024-01-01" --group-by issue
 
 **Success Criteria**: You can track and report time spent on development work.
 
@@ -443,7 +443,7 @@ Module 3.1: Automation and Scripting (90 minutes)
    $(yt issues search "state:\"In Progress\" updated:today" --format json | jq 'length') issues
 
    ## Time Logged
-   $(yt time report --from today --to today --format json | jq '[.[] | .duration] | add // 0') hours
+   $(yt time list --start-date 2024-01-15 --end-date 2024-01-15 --format json | jq '[.[] | .duration] | add // 0') hours
    EOF
 
    echo "Report generated: $REPORT_FILE"

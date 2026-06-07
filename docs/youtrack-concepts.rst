@@ -178,8 +178,8 @@ Here's how YouTrack concepts map to CLI commands:
    # Log work time
    yt time log ISSUE-ID "2h 30m" --description "Fixed the bug"
 
-   # Generate time report
-   yt time report --from "2024-01-01" --to "2024-01-31"
+   # Generate time summary
+   yt time summary --start-date "2024-01-01" --end-date "2024-01-31"
 
 Getting Started Tips
 --------------------

@@ -314,7 +314,19 @@ List articles with filtering and formatting options.
      - Comma-separated list of fields to return
    * - ``--top, -t``
      - integer
-     - Maximum number of articles to return
+     - Maximum number of articles to return (legacy, use ``--page-size``)
+   * - ``--page-size``
+     - integer
+     - Number of articles per page (default: 100)
+   * - ``--all``
+     - flag
+     - Fetch all results using pagination
+   * - ``--max-results``
+     - integer
+     - Maximum total number of results to fetch
+   * - ``--before-cursor`` / ``--after-cursor``
+     - string
+     - Start pagination before/after this cursor
    * - ``--query, -q``
      - string
      - Search query to filter articles
@@ -371,6 +383,12 @@ Display articles in hierarchical tree structure showing parent-child relationshi
    * - ``--top, -t``
      - integer
      - Maximum number of articles to return
+   * - ``--enhanced``
+     - flag
+     - Use the enhanced tree renderer with richer formatting
+   * - ``--show-metadata``
+     - flag
+     - Show additional article metadata in the tree
 
 **Examples:**
 
@@ -378,6 +396,9 @@ Display articles in hierarchical tree structure showing parent-child relationshi
 
    # Display articles in hierarchical tree structure
    yt articles tree
+
+   # Enhanced tree with metadata
+   yt articles tree --enhanced --show-metadata
 
    # Filter tree view by project
    yt articles tree --project-id PROJECT-123
@@ -698,7 +719,7 @@ Delete a comment (not yet implemented).
    * - Option
      - Type
      - Description
-   * - ``--confirm``
+   * - ``--force``
      - flag
      - Skip confirmation prompt
 
@@ -787,6 +808,9 @@ Download an attachment from an article (not yet implemented).
    * - ``--output, -o``
      - path
      - Output file path
+   * - ``--overwrite``
+     - flag
+     - Overwrite the output file if it already exists
 
 .. note::
    This functionality is not yet implemented and requires binary file handling.
@@ -814,7 +838,7 @@ Delete an attachment from an article (not yet implemented).
    * - Option
      - Type
      - Description
-   * - ``--confirm``
+   * - ``--force``
      - flag
      - Skip confirmation prompt
 

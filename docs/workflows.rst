@@ -23,8 +23,8 @@ Morning Standup Workflow
    # 2. Check recently completed issues (last 7 days)
    yt issues search "assignee:me resolved:today .. -7d"
 
-   # 3. View time spent yesterday
-   yt time report --from yesterday --to today --assignee me
+   # 3. View time you logged for a date range
+   yt time summary --start-date 2024-01-15 --end-date 2024-01-16 --user-id me
 
    # 4. Check upcoming deadlines
    yt issues search "assignee:me has:due-date due:today .. +7d"
@@ -73,8 +73,8 @@ Bug Fix Workflow
    # 7. Mark as resolved and ready for QA
    yt issues update WEB-567 --state "Fixed" --assignee "qa-lead"
 
-   # 8. Generate time report for the bug
-   yt time report --issue WEB-567
+   # 8. List time entries logged against the bug
+   yt time list --issue WEB-567
 
 Feature Development Workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,7 +178,7 @@ Sprint Planning Workflow
    # Sprint setup:
    # 1. List backlog issues for planning
    yt issues search "project:WEB-FRONTEND state:Open priority:{High,Medium}" \
-     --sort "priority,created" --limit 20
+     --top 20
 
    # 2. Assign issues to sprint (using tags)
    yt issues update WEB-123 --tags "sprint-15,frontend"
@@ -194,9 +194,9 @@ Sprint Planning Workflow
    # 4. Check sprint progress
    yt issues search "tag:sprint-15 state:{\"In Progress\",Open,\"In Review\"}"
 
-   # 5. Generate sprint burndown data
-   yt time report --from "2024-01-01" --to "2024-01-14" \
-     --project WEB-FRONTEND --format json
+   # 5. Generate sprint time summary
+   yt time summary --start-date "2024-01-01" --end-date "2024-01-14" \
+     --format json
 
    # Sprint retrospective:
    # 6. Review completed vs planned
@@ -407,8 +407,8 @@ Reporting and Analytics Workflow
 .. code-block:: bash
 
    # 1. Team productivity report
-   yt time report --from "2024-01-01" --to "2024-01-31" \
-     --project WEB-FRONTEND --format json > team-time.json
+   yt time summary --start-date "2024-01-01" --end-date "2024-01-31" \
+     --group-by user --format json > team-time.json
 
    # 2. Issue velocity analysis
    yt issues search "project:WEB-FRONTEND resolved:this-month" \
@@ -515,7 +515,7 @@ Script Safety Tips
    set -e  # Exit on any error
 
    # 2. Test with limited scope first
-   yt issues search "project:TEST-PROJECT" --limit 5
+   yt issues search "project:TEST-PROJECT" --top 5
 
    # 3. Use dry-run when available
    # Preview batch operations before executing
@@ -541,7 +541,7 @@ Performance Optimization
 .. code-block:: bash
 
    # 1. Use specific filters to reduce data transfer
-   yt issues search "project:WEB created:today" --limit 50
+   yt issues search "project:WEB created:today" --top 50
 
    # 2. Batch operations when possible
    # Instead of individual updates:
@@ -584,7 +584,7 @@ Error Handling Patterns
 .. code-block:: bash
 
    # 1. Check if issue exists before updating
-   if yt issues get WEB-123 >/dev/null 2>&1; then
+   if yt issues show WEB-123 >/dev/null 2>&1; then
      yt issues update WEB-123 --state "In Progress"
    else
      echo "Issue WEB-123 not found"

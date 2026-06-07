@@ -200,7 +200,7 @@ Advanced completion based on YouTrack data (when implemented):
    # Context-aware examples (future enhancement)
    yt issues update PROJ-<TAB>     # Could complete issue IDs
    yt projects show <TAB>          # Could complete project names
-   yt users assign <TAB>           # Could complete usernames
+   yt users assign-role <TAB>      # Could complete usernames
 
 Installation Methods
 --------------------

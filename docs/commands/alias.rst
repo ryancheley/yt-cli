@@ -212,7 +212,7 @@ You can create aliases for complex command combinations:
    yt alias create criticalbugs "issues list --type Bug --priority Critical --state Open --assignee me"
 
    # Reporting with specific formatting
-   yt alias create weekreport "time report --from -7days --format csv --output weekly.csv"
+   yt alias create weekreport "time summary --start-date 2024-01-01 --format json"
 
 **Integration with Automation:**
 

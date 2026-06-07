@@ -52,7 +52,19 @@ List all projects with filtering and formatting options.
      - Comma-separated list of project fields to return
    * - ``--top, -t``
      - integer
-     - Maximum number of projects to return
+     - Maximum number of projects to return (legacy, use ``--page-size``)
+   * - ``--page-size``
+     - integer
+     - Number of projects per page (default: 100)
+   * - ``--all``
+     - flag
+     - Fetch all results using pagination
+   * - ``--max-results``
+     - integer
+     - Maximum total number of results to fetch
+   * - ``--before-cursor`` / ``--after-cursor``
+     - string
+     - Start pagination before/after this cursor
    * - ``--show-archived``
      - flag
      - Include archived projects in the list
@@ -272,7 +284,7 @@ Archive a project to mark it as inactive.
    * - Option
      - Type
      - Description
-   * - ``--confirm``
+   * - ``--force``
      - flag
      - Skip confirmation prompt
 
@@ -284,7 +296,7 @@ Archive a project to mark it as inactive.
    yt projects archive PROJECT_KEY
 
    # Archive a project without confirmation prompt
-   yt projects archive PROJECT_KEY --confirm
+   yt projects archive PROJECT_KEY --force
 
 Project Features
 ----------------
@@ -421,7 +433,7 @@ Project Lifecycle Management
    yt projects list
 
    # Archive completed projects
-   yt projects archive OLD_PROJECT --confirm
+   yt projects archive OLD_PROJECT --force
 
    # View all projects including archived
    yt projects list --show-archived
@@ -613,7 +625,7 @@ Bulk Operations
 
    # Archive multiple old projects
    for project in OLD1 OLD2 OLD3; do
-     yt projects archive "$project" --confirm
+     yt projects archive "$project" --force
    done
 
    # Update descriptions for multiple projects

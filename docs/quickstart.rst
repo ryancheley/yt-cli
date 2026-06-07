@@ -142,7 +142,7 @@ Generate time reports:
 
 .. code-block:: bash
 
-   yt time report --from "2024-01-01" --to "2024-01-31" --assignee "me"
+   yt time summary --start-date "2024-01-01" --end-date "2024-01-31" --user-id me
 
 5. Configuration
 ----------------
