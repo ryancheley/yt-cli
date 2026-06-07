@@ -16,6 +16,10 @@ concurrency:
 
 jobs:
   test:
+    # Full gate runs on PRs. Pushes to protected branches (post-merge) only run
+    # the lightweight coverage-baseline job below, since the PR was already tested
+    # against the latest base (branch protection requires up-to-date branches).
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -52,6 +56,7 @@ jobs:
       continue-on-error: true
 
   lint:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
@@ -74,6 +79,7 @@ jobs:
       run: uvx --with tox-uv tox -e lint
 
   type-check:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
@@ -96,6 +102,7 @@ jobs:
       run: uvx --with tox-uv tox -e type
 
   security:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
@@ -118,6 +125,7 @@ jobs:
       run: uvx zizmor .github/workflows/
 
   documentation:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
@@ -145,10 +153,10 @@ jobs:
         echo "Documentation testing infrastructure is in place"
         echo "RST files found:" && find docs/ -name "*.rst" | wc -l
 
-  # Summary job for branch protection
+  # Summary job for branch protection (PR-only; pushes are not gated)
   tests-complete:
     name: test
-    if: always()
+    if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: [test, lint, type-check, security, documentation]
     steps:
@@ -171,3 +179,38 @@ jobs:
             echo "Some checks failed"
             exit 1
           fi
+
+  # Lightweight post-merge run: refreshes the Codecov baseline for the default
+  # branch without re-running the full matrix + lint/type/security/docs, which
+  # the PR already validated. Runs only on pushes (e.g. after a squash merge).
+  coverage-baseline:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
+      with:
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v5
+      with:
+        python-version: "3.11"
+
+    - name: Run tests with coverage
+      run: uvx --with tox-uv tox -e py311
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v4
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      continue-on-error: true
