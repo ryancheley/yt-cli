@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- 👷 Test against Python 3.14 free-threaded (`3.14t`) in CI and tox (#616)
+  - Note: Python 3.13 free-threaded (`3.13t`) is intentionally not supported,
+    as `cffi` (a transitive dependency via `cryptography`) does not support the
+    free-threaded build of CPython 3.13. Free-threaded support starts at 3.14t.
+
 ## [0.22.2] - 2025-03-20
 
 ### Added
