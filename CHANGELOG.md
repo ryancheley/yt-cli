@@ -57,6 +57,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `issues tag add --create-if-missing`, `config theme create --base`/`delete
     --force`, `articles tree --enhanced`/`--show-metadata`, `attach download
     --overwrite`)
+- 📝 Fixed more invented options found by a second `/deep-review` pass (#686)
+  - `admin fields list --fields` and `admin user-groups list --fields` do not
+    exist (those commands take no options); removed the option rows and examples
+  - `groups create`/`admin user-groups create` use a positional `NAME`, not
+    `--name`; `groups list`/`admin user-groups list` have no `--format`
+  - `issues list --project`/`--priority` → `--project-id`/`--query`;
+    `projects list --detailed` → `-f`; `projects create --name/--key` → positional
+    `NAME SHORT_NAME`; `auth login --test` → `auth status`; `config list
+    --show-file` → the default `~/.config/youtrack-cli/.env` path
+  - Replaced the fictional `yt settings` / `admin global-settings get`/`set`
+    examples in the command-aliases doc with the real `admin global-settings list`
 
 ## [0.23.0] - 2026-06-07
 

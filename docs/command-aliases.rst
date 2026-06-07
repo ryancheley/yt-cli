@@ -297,12 +297,8 @@ Flatter Commands
    yt admin user-groups list
    yt groups list
 
-   # Settings - Traditional vs Flatter
-   yt admin global-settings get --name system.timeZone
-   yt settings get --name system.timeZone
-
-   yt admin global-settings set timeout 30
-   yt settings set timeout 30
+   # Global settings (view only — no flatter alias)
+   yt admin global-settings list
 
    # Audit Log - Traditional vs Flatter
    yt security audit --limit 25 --format json
@@ -372,7 +368,7 @@ Flatter Command Workflows:
 
    # Administrative tasks
    yt groups create "QA Team"                 # Create user group
-   yt settings get --name system.timeZone     # Check timezone setting
+   yt admin global-settings list              # View global settings
    yt audit --limit 10                       # Review recent actions
 
 Help and Discovery

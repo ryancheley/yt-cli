@@ -223,11 +223,11 @@ Configuration File Issues
 
 **Solutions**:
 
-1. **Check configuration file location**:
+1. **Check configuration file location** (defaults to ``~/.config/youtrack-cli/.env``):
 
    .. code-block:: bash
 
-      yt config list --show-file
+      ls ~/.config/youtrack-cli/
 
 2. **Verify file permissions**:
 
@@ -405,7 +405,7 @@ Empty Results
    .. code-block:: bash
 
       # Specify project explicitly
-      yt issues list --project PROJECT-KEY
+      yt issues list --project-id PROJECT-KEY
 
 Output Formatting Issues
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -539,7 +539,7 @@ YouTrack CLI provides user-friendly error messages with actionable suggestions:
 .. code-block:: bash
 
    # Example error with suggestion
-   $ yt issues list --project INVALID-PROJECT
+   $ yt issues list --project-id INVALID-PROJECT
    Error: Project 'INVALID-PROJECT' not found
    Suggestion: Check if the project exists and you have access to it
 
@@ -605,7 +605,7 @@ Verify your setup is working:
 .. code-block:: bash
 
    # Test authentication
-   yt auth login --test
+   yt auth status
 
    # Test basic operations
    yt projects list --top 1

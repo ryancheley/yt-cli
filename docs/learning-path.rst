@@ -170,7 +170,7 @@ Module 1.4: Searching and Filtering (45 minutes)
    yt issues list --state "Open"
 
    # Find issues with specific priority
-   yt issues list --priority "High"
+   yt issues list --query "priority: High"
 
 **Exercise 2: Advanced Search**
 
@@ -344,7 +344,7 @@ Module 2.4: Project Management Basics (60 minutes)
 .. code-block:: bash
 
    # List project details
-   yt projects list --detailed
+   yt projects list -f "name,shortName,description"
 
    # View project configuration
    yt projects configure PROJECT-KEY --show
@@ -755,7 +755,7 @@ Troubleshooting Learning Issues
 
 **Solutions**:
 1. Check your YouTrack CLI version: ``yt --version``
-2. Verify authentication: ``yt auth login --test``
+2. Verify authentication: ``yt auth status``
 3. Use ``--debug`` flag to see detailed error messages
 4. Consult :doc:`troubleshooting` guide
 

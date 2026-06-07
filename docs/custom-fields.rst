@@ -131,7 +131,7 @@ The issues commands automatically handle custom fields for common use cases:
     yt issues update ISSUE-ID --priority Critical --assignee john.doe
 
     # Search issues by custom field values
-    yt issues list --project PROJECT-ID --priority High
+    yt issues list --project-id PROJECT-ID --query "Priority: High"
 
 Projects Commands
 -----------------
