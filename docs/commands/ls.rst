@@ -63,7 +63,7 @@ Common Usage Patterns
 ---------------------
 
 Personal Issue Management
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Quickly check your assigned work:
 
@@ -83,7 +83,7 @@ Quickly check your assigned work:
    yt ls --assignee me --type Task
 
 Project Overview
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Get a quick project status overview:
 
@@ -102,7 +102,7 @@ Get a quick project status overview:
    yt ls -p DEMO --priority High
 
 Team and Workflow Monitoring
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Monitor team progress and workflow status:
 
@@ -120,7 +120,7 @@ Monitor team progress and workflow status:
    yt ls --tag "needs-review"
 
 Data Export and Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Export issue data for reports and analysis:
 
@@ -287,7 +287,7 @@ Generate team-level status reports:
    done
 
 CI/CD Integration
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 Integrate issue checking into development workflows:
 
@@ -306,7 +306,7 @@ Performance and Efficiency Tips
 -------------------------------
 
 Optimizing List Operations
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Make listing operations faster and more efficient:
 

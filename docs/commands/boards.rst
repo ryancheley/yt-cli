@@ -172,7 +172,7 @@ Board Types
   * Continuous delivery focus
 
 Board Components
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 **Columns**
   Represent different stages of work (To Do, In Progress, Done, etc.)
@@ -190,7 +190,7 @@ Board Components
   Rules that determine which issues appear on the board
 
 Board Configuration
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 **Ownership**
   Boards have owners who can configure settings and permissions
@@ -208,7 +208,7 @@ Common Workflows
 ----------------
 
 Board Discovery
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -225,7 +225,7 @@ Board Discovery
    yt boards list | grep -i "dev"
 
 Board Analysis
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -240,7 +240,7 @@ Board Analysis
    yt boards show PROJECT-BOARD --format json
 
 Board Maintenance
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -253,7 +253,7 @@ Board Maintenance
    yt boards update TEAM-B-BOARD --name "Feature Team Board"
 
 Project Board Management
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -296,7 +296,7 @@ Board Reporting and Analytics
 -----------------------------
 
 Board Inventory
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -310,7 +310,7 @@ Board Inventory
    yt boards list --format json > boards_metadata.json
 
 Configuration Analysis
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -324,7 +324,7 @@ Configuration Analysis
    yt boards list --format json | jq '.[] | {name: .name, owner: .owner}'
 
 Performance Monitoring
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -386,7 +386,7 @@ JSON format provides structured data for automation and integration:
    ]
 
 Board Detail View
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 When viewing a specific board, detailed information is displayed:
 
@@ -436,10 +436,10 @@ Common error scenarios and solutions:
   Check connectivity if boards fail to load or update.
 
 Integration Examples
--------------------
+--------------------
 
 Board Monitoring Script
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -462,7 +462,7 @@ Board Monitoring Script
    done
 
 Board Backup Script
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -483,7 +483,7 @@ Board Backup Script
    echo "Board backup completed in $BACKUP_DIR"
 
 Project Board Analysis
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -514,21 +514,21 @@ Use Cases
 ---------
 
 Team Organization
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 * **Multi-team Projects**: Use separate boards for different teams working on the same project
 * **Feature Teams**: Create boards for specific feature development streams
 * **Cross-functional Work**: Set up boards that span multiple projects or components
 
 Workflow Management
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 * **Process Improvement**: Analyze board configurations to optimize team workflows
 * **Standardization**: Ensure consistent board setup across similar teams
 * **Compliance**: Monitor board usage for process compliance requirements
 
 Project Management
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 * **Portfolio View**: Track multiple projects through their associated boards
 * **Resource Planning**: Use board data for capacity and resource allocation

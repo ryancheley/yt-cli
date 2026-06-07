@@ -1,5 +1,5 @@
 Security Features
-================
+=================
 
 YouTrack CLI includes comprehensive security enhancements to protect user credentials and provide audit capabilities for enterprise environments.
 
@@ -14,7 +14,7 @@ The security features include:
 - **Sensitive Data Masking**: Automatic masking of credentials in output and logs
 
 Command Audit Logging
---------------------
+---------------------
 
 All CLI commands are automatically logged with timestamps for security auditing and compliance purposes.
 
@@ -52,7 +52,7 @@ Audit logging can be disabled using the ``--secure`` flag::
 This prevents command logging while maintaining other security features.
 
 Credential Encryption
---------------------
+---------------------
 
 Credentials are encrypted at rest using industry-standard encryption and the system keyring where available.
 
@@ -90,7 +90,7 @@ For CI/CD environments, you can disable keyring and use environment variables::
     export YOUTRACK_TOKEN="your-api-token"
 
 Token Expiration Management
--------------------------
+---------------------------
 
 The CLI proactively monitors token expiration and provides warnings before tokens expire.
 
@@ -177,7 +177,7 @@ This includes entries for:
 5. Consider using organizational certificate authorities for internal systems
 
 Sensitive Data Masking
----------------------
+----------------------
 
 All output and logs automatically mask sensitive information to prevent credential exposure.
 
@@ -201,7 +201,7 @@ After masking::
     token=***MASKED***
 
 Security Best Practices
-----------------------
+-----------------------
 
 **For Individual Users:**
 
@@ -251,7 +251,7 @@ Security Best Practices
 4. **Secret Rotation**: Implement regular token rotation for automated systems
 
 Configuration Options
---------------------
+---------------------
 
 Security features can be configured through environment variables or the configuration file.
 
@@ -285,7 +285,7 @@ Add to ``~/.config/youtrack-cli/.env``::
     YT_AUDIT_MAX_ENTRIES=1000
 
 Troubleshooting
---------------
+---------------
 
 **Keyring Issues:**
 
@@ -336,7 +336,7 @@ If token warnings are incorrect:
 3. Verify token format and YouTrack version compatibility
 
 Security Considerations
----------------------
+-----------------------
 
 **Limitations:**
 

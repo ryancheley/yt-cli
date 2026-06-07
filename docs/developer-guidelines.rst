@@ -357,7 +357,7 @@ For functions with doctests:
 - Output should be predictable across different environments
 
 Troubleshooting Common Issues
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Import errors in doctests:**
 
@@ -525,7 +525,7 @@ Good examples are worth more than lengthy descriptions:
         """
 
 3. Document Edge Cases
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Mention important behavioral details:
 
