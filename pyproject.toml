@@ -3,7 +3,7 @@ name = "youtrack-cli"
 version = "0.22.2"
 description = "YouTrack CLI - Command line interface for JetBrains YouTrack issue tracking system"
 readme = "README.md"
-requires-python = ">=3.10, <3.14"
+requires-python = ">=3.10, <3.15"
 license = { text = "MIT" }
 authors = [
     { name = "Ryan Cheley", email = "rcheley@gmail.com" },
@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Bug Tracking",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Utilities",
