@@ -1374,7 +1374,12 @@ class TestIssuesCLI:
         """`issues list --format json` keeps status off stdout (issue #648)."""
         from youtrack_cli.main import main
 
-        runner = CliRunner(mix_stderr=False)
+        # Click < 8.2 mixes stderr into stdout unless ``mix_stderr=False``; Click >= 8.2
+        # removed the argument and always captures stderr separately.
+        try:
+            runner = CliRunner(mix_stderr=False)
+        except TypeError:
+            runner = CliRunner()
 
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {
