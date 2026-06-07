@@ -198,7 +198,7 @@ Display Settings
      - Description
    * - ``display.output_format``
      - string
-     - Output format: table, json, yaml (default: table)
+     - Output format: table or json (default: table)
    * - ``display.max_results``
      - integer
      - Maximum results to display (default: 50)

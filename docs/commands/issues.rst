@@ -97,15 +97,19 @@ List and filter issues with advanced options.
   * ``-s, --state TEXT`` - Filter by issue state
   * ``-a, --assignee TEXT`` - Filter by assignee
   * ``-f, --fields TEXT`` - Comma-separated list of fields to return
-  * ``-t, --top INTEGER`` - Maximum number of issues to return (legacy)
-  * ``--max-results INTEGER`` - Maximum number of results to fetch (default: 10,000)
+  * ``--profile [minimal|standard|full]`` - Field selection profile (default: standard)
+  * ``-t, --top INTEGER`` - Maximum number of issues to return (legacy, use ``--page-size``)
+  * ``--page-size INTEGER`` - Number of issues per page (default: 100)
+  * ``--max-results INTEGER`` - Maximum total number of results to fetch
   * ``--after-cursor TEXT`` - Start listing after this cursor position
   * ``--before-cursor TEXT`` - Start listing before this cursor position
+  * ``--all`` - Fetch all results automatically (respects max-results limit)
   * ``--paginated`` - Display results with interactive pagination
   * ``--display-page-size INTEGER`` - Items per page for interactive display (default: 50)
-  * ``--all`` - Fetch all results automatically (respects max-results limit)
+  * ``--show-all`` - Show all results without interactive pagination
+  * ``--start-page INTEGER`` - Page number to start displaying from
   * ``-q, --query TEXT`` - Advanced query filter using YouTrack syntax
-  * ``--format [table|json|csv]`` - Output format (default: table)
+  * ``--format [table|json]`` - Output format (default: table)
 
 .. note::
    The assignee column in table output displays both the user's full name and username
@@ -125,8 +129,8 @@ List and filter issues with advanced options.
    # List issues in JSON format with cursor pagination
    yt issues list --format json --max-results 50
 
-   # Export issues to CSV format for spreadsheet analysis
-   yt issues list --format csv --limit 100
+   # Limit the number of issues returned
+   yt issues list -p PROJ-1 --page-size 100
 
    # Navigate through pages using cursors
    yt issues list -p PROJ-1 --after-cursor "cursor_token_here"
@@ -216,14 +220,15 @@ Advanced issue search with YouTrack query language.
 
 **Options:**
   * ``-p, --project-id TEXT`` - Filter by project ID
-  * ``-t, --top INTEGER`` - Maximum number of results (legacy)
-  * ``--max-results INTEGER`` - Maximum number of results to fetch (default: 10,000)
+  * ``-t, --top INTEGER`` - Maximum number of results (legacy, use ``--page-size``)
+  * ``--page-size INTEGER`` - Number of results per page (default: 100)
+  * ``--max-results INTEGER`` - Maximum total number of results to fetch
   * ``--after-cursor TEXT`` - Start searching after this cursor position
   * ``--before-cursor TEXT`` - Start searching before this cursor position
-  * ``--paginated`` - Display results with interactive pagination
-  * ``--display-page-size INTEGER`` - Items per page for interactive display (default: 50)
   * ``--all`` - Fetch all results automatically (respects max-results limit)
-  * ``--format [table|json|csv]`` - Output format
+  * ``-f, --fields TEXT`` - Comma-separated list of fields to return
+  * ``--profile [minimal|standard|full]`` - Field selection profile (default: standard)
+  * ``--format [table|json]`` - Output format
 
 **Examples:**
 
@@ -329,7 +334,9 @@ Manage issue tags.
 
 .. code-block:: bash
 
-   yt issues tag add ISSUE_ID TAG_NAME
+   yt issues tag add ISSUE_ID TAG_NAME [--create-if-missing]
+
+Use ``--create-if-missing`` to create the tag automatically if it does not already exist.
 
 **Remove Tags:**
 
@@ -414,7 +421,7 @@ List Comments
    yt issues comments list ISSUE_ID [OPTIONS]
 
 **Options:**
-  * ``--format [table|json|csv]`` - Output format
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 Update Comments
 ~~~~~~~~~~~~~~~
@@ -471,7 +478,7 @@ List all attachments for an issue, displaying attachment IDs needed for download
    yt issues attach list ISSUE_ID [OPTIONS]
 
 **Options:**
-  * ``--format [table|json|csv]`` - Output format
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 **Output:** Displays attachment ID, name, size, author, and creation date. The attachment ID can be used with the ``download`` and ``delete`` commands.
 
@@ -528,7 +535,7 @@ List Links
    yt issues links list ISSUE_ID [OPTIONS]
 
 **Options:**
-  * ``--format [table|json|csv]`` - Output format
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 Delete Links
 ~~~~~~~~~~~~
@@ -550,7 +557,7 @@ Display available link types in your YouTrack instance.
    yt issues links types [OPTIONS]
 
 **Options:**
-  * ``--format [table|json|csv]`` - Output format
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 Show Related Issues
 ~~~~~~~~~~~~~~~~~~~

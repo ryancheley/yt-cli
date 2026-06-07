@@ -158,11 +158,8 @@ System-level custom field management:
 
 .. code-block:: bash
 
-    # List all custom fields in the system
+    # List all custom fields in the system (includes type and details)
     yt admin fields list
-
-    # View custom field details
-    yt admin fields show FIELD-ID
 
 Best Practices
 ==============

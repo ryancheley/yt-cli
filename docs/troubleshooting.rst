@@ -852,7 +852,7 @@ Several commands have interactive behavior that prompts for additional informati
 
 **Authentication Commands**:
   - ``yt auth login`` - Interactive authentication setup
-  - ``yt auth token update`` - Interactive token updating
+  - ``yt auth token --update`` - Interactive token updating
 
 **Tutorial Command**:
   ``yt tutorial run`` provides interactive learning modules.

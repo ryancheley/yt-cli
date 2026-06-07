@@ -35,6 +35,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     Codecov default-branch baseline fresh, avoiding a redundant second run of
     the entire suite on every merge
 
+### Fixed
+- 📝 Corrected documentation to match the actual CLI (full v0.23.0 doc review) (#681)
+  - Fixed broken examples that would fail if copy-pasted: `reports generate
+    burndown` → `reports burndown`; `time report --from/--to/--assignee` →
+    `time summary`/`time list` with `--start-date`/`--end-date`/`--user-id`;
+    `issues get` → `issues show`; `config show`/`config export` → `config list`;
+    `admin fields show`, `admin maintenance clear-cache`, and `admin usage` (which
+    don't exist); `auth token update` → `auth token --update`; positional-argument
+    fixes for `projects create`, `users create`, and `time log`
+  - Removed false option claims: `--format [table|json|csv]` on `issues`
+    subcommands and `groups list` (CSV/those options aren't supported), the
+    nonexistent `--limit`/`--sort` on `issues list`/`search`, and `--format yaml`
+    references; corrected `projects archive`/`articles` `--confirm` to `--force`
+  - Fixed the global-options table (`--format`, `--no-color`, `--dry-run` are not
+    global; corrected the `--quiet` description)
+  - Documented previously-undocumented features: pagination options
+    (`--page-size`/`--all`/`--max-results`/cursors) on `issues`/`projects`/`users`/
+    `articles list`, the `admin i18n`/`locale` get/set subcommands, and assorted
+    flags (`tutorial reset --all`, `tutorial list --show-progress`,
+    `issues tag add --create-if-missing`, `config theme create --base`/`delete
+    --force`, `articles tree --enhanced`/`--show-metadata`, `attach download
+    --overwrite`)
+
 ## [0.23.0] - 2026-06-07
 
 ### Fixed

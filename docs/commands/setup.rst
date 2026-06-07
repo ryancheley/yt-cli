@@ -157,7 +157,7 @@ After completing setup, verify your configuration:
    yt projects list
 
    # Check configuration
-   yt config show
+   yt config list
 
 Configuration Storage
 ---------------------
@@ -253,11 +253,8 @@ Setup integrates with configuration management:
    yt setup
 
    # View and modify configuration later
-   yt config show
+   yt config list
    yt config set key value
-
-   # Export configuration for backup
-   yt config export config-backup.json
 
 Automation and Scripting
 -------------------------

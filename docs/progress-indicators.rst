@@ -149,9 +149,9 @@ Admin
 
 Administrative operations with progress:
 
-- ``yt admin maintenance clear-cache`` - Spinner for cache clearing operations
+- ``yt admin fields list`` - Spinner while loading custom fields
 - ``yt admin health check`` - Progress bar for multi-step diagnostics
-- ``yt admin usage users report`` - Progress bar for report generation
+- ``yt admin license usage`` - Progress bar while fetching license usage
 
 Best Practices
 ---------------

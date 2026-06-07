@@ -49,16 +49,13 @@ These options are available for all commands:
      - Enable verbose output
    * - ``--quiet, -q``
      - flag
-     - Suppress all output except errors
+     - Enable quiet mode for automation (minimal output)
    * - ``--config, -c``
      - path
      - Path to configuration file
    * - ``--debug``
      - flag
      - Enable debug output
-   * - ``--format``
-     - choice
-     - Output format: table, json, yaml (default: table)
    * - ``--help-verbose``
      - flag
      - Show detailed help information with all options and examples
@@ -71,12 +68,12 @@ These options are available for all commands:
    * - ``--version``
      - flag
      - Show the version and exit
-   * - ``--no-color``
-     - flag
-     - Disable colored output
-   * - ``--dry-run``
-     - flag
-     - Show what would be done without making changes
+
+.. note::
+
+   ``--format`` is **not** a global option. Many subcommands accept a
+   ``--format``/``-f`` option (typically ``table`` or ``json``); check each
+   command's help for the formats it supports.
 
 Command Categories
 ------------------
@@ -287,39 +284,38 @@ Most list commands support filtering and searching:
 
 .. code-block:: bash
 
-   yt issues list --assignee me --state open
-   yt issues search --query "project:PROJECT and state:open"
+   yt issues list --assignee me --state Open
+   yt issues search "project:PROJECT state:Open"
 
 Output Formatting
 ~~~~~~~~~~~~~~~~~
 
-All commands support multiple output formats:
+Most list commands support multiple output formats (``table`` and ``json``):
 
 .. code-block:: bash
 
    yt issues list --format json
-   yt projects list --format yaml
+   yt projects list --format json
    yt users list --format table
 
 Batch Operations
 ~~~~~~~~~~~~~~~~
 
-Many commands support batch operations:
+Several commands support batch operations from a CSV or JSON file:
 
 .. code-block:: bash
 
-   yt issues update ISSUE-1 ISSUE-2 ISSUE-3 --state "Fixed"
-   yt users create --from-file users.csv
+   yt issues batch update --file updates.csv
+   yt issues batch create --file new_issues.csv
 
 Interactive Mode
 ~~~~~~~~~~~~~~~~
 
-Some commands provide interactive prompts:
+The setup wizard runs interactively to guide first-time configuration:
 
 .. code-block:: bash
 
-   yt issues create --interactive
-   yt projects configure PROJECT-ID --interactive
+   yt setup
 
 Examples
 --------
@@ -329,15 +325,15 @@ Common command combinations and workflows:
 .. code-block:: bash
 
    # Daily workflow
-   yt issues list --assignee me --state open
+   yt issues list --assignee me --state Open
    yt issues update ISSUE-123 --state "In Progress"
-   yt time log ISSUE-123 --duration "2h" --description "Fixed bug"
+   yt time log ISSUE-123 "2h" --description "Fixed bug"
 
    # Project setup
-   yt projects create --name "New Project" --key "NP"
-   yt users create --username "john.doe" --email "john@example.com"
-   yt projects configure NP --add-user "john.doe"
+   yt projects create "New Project" NP
+   yt users create john.doe "John Doe" john@example.com
+   yt projects configure NP --leader john.doe
 
    # Reporting
-   yt time report --project "PROJECT-ID" --from "2024-01-01"
-   yt reports generate burndown --project "PROJECT-ID" --sprint "Sprint-1"
+   yt time summary --start-date "2024-01-01"
+   yt reports burndown PROJECT-ID --sprint "Sprint-1"

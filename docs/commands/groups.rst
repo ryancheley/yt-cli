@@ -65,7 +65,7 @@ List all user groups in your YouTrack instance.
    yt groups list [OPTIONS]
 
 **Options:**
-  * ``--format [table|json|csv]`` - Output format (default: table)
+  * ``-h, --help`` - Show help and exit (this command takes no other options)
 
 **Examples:**
 
@@ -73,12 +73,6 @@ List all user groups in your YouTrack instance.
 
    # List all user groups
    yt groups list
-
-   # List groups in JSON format for processing
-   yt groups list --format json
-
-   # Export group list for reporting
-   yt groups list --format csv > user-groups.csv
 
 Understanding User Groups
 -------------------------

@@ -39,12 +39,18 @@ List all available tutorials and their current progress status.
 
    yt tutorial list [OPTIONS]
 
+**Options:**
+  * ``--show-progress`` - Show completion progress for each tutorial
+
 **Examples:**
 
 .. code-block:: bash
 
    # List all available tutorials
    yt tutorial list
+
+   # List tutorials with completion progress
+   yt tutorial list --show-progress
 
    # Shows tutorial names, descriptions, and completion status
 
@@ -114,7 +120,10 @@ Reset progress for specific tutorials to start over.
    yt tutorial reset TUTORIAL_NAME [OPTIONS]
 
 **Arguments:**
-  * ``TUTORIAL_NAME`` - The name of the tutorial to reset
+  * ``TUTORIAL_NAME`` - The name of the tutorial to reset (optional when using ``--all``)
+
+**Options:**
+  * ``--all`` - Reset progress for all tutorials
 
 **Examples:**
 
@@ -125,6 +134,9 @@ Reset progress for specific tutorials to start over.
 
    # Reset setup tutorial to start over
    yt tutorial reset setup
+
+   # Reset progress for all tutorials
+   yt tutorial reset --all
 
 Provide Tutorial Feedback
 ~~~~~~~~~~~~~~~~~~~~~~~~~

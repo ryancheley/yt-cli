@@ -52,7 +52,19 @@ List all users with filtering and search capabilities.
      - Comma-separated list of user fields to return
    * - ``--top, -t``
      - integer
-     - Maximum number of users to return
+     - Maximum number of users to return (legacy, use ``--page-size``)
+   * - ``--page-size``
+     - integer
+     - Number of users per page (default: 100)
+   * - ``--all``
+     - flag
+     - Fetch all results using pagination
+   * - ``--max-results``
+     - integer
+     - Maximum total number of results to fetch
+   * - ``--before-cursor`` / ``--after-cursor``
+     - string
+     - Start pagination before/after this cursor
    * - ``--query, -q``
      - string
      - Search query to filter users

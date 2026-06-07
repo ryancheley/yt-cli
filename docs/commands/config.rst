@@ -136,6 +136,12 @@ Create a new custom theme interactively with guided configuration.
 
    yt config theme create
 
+Use ``--base THEME`` to copy an existing theme as the starting point:
+
+.. code-block:: bash
+
+   yt config theme create --base dark
+
 current
 ^^^^^^^
 
@@ -153,6 +159,8 @@ Delete a custom theme from your configuration.
 .. code-block:: bash
 
    yt config theme delete
+
+Use ``--force`` to delete without a confirmation prompt.
 
 export
 ^^^^^^

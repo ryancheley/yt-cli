@@ -281,6 +281,94 @@ List available locales for internationalization. This command is an alias for ``
 .. note::
    This command provides the same functionality as ``yt admin locale list`` for consistency with other i18n commands.
 
+i18n get
+~~~~~~~~
+
+View the current internationalization settings. This command is an alias for ``yt admin locale get``.
+
+.. code-block:: bash
+
+   yt admin i18n get
+
+i18n set
+~~~~~~~~
+
+Set internationalization settings.
+
+.. code-block:: bash
+
+   yt admin i18n set [OPTIONS]
+
+**Options:**
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Option
+     - Description
+   * - ``--language, -l``
+     - Locale ID to set (e.g., ``en_US``, ``de_DE``, ``fr_FR``)
+   * - ``--timezone, -tz``
+     - Timezone to set (reserved; not implemented in this version)
+   * - ``--date-format, -df``
+     - Date format to set (reserved; not implemented in this version)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Set the system locale to German
+   yt admin i18n set --language de_DE
+
+Locale Management
+-----------------
+
+locale list
+~~~~~~~~~~~
+
+List available locales (same as ``yt admin i18n list``).
+
+.. code-block:: bash
+
+   yt admin locale list
+
+locale get
+~~~~~~~~~~
+
+View the current system language locale.
+
+.. code-block:: bash
+
+   yt admin locale get
+
+locale set
+~~~~~~~~~~
+
+Set the system language locale.
+
+.. code-block:: bash
+
+   yt admin locale set --language LOCALE_ID
+
+**Options:**
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Option
+     - Description
+   * - ``--language, -l``
+     - Locale ID to set, e.g. ``en_US``, ``de_DE``, ``fr_FR`` (required)
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Set the system locale to French
+   yt admin locale set --language fr_FR
+
 Administrative Features
 ----------------------
 
