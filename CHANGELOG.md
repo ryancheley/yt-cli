@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+- 🔥 Removed the unused `selenium` dependency (#677)
+  - It was added for a browser-automation article-reordering feature that was
+    later removed; the current reorder/sort command is API-only and selenium had
+    no references left in the codebase
+  - Drops selenium and its unique transitive dependencies (`trio`,
+    `trio-websocket`, `wsproto`, `outcome`, `sortedcontainers`,
+    `websocket-client`) — roughly 25MB — from installs and CI
+  - Also removed the corresponding stale "Browser Automation Issues" section
+    from the troubleshooting documentation
+
+### Changed
+- ⚡ Sped up CI and stopped per-run external link checks (#676)
+  - Added a concurrency group so new pushes cancel superseded in-flight CI runs
+  - The `security` job now runs `zizmor` via `uvx` instead of a full dev sync,
+    and the `documentation` job installs only the docs dependency group
+  - Removed the Sphinx `linkcheck` step from per-push CI (it made outbound
+    requests to external sites, including readthedocs.io, on every run) and
+    moved it to a new weekly scheduled workflow with manual dispatch
+
 ## [0.23.0] - 2026-06-07
 
 ### Fixed
