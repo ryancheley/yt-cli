@@ -18,7 +18,7 @@ Thank you for your interest in contributing to YouTrack CLI! This document provi
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - [uv](https://docs.astral.sh/uv/) package manager
 - Git
 - A YouTrack instance for testing (optional, but recommended)
@@ -92,7 +92,7 @@ yt-cli/
 
 - **Code Style**: Follow PEP 8, enforced by `ruff`
 - **Line Length**: Maximum 120 characters
-- **Python Version**: Support Python 3.9+
+- **Python Version**: Support Python 3.10+
 - **Type Hints**: Required for all public APIs
 
 ### Docstring Standards
@@ -170,7 +170,7 @@ uv run tox
 
 - All new features must have tests
 - Maintain or improve test coverage
-- Tests must pass on Python 3.9-3.13
+- Tests must pass on Python 3.10-3.15
 - Integration tests should use the `FPU` project for testing
 
 ## Documentation

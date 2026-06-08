@@ -24,7 +24,7 @@ YouTrack is an issue tracking and project management tool by JetBrains. If you'r
 * A YouTrack instance URL (ask your team lead or admin)
 * API token or login credentials (see Authentication section below)
 * Basic command line familiarity
-* Python 3.9+ installed on your system
+* Python 3.10+ installed on your system
 
 Authentication
 --------------

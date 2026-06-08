@@ -111,7 +111,7 @@ class HTTPClientManager:
         self._default_timeout = default_timeout
         self._verify_ssl = verify_ssl
         self._client: httpx.AsyncClient | None = None
-        self._lock: asyncio.Lock | None = None
+        self._lock: asyncio.Lock = asyncio.Lock()
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure the HTTP client is initialized.
@@ -123,10 +123,6 @@ class HTTPClientManager:
             Initialized httpx.AsyncClient instance.
         """
         if self._client is None or self._client.is_closed:
-            # Create lock if it doesn't exist (for Python 3.9 compatibility)
-            if self._lock is None:
-                self._lock = asyncio.Lock()
-
             async with self._lock:
                 if self._client is None or self._client.is_closed:
                     # Configure SSL verification
@@ -708,7 +704,7 @@ def reset_client_manager_sync() -> None:
         return
     except RuntimeError:
         # RuntimeError means either:
-        # 1. There's already an event loop running (Python 3.9+)
+        # 1. There's already an event loop running
         # 2. Some other async-related issue
         pass
     except Exception as e:

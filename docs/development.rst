@@ -9,7 +9,7 @@ Development Setup
 Prerequisites
 ~~~~~~~~~~~~~
 
-* Python 3.9 or higher
+* Python 3.10 or higher
 * `uv <https://docs.astral.sh/uv/>`_ package manager
 * Git
 
@@ -393,7 +393,7 @@ Test against multiple Python versions using tox with enhanced uv integration for
    uvx --with tox-uv tox -e type
 
    # Run multiple environments in parallel
-   uvx --with tox-uv tox -e py39,py310,py311,py312,py313
+   uvx --with tox-uv tox -e py310,py311,py312,py313,py314,py315
 
 The project uses the **tox-uv plugin** with enhanced configuration to leverage uv's exceptional speed for creating and managing test environments. This provides **1.5x to 10x faster** test execution compared to traditional pip-based installation, significantly reducing development feedback loops.
 
