@@ -60,17 +60,10 @@ class Cache:
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self._default_ttl = default_ttl
         self._max_size = max_size
-        self._lock: asyncio.Lock | None = None
+        self._lock: asyncio.Lock = asyncio.Lock()
         self._hits = 0
         self._misses = 0
         self._evictions = 0
-
-    @property
-    def _get_lock(self) -> asyncio.Lock:
-        """Get or create the async lock. Lazy initialization to avoid event loop issues."""
-        if self._lock is None:
-            self._lock = asyncio.Lock()
-        return self._lock
 
     async def get(self, key: str) -> Any | None:
         """Get a value from the cache.
@@ -81,7 +74,7 @@ class Cache:
         Returns:
             Cached value or None if not found/expired
         """
-        async with self._get_lock:
+        async with self._lock:
             entry = self._cache.get(key)
             if entry is None:
                 logger.debug("Cache miss", key=key)
@@ -113,7 +106,7 @@ class Cache:
         ttl = ttl or self._default_ttl
         tags = tags or set()
 
-        async with self._get_lock:
+        async with self._lock:
             # Check if we need to evict entries for size limit
             if self._max_size and len(self._cache) >= self._max_size and key not in self._cache:
                 await self._evict_lru()
@@ -137,7 +130,7 @@ class Cache:
         Returns:
             True if the key was deleted, False if not found
         """
-        async with self._get_lock:
+        async with self._lock:
             if key in self._cache:
                 del self._cache[key]
                 logger.debug("Cache deleted", key=key)
@@ -146,7 +139,7 @@ class Cache:
 
     async def clear(self) -> None:
         """Clear all cached values."""
-        async with self._get_lock:
+        async with self._lock:
             count = len(self._cache)
             self._cache.clear()
             logger.debug("Cache cleared", removed_entries=count)
@@ -157,7 +150,7 @@ class Cache:
         Returns:
             Number of entries removed
         """
-        async with self._get_lock:
+        async with self._lock:
             expired_keys = [key for key, entry in self._cache.items() if entry.is_expired]
 
             for key in expired_keys:
@@ -188,7 +181,7 @@ class Cache:
         Returns:
             Number of entries invalidated
         """
-        async with self._get_lock:
+        async with self._lock:
             matching_keys = [key for key in self._cache.keys() if fnmatch.fnmatch(key, pattern)]
 
             for key in matching_keys:
@@ -208,7 +201,7 @@ class Cache:
         Returns:
             Number of entries invalidated
         """
-        async with self._get_lock:
+        async with self._lock:
             tag_set = set(tags)
             matching_keys = [key for key, entry in self._cache.items() if entry.tags.intersection(tag_set)]
 
@@ -233,7 +226,7 @@ class Cache:
         ttl = ttl or self._default_ttl
         tags = tags or set()
 
-        async with self._get_lock:
+        async with self._lock:
             now = time.time()
             for key, value in items.items():
                 # Check if we need to evict entries for size limit
@@ -259,7 +252,7 @@ class Cache:
         Returns:
             Number of keys actually deleted
         """
-        async with self._get_lock:
+        async with self._lock:
             deleted_count = 0
             for key in keys:
                 if key in self._cache:
@@ -277,7 +270,7 @@ class Cache:
         Returns:
             Dictionary with cache statistics
         """
-        async with self._get_lock:
+        async with self._lock:
             now = time.time()
             expired_count = sum(1 for entry in self._cache.values() if entry.is_expired)
             total_requests = self._hits + self._misses
