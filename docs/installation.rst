@@ -4,7 +4,7 @@ Installation
 Requirements
 ------------
 
-* Python 3.9 or higher
+* Python 3.10 or higher
 * An active YouTrack instance
 * API access to your YouTrack instance
 

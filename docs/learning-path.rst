@@ -33,7 +33,7 @@ Prerequisites Check
 
 Before starting, ensure you have:
 
-- Python 3.9+ installed
+- Python 3.10+ installed
 - Basic command line familiarity (cd, ls, basic navigation)
 - Access to a YouTrack instance
 - Your YouTrack credentials or API token

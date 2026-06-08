@@ -44,7 +44,7 @@ Python Version Issues
 
 **Problem**: Installation fails with Python version errors.
 
-**Solution**: YouTrack CLI requires Python 3.9 or higher.
+**Solution**: YouTrack CLI requires Python 3.10 or higher.
 
 .. code-block:: bash
 
@@ -52,8 +52,8 @@ Python Version Issues
    python --version
 
    # If using multiple Python versions
-   python3.9 -m pip install youtrack-cli
-   python3.9 -m youtrack_cli --help
+   python3.10 -m pip install youtrack-cli
+   python3.10 -m youtrack_cli --help
 
 Virtual Environment Issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

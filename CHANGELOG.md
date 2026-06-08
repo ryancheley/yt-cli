@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-06-08
+
+### Changed
+- 📝 Documented Python **3.10+** as the minimum supported version across the
+  installation, quickstart, learning-path, troubleshooting, and development
+  guides, plus `CONTRIBUTING.md` — the previous packaging drop of Python 3.9
+  (#650, released in 0.23.0) had left these references stale
+- 🩹 Updated the `pre-commit-doctor.sh` Python-version check to expect 3.10+
+
+### Removed
+- 🔥 Removed obsolete Python 3.9 compatibility workarounds — the lazy
+  `asyncio.Lock` initialization in both the HTTP client and cache managers.
+  Python 3.10+ constructs locks without binding to an event loop, so the lock
+  is now created eagerly. This also closes a latent race where concurrent
+  first-callers could each create a separate lock, defeating the mutual exclusion
+
 ## [0.23.2] - 2026-06-07
 
 ### Fixed

@@ -65,11 +65,11 @@ fi
 # Check Python version
 print_check "Checking Python version..."
 PYTHON_VERSION=$(uv run python --version 2>&1)
-if [[ $PYTHON_VERSION == *"3.9"* ]] || [[ $PYTHON_VERSION == *"3.1"* ]]; then
+if [[ $PYTHON_VERSION == *"3.1"* ]]; then
     print_success "Python version compatible: $PYTHON_VERSION"
 else
     print_warning "Python version may not be compatible: $PYTHON_VERSION"
-    print_fix "This project requires Python 3.9+"
+    print_fix "This project requires Python 3.10+"
 fi
 
 # Check virtual environment
