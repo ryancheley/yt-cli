@@ -89,7 +89,7 @@ YouTrack CLI supports tab completion for bash, zsh, and fish shells:
 yt completion bash --install
 ```
 
-📖 **[Complete shell completion guide](https://yt-cli.readthedocs.io/en/latest/installation.html#shell-completion)**
+📖 **[Complete shell completion guide](https://yt-cli.readthedocs.io/en/stable/installation.html)**
 
 ### Basic Usage
 

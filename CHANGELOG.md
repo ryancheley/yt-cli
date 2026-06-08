@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.2] - 2026-06-07
+
+### Fixed
+- 📝 Removed inconsistent numbered section headers from the Quick Start guide (#693)
+  - The headers were numbered out of order (`1, 2, 3, 1, 5, 6`) and inconsistent
+    with every other docs page, none of which number their sections
+- 📝 Pointed the README shell-completion link at the `stable` docs instead of `latest`
+
 ## [0.23.1] - 2026-06-07
 
 ### Removed
