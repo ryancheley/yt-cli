@@ -26,8 +26,8 @@ YouTrack is an issue tracking and project management tool by JetBrains. If you'r
 * Basic command line familiarity
 * Python 3.9+ installed on your system
 
-1. Authentication
------------------
+Authentication
+--------------
 
 First, authenticate with your YouTrack instance:
 
@@ -40,8 +40,8 @@ You'll be prompted to enter:
 - Username
 - Password or API token
 
-2. Basic Commands
------------------
+Basic Commands
+--------------
 
 List Issues
 ~~~~~~~~~~~
@@ -104,8 +104,8 @@ Add a comment:
 
    yt issues comments add ISSUE-123 "Working on this issue"
 
-3. Project Management
----------------------
+Project Management
+------------------
 
 List Projects
 ~~~~~~~~~~~~~
@@ -123,8 +123,8 @@ Create a Project
 
    yt projects create "New Project" "NP" --description "Project description"
 
-1. Time Tracking
-----------------
+Time Tracking
+-------------
 
 Log Work Time
 ~~~~~~~~~~~~~
@@ -144,8 +144,8 @@ Generate time reports:
 
    yt time summary --start-date "2024-01-01" --end-date "2024-01-31" --user-id me
 
-5. Configuration
-----------------
+Configuration
+-------------
 
 View Current Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,8 +162,8 @@ Set Configuration Values
    yt config set default_project "PROJECT-ID"
    yt config set output_format "table"
 
-6. Common Workflows
--------------------
+Common Workflows
+----------------
 
 Daily Workflow
 ~~~~~~~~~~~~~~
