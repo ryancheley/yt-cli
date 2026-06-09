@@ -1,0 +1,69 @@
+# Run gh-profiler against the author of each new issue and PR.
+
+name: Profile contributors
+
+on:
+  issues:
+    types: [opened]
+  # This workflow never checks out or executes PR code; it only reads the
+  # author login to post a comment, so pull_request_target is safe here.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  profile-author:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+      - name: Determine target login and issue number
+        id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_LOGIN: ${{ github.event.issue.user.login }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_LOGIN: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$EVENT_NAME" = "issues" ]; then
+            echo "login=$ISSUE_LOGIN" >> "$GITHUB_OUTPUT"
+            echo "number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          else
+            echo "login=$PR_LOGIN" >> "$GITHUB_OUTPUT"
+            echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run gh-profiler
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOGIN: ${{ steps.meta.outputs.login }}
+        run: |
+          echo "Running gh-profiler for: '$LOGIN'"
+          uvx gh-profiler@latest "$LOGIN" --concise > profiler.txt
+          echo "=== gh-profiler output ==="
+          cat profiler.txt
+
+      - name: Comment on issue or PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.meta.outputs.number }}
+        run: |
+          {
+            echo "Profile summary:"
+            echo
+            echo '```text'
+            cat profiler.txt
+            echo '```'
+          } > body.txt
+
+          jq -Rs '{body: .}' body.txt > payload.json
+
+          gh api \
+            "repos/$REPO/issues/$NUMBER/comments" \
+            --input payload.json
