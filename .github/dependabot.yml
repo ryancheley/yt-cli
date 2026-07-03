@@ -15,6 +15,10 @@ updates:
     commit-message:
       prefix: ":arrow_up: deps"
       include: "scope"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
 
   # Update GitHub Actions weekly
   - package-ecosystem: "github-actions"
@@ -31,3 +35,7 @@ updates:
     commit-message:
       prefix: ":construction_worker: ci"
       include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
