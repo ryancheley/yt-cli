@@ -275,6 +275,26 @@ class TestIssueManager:
             mock_client_manager.make_request.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_list_issues_multiword_state_is_escaped(self, issue_manager, sample_issue):
+        """Regression for #721: multi-word state must be brace-escaped in the query
+        so YouTrack does not treat the trailing word as a free-text search."""
+        with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:
+            mock_resp = Mock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = [sample_issue]
+            mock_resp.text = '{"mock": "response"}'
+            mock_resp.headers = {"content-type": "application/json"}
+            mock_client_manager = Mock()
+            mock_client_manager.make_request = AsyncMock(return_value=mock_resp)
+            mock_get_client_manager.return_value = mock_client_manager
+
+            await issue_manager.list_issues(project_id="PROJ", state="In Progress")
+
+            query = mock_client_manager.make_request.call_args[1]["params"]["query"]
+            assert "state:{In Progress}" in query
+            assert "state:In Progress" not in query
+
+    @pytest.mark.asyncio
     async def test_get_issue_success(self, issue_manager, sample_issue):
         """Test successful issue retrieval."""
         with patch("youtrack_cli.issues.get_client_manager") as mock_get_client_manager:

@@ -647,7 +647,9 @@ class IssueManager:
 
         # Add state filter to query if provided
         if state:
-            query = f"State: {state} {query}".strip()
+            from ..utils import escape_query_value
+
+            query = f"State: {escape_query_value(state)} {query}".strip()
 
         # Add assignee filter to query if provided
         if assignee:
