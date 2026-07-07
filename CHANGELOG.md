@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-07-07
+
+### Fixed
+- 🐛 `yt issues list --state 'In Progress'` no longer returns issues that don't
+  match the requested state. Multi-word state values were built into the
+  YouTrack query unescaped (`State: In Progress`), so YouTrack parsed the
+  trailing word as a free-text term matching summary/description/comments. State
+  values are now wrapped in curly-brace escaping (`State: {In Progress}`) so the
+  filter is treated as a single atomic term (#721)
+
 ## [0.24.0] - 2026-06-08
 
 ### Changed
