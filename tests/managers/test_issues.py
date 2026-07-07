@@ -165,33 +165,66 @@ class TestIssueManagerRetrieval:
         call_args = issue_manager.issue_service.search_issues.call_args
         assert "project: TEST" in call_args[1]["query"]
 
+    @staticmethod
+    def _issue_with_state(issue_id, state_name, *, field_name="Status", summary="summary"):
+        """Build an issue whose state lives in a StateIssueCustomField, matching
+        the real YouTrack payload shape (field name varies: State/Status/Stage)."""
+        return {
+            "idReadable": issue_id,
+            "summary": summary,
+            "customFields": [
+                {
+                    "name": field_name,
+                    "id": "128-426",
+                    "$type": "StateIssueCustomField",
+                    "value": {"name": state_name, "$type": "StateBundleElement"},
+                }
+            ],
+        }
+
     @pytest.mark.asyncio
-    async def test_list_issues_with_filters(self, issue_manager):
-        """Test list issues with state and assignee filters."""
+    async def test_list_issues_state_not_in_server_query(self, issue_manager):
+        """State must NOT be sent as a server-side query term — that made YouTrack
+        free-text match the value across summary/description/comments (#721).
+        Assignee still goes to the query."""
         issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": []}
 
-        await issue_manager.list_issues(state="Open", assignee="testuser")
+        await issue_manager.list_issues(state="In Progress", assignee="testuser", project_id="TEST")
 
-        # Verify filters were added to query (state value is brace-escaped)
-        call_args = issue_manager.issue_service.search_issues.call_args
-        query = call_args[1]["query"]
-        assert "State: {Open}" in query
+        query = issue_manager.issue_service.search_issues.call_args[1]["query"]
+        assert "State" not in query
+        assert "In Progress" not in query
         assert "Assignee: testuser" in query
 
     @pytest.mark.asyncio
-    async def test_list_issues_multiword_state_is_escaped(self, issue_manager):
-        """Regression for #721: a multi-word state must be brace-escaped so YouTrack
-        treats it as one atomic term instead of splitting the trailing word into a
-        free-text search that matches summary/description/comments."""
-        issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": []}
+    async def test_list_issues_filters_by_state_field_clientside(self, issue_manager):
+        """Regression for #721: only issues whose actual state field equals the
+        requested state are returned — not issues that merely mention the words."""
+        in_progress = self._issue_with_state("PROJ-1", "In Progress")
+        # Same words appear in the summary, but the real state is Done — must be excluded.
+        done_but_mentions = self._issue_with_state("PROJ-2", "Done", summary="working on In Progress items")
+        issue_manager.issue_service.search_issues.return_value = {
+            "status": "success",
+            "data": [in_progress, done_but_mentions],
+        }
 
-        await issue_manager.list_issues(state="In Progress", project_id="TEST")
+        result = await issue_manager.list_issues(state="In Progress", project_id="TEST")
 
-        query = issue_manager.issue_service.search_issues.call_args[1]["query"]
-        # The whole value is bound to the State attribute...
-        assert "State: {In Progress}" in query
-        # ...and there is no bare trailing "Progress" free-text term.
-        assert "State: In Progress" not in query
+        ids = [i["idReadable"] for i in result["data"]]
+        assert ids == ["PROJ-1"]
+        assert result["count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_list_issues_state_match_is_case_insensitive(self, issue_manager):
+        """State matching ignores case and surrounding whitespace."""
+        issue_manager.issue_service.search_issues.return_value = {
+            "status": "success",
+            "data": [self._issue_with_state("PROJ-1", "In Progress")],
+        }
+
+        result = await issue_manager.list_issues(state="in progress", project_id="TEST")
+
+        assert [i["idReadable"] for i in result["data"]] == ["PROJ-1"]
 
 
 class TestIssueManagerUpdate:

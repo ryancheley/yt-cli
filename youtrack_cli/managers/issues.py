@@ -645,17 +645,16 @@ class IssueManager:
         if query is None:
             query = ""
 
-        # Add state filter to query if provided
-        if state:
-            from ..utils import escape_query_value
-
-            query = f"State: {escape_query_value(state)} {query}".strip()
-
         # Add assignee filter to query if provided
         if assignee:
             query = f"Assignee: {assignee} {query}".strip()
 
-        return await self.search_issues(
+        # NOTE: state is intentionally NOT added to the server-side query. The
+        # state lives in a custom field whose name varies per project
+        # (State/Status/Stage), and a `State: <value>` query term makes YouTrack
+        # free-text match the value across summary/description/comments (#721).
+        # We filter by the issue's actual state field value below instead.
+        result = await self.search_issues(
             query=query,
             project_id=project_id,
             fields=fields,
@@ -665,6 +664,19 @@ class IssueManager:
             no_pagination=no_pagination,
             use_cached_fields=use_cached_fields,
         )
+
+        if state and result.get("status") == "success" and isinstance(result.get("data"), list):
+            wanted = state.strip().casefold()
+            result["data"] = [
+                issue for issue in result["data"] if self._get_state_field_value(issue).casefold() == wanted
+            ]
+            result["count"] = len(result["data"])
+            # ponytail: filters the fetched page only; matches beyond the page
+            # size are missed. Widen with --top / pagination if a project has more
+            # issues than one page. Server-side filtering by the discovered state
+            # field name would remove this ceiling.
+
+        return result
 
     def display_issues_table(self, issues: list[dict[str, Any]]) -> None:
         """Display issues in a simple table format."""

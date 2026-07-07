@@ -586,30 +586,6 @@ async def batch_get_resources(
     return results
 
 
-def escape_query_value(value: str) -> str:
-    """Wrap a YouTrack query filter value in curly braces.
-
-    Multi-word values must stay a single atomic term.
-    YouTrack splits on whitespace, so ``State: In Progress`` parses as
-    ``State: In`` AND a free-text term ``Progress`` (matching summary/description/
-    comments). Curly-brace escaping binds the whole value to the attribute:
-    ``State: {In Progress}``. Braces are harmless on single-word values, and an
-    already-wrapped value is left untouched.
-
-    Examples:
-        >>> escape_query_value("In Progress")
-        '{In Progress}'
-        >>> escape_query_value("Open")
-        '{Open}'
-        >>> escape_query_value("{Already Wrapped}")
-        '{Already Wrapped}'
-    """
-    stripped = value.strip()
-    if stripped.startswith("{") and stripped.endswith("}"):
-        return stripped
-    return "{" + stripped + "}"
-
-
 def optimize_fields(
     base_params: dict[str, Any] | None = None,
     fields: list[str] | None = None,
