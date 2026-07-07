@@ -20,7 +20,7 @@ from .panels import (
     create_issue_overview_panel,
 )
 from .progress import get_progress_manager
-from .utils import escape_query_value, format_timestamp
+from .utils import format_timestamp
 
 __all__ = ["IssueManager"]
 
@@ -281,7 +281,7 @@ class IssueManager:
             if project_id:
                 query_parts.append(f"project:{project_id}")
             if state:
-                query_parts.append(f"state:{escape_query_value(state)}")
+                query_parts.append(f"state:{state}")
             if assignee:
                 query_parts.append(f"assignee:{assignee}")
             if query:

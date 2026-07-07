@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.2] - 2026-07-07
+
+### Fixed
+- 🐛 `yt issues list --state 'In Progress'` now returns only issues whose state
+  actually matches. The real cause (which 0.24.1 did not fix) was that the state
+  was sent as a server-side query term, which YouTrack free-text matched across
+  summary/description/comments. State is no longer added to the server query;
+  instead the returned issues are filtered by their actual state custom-field
+  value. This works regardless of whether the field is named State, Status, or
+  Stage (matched case-insensitively via the `StateIssueCustomField` value). Note:
+  filtering applies to the fetched page — use `--top`/pagination for projects
+  with more issues than one page (#721)
+
 ## [0.24.1] - 2026-07-07
 
 ### Fixed
