@@ -18,6 +18,7 @@ from youtrack_cli.utils import (
     display_info,
     display_success,
     display_warning,
+    escape_query_value,
     format_timestamp,
     handle_error,
     make_request,
@@ -231,6 +232,22 @@ class TestOptimizeFields:
         base_params = {"query": "test"}
         result = optimize_fields(base_params)
         assert result == {"query": "test"}
+
+
+class TestEscapeQueryValue:
+    """Test escape_query_value (regression for #721)."""
+
+    def test_multiword_value_is_wrapped(self):
+        assert escape_query_value("In Progress") == "{In Progress}"
+
+    def test_single_word_value_is_wrapped(self):
+        assert escape_query_value("Open") == "{Open}"
+
+    def test_surrounding_whitespace_stripped(self):
+        assert escape_query_value("  In Progress  ") == "{In Progress}"
+
+    def test_already_wrapped_not_double_wrapped(self):
+        assert escape_query_value("{In Progress}") == "{In Progress}"
 
 
 class TestStreamLargeResponse:

@@ -172,11 +172,26 @@ class TestIssueManagerRetrieval:
 
         await issue_manager.list_issues(state="Open", assignee="testuser")
 
-        # Verify filters were added to query
+        # Verify filters were added to query (state value is brace-escaped)
         call_args = issue_manager.issue_service.search_issues.call_args
         query = call_args[1]["query"]
-        assert "State: Open" in query
+        assert "State: {Open}" in query
         assert "Assignee: testuser" in query
+
+    @pytest.mark.asyncio
+    async def test_list_issues_multiword_state_is_escaped(self, issue_manager):
+        """Regression for #721: a multi-word state must be brace-escaped so YouTrack
+        treats it as one atomic term instead of splitting the trailing word into a
+        free-text search that matches summary/description/comments."""
+        issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": []}
+
+        await issue_manager.list_issues(state="In Progress", project_id="TEST")
+
+        query = issue_manager.issue_service.search_issues.call_args[1]["query"]
+        # The whole value is bound to the State attribute...
+        assert "State: {In Progress}" in query
+        # ...and there is no bare trailing "Progress" free-text term.
+        assert "State: In Progress" not in query
 
 
 class TestIssueManagerUpdate:
