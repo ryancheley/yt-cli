@@ -57,7 +57,7 @@ def issue_manager(auth_manager):
         ]:
             setattr(manager.issue_service, method_name, AsyncMock())
 
-        for method_name in ["get_project", "get_project_custom_fields"]:
+        for method_name in ["get_project", "get_project_custom_fields", "discover_state_field"]:
             setattr(manager.project_service, method_name, AsyncMock())
 
         return manager
@@ -183,47 +183,88 @@ class TestIssueManagerRetrieval:
         }
 
     @pytest.mark.asyncio
-    async def test_list_issues_state_not_in_server_query(self, issue_manager):
-        """State must NOT be sent as a server-side query term — that made YouTrack
-        free-text match the value across summary/description/comments (#721).
-        Assignee still goes to the query."""
+    @pytest.mark.parametrize("keyword", ["open", "OPEN", "unresolved"])
+    async def test_list_issues_open_keyword_uses_unresolved_query(self, issue_manager, keyword):
+        """'open'/'unresolved' map to YouTrack's field-agnostic #Unresolved query,
+        returning all non-resolved issues regardless of the state field name."""
         issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": []}
 
-        await issue_manager.list_issues(state="In Progress", assignee="testuser", project_id="TEST")
+        await issue_manager.list_issues(state=keyword, project_id="TEST")
 
         query = issue_manager.issue_service.search_issues.call_args[1]["query"]
-        assert "State" not in query
-        assert "In Progress" not in query
-        assert "Assignee: testuser" in query
+        assert "#Unresolved" in query
+        # No field-name term and no discovery needed for the keyword path.
+        issue_manager.project_service.discover_state_field.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_list_issues_filters_by_state_field_clientside(self, issue_manager):
-        """Regression for #721: only issues whose actual state field equals the
-        requested state are returned — not issues that merely mention the words."""
+    @pytest.mark.parametrize("keyword", ["resolved", "closed"])
+    async def test_list_issues_resolved_keyword_uses_resolved_query(self, issue_manager, keyword):
+        """'resolved'/'closed' map to #Resolved."""
+        issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": []}
+
+        await issue_manager.list_issues(state=keyword, project_id="TEST")
+
+        assert "#Resolved" in issue_manager.issue_service.search_issues.call_args[1]["query"]
+
+    @pytest.mark.asyncio
+    async def test_list_issues_specific_state_filters_server_side(self, issue_manager):
+        """A specific state is filtered server-side using the project's discovered
+        state field name, brace-escaped — no client-side page filtering (#721)."""
+        issue_manager.project_service.discover_state_field.return_value = {
+            "status": "success",
+            "data": {"field_name": "Status"},
+        }
+        # Server returns exactly what the query asked for; manager must not re-filter.
+        issue_manager.issue_service.search_issues.return_value = {
+            "status": "success",
+            "data": [self._issue_with_state("PROJ-1", "In Progress")],
+        }
+
+        result = await issue_manager.list_issues(state="In Progress", project_id="TEST")
+
+        query = issue_manager.issue_service.search_issues.call_args[1]["query"]
+        assert "Status: {In Progress}" in query
+        assert [i["idReadable"] for i in result["data"]] == ["PROJ-1"]
+
+    @pytest.mark.asyncio
+    async def test_list_issues_specific_state_clientside_fallback(self, issue_manager):
+        """When the state field can't be discovered (e.g. no project), fall back to
+        filtering the fetched page by the actual state field value."""
+        issue_manager.project_service.discover_state_field.return_value = {"status": "error", "message": "nope"}
         in_progress = self._issue_with_state("PROJ-1", "In Progress")
-        # Same words appear in the summary, but the real state is Done — must be excluded.
         done_but_mentions = self._issue_with_state("PROJ-2", "Done", summary="working on In Progress items")
         issue_manager.issue_service.search_issues.return_value = {
             "status": "success",
             "data": [in_progress, done_but_mentions],
         }
 
-        result = await issue_manager.list_issues(state="In Progress", project_id="TEST")
+        result = await issue_manager.list_issues(state="in progress")  # no project_id
 
-        ids = [i["idReadable"] for i in result["data"]]
-        assert ids == ["PROJ-1"]
+        # 'In Progress' is not a state keyword, so it must not leak into the query.
+        assert "In Progress" not in issue_manager.issue_service.search_issues.call_args[1]["query"]
+        assert [i["idReadable"] for i in result["data"]] == ["PROJ-1"]
         assert result["count"] == 1
 
     @pytest.mark.asyncio
-    async def test_list_issues_state_match_is_case_insensitive(self, issue_manager):
-        """State matching ignores case and surrounding whitespace."""
+    async def test_list_issues_multiword_field_name_falls_back_to_clientside(self, issue_manager):
+        """A multi-word discovered field name (e.g. 'Workflow State') would misparse
+        in a query, so it falls back to client-side filtering."""
+        issue_manager.project_service.discover_state_field.return_value = {
+            "status": "success",
+            "data": {"field_name": "Workflow State"},
+        }
         issue_manager.issue_service.search_issues.return_value = {
             "status": "success",
-            "data": [self._issue_with_state("PROJ-1", "In Progress")],
+            "data": [
+                self._issue_with_state("PROJ-1", "In Progress", field_name="Workflow State"),
+                self._issue_with_state("PROJ-2", "Done", field_name="Workflow State"),
+            ],
         }
 
-        result = await issue_manager.list_issues(state="in progress", project_id="TEST")
+        result = await issue_manager.list_issues(state="In Progress", project_id="TEST")
 
+        query = issue_manager.issue_service.search_issues.call_args[1]["query"]
+        assert "Workflow State" not in query
         assert [i["idReadable"] for i in result["data"]] == ["PROJ-1"]
 
 

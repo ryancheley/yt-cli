@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.3] - 2026-07-08
+
+### Fixed
+- 🐛 `yt issues list --state open` now returns all non-resolved issues (and
+  `--state resolved`/`closed` returns resolved issues). `open`/`unresolved` and
+  `resolved`/`closed` are handled as YouTrack resolution queries
+  (`#Unresolved`/`#Resolved`), which are independent of the state field's name.
+  Previously `--state open` matched only a literal state named "Open" and
+  returned nothing when a project had no such state (#721)
+
+### Changed
+- ⚡ Specific `--state` values are now filtered server-side using the project's
+  discovered state field name (State/Status/Stage/…), removing the previous
+  "fetched page only" limitation. Filtering falls back to client-side when the
+  field name can't be determined (no project specified) or is multi-word (#721)
+
 ## [0.24.2] - 2026-07-07
 
 ### Fixed
