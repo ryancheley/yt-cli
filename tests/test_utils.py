@@ -20,6 +20,7 @@ from youtrack_cli.utils import (
     display_warning,
     format_timestamp,
     handle_error,
+    loads_lenient,
     make_request,
     optimize_fields,
     paginate_issues,
@@ -231,6 +232,34 @@ class TestOptimizeFields:
         base_params = {"query": "test"}
         result = optimize_fields(base_params)
         assert result == {"query": "test"}
+
+
+class TestLoadsLenient:
+    """Test lenient JSON parsing for malformed YouTrack responses."""
+
+    def test_valid_json_unaffected(self):
+        assert loads_lenient('{"description": "normal text"}') == {"description": "normal text"}
+
+    def test_valid_escapes_preserved(self):
+        result = loads_lenient(r'{"description": "quote \" tab \t unicode A newline \n backslash \\"}')
+        assert result["description"] == 'quote " tab \t unicode A newline \n backslash \\'
+
+    def test_literal_control_character_allowed(self):
+        # Raw newline inside the string (strict json.loads rejects this).
+        assert loads_lenient('{"description": "line1\nline2"}') == {"description": "line1\nline2"}
+
+    def test_invalid_backslash_escape_repaired(self):
+        # A regex written in a description: "\d+" is an invalid JSON escape.
+        assert loads_lenient(r'{"description": "match \d+ digits"}') == {"description": r"match \d+ digits"}
+
+    def test_lone_backslash_repaired(self):
+        assert loads_lenient(r'{"description": "50\% done"}') == {"description": r"50\% done"}
+
+    def test_unrecoverable_json_still_raises(self):
+        import json
+
+        with pytest.raises(json.JSONDecodeError):
+            loads_lenient('{"description": ')
 
 
 class TestStreamLargeResponse:

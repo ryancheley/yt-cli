@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.4] - 2026-07-08
+
+### Fixed
+- 🐛 `yt issues list` no longer aborts with a JSON parse error when an issue's
+  `description` (or another field) contains characters the API returns as
+  malformed JSON — literal control characters (raw newlines/tabs) or invalid
+  backslash escapes (e.g. a Windows path `C:\\…` or a regex `\\d+` serialized
+  with single backslashes). Responses are now parsed leniently: strict parsing is
+  tried first, then control characters are allowed, then stray backslashes are
+  repaired, so one bad field no longer fails the whole request
+
 ## [0.24.3] - 2026-07-08
 
 ### Fixed

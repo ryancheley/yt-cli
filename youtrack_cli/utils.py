@@ -7,6 +7,8 @@ The utilities provide consistent interfaces for API interactions, response
 handling, and user feedback with proper error handling and logging.
 """
 
+import json
+import re
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from enum import Enum
@@ -47,6 +49,36 @@ __all__ = [
 
 logger = get_logger(__name__)
 console = get_console()
+
+# Matches a valid JSON escape (kept intact) OR a lone backslash (repaired). By
+# consuming valid escapes first, a genuine "\\" pair is left untouched.
+_INVALID_JSON_ESCAPE_RE = re.compile(r'\\(["\\/bfnrtu])|\\')
+
+
+def loads_lenient(text: str) -> Any:
+    """Parse JSON, tolerating two malformations occasionally present in YouTrack
+    field values (most often issue descriptions):
+
+    1. Literal control characters inside strings (raw newlines/tabs) — allowed by
+       ``strict=False``.
+    2. Invalid backslash escapes — e.g. a Windows path ``C:\\Users`` or a regex
+       ``\\d+`` serialized with single backslashes. Any backslash that is not part
+       of a valid JSON escape sequence is doubled before re-parsing.
+
+    Strict parsing is tried first, so well-formed responses are unaffected. Raises
+    ``json.JSONDecodeError`` if the text is still unparseable after repair.
+    """
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    try:
+        return json.loads(text, strict=False)
+    except json.JSONDecodeError:
+        pass
+    repaired = _INVALID_JSON_ESCAPE_RE.sub(lambda m: m.group(0) if m.group(1) else "\\\\", text)
+    logger.warning("Response contained invalid JSON escapes; parsed after repairing backslashes")
+    return json.loads(repaired, strict=False)
 
 
 class PaginationType(Enum):
