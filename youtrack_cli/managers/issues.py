@@ -1,5 +1,6 @@
 """Issue manager for YouTrack CLI business logic."""
 
+from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,7 @@ from rich.table import Table
 from ..auth import AuthManager
 from ..console import get_console
 from ..custom_field_manager import CustomFieldManager
+from ..exceptions import YouTrackError
 from ..logging import get_logger
 from ..pagination import create_paginated_display
 from ..panels import (
@@ -667,39 +669,9 @@ class IssueManager:
             fields = get_field_selector().get_fields("issues", field_profile)
 
         # Build query from parameters
-        if query is None:
-            query = ""
-
-        # Add assignee filter to query if provided
-        if assignee:
-            query = f"Assignee: {assignee} {query}".strip()
-
-        # State handling. The state lives in a custom field whose name varies per
-        # project (State/Status/Stage/...), so we never hard-code "State:" — that
-        # made YouTrack free-text match the value everywhere (#721).
-        #   - "open"/"unresolved" and "resolved"/"closed" map to YouTrack's
-        #     resolution query (#Unresolved/#Resolved), which is field-name
-        #     agnostic (Resolved is a property of the State field's values).
-        #   - a specific state name is filtered server-side using the project's
-        #     actual state field name (discovered + cached). If we cannot discover
-        #     it (e.g. no project given), we fall back to filtering the fetched
-        #     page client-side.
-        client_side_state: str | None = None
-        if state:
-            normalized = state.strip().casefold()
-            if normalized in ("open", "unresolved"):
-                query = f"#Unresolved {query}".strip()
-            elif normalized in ("resolved", "closed"):
-                query = f"#Resolved {query}".strip()
-            else:
-                field_name = await self._discover_state_field_name(project_id)
-                # Only filter server-side for single-word field names — a
-                # multi-word attribute (e.g. "Workflow State") would misparse in
-                # the query. Those fall back to client-side filtering.
-                if field_name and " " not in field_name:
-                    query = f"{field_name}: {{{state.strip()}}} {query}".strip()
-                else:
-                    client_side_state = state
+        query, client_side_state = await self._apply_state_and_assignee_filters(
+            query, state=state, assignee=assignee, project_id=project_id
+        )
 
         result = await self.search_issues(
             query=query,
@@ -735,6 +707,98 @@ class IssueManager:
                 )
 
         return result
+
+    async def _apply_state_and_assignee_filters(
+        self, query: str | None, *, state: str | None, assignee: str | None, project_id: str | None
+    ) -> tuple[str, str | None]:
+        """Fold assignee and state filters into the server query.
+
+        Returns the query plus, when the state must be filtered client-side (its
+        field name can't be resolved for a server-side term), the casefolded state
+        value to match against each issue; otherwise None. Shared by list_issues
+        and stream_list_issues so state handling stays in one place.
+
+        State: 'open'/'unresolved' and 'resolved'/'closed' map to YouTrack's
+        field-agnostic #Unresolved/#Resolved; a specific state is added as
+        `<discovered field>: {value}` when the field name is a single word, else it
+        falls back to client-side filtering (#721, #728).
+        """
+        query = query or ""
+        if assignee:
+            query = f"Assignee: {assignee} {query}".strip()
+        client_side_state: str | None = None
+        if state:
+            normalized = state.strip().casefold()
+            if normalized in ("open", "unresolved"):
+                query = f"#Unresolved {query}".strip()
+            elif normalized in ("resolved", "closed"):
+                query = f"#Resolved {query}".strip()
+            else:
+                field_name = await self._discover_state_field_name(project_id)
+                if field_name and " " not in field_name:
+                    query = f"{field_name}: {{{state.strip()}}} {query}".strip()
+                else:
+                    client_side_state = normalized
+        return query, client_side_state
+
+    async def stream_list_issues(
+        self,
+        *,
+        project_id: str | None = None,
+        fields: str | None = None,
+        field_profile: str | None = None,
+        page_size: int = 100,
+        top: int | None = None,
+        max_results: int | None = None,
+        query: str | None = None,
+        state: str | None = None,
+        assignee: str | None = None,
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Yield issues one at a time, fetched in bounded pages, for streaming
+        (NDJSON) output.
+
+        Applies the same field/query/state filtering as list_issues but never
+        holds the whole result set in memory — each page is emitted as it arrives,
+        so a whole-project fetch streams rather than buffering (#727). Raises
+        YouTrackError if the very first page fails; a later page failure ends the
+        stream after logging (issues already yielded are kept).
+        """
+        if field_profile and not fields:
+            from ..field_selection import get_field_selector
+
+            fields = get_field_selector().get_fields("issues", field_profile)
+
+        query, client_side_state = await self._apply_state_and_assignee_filters(
+            query, state=state, assignee=assignee, project_id=project_id
+        )
+        full_query = f"project: {project_id} {query}".strip() if project_id else query
+
+        overall_limit = top if top is not None else max_results
+        per_page = page_size if page_size and page_size > 0 else 100
+        fetched = 0
+        offset = 0
+        while overall_limit is None or fetched < overall_limit:
+            this_page = per_page if overall_limit is None else min(per_page, overall_limit - fetched)
+            page_result = await self.issue_service.search_issues(
+                query=full_query, fields=fields, top=this_page, skip=offset
+            )
+            if page_result.get("status") != "success":
+                if fetched == 0:
+                    raise YouTrackError(page_result.get("message", "Failed to list issues"))
+                logger.warning("Issue streaming stopped after a failed page at skip=%d", offset)
+                return
+            page_data = page_result.get("data") or []
+            if not isinstance(page_data, list):
+                page_data = []
+            fetched += len(page_data)
+            offset += len(page_data)
+            emit = page_data
+            if client_side_state:
+                emit = [i for i in page_data if self._get_state_field_value(i).casefold() == client_side_state]
+            for issue in emit:
+                yield issue
+            if len(page_data) < this_page:
+                return
 
     async def _discover_state_field_name(self, project_id: str | None) -> str | None:
         """Resolve the project's actual state field name (State/Status/Stage/...)

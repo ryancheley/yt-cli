@@ -488,9 +488,10 @@ def create(
 )
 @click.option(
     "--format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "ndjson"]),
     default="table",
-    help="Output format",
+    help="Output format. 'ndjson' streams one JSON issue per line as pages arrive "
+    "(bounded memory, pipe-friendly for large/whole-project fetches).",
 )
 @click.option(
     "--paginated",
@@ -575,6 +576,32 @@ def list_issues(
                 output_format=format,
                 style="yellow",
             )
+
+        if format == "ndjson":
+            # Stream one JSON issue per line as pages arrive, so a large/whole-project
+            # fetch uses bounded memory and can be piped incrementally (#727).
+            import json
+
+            async def _stream_ndjson() -> int:
+                count = 0
+                async for issue in issue_manager.stream_list_issues(
+                    project_id=project_id,
+                    fields=fields,
+                    field_profile=profile,
+                    page_size=page_size,
+                    top=top,
+                    max_results=max_results,
+                    query=query,
+                    state=state,
+                    assignee=assignee,
+                ):
+                    click.echo(json.dumps(issue))
+                    count += 1
+                return count
+
+            emitted = asyncio.run(_stream_ndjson())
+            print_status(f"Streamed {emitted} issues", output_format=format, style="dim")
+            return
 
         result = asyncio.run(
             issue_manager.list_issues(

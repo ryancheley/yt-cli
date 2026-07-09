@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from youtrack_cli.auth import AuthManager
+from youtrack_cli.exceptions import YouTrackError
 from youtrack_cli.managers.issues import IssueManager
 
 
@@ -190,6 +191,37 @@ class TestIssueManagerRetrieval:
 
         assert result["count"] == 100
         assert issue_manager.issue_service.search_issues.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_stream_list_issues_yields_across_pages(self, issue_manager):
+        """#727: streaming yields issues one at a time across bounded pages without
+        buffering the whole result set."""
+        page1 = {"status": "success", "data": [{"idReadable": f"P-{i}"} for i in range(100)]}
+        page2 = {"status": "success", "data": [{"idReadable": f"P-{i}"} for i in range(100, 130)]}
+        issue_manager.issue_service.search_issues = AsyncMock(side_effect=[page1, page2])
+
+        got = [issue["idReadable"] async for issue in issue_manager.stream_list_issues(page_size=100)]
+
+        assert got == [f"P-{i}" for i in range(130)]
+        assert issue_manager.issue_service.search_issues.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_stream_list_issues_first_page_error_raises(self, issue_manager):
+        """A first-page failure raises rather than silently yielding nothing."""
+        issue_manager.issue_service.search_issues = AsyncMock(return_value={"status": "error", "message": "boom"})
+
+        with pytest.raises(YouTrackError):
+            [issue async for issue in issue_manager.stream_list_issues()]
+
+    @pytest.mark.asyncio
+    async def test_stream_list_issues_open_keyword_uses_unresolved(self, issue_manager):
+        """Streaming applies the same state handling: 'open' → #Unresolved."""
+        issue_manager.issue_service.search_issues = AsyncMock(return_value={"status": "success", "data": []})
+
+        [issue async for issue in issue_manager.stream_list_issues(state="open", project_id="TEST")]
+
+        query = issue_manager.issue_service.search_issues.call_args[1]["query"]
+        assert "#Unresolved" in query
 
     @pytest.mark.asyncio
     async def test_search_issues_error_on_first_page_surfaces(self, issue_manager):

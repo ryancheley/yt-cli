@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✨ New `compact` field profile for issues: core fields plus `description` but
   without the heavy `customFields` expansion, giving a lean `--format json`
   payload for large/whole-project fetches over constrained networks (#727)
+- ✨ New `yt issues list --format ndjson`: streams one JSON issue per line as
+  pages arrive, so a large/whole-project fetch uses bounded memory and can be
+  piped and processed incrementally (e.g. `| jq`), rather than buffering the
+  whole result set before output (#727)
 
 ## [0.24.3] - 2026-07-08
 
