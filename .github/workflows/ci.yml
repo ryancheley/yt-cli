@@ -23,10 +23,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # 3.15 is a prerelease with no prebuilt native-extension wheels
+        # (cryptography, pydantic-core, ...), so tox-uv compiles them from
+        # source and the job runs ~3x slower (~137s vs ~45s) — the long pole on
+        # every PR (issue #736). 3.14 already covers newest-stable behavior, so
+        # 3.15 is exercised by the post-merge `test-py315` job below instead.
+        # To fold it back once cp315 wheels ship: add "3.15" here and delete the
+        # `test-py315` job.
         # 3.15t (free-threaded) is omitted until cryptography ships free-threaded
         # 3.15 wheels; building from source yields an abi3 wheel that the
         # free-threaded ABI can't load. Re-add once upstream wheels exist.
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
 
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
@@ -217,3 +224,31 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       continue-on-error: true
+
+  # Post-merge early-warning for Python 3.15 (prerelease). Kept off the per-PR
+  # matrix because its source-built deps make it ~3x slower (issue #736); running
+  # it on pushes to main still surfaces 3.15-specific breakage on every merge.
+  # Remove this job (and re-add "3.15" to the test matrix) once cp315 wheels ship.
+  test-py315:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      with:
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python 3.15
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v5
+      with:
+        python-version: "3.15"
+        allow-prereleases: true
+
+    - name: Run tests with tox-uv
+      run: uvx --with tox-uv tox -e py315
