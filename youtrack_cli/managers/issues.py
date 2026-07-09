@@ -205,9 +205,13 @@ class IssueManager:
         max_results: int | None = None,
     ) -> dict[str, Any]:
         """Search issues with enhanced formatting and pagination."""
-        # Handle field_profile parameter (legacy)
+        # Resolve a field profile name (minimal/standard/full) to its actual field
+        # list. Passing the profile name straight to the REST `fields=` param made
+        # YouTrack treat it as an unknown field and return near-empty issues (#726).
         if field_profile and not fields:
-            fields = field_profile
+            from ..field_selection import get_field_selector
+
+            fields = get_field_selector().get_fields("issues", field_profile)
 
         # Build the query with project filter if specified
         full_query = query
@@ -637,9 +641,13 @@ class IssueManager:
         assignee: str | None = None,
     ) -> dict[str, Any]:
         """List issues with enhanced filtering and pagination."""
-        # Handle field_profile parameter (legacy)
+        # Resolve a field profile name (minimal/standard/full) to its actual field
+        # list rather than passing the name straight to the REST `fields=` param,
+        # which returned near-empty issues for every profile (#726).
         if field_profile and not fields:
-            fields = field_profile
+            from ..field_selection import get_field_selector
+
+            fields = get_field_selector().get_fields("issues", field_profile)
 
         # Build query from parameters
         if query is None:
@@ -690,11 +698,22 @@ class IssueManager:
         if client_side_state and result.get("status") == "success" and isinstance(result.get("data"), list):
             # Fallback path only (no project / discovery failed): filters the
             # fetched page, so matches beyond it are missed — widen with --top.
+            raw_count = len(result["data"])
             wanted = client_side_state.strip().casefold()
             result["data"] = [
                 issue for issue in result["data"] if self._get_state_field_value(issue).casefold() == wanted
             ]
             result["count"] = len(result["data"])
+            # The state field couldn't be filtered server-side, so this only saw one
+            # page. If that page looks full, later matches may be silently missed (#728).
+            limit = top or page_size
+            if raw_count >= limit:
+                logger.warning(
+                    "State filter was applied client-side to a single full page of %d issues, so matching "
+                    "issues beyond it may be missing. Pass --project-id so the state can be filtered "
+                    "server-side across all issues, or widen --top.",
+                    raw_count,
+                )
 
         return result
 

@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with single backslashes). Responses are now parsed leniently: strict parsing is
   tried first, then control characters are allowed, then stray backslashes are
   repaired, so one bad field no longer fails the whole request
+- 🐛 `yt issues list --profile {minimal,compact,standard,full}` now works. The
+  profile name was passed straight to the REST `fields=` parameter, so every
+  profile returned near-empty issues; it is now resolved to its actual field list
+  (#726)
+- 🐛 `yt issues list --state <value>` warns when it can only filter a state
+  client-side (no `--project-id`, so the state field can't be resolved
+  server-side) and the fetched page is full — previously matches beyond the page
+  were dropped with no indication. Specific states are already filtered
+  server-side when a project is given (#728)
+
+### Added
+- ✨ New `compact` field profile for issues: core fields plus `description` but
+  without the heavy `customFields` expansion, giving a lean `--format json`
+  payload for large/whole-project fetches over constrained networks (#727)
 
 ## [0.24.3] - 2026-07-08
 

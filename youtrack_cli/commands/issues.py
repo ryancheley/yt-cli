@@ -448,8 +448,8 @@ def create(
 )
 @click.option(
     "--profile",
-    type=click.Choice(["minimal", "standard", "full"]),
-    help="Field selection profile (minimal, standard, full). Standard is default.",
+    type=click.Choice(["minimal", "compact", "standard", "full"]),
+    help="Field selection profile. 'compact' is lean for JSON (core fields + description, no customFields); 'minimal' is smallest. Defaults to the standard field set.",
 )
 @click.option(
     "--top",
@@ -859,8 +859,8 @@ def delete(ctx: click.Context, issue_id: str, force: bool) -> None:
 )
 @click.option(
     "--profile",
-    type=click.Choice(["minimal", "standard", "full"]),
-    help="Field selection profile (minimal, standard, full). Standard is default.",
+    type=click.Choice(["minimal", "compact", "standard", "full"]),
+    help="Field selection profile. 'compact' is lean for JSON (core fields + description, no customFields); 'minimal' is smallest. Defaults to the standard field set.",
 )
 @click.option(
     "--format",

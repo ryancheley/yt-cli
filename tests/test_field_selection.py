@@ -67,6 +67,15 @@ class TestFieldSelector:
         assert profile.profile_name == "minimal"
         assert "id" in profile.fields
 
+    def test_compact_profile_is_lean_json(self):
+        """compact (#727) carries description + core fields but omits the heavy
+        customFields expansion that dominates large JSON payloads."""
+        fields = self.selector.get_fields("issues", "compact")
+
+        assert "summary" in fields
+        assert "description" in fields
+        assert "customFields" not in fields
+
     def test_get_profile_invalid_entity(self):
         """Test getting profile for invalid entity type."""
         profile = self.selector.get_profile("invalid", "minimal")

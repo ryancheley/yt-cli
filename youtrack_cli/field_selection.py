@@ -27,6 +27,21 @@ FIELD_PROFILES: dict[str, dict[str, list[str]]] = {
             "summary",
             "state(name,id)",
         ],
+        "compact": [
+            # Lean JSON-friendly set: core fields + description, but NO customFields
+            # expansion, which dominates payload size on large fetches (#727).
+            "id",
+            "numberInProject",
+            "summary",
+            "description",
+            "state(name,id)",
+            "priority(name,id)",
+            "type(name,id)",
+            "assignee(login,fullName,id)",
+            "project(id,name,shortName)",
+            "created",
+            "updated",
+        ],
         "standard": [
             "id",
             "numberInProject",
