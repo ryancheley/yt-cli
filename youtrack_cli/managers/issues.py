@@ -218,25 +218,42 @@ class IssueManager:
         if project_id:
             full_query = f"project: {project_id} {query}".strip()
 
-        # Use service to search issues
-        result = await self.issue_service.search_issues(
-            query=full_query,
-            fields=fields,
-            top=top,
-            skip=skip,
-        )
+        # Fetch in bounded pages so a large/whole-project result never becomes a
+        # single oversized request that a gateway can time out and kill (#727).
+        # Each request asks for at most `page_size` issues; paging stops at the
+        # overall cap (`top`/`max_results`) or when a short page signals the end.
+        overall_limit = top if top is not None else max_results
+        per_page = page_size if page_size and page_size > 0 else 100
+        collected: list[dict[str, Any]] = []
+        offset = skip or 0
+        while overall_limit is None or len(collected) < overall_limit:
+            this_page = per_page if overall_limit is None else min(per_page, overall_limit - len(collected))
+            page_result = await self.issue_service.search_issues(
+                query=full_query,
+                fields=fields,
+                top=this_page,
+                skip=offset,
+            )
+            if page_result.get("status") != "success":
+                # Nothing collected yet → surface the error. Otherwise keep the
+                # pages we already have rather than losing them to a late failure.
+                if not collected:
+                    return page_result
+                logger.warning("Issue pagination stopped after a failed page at skip=%d", offset)
+                break
+            page_data = page_result.get("data") or []
+            if not isinstance(page_data, list):
+                page_data = []
+            collected.extend(page_data)
+            offset += len(page_data)
+            if len(page_data) < this_page:
+                break  # short page → no more results
 
-        # Add count field for backward compatibility with command layer
-        if result["status"] == "success" and "data" in result:
-            issues = result["data"]
-            if isinstance(issues, list):
-                result["count"] = len(issues)
+        result: dict[str, Any] = {"status": "success", "data": collected, "count": len(collected)}
 
         # Add presentation logic for different output formats
-        if result["status"] == "success" and format_output != "json":
-            issues = result["data"]
-            if isinstance(issues, list):
-                result["formatted_output"] = self._format_issues_for_display(issues, format_output, no_pagination)
+        if format_output != "json":
+            result["formatted_output"] = self._format_issues_for_display(collected, format_output, no_pagination)
 
         return result
 
@@ -693,25 +710,27 @@ class IssueManager:
             format_output=format_output,
             no_pagination=no_pagination,
             use_cached_fields=use_cached_fields,
+            page_size=page_size,
+            max_results=max_results,
         )
 
         if client_side_state and result.get("status") == "success" and isinstance(result.get("data"), list):
-            # Fallback path only (no project / discovery failed): filters the
-            # fetched page, so matches beyond it are missed — widen with --top.
+            # Fallback path only (no project / discovery failed): state is filtered
+            # over whatever search_issues fetched. That is now the full paginated
+            # set unless capped by --top/--max-results, in which case matches beyond
+            # the cap may be missing (#728).
             raw_count = len(result["data"])
             wanted = client_side_state.strip().casefold()
             result["data"] = [
                 issue for issue in result["data"] if self._get_state_field_value(issue).casefold() == wanted
             ]
             result["count"] = len(result["data"])
-            # The state field couldn't be filtered server-side, so this only saw one
-            # page. If that page looks full, later matches may be silently missed (#728).
-            limit = top or page_size
-            if raw_count >= limit:
+            cap = top if top is not None else max_results
+            if cap is not None and raw_count >= cap:
                 logger.warning(
-                    "State filter was applied client-side to a single full page of %d issues, so matching "
-                    "issues beyond it may be missing. Pass --project-id so the state can be filtered "
-                    "server-side across all issues, or widen --top.",
+                    "State filter was applied client-side and --top/--max-results capped the fetch at %d "
+                    "issues, so matching issues beyond the cap may be missing. Pass --project-id so the "
+                    "state can be filtered server-side across all issues, or raise the cap.",
                     raw_count,
                 )
 

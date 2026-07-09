@@ -165,6 +165,41 @@ class TestIssueManagerRetrieval:
         call_args = issue_manager.issue_service.search_issues.call_args
         assert "project: TEST" in call_args[1]["query"]
 
+    @pytest.mark.asyncio
+    async def test_search_issues_paginates_large_result(self, issue_manager):
+        """#727: a large result is fetched in bounded pages (each request ≤
+        page_size) and accumulated, so no single request is oversized."""
+        page1 = {"status": "success", "data": [{"idReadable": f"P-{i}"} for i in range(100)]}
+        page2 = {"status": "success", "data": [{"idReadable": f"P-{i}"} for i in range(100, 150)]}
+        issue_manager.issue_service.search_issues = AsyncMock(side_effect=[page1, page2])
+
+        result = await issue_manager.search_issues("", page_size=100, format_output="json")
+
+        assert result["count"] == 150
+        assert issue_manager.issue_service.search_issues.call_count == 2
+        # Second request skips past the first page.
+        assert issue_manager.issue_service.search_issues.call_args_list[1].kwargs["skip"] == 100
+
+    @pytest.mark.asyncio
+    async def test_search_issues_stops_at_top_cap(self, issue_manager):
+        """#727: --top bounds the total fetched, so paging stops once the cap is met."""
+        page = {"status": "success", "data": [{"idReadable": f"P-{i}"} for i in range(100)]}
+        issue_manager.issue_service.search_issues = AsyncMock(return_value=page)
+
+        result = await issue_manager.search_issues("", top=100, page_size=100, format_output="json")
+
+        assert result["count"] == 100
+        assert issue_manager.issue_service.search_issues.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_search_issues_error_on_first_page_surfaces(self, issue_manager):
+        """A failure on the first page is returned as an error, not swallowed."""
+        issue_manager.issue_service.search_issues = AsyncMock(return_value={"status": "error", "message": "boom"})
+
+        result = await issue_manager.search_issues("", format_output="json")
+
+        assert result["status"] == "error"
+
     @staticmethod
     def _issue_with_state(issue_id, state_name, *, field_name="Status", summary="summary"):
         """Build an issue whose state lives in a StateIssueCustomField, matching
@@ -259,19 +294,33 @@ class TestIssueManagerRetrieval:
         assert "customFields" not in fields  # minimal carries no customFields
 
     @pytest.mark.asyncio
-    async def test_list_issues_clientside_fallback_warns_on_full_page(self, issue_manager):
-        """#728: when state is filtered client-side (no project) and the fetched
-        page is full, warn that matches beyond it may be missing."""
+    async def test_list_issues_clientside_fallback_warns_when_capped(self, issue_manager):
+        """#728: when state is filtered client-side (no project) and --top caps the
+        fetch, warn that matches beyond the cap may be missing."""
         issue_manager.project_service.discover_state_field.return_value = {"status": "error"}
-        # page_size default is 100 → a 100-issue page is "full".
+        # top=100 caps the fetch; a full 100-issue page means more may exist.
         data = [self._issue_with_state(f"P-{i}", "Done") for i in range(100)]
         issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": data}
 
         with patch("youtrack_cli.managers.issues.logger") as mock_logger:
-            await issue_manager.list_issues(state="In Progress")  # no project_id → fallback
+            await issue_manager.list_issues(state="In Progress", top=100)  # no project_id → fallback
 
         assert mock_logger.warning.called
         assert "client-side" in mock_logger.warning.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_list_issues_clientside_fallback_no_warning_when_uncapped(self, issue_manager):
+        """#728: with no cap, search_issues paginates the full set, so client-side
+        filtering is complete — no truncation warning."""
+        issue_manager.project_service.discover_state_field.return_value = {"status": "error"}
+        # A short page (< page_size) signals the end, so pagination stops naturally.
+        data = [self._issue_with_state(f"P-{i}", "Done") for i in range(10)]
+        issue_manager.issue_service.search_issues.return_value = {"status": "success", "data": data}
+
+        with patch("youtrack_cli.managers.issues.logger") as mock_logger:
+            await issue_manager.list_issues(state="In Progress")  # no cap
+
+        assert not mock_logger.warning.called
 
     @pytest.mark.asyncio
     async def test_list_issues_multiword_field_name_falls_back_to_clientside(self, issue_manager):
