@@ -649,11 +649,33 @@ class IssueManager:
         if assignee:
             query = f"Assignee: {assignee} {query}".strip()
 
-        # NOTE: state is intentionally NOT added to the server-side query. The
-        # state lives in a custom field whose name varies per project
-        # (State/Status/Stage), and a `State: <value>` query term makes YouTrack
-        # free-text match the value across summary/description/comments (#721).
-        # We filter by the issue's actual state field value below instead.
+        # State handling. The state lives in a custom field whose name varies per
+        # project (State/Status/Stage/...), so we never hard-code "State:" — that
+        # made YouTrack free-text match the value everywhere (#721).
+        #   - "open"/"unresolved" and "resolved"/"closed" map to YouTrack's
+        #     resolution query (#Unresolved/#Resolved), which is field-name
+        #     agnostic (Resolved is a property of the State field's values).
+        #   - a specific state name is filtered server-side using the project's
+        #     actual state field name (discovered + cached). If we cannot discover
+        #     it (e.g. no project given), we fall back to filtering the fetched
+        #     page client-side.
+        client_side_state: str | None = None
+        if state:
+            normalized = state.strip().casefold()
+            if normalized in ("open", "unresolved"):
+                query = f"#Unresolved {query}".strip()
+            elif normalized in ("resolved", "closed"):
+                query = f"#Resolved {query}".strip()
+            else:
+                field_name = await self._discover_state_field_name(project_id)
+                # Only filter server-side for single-word field names — a
+                # multi-word attribute (e.g. "Workflow State") would misparse in
+                # the query. Those fall back to client-side filtering.
+                if field_name and " " not in field_name:
+                    query = f"{field_name}: {{{state.strip()}}} {query}".strip()
+                else:
+                    client_side_state = state
+
         result = await self.search_issues(
             query=query,
             project_id=project_id,
@@ -665,18 +687,31 @@ class IssueManager:
             use_cached_fields=use_cached_fields,
         )
 
-        if state and result.get("status") == "success" and isinstance(result.get("data"), list):
-            wanted = state.strip().casefold()
+        if client_side_state and result.get("status") == "success" and isinstance(result.get("data"), list):
+            # Fallback path only (no project / discovery failed): filters the
+            # fetched page, so matches beyond it are missed — widen with --top.
+            wanted = client_side_state.strip().casefold()
             result["data"] = [
                 issue for issue in result["data"] if self._get_state_field_value(issue).casefold() == wanted
             ]
             result["count"] = len(result["data"])
-            # ponytail: filters the fetched page only; matches beyond the page
-            # size are missed. Widen with --top / pagination if a project has more
-            # issues than one page. Server-side filtering by the discovered state
-            # field name would remove this ceiling.
 
         return result
+
+    async def _discover_state_field_name(self, project_id: str | None) -> str | None:
+        """Resolve the project's actual state field name (State/Status/Stage/...)
+        for building a server-side state filter. Returns None when it cannot be
+        determined — e.g. no project was given, or discovery failed."""
+        if not project_id:
+            return None
+        try:
+            result = await self.project_service.discover_state_field(project_id)
+        except Exception:
+            return None
+        if result.get("status") == "success":
+            name = result.get("data", {}).get("field_name")
+            return name or None
+        return None
 
     def display_issues_table(self, issues: list[dict[str, Any]]) -> None:
         """Display issues in a simple table format."""

@@ -432,7 +432,9 @@ def create(
 @click.option(
     "--state",
     "-s",
-    help="Filter by issue state",
+    help="Filter by issue state. Use a state name (e.g. 'In Progress'), or the "
+    "keywords 'open'/'unresolved' for all non-resolved issues and "
+    "'resolved'/'closed' for resolved issues.",
 )
 @click.option(
     "--assignee",
