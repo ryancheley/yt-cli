@@ -250,7 +250,7 @@ def get_error_console() -> Console:
 
 #: Output formats that are intended to be consumed by other programs. Status and
 #: progress messages must not be written to stdout for these formats.
-MACHINE_READABLE_FORMATS = frozenset({"json", "csv"})
+MACHINE_READABLE_FORMATS = frozenset({"json", "csv", "ndjson"})
 
 
 def print_status(message: str, *, output_format: str | None = None, style: str = "blue") -> None:
