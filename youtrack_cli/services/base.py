@@ -1,5 +1,6 @@
 """Base service class for YouTrack API communication."""
 
+import json
 from typing import Any
 
 import httpx
@@ -49,7 +50,16 @@ class BaseService:
             if "application/json" not in content_type:
                 raise ValueError(f"Response is not JSON. Content-Type: {content_type}")
 
-            return response.json()
+            try:
+                return response.json()
+            except json.JSONDecodeError:
+                # YouTrack occasionally returns field values (notably issue
+                # descriptions) with literal control characters or improperly
+                # escaped backslashes, which strict parsing rejects. Fall back to
+                # a lenient parse so one bad description doesn't abort the request.
+                from ..utils import loads_lenient
+
+                return loads_lenient(response.text)
         except Exception as e:
             # Try to provide more context about the error
             status_code = response.status_code

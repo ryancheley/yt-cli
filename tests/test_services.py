@@ -63,6 +63,21 @@ class TestBaseService:
         with pytest.raises(ValueError, match="Response is not JSON"):
             base_service._parse_json_response(mock_response)
 
+    def test_parse_json_response_recovers_from_invalid_escape(self, base_service):
+        """A malformed description (invalid backslash escape) must not abort the
+        request — the parser falls back to a lenient parse (#721 follow-up)."""
+        import json
+
+        mock_response = Mock()
+        mock_response.headers = {"content-type": "application/json"}
+        # A regex written in the description: "\d+" is an invalid JSON escape, so
+        # strict response.json() raises — mirror that with a real strict parse.
+        mock_response.text = r'{"description": "match \d+ digits"}'
+        mock_response.json.side_effect = lambda: json.loads(mock_response.text)
+
+        result = base_service._parse_json_response(mock_response)
+        assert result == {"description": r"match \d+ digits"}
+
 
 class TestIssueService:
     """Test cases for IssueService."""
