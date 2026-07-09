@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server-side) and the fetched page is full — previously matches beyond the page
   were dropped with no indication. Specific states are already filtered
   server-side when a project is given (#728)
+- 🐛 `yt issues list` (and `search`) no longer issue a single unbounded request
+  for large/whole-project fetches, which could exceed a gateway's per-request
+  time limit and be killed (caller saw 0 issues, no error). Results are now
+  fetched in bounded pages (≤ `--page-size`, default 100) and accumulated, so
+  each request stays small; `--top`/`--max-results` cap the total (#727)
 
 ### Added
 - ✨ New `compact` field profile for issues: core fields plus `description` but
