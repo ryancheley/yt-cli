@@ -56,13 +56,15 @@ _INVALID_JSON_ESCAPE_RE = re.compile(r'\\(["\\/bfnrtu])|\\')
 
 
 def loads_lenient(text: str) -> Any:
-    """Parse JSON, tolerating two malformations occasionally present in YouTrack
-    field values (most often issue descriptions):
+    r"""Parse JSON, tolerating malformations occasionally present in YouTrack values.
+
+    Handles two malformations most often seen in YouTrack field values (issue
+    descriptions especially):
 
     1. Literal control characters inside strings (raw newlines/tabs) — allowed by
        ``strict=False``.
-    2. Invalid backslash escapes — e.g. a Windows path ``C:\\Users`` or a regex
-       ``\\d+`` serialized with single backslashes. Any backslash that is not part
+    2. Invalid backslash escapes — e.g. a Windows path ``C:\Users`` or a regex
+       ``\d+`` serialized with single backslashes. Any backslash that is not part
        of a valid JSON escape sequence is doubled before re-parsing.
 
     Strict parsing is tried first, so well-formed responses are unaffected. Raises

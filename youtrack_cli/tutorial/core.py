@@ -1,7 +1,5 @@
 """Core tutorial engine and base classes."""
 
-import asyncio
-import asyncio.subprocess
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -9,7 +7,6 @@ from dataclasses import dataclass
 from rich import box
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
-from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
@@ -353,49 +350,6 @@ class TutorialEngine:
         )
         self.console.print("\n")
         self.console.print(completion_panel)
-
-    async def _execute_command(self, command: str) -> None:
-        """Execute a command and display its output.
-
-        Args:
-            command: The command to execute.
-        """
-        self.console.print(f"\n[blue]⚡ Executing command:[/blue] [green]{command}[/green]")
-
-        try:
-            # Show the command in a syntax panel
-            syntax = Syntax(command, "bash", theme="monokai", line_numbers=False)
-            self.console.print(Panel(syntax, title="Command", border_style="blue"))
-
-            # Execute the command
-            process = await asyncio.create_subprocess_shell(
-                command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, shell=True
-            )
-
-            stdout, stderr = await process.communicate()
-
-            # Display output
-            if stdout:
-                output_text = stdout.decode().strip()
-                if output_text:
-                    self.console.print(
-                        Panel(output_text, title="[green]Output[/green]", border_style="green", expand=False)
-                    )
-
-            if stderr:
-                error_text = stderr.decode().strip()
-                if error_text:
-                    self.console.print(
-                        Panel(error_text, title="[red]Error Output[/red]", border_style="red", expand=False)
-                    )
-
-            if process.returncode == 0:
-                self.console.print("[green]✓ Command executed successfully![/green]\n")
-            else:
-                self.console.print(f"[red]✗ Command failed with exit code {process.returncode}[/red]\n")
-
-        except Exception as e:
-            self.console.print(f"[red]✗ Failed to execute command: {e}[/red]\n")
 
     def display_welcome(self) -> None:
         """Display welcome message for tutorial system."""

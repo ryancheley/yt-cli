@@ -15,6 +15,7 @@ Example:
 import os
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from dotenv import load_dotenv
@@ -22,11 +23,30 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .client import reset_client_manager_sync
 from .config import ConfigManager
-from .console import get_console
+from .console import get_console, get_error_console
 from .models import CredentialVerificationResult
 from .security import CredentialManager, SecurityConfig, TokenManager
 
-__all__ = ["AuthConfig", "AuthManager"]
+__all__ = ["AuthConfig", "AuthManager", "warn_if_insecure_url"]
+
+
+def warn_if_insecure_url(base_url: str) -> None:
+    """Warn (to stderr) when a base URL would send the token over cleartext HTTP.
+
+    The YouTrack instance URL determines whether credentials travel encrypted.
+    An ``http://`` scheme means the API token is transmitted in cleartext and is
+    capturable by a network (MITM) attacker. This is warn-only: the caller still
+    proceeds, but the transmission is no longer silent (see issue #741).
+
+    Args:
+        base_url: The configured YouTrack instance URL.
+    """
+    if urlparse(base_url).scheme == "http":
+        get_error_console().print(
+            "[yellow]⚠ Insecure connection: the base URL uses http://, so your API "
+            "token will be sent in cleartext and can be intercepted. Use https:// "
+            "if your YouTrack instance supports it.[/yellow]"
+        )
 
 
 class AuthConfig(BaseModel):
@@ -388,6 +408,9 @@ class AuthManager:
         Raises:
             httpx.HTTPError: If request fails
         """
+        # Warn before the token leaves the process over a cleartext connection.
+        warn_if_insecure_url(base_url)
+
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
 
         # Configure SSL verification

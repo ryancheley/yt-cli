@@ -1392,9 +1392,17 @@ def download(ctx: click.Context, article_id: str, attachment_id: str, output: st
 
             # Determine output path
             if output:
+                # User-supplied path is their own trusted choice.
                 output_path = Path(output)
             else:
-                output_path = Path(filename)
+                # The filename comes from the server and is untrusted: strip any
+                # directory components so a hostile name (../../x, /etc/x) cannot
+                # escape the working directory. Fall back to a safe default when
+                # the basename is empty or a traversal token.
+                safe_name = Path(filename).name
+                if not safe_name or safe_name in (".", ".."):
+                    safe_name = f"attachment_{attachment_id}"
+                output_path = Path(safe_name)
 
             # Check if file exists and handle overwrite
             if output_path.exists() and not overwrite:

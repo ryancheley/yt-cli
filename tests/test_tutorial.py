@@ -306,27 +306,9 @@ class TestTutorialCommandExecution:
 
         assert step.command_example == "echo 'hello world'"
 
-    @pytest.mark.asyncio
-    async def test_command_execution_success(self):
-        """Test successful command execution."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            tracker = ProgressTracker(config_dir=temp_dir)
-            engine = TutorialEngine(tracker)
-
-            # Test simple echo command
-            await engine._execute_command("echo 'test success'")
-            # If no exception is raised, the test passes
-
-    @pytest.mark.asyncio
-    async def test_command_execution_failure(self):
-        """Test command execution with failure."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            tracker = ProgressTracker(config_dir=temp_dir)
-            engine = TutorialEngine(tracker)
-
-            # Test command that should fail
-            await engine._execute_command("nonexistent_command_that_should_fail")
-            # If no exception is raised, the test passes (failure is handled gracefully)
+    # NOTE: tests for TutorialEngine._execute_command were removed with that dead
+    # shell=True method (#742). Live command execution runs through
+    # ClickCommandExecutor (no shell); see tests/test_security_fixes.py.
 
 
 class TestTutorialEngineDisplay:
