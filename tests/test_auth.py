@@ -293,3 +293,54 @@ class TestAuthManager:
         assert "YOUTRACK_VERIFY_SSL" not in config_values
         assert "YOUTRACK_API_KEY" not in config_values
         assert config_values.get("OTHER_CONFIG") == "should_remain"
+
+
+@pytest.mark.unit
+class TestCredentialsStoredButUnreadable:
+    """Issue #746: distinguish 'no credentials' from 'stored but unreadable'.
+
+    After an upgrade/move relocates the CLI binary, the OS keychain can deny the
+    new binary access to the saved token, so load_credentials() returns None even
+    though a keyring-backed login is recorded in the config file.
+    """
+
+    def _manager(self, tmp_path, env_lines):
+        from youtrack_cli.security import SecurityConfig
+
+        cfg = tmp_path / ".env"
+        cfg.write_text("\n".join(env_lines) + "\n")
+        return AuthManager(str(cfg), security_config=SecurityConfig(enable_credential_encryption=True))
+
+    def test_flags_placeholder_with_unreadable_token(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("YOUTRACK_TOKEN", raising=False)
+        mgr = self._manager(
+            tmp_path,
+            ["YOUTRACK_BASE_URL=https://yt.example.com", "YOUTRACK_API_KEY=[Stored in keyring]"],
+        )
+        # Keyring cannot return the token (simulates the post-upgrade ACL denial).
+        mgr.credential_manager.retrieve_credential = MagicMock(return_value=None)
+        assert mgr.load_credentials() is None
+        assert mgr.credentials_stored_but_unreadable() is True
+
+    def test_not_flagged_when_token_is_readable(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("YOUTRACK_TOKEN", raising=False)
+        mgr = self._manager(
+            tmp_path,
+            ["YOUTRACK_BASE_URL=https://yt.example.com", "YOUTRACK_API_KEY=[Stored in keyring]"],
+        )
+        stored = {
+            "youtrack_base_url": "https://yt.example.com",
+            "youtrack_token": "perm:REAL-TOKEN",
+            "youtrack_username": "ryan",
+        }
+        mgr.credential_manager.retrieve_credential = MagicMock(side_effect=lambda key: stored.get(key))
+        assert mgr.load_credentials() is not None
+        assert mgr.credentials_stored_but_unreadable() is False
+
+    def test_not_flagged_when_nothing_configured(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("YOUTRACK_TOKEN", raising=False)
+        monkeypatch.delenv("YOUTRACK_BASE_URL", raising=False)
+        mgr = self._manager(tmp_path, ["# no credentials configured"])
+        mgr.credential_manager.retrieve_credential = MagicMock(return_value=None)
+        assert mgr.load_credentials() is None
+        assert mgr.credentials_stored_but_unreadable() is False

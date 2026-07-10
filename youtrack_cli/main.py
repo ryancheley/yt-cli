@@ -1398,6 +1398,18 @@ def status(ctx: click.Context) -> None:
     try:
         credentials = auth_manager.load_credentials()
         if not credentials:
+            if auth_manager.credentials_stored_but_unreadable():
+                console.print(
+                    "⚠ Credentials are stored in the system keyring but can't be read.",
+                    style="yellow",
+                )
+                console.print(
+                    "This can happen after upgrading or moving the CLI — the OS keychain "
+                    "may no longer grant the new binary access to the saved token.",
+                    style="yellow",
+                )
+                console.print("Run 'yt auth login' to re-store your credentials.", style="blue")
+                return
             format_and_print_error(CommonErrors.no_credentials())
             console.print("Run 'yt auth login' to authenticate first.", style="blue")
             return
