@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.5] - 2026-07-09
+
+### Security
+- 🔒 `yt articles attach download` now sanitizes the server-supplied attachment
+  filename: directory components are stripped so a hostile filename
+  (`../../…` or an absolute path) can no longer write outside the working
+  directory. Explicit `--output` paths are unchanged (#740)
+- 🔒 Authenticating against an insecure `http://` base URL now prints a cleartext
+  warning before the API token is sent, so credentials are never transmitted
+  over cleartext silently. Warn-only: the request still proceeds, so
+  `http://localhost` and on-prem plain-HTTP instances keep working (#741)
+- 🔒 The interactive tutorial no longer executes example commands through a
+  system shell (`shell=True`); commands run via a parsed argument list, so shell
+  metacharacters cannot spawn secondary processes. A dead shell-executing code
+  path was removed (#742)
+- 🔒 Added a `SECURITY.md` vulnerability disclosure policy (#743)
+
+### Changed
+- ⚡ CI: Python 3.15 (prerelease) no longer runs on every pull request; it runs
+  post-merge on `main` instead, cutting ~1.5 min off each PR's critical path
+  while retaining 3.15 early-warning coverage (#736)
+
 ## [0.24.4] - 2026-07-08
 
 ### Fixed
