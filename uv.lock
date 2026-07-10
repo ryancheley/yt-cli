@@ -1992,7 +1992,7 @@ wheels = [
 
 [[package]]
 name = "youtrack-cli"
-version = "0.24.5"
+version = "0.24.6"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.6] - 2026-07-09
+
+### Fixed
+- 🩹 `yt auth status` now distinguishes "no credentials" from "credentials
+  stored but unreadable". When a keyring-backed login is on record
+  (`YOUTRACK_API_KEY=[Stored in keyring]` + base URL) but the token can no longer
+  be read from the system keyring — e.g. after an upgrade or move relocated the
+  CLI binary and the OS keychain stopped granting the new binary access — it now
+  says the credentials are stored but unreadable and to run `yt auth login` to
+  re-store them, instead of the misleading "No authentication credentials found"
+  (#746)
+
 ## [0.24.5] - 2026-07-09
 
 ### Security
