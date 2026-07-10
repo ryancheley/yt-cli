@@ -177,9 +177,15 @@ class ClickCommandExecutor:
             if hasattr(self.config_manager, "get_env_vars"):
                 env.update(self.config_manager.get_env_vars())
 
-            # Execute the command
-            process = await asyncio.create_subprocess_shell(
-                command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, shell=True, env=env
+            # Execute the command WITHOUT a shell: parse into an argv list and
+            # invoke the `yt` entrypoint directly. This makes shell
+            # metacharacters (`;`, `&&`, `$(...)`, backticks) inert, so the
+            # command string can never spawn a secondary process. The exec is the
+            # security boundary here — `is_command_allowed()` remains only a
+            # tutorial-scope UX filter, not the safety mechanism (issue #742).
+            args = self.parse_command(command)
+            process = await asyncio.create_subprocess_exec(
+                "yt", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env
             )
 
             stdout, stderr = await process.communicate()

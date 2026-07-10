@@ -76,7 +76,10 @@ repos:
       - id: ty
         name: Type checking with ty
         description: Static type checking for Python code
-        entry: uv run ty check --ignore call-non-callable --ignore unresolved-attribute --ignore invalid-assignment --ignore invalid-argument-type --ignore unresolved-import youtrack_cli
+        # Pin ty to the same version the tox `type` gate uses so local pre-commit
+        # matches CI. Without the pin, `uv run` picks up whatever ty is in the
+        # venv (a newer release), which flags pre-existing warnings CI does not.
+        entry: uv run --with ty==0.0.1a14 ty check --ignore call-non-callable --ignore unresolved-attribute --ignore invalid-assignment --ignore invalid-argument-type --ignore unresolved-import --ignore invalid-method-override youtrack_cli
         language: system
         types: [python]
         exclude: ^tests/
