@@ -18,7 +18,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
 from .client import reset_client_manager_sync
@@ -255,6 +255,27 @@ class AuthManager:
             return config
         except ValidationError:
             return None
+
+    def credentials_stored_but_unreadable(self) -> bool:
+        """Report whether keyring-backed credentials exist on record but can't be read.
+
+        Distinguishes "never logged in" from "logged in previously, but the token
+        is no longer readable". The config file records a keyring-backed login as
+        ``YOUTRACK_API_KEY=[Stored in keyring]`` alongside the base URL, while the
+        real token lives in the system keyring. If that placeholder is present but
+        :meth:`load_credentials` returns ``None``, the keyring entry has become
+        unreadable — e.g. after an upgrade or move relocated the CLI binary and the
+        OS keychain no longer grants the new binary access. Re-running
+        ``yt auth login`` re-stores the credential and fixes it.
+
+        Returns:
+            True if a keyring-backed credential is on record but currently
+            unreadable; False otherwise (including when credentials load fine).
+        """
+        if self.load_credentials() is not None:
+            return False
+        values = dotenv_values(self.config_path)
+        return bool(values.get("YOUTRACK_BASE_URL")) and values.get("YOUTRACK_API_KEY") == "[Stored in keyring]"
 
     def clear_credentials(self) -> None:
         """Clear saved authentication credentials from both keyring and file."""
