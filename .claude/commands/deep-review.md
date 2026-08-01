@@ -19,6 +19,7 @@ helper to `scratch/walk_cli.py` and run it, capturing the tree to
 ```python
 #!/usr/bin/env python3
 """Recursively walk the yt CLI command tree via --help and dump JSON."""
+
 import json, re, subprocess
 
 
@@ -35,11 +36,14 @@ def parse_help(text):
     for line in text.split("\n"):
         s = line.strip()
         if s == "Commands:":
-            section = "commands"; continue
+            section = "commands"
+            continue
         if s == "Options:":
-            section = "options"; continue
+            section = "options"
+            continue
         if s and not line.startswith(" ") and s.endswith(":"):
-            section = None; continue
+            section = None
+            continue
         if section == "commands" and line.startswith("  ") and s:
             parts = s.split(None, 1)
             subcommands[parts[0]] = parts[1] if len(parts) > 1 else ""
@@ -50,8 +54,7 @@ def parse_help(text):
 
 def walk(path):
     subs, opts = parse_help(help_for(path))
-    return {"options": opts,
-            "subcommands": {s: walk(path + [s]) for s in subs}}
+    return {"options": opts, "subcommands": {s: walk(path + [s]) for s in subs}}
 
 
 if __name__ == "__main__":
