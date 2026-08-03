@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.7] - 2026-08-03
+
+### Fixed
+- 🐛 `--format json` output no longer silently strips `[bracket]` content from
+  field values. Rich's `console.print()` was interpreting brackets as markup
+  tags and discarding them; all 20 JSON output call sites across `issues`,
+  `users`, `projects`, `articles`, and `main` now use `click.echo(json.dumps(…))`
+  which writes directly to stdout with no markup processing (#756)
+
 ## [0.24.6] - 2026-07-09
 
 ### Fixed
