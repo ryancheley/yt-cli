@@ -31,7 +31,6 @@ repos:
       - id: check-json
         name: Check JSON syntax
         description: Validates JSON file syntax
-        args: [--autofix]
       - id: check-xml
         name: Check XML syntax
         description: Validates XML file syntax

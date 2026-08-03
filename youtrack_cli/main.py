@@ -413,7 +413,7 @@ def audit_main(ctx: click.Context, limit: int, output_format: str) -> None:
             import json
 
             audit_data = [entry.model_dump(mode="json") for entry in entries]
-            console.print(json.dumps(audit_data, indent=2, default=str))
+            click.echo(json.dumps(audit_data, indent=2, default=str))
         else:
             from rich.table import Table
 
@@ -2053,7 +2053,7 @@ def audit(ctx: click.Context, limit: int, output_format: str) -> None:
             import json
 
             audit_data = [entry.model_dump(mode="json") for entry in entries]
-            console.print(json.dumps(audit_data, indent=2, default=str))
+            click.echo(json.dumps(audit_data, indent=2, default=str))
         else:
             from rich.table import Table
 

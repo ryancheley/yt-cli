@@ -213,7 +213,7 @@ def projects_list(
             else:
                 import json
 
-                console.print(json.dumps(projects, indent=2))
+                click.echo(json.dumps(projects, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list projects")
@@ -277,7 +277,7 @@ def projects_show(
             else:
                 import json
 
-                console.print(json.dumps(project, indent=2))
+                click.echo(json.dumps(project, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to get project details")
@@ -570,7 +570,7 @@ def fields_command(
             else:
                 import json
 
-                console.print(json.dumps(custom_fields, indent=2))
+                click.echo(json.dumps(custom_fields, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list custom fields")

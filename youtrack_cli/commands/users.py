@@ -219,7 +219,7 @@ def list_users(
             else:
                 import json
 
-                console.print(json.dumps(users, indent=2))
+                click.echo(json.dumps(users, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list users")
@@ -532,7 +532,7 @@ def users_groups(ctx: click.Context, user_id: str, format: str) -> None:
             else:
                 import json
 
-                console.print(json.dumps(groups, indent=2))
+                click.echo(json.dumps(groups, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to get user groups")
@@ -584,7 +584,7 @@ def users_roles(ctx: click.Context, user_id: str, format: str) -> None:
             else:
                 import json
 
-                console.print(json.dumps(roles, indent=2))
+                click.echo(json.dumps(roles, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to get user roles")
@@ -675,7 +675,7 @@ def users_teams(ctx: click.Context, user_id: str, format: str) -> None:
             else:
                 import json
 
-                console.print(json.dumps(teams, indent=2))
+                click.echo(json.dumps(teams, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to get user teams")

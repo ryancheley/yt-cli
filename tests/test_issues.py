@@ -1398,6 +1398,50 @@ class TestIssuesCLI:
         # The actual data is written to stdout.
         assert "PROJ-123" in result.stdout
 
+    def test_issues_list_json_output_is_valid_json(self):
+        """`issues list --format json` must preserve [bracket] content verbatim (issue #756).
+
+        Regression guard: console.print(json.dumps(...)) passes the JSON string
+        through Rich's markup parser. Rich interprets [tag] patterns as markup and
+        silently strips them from the output — so "[bug] fix login" becomes
+        " fix login" in the JSON. click.echo() bypasses Rich and preserves content.
+        """
+        import json as json_mod
+
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+
+        # Summaries with square-bracket prefixes — common in real YouTrack data.
+        # Rich strips "[bug]" and "[feature]" as unrecognised markup tags.
+        mock_data = [
+            {"id": "PROJ-1", "summary": "[bug] fix login"},
+            {"id": "PROJ-2", "summary": "[feature] dark mode"},
+        ]
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {
+                "status": "success",
+                "data": mock_data,
+                "count": 2,
+            }
+            result = runner.invoke(main, ["issues", "list", "-p", "PROJ", "--format", "json"])
+
+        assert result.exit_code == 0, f"Command failed: {result.output}"
+        # Locate the JSON array in the output. Status messages ("🔍 Fetching…")
+        # may appear before it when stderr is mixed; find the start of the array.
+        output = result.output
+        json_start = output.find("[\n")
+        assert json_start != -1, f"No JSON array in output: {repr(output[:500])}"
+        parsed = json_mod.loads(output[json_start:])
+        assert isinstance(parsed, list)
+        assert len(parsed) == 2
+        # Square-bracket content must be preserved verbatim — not stripped by Rich.
+        assert parsed[0]["summary"] == "[bug] fix login", (
+            f"Content corrupted — Rich likely stripped markup. Got: {repr(parsed[0]['summary'])}"
+        )
+        assert parsed[1]["summary"] == "[feature] dark mode"
+
     def test_issues_update_command(self):
         """Test the issues update CLI command."""
         from youtrack_cli.main import main
