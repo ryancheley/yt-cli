@@ -676,7 +676,7 @@ def list_articles(
             else:
                 import json
 
-                console.print(json.dumps(articles, indent=2))
+                click.echo(json.dumps(articles, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list articles")
@@ -818,7 +818,7 @@ def search(
             else:
                 import json
 
-                console.print(json.dumps(articles, indent=2))
+                click.echo(json.dumps(articles, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to search articles")
@@ -879,7 +879,7 @@ def draft(
             else:
                 import json
 
-                console.print(json.dumps(draft_articles, indent=2))
+                click.echo(json.dumps(draft_articles, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list draft articles")
@@ -1241,7 +1241,7 @@ def list_comments(
             else:
                 import json
 
-                console.print(json.dumps(comments, indent=2))
+                click.echo(json.dumps(comments, indent=2))
 
         else:
             console.print(f"❌ {result['message']}", style="red")
@@ -1488,7 +1488,7 @@ def list_attachments(
             else:
                 import json
 
-                console.print(json.dumps(attachments, indent=2))
+                click.echo(json.dumps(attachments, indent=2))
 
         else:
             console.print(f"❌ {result['message']}", style="red")

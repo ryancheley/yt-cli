@@ -653,7 +653,7 @@ def list_issues(
             else:
                 import json
 
-                console.print(json.dumps(issues, indent=2))
+                click.echo(json.dumps(issues, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list issues")
@@ -966,7 +966,7 @@ def search(
             else:
                 import json
 
-                console.print(json.dumps(issues, indent=2))
+                click.echo(json.dumps(issues, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to search issues")
@@ -1361,7 +1361,7 @@ def list_issue_comments(
             else:
                 import json
 
-                console.print(json.dumps(comments, indent=2))
+                click.echo(json.dumps(comments, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list comments")
@@ -1559,7 +1559,7 @@ def list_attachments(
             else:
                 import json
 
-                console.print(json.dumps(attachments, indent=2))
+                click.echo(json.dumps(attachments, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list attachments")
@@ -1679,7 +1679,7 @@ def list_links(
             else:
                 import json
 
-                console.print(json.dumps(links, indent=2))
+                click.echo(json.dumps(links, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list links")
@@ -1761,7 +1761,7 @@ def types(ctx: click.Context, format: str) -> None:
             else:
                 import json
 
-                console.print(json.dumps(link_types, indent=2))
+                click.echo(json.dumps(link_types, indent=2))
         else:
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list link types")
