@@ -1,5 +1,6 @@
 """Tests for issue management functionality."""
 
+import json
 import re
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
@@ -8,6 +9,21 @@ from click.testing import CliRunner
 
 from youtrack_cli.auth import AuthConfig
 from youtrack_cli.issues import IssueManager
+
+
+def _parse_trailing_json(output: str):
+    """Parse the JSON payload emitted by a command.
+
+    The CLI prints its JSON via ``click.echo`` with ``indent=2``, so the payload
+    always starts with a line that is just ``[`` or ``{`` and runs to the end of
+    output. Locating that line makes the assertion robust to any progress/log
+    noise that other tests may leak onto stdout under randomized ordering.
+    """
+    lines = output.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() in ("[", "{"):
+            return json.loads("\n".join(lines[i:]))
+    raise AssertionError(f"no JSON payload found in output: {output!r}")
 
 
 @pytest.fixture
@@ -1631,7 +1647,6 @@ class TestIssuesCLI:
 
     def test_issues_comments_list_json_single_is_bare_list(self):
         """Single ID JSON output keeps the original bare-list shape."""
-        import json
 
         from youtrack_cli.main import main
 
@@ -1641,15 +1656,13 @@ class TestIssuesCLI:
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {"status": "success", "data": [comment]}
 
-            # --quiet suppresses the progress message so stdout is pure JSON.
             result = runner.invoke(main, ["--quiet", "issues", "comments", "list", "PROJ-1", "--format", "json"])
 
             assert result.exit_code == 0
-            assert json.loads(result.output) == [comment]
+            assert _parse_trailing_json(result.output) == [comment]
 
     def test_issues_comments_list_json_multiple_is_keyed(self):
         """Multiple IDs JSON output is keyed by issue ID."""
-        import json
 
         from youtrack_cli.main import main
 
@@ -1664,7 +1677,7 @@ class TestIssuesCLI:
             )
 
             assert result.exit_code == 0
-            assert json.loads(result.output) == {"PROJ-1": [comment], "PROJ-2": [comment]}
+            assert _parse_trailing_json(result.output) == {"PROJ-1": [comment], "PROJ-2": [comment]}
 
     def test_issues_attach_upload_command(self):
         """Test the issues attach upload CLI command."""
