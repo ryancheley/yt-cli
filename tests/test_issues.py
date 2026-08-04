@@ -1679,6 +1679,39 @@ class TestIssuesCLI:
             assert result.exit_code == 0
             assert _parse_trailing_json(result.output) == {"PROJ-1": [comment], "PROJ-2": [comment]}
 
+    def test_issues_comments_list_query_filters_output(self):
+        """--query filters the fetched comments before display."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+        keep = {"id": "1", "text": "hello @ryan", "created": 1772323200000, "author": {"login": "ryan"}}
+        drop = {"id": "2", "text": "no mention", "created": 1772323200000, "author": {"login": "bob"}}
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {"status": "success", "data": [keep, drop]}
+
+            result = runner.invoke(
+                main, ["--quiet", "issues", "comments", "list", "PROJ-1", "--query", "@ryan", "--format", "json"]
+            )
+
+            assert result.exit_code == 0
+            assert _parse_trailing_json(result.output) == [keep]
+
+    def test_issues_comments_list_invalid_query_errors(self):
+        """An unparseable --query produces a clear error."""
+        from youtrack_cli.main import main
+
+        runner = CliRunner()
+        comment = {"id": "1", "text": "hi", "created": 1772323200000, "author": {"login": "ryan"}}
+
+        with patch("youtrack_cli.main.asyncio.run") as mock_run:
+            mock_run.return_value = {"status": "success", "data": [comment]}
+
+            result = runner.invoke(main, ["issues", "comments", "list", "PROJ-1", "--query", "author: bob"])
+
+            assert result.exit_code != 0
+            assert "Invalid query term" in result.output
+
     def test_issues_attach_upload_command(self):
         """Test the issues attach upload CLI command."""
         from youtrack_cli.main import main
