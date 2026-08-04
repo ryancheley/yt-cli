@@ -1635,19 +1635,17 @@ class TestIssuesCLI:
 
         from youtrack_cli.main import main
 
-        try:
-            runner = CliRunner(mix_stderr=False)
-        except TypeError:
-            runner = CliRunner()
+        runner = CliRunner()
         comment = {"id": "1-1", "text": "hi", "created": 1767225600000, "author": {"login": "ryan"}}
 
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {"status": "success", "data": [comment]}
 
-            result = runner.invoke(main, ["issues", "comments", "list", "PROJ-1", "--format", "json"])
+            # --quiet suppresses the progress message so stdout is pure JSON.
+            result = runner.invoke(main, ["--quiet", "issues", "comments", "list", "PROJ-1", "--format", "json"])
 
             assert result.exit_code == 0
-            assert json.loads(result.stdout) == [comment]
+            assert json.loads(result.output) == [comment]
 
     def test_issues_comments_list_json_multiple_is_keyed(self):
         """Multiple IDs JSON output is keyed by issue ID."""
@@ -1655,19 +1653,18 @@ class TestIssuesCLI:
 
         from youtrack_cli.main import main
 
-        try:
-            runner = CliRunner(mix_stderr=False)
-        except TypeError:
-            runner = CliRunner()
+        runner = CliRunner()
         comment = {"id": "1-1", "text": "hi", "created": 1767225600000, "author": {"login": "ryan"}}
 
         with patch("youtrack_cli.main.asyncio.run") as mock_run:
             mock_run.return_value = {"status": "success", "data": [comment]}
 
-            result = runner.invoke(main, ["issues", "comments", "list", "PROJ-1", "PROJ-2", "--format", "json"])
+            result = runner.invoke(
+                main, ["--quiet", "issues", "comments", "list", "PROJ-1", "PROJ-2", "--format", "json"]
+            )
 
             assert result.exit_code == 0
-            assert json.loads(result.stdout) == {"PROJ-1": [comment], "PROJ-2": [comment]}
+            assert json.loads(result.output) == {"PROJ-1": [comment], "PROJ-2": [comment]}
 
     def test_issues_attach_upload_command(self):
         """Test the issues attach upload CLI command."""
