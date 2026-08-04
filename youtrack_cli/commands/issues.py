@@ -1330,6 +1330,14 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
 @comments.command(name="list")
 @click.argument("issue_ids", nargs=-1)
 @click.option(
+    "--query",
+    default=None,
+    help=(
+        "Filter comments. Combine terms with 'and': an @mention (e.g. @ryan) "
+        'and/or a create date (e.g. "created >= 2026-01-01").'
+    ),
+)
+@click.option(
     "--format",
     type=click.Choice(["table", "json"]),
     default="table",
@@ -1339,12 +1347,21 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
 def list_issue_comments(
     ctx: click.Context,
     issue_ids: tuple[str, ...],
+    query: str | None,
     format: str,
 ) -> None:
-    """List comments on one or more issues.
+    r"""List comments on one or more issues.
 
     Pass one or more issue IDs as arguments, or pipe them via stdin
     (one ID per line) when no arguments are given.
+
+    Use --query to filter comments by an @mention and/or the comment create
+    date, combined with 'and':
+
+    \b
+        yt issues comments list ISSUE-123 --query "@ryan"
+        yt issues comments list ISSUE-123 --query "created > 2026-01-01"
+        yt issues comments list ISSUE-123 --query "@ryan and created >= 2026-01-01 and created < 2026-06-01"
 
     Examples:
         yt issues comments list ISSUE-123
@@ -1353,6 +1370,7 @@ def list_issue_comments(
     """
     import sys
 
+    from ..comment_query import QueryError, filter_comments
     from ..managers.issues import IssueManager
 
     console = get_console()
@@ -1385,6 +1403,12 @@ def list_issue_comments(
             raise click.ClickException("Failed to list comments")
 
         comments = result["data"]
+
+        if query:
+            try:
+                comments = filter_comments(comments, query)
+            except QueryError as e:
+                raise click.ClickException(str(e)) from e
 
         if format == "table":
             if multiple:

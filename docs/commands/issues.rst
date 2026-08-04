@@ -438,7 +438,34 @@ When multiple issues are given, the table output is grouped under a heading per
 issue, and ``--format json`` returns an object keyed by issue ID. A single issue
 keeps the original output shape (a bare table / JSON list).
 
+Filtering with ``--query``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``--query`` to filter comments by an **@mention** in the comment text and/or
+the comment **create date**. Terms are combined with ``and`` (the only supported
+connector):
+
+* ``@name`` – matches comments whose text mentions ``@name`` (exact login, so
+  ``@ryan`` does not match ``@ryanc``).
+* ``created OP DATE`` – compares the comment's create date against an ISO
+  ``YYYY-MM-DD`` date (interpreted as local start-of-day), where ``OP`` is one of
+  ``>``, ``<``, ``>=``, ``<=``. Use two bounds for a range.
+
+.. code-block:: bash
+
+   # Comments that mention @ryan
+   yt issues comments list PROJ-123 --query "@ryan"
+
+   # Comments created on or after a date
+   yt issues comments list PROJ-123 --query "created >= 2026-01-01"
+
+   # Comments mentioning @ryan created within a date range
+   yt issues comments list PROJ-123 --query "@ryan and created >= 2026-01-01 and created < 2026-06-01"
+
+An unrecognized term (for example ``author: bob``) produces a clear error.
+
 **Options:**
+  * ``--query TEXT`` - Filter comments by @mention and/or create date (see above)
   * ``--format [table|json]`` - Output format (default: ``table``)
   * ``-h, --help`` - Show help and exit
 
