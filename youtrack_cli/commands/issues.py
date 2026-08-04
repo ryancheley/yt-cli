@@ -1328,7 +1328,7 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
 
 
 @comments.command(name="list")
-@click.argument("issue_id")
+@click.argument("issue_ids", nargs=-1)
 @click.option(
     "--format",
     type=click.Choice(["table", "json"]),
@@ -1338,37 +1338,68 @@ def add_comment(ctx: click.Context, issue_id: str, text: str) -> None:
 @click.pass_context
 def list_issue_comments(
     ctx: click.Context,
-    issue_id: str,
+    issue_ids: tuple[str, ...],
     format: str,
 ) -> None:
-    """List comments on an issue."""
+    """List comments on one or more issues.
+
+    Pass one or more issue IDs as arguments, or pipe them via stdin
+    (one ID per line) when no arguments are given.
+
+    Examples:
+        yt issues comments list ISSUE-123
+        yt issues comments list ISSUE-123 ISSUE-456
+        cat issues.txt | yt issues comments list
+    """
+    import sys
+
     from ..managers.issues import IssueManager
 
     console = get_console()
+
+    ids = list(issue_ids)
+    if not ids and not sys.stdin.isatty():
+        ids = [line.strip() for line in sys.stdin if line.strip()]
+    if not ids:
+        raise click.ClickException(
+            "No issue IDs provided. Pass one or more IDs as arguments or pipe them via stdin (one per line)."
+        )
+
     auth_manager = AuthManager(ctx.obj.get("config"))
     issue_manager = IssueManager(auth_manager)
 
-    print_status(f"💬 Fetching comments for issue '{issue_id}'...", output_format=format)
+    multiple = len(ids) > 1
+    json_output: dict[str, list] = {}
 
-    try:
-        result = asyncio.run(issue_manager.list_comments(issue_id))
+    for issue_id in ids:
+        print_status(f"💬 Fetching comments for issue '{issue_id}'...", output_format=format)
 
-        if result["status"] == "success":
-            comments = result["data"]
+        try:
+            result = asyncio.run(issue_manager.list_comments(issue_id))
+        except Exception as e:
+            console.print(f"❌ Error listing comments for '{issue_id}': {e}", style="red")
+            raise click.ClickException("Failed to list comments") from e
 
-            if format == "table":
-                issue_manager.display_comments_table(comments)
-            else:
-                import json
-
-                click.echo(json.dumps(comments, indent=2))
-        else:
+        if result["status"] != "success":
             console.print(f"❌ {result['message']}", style="red")
             raise click.ClickException("Failed to list comments")
 
-    except Exception as e:
-        console.print(f"❌ Error listing comments: {e}", style="red")
-        raise click.ClickException("Failed to list comments") from e
+        comments = result["data"]
+
+        if format == "table":
+            if multiple:
+                console.print(f"\n[bold]{issue_id}[/bold]")
+            issue_manager.display_comments_table(comments)
+        else:
+            json_output[issue_id] = comments
+
+    if format == "json":
+        import json
+
+        # Single ID keeps the original bare-list shape for backwards compatibility;
+        # multiple IDs are keyed by issue ID so callers can tell them apart.
+        payload: object = json_output if multiple else json_output[ids[0]]
+        click.echo(json.dumps(payload, indent=2))
 
 
 @comments.command(name="update")

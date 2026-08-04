@@ -418,10 +418,29 @@ List Comments
 
 .. code-block:: bash
 
-   yt issues comments list ISSUE_ID [OPTIONS]
+   yt issues comments list [ISSUE_ID ...] [OPTIONS]
+
+Accepts one or more issue IDs. When no IDs are passed as arguments, the command
+reads them from standard input, one per line (blank lines are ignored):
+
+.. code-block:: bash
+
+   # A single issue
+   yt issues comments list PROJ-123
+
+   # Several issues at once
+   yt issues comments list PROJ-123 PROJ-456
+
+   # Issue IDs piped from another command or a file
+   cat issues.txt | yt issues comments list
+
+When multiple issues are given, the table output is grouped under a heading per
+issue, and ``--format json`` returns an object keyed by issue ID. A single issue
+keeps the original output shape (a bare table / JSON list).
 
 **Options:**
-  * ``-h, --help`` - Show help and exit (this command takes no other options)
+  * ``--format [table|json]`` - Output format (default: ``table``)
+  * ``-h, --help`` - Show help and exit
 
 Update Comments
 ~~~~~~~~~~~~~~~
