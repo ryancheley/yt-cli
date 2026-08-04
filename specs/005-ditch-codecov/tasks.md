@@ -73,7 +73,7 @@ failure-only HTML drill-down.
 - [X] T016 Run `uvx zizmor .github/workflows/` and confirm no new findings; confirm every `uses:` in `ci.yml` is a full SHA with a `# vX` comment and `checkout` uses `persist-credentials: false`. (FR-012)
 - [X] T017 [P] Add a `CHANGELOG.md` entry under the appropriate version noting the migration from Codecov to an in-CI coverage gate.
 - [X] T018 Verify SC-001 (`grep -ri codecov .github README.md` → empty) and FR-013 (lint, type-check, security, documentation, and `test-py315` jobs are byte-for-byte unchanged aside from the intended edits) via `git diff`.
-- [ ] T019 Push the branch, open the PR, and validate on the live run per quickstart §2 (per-version artifacts exist, `coverage` job combines + summarizes + gates green, no `html-report` on green, `test` required check green). Post-merge, confirm `coverage-baseline` no longer runs on push (quickstart §4).
+- [X] T019 Push the branch, open the PR, and validate on the live run per quickstart §2 (per-version artifacts exist, `coverage` job combines + summarizes + gates green, no `html-report` on green, `test` required check green). Post-merge, confirm `coverage-baseline` no longer runs on push (quickstart §4). **Verified on PR #763**: 6 `coverage-data-3.x` artifacts present; `coverage` job green at TOTAL 60.69% ≥ 60; run summary shows the markdown table; no `html-report` artifact on the green run; `test` summary check green. Note: `coverage combine` reported "Combined 5 files, skipped 1" — a benign de-dup of an identical per-version data file (same tests across versions produce identical arcs; union total is unchanged).
 
 ## Dependencies & Execution Order
 
