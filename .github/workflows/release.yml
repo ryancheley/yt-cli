@@ -82,4 +82,13 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         TAG: ${{ github.ref_name }}
-      run: gh release create "$TAG" dist/* --verify-tag --generate-notes
+      # Idempotent: if the release already exists (e.g. the tag was created via
+      # `gh release create`, or this is a re-run), upload the build artifacts to
+      # it instead of failing. Otherwise create the release as usual.
+      run: |
+        if gh release view "$TAG" >/dev/null 2>&1; then
+          echo "Release $TAG already exists; uploading build artifacts to it."
+          gh release upload "$TAG" dist/* --clobber
+        else
+          gh release create "$TAG" dist/* --verify-tag --generate-notes
+        fi
