@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- 👷 CI no longer depends on Codecov. Each test-matrix job now uploads its
+  coverage data as an artifact, and a new `coverage` job combines them, publishes
+  a markdown coverage report to the run summary, and fails the build if aggregate
+  coverage drops below the project threshold (`[tool.coverage.report] fail_under`,
+  currently 60). The HTML report is uploaded only when the gate fails. The
+  post-merge `coverage-baseline` job (which existed only to refresh the external
+  service) was removed (#700)
+
 ## [0.24.7] - 2026-08-03
 
 ### Fixed
