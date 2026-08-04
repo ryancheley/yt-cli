@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test:
     # Full gate runs on PRs. Pushes to protected branches (post-merge) only run
-    # the lightweight coverage-baseline job below, since the PR was already tested
+    # the `test-py315` early-warning job below, since the PR was already tested
     # against the latest base (branch protection requires up-to-date branches).
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
