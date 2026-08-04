@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-08-04
+
+### Added
+- ✨ `yt issues comments list` now accepts multiple issue IDs and reads IDs from
+  stdin (one per line) when none are passed as arguments, e.g.
+  `yt issues comments list PROJ-1 PROJ-2` or `cat issues.txt | yt issues comments
+  list`. Multiple issues are grouped per-issue in table output and keyed by issue
+  ID in `--format json`; a single issue keeps the original output shape (#759)
+- ✨ `yt issues comments list --query` filters comments by an `@mention` in the
+  comment text and/or the comment create date, combined with `and` — e.g.
+  `--query "@ryan and created >= 2026-01-01 and created < 2026-06-01"`. Dates use
+  ISO `YYYY-MM-DD` with `>`, `<`, `>=`, `<=`; mentions match the exact login (#758)
+
 ### Changed
 - 👷 CI no longer depends on Codecov. Each test-matrix job now uploads its
   coverage data as an artifact, and a new `coverage` job combines them, publishes
