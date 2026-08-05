@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.1] - 2026-08-04
+
+### Fixed
+- 🐛 `yt issues comments list` no longer fails with `RuntimeError: Event loop is
+  closed` when an issue has no comments — most visibly when piping several issue
+  IDs via stdin (`cat issues.txt | yt issues comments list`). The shared HTTP
+  client is now rebound to the current event loop when reused across the
+  per-issue `asyncio.run()` calls, instead of reusing a client whose connection
+  pool was bound to a closed loop (#768)
+
+### Changed
+- 👷 The GitHub Release step in `release.yml` is now idempotent (#767)
+
 ## [0.25.0] - 2026-08-04
 
 ### Added
