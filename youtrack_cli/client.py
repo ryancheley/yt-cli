@@ -112,6 +112,7 @@ class HTTPClientManager:
         self._verify_ssl = verify_ssl
         self._client: httpx.AsyncClient | None = None
         self._lock: asyncio.Lock = asyncio.Lock()
+        self._client_loop: asyncio.AbstractEventLoop | None = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure the HTTP client is initialized.
@@ -122,6 +123,20 @@ class HTTPClientManager:
         Returns:
             Initialized httpx.AsyncClient instance.
         """
+        # The client and its lock bind to the event loop they are first used on. Callers
+        # like `yt issues comments list` run one `asyncio.run()` per issue, so a cached
+        # client can be reused on a *later* loop; the stale loop is closed, and httpx then
+        # raises "Event loop is closed" when it tears down a pooled connection (#768).
+        # Rebind to the current loop when it changes. The abandoned client is bound to a
+        # dead loop, so its connections are already inert.
+        # ponytail: no aclose() on the old client — its loop is gone and the CLI process is
+        # short-lived; add explicit cleanup if this ever runs inside a long-lived loop.
+        running_loop = asyncio.get_running_loop()
+        if self._client_loop is not running_loop:
+            self._client = None
+            self._lock = asyncio.Lock()
+            self._client_loop = running_loop
+
         if self._client is None or self._client.is_closed:
             async with self._lock:
                 if self._client is None or self._client.is_closed:

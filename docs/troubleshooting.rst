@@ -468,6 +468,23 @@ Issue Creation Fails
       # Quote strings with special characters:
       yt issues create PROJECT-KEY "Fix: API returns 500 error"
 
+Listing Comments Fails with "Event loop is closed"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem**: ``yt issues comments list`` — especially when piping several issue IDs via
+stdin (``cat issues.txt | yt issues comments list``) — errored with
+``RuntimeError: Event loop is closed`` when one of the issues had no comments.
+
+**Solution**: This is fixed. Listing comments for an issue with no comments now succeeds and
+simply shows no comments, both for a single issue and for a batch of IDs read from stdin:
+
+.. code-block:: bash
+
+   # Works even when some issues have zero comments:
+   printf 'PROJ-1\nPROJ-2\n' | yt issues comments list
+
+If you still see this error, upgrade to the latest ``yt`` version.
+
 Time Tracking Issues
 ~~~~~~~~~~~~~~~~~~~~
 

@@ -202,6 +202,23 @@ class TestHTTPClientManager:
         assert manager._timeout.connect == 12.0
         assert manager._timeout.read == 50.0
 
+    def test_ensure_client_recreated_across_event_loops(self):
+        """Regression (#768): reusing the client on a new event loop must recreate it.
+
+        ``yt issues comments list`` calls ``asyncio.run()`` once per issue, so the shared
+        client is reused across event loops. Before the fix the same (dead-loop-bound)
+        client was returned, causing ``RuntimeError: Event loop is closed`` when httpx tore
+        down a pooled connection. The client must be rebound to the current loop instead.
+        """
+        import asyncio
+
+        manager = HTTPClientManager()
+
+        client1 = asyncio.run(manager._ensure_client())
+        client2 = asyncio.run(manager._ensure_client())
+
+        assert client1 is not client2
+
     @pytest.mark.asyncio
     async def test_ensure_client_with_ssl_verification(self):
         """Test that _ensure_client uses SSL verification setting."""
