@@ -42,21 +42,21 @@ yt --version
 
 ```bash
 # From PyPI (when available)
-pip install yt-cli
+pip install youtrack-cli
 
 # With virtual environment (recommended for pip)
 python -m venv youtrack-env
 source youtrack-env/bin/activate  # Linux/macOS
 # or
 youtrack-env\Scripts\activate     # Windows
-pip install yt-cli
+pip install youtrack-cli
 ```
 
 #### Development installation
 
 ```bash
 # Clone and set up for development
-git clone https://github.com/YOUR_USERNAME/yt-cli.git
+git clone https://github.com/ryancheley/yt-cli.git
 cd yt-cli
 
 # Using uv (recommended)
@@ -245,7 +245,7 @@ This project uses `uv` for dependency management.
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/yt-cli.git
+git clone https://github.com/ryancheley/yt-cli.git
 cd yt-cli
 
 # Install dependencies
@@ -267,7 +267,7 @@ This project uses `pytest` with randomized test execution to ensure test reliabi
 uv run pytest
 
 # Run tests with coverage
-uv run pytest --cov=yt_cli
+uv run pytest --cov=youtrack_cli
 
 # Run tests on multiple Python versions
 uv run tox
