@@ -214,6 +214,7 @@ linkcheck_ignore = [
     r"http://0\.0\.0\.0.*",
     r"https://youtrack\.example\.com.*",
     r"https://yourcompany\.youtrack\.cloud.*",
+    r"https://youtrack\.yourcompany\.com.*",
 ]
 
 linkcheck_timeout = 30
