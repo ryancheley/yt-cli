@@ -681,30 +681,42 @@ class ProjectService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error discovering custom field '{field_name}': {str(e)}")
 
-    def _project_to_issue_field_type(self, project_field_type: str) -> str:
+    def _project_to_issue_field_type(self, project_field_type: str) -> str | None:
         """Convert project field type to issue field type.
 
         Args:
             project_field_type: The project field type string
 
         Returns:
-            The corresponding issue field type string
+            The corresponding issue field type string, or None when the project type
+            is not one this CLI knows how to write. Callers must treat None as
+            "cannot type this field" rather than substituting a default: a wrong
+            guess is rejected by the server as a type error, which is far harder to
+            diagnose than an explicit refusal here.
         """
         from ..custom_field_types import IssueCustomFieldTypes, ProjectCustomFieldTypes
 
+        # Keys are the project admin API's spelling (it names the *kind* of field) and
+        # values are the issue-side spelling for the same field. The two vocabularies are
+        # not parallel: a version field is "VersionProjectCustomField" on the project but
+        # "MultiVersionIssueCustomField" on the issue, because it holds several values.
+        #
+        # Multi-valued issue types are mapped but not written by --custom-field, which
+        # takes a single value; they surface as an explicit refusal rather than a payload
+        # the server would reject. Anything absent here returns None for the same reason.
         mapping = {
             ProjectCustomFieldTypes.ENUM: IssueCustomFieldTypes.SINGLE_ENUM,
             ProjectCustomFieldTypes.MULTI_ENUM: IssueCustomFieldTypes.MULTI_ENUM,
+            ProjectCustomFieldTypes.OWNED: IssueCustomFieldTypes.SINGLE_OWNED,
+            ProjectCustomFieldTypes.MULTI_OWNED: IssueCustomFieldTypes.MULTI_OWNED,
             ProjectCustomFieldTypes.STATE: IssueCustomFieldTypes.STATE,
             ProjectCustomFieldTypes.SINGLE_USER: IssueCustomFieldTypes.SINGLE_USER,
             ProjectCustomFieldTypes.MULTI_USER: IssueCustomFieldTypes.MULTI_USER,
-            ProjectCustomFieldTypes.TEXT: IssueCustomFieldTypes.TEXT,
-            ProjectCustomFieldTypes.INTEGER: IssueCustomFieldTypes.INTEGER,
-            ProjectCustomFieldTypes.SINGLE_VERSION: IssueCustomFieldTypes.SINGLE_VERSION,
+            ProjectCustomFieldTypes.SINGLE_VERSION: IssueCustomFieldTypes.MULTI_VERSION,
             ProjectCustomFieldTypes.MULTI_VERSION: IssueCustomFieldTypes.MULTI_VERSION,
             ProjectCustomFieldTypes.SINGLE_BUILD: IssueCustomFieldTypes.SINGLE_BUILD,
             ProjectCustomFieldTypes.MULTI_BUILD: IssueCustomFieldTypes.MULTI_BUILD,
-            ProjectCustomFieldTypes.SINGLE_OWN_BUILD: IssueCustomFieldTypes.SINGLE_OWN_BUILD,
-            ProjectCustomFieldTypes.MULTI_OWN_BUILD: IssueCustomFieldTypes.MULTI_OWN_BUILD,
+            ProjectCustomFieldTypes.TEXT: IssueCustomFieldTypes.TEXT,
+            ProjectCustomFieldTypes.INTEGER: IssueCustomFieldTypes.INTEGER,
         }
-        return mapping.get(project_field_type, IssueCustomFieldTypes.SINGLE_ENUM)
+        return mapping.get(project_field_type)

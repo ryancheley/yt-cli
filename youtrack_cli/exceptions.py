@@ -15,6 +15,7 @@ __all__ = [
     "UsageError",
     "TokenRefreshError",
     "TokenExpiredError",
+    "UnsupportedCustomFieldTypeError",
 ]
 
 
@@ -197,3 +198,39 @@ class TokenExpiredError(AuthenticationError):
     def __init__(self, message: str = "Token has expired"):
         super().__init__(message)
         self.suggestion = "Run 'yt auth refresh' to renew your token or 'yt auth login' to re-authenticate"
+
+
+class UnsupportedCustomFieldTypeError(YouTrackError):
+    """A custom field's type cannot be determined well enough to write it.
+
+    Raised instead of substituting a default field type. A field sent with the wrong
+    type discriminator is rejected by the server as a type mismatch, which reads like
+    a server or data problem rather than a CLI limitation; refusing locally names the
+    field and its type and leaves the issue untouched.
+    """
+
+    def __init__(self, field_name: str, project_field_type: str | None, issue_field_type: str | None = None):
+        self.field_name = field_name
+        self.project_field_type = project_field_type
+        self.issue_field_type = issue_field_type
+
+        if issue_field_type and issue_field_type.startswith("Multi"):
+            message = (
+                f"Cannot set field '{field_name}': it holds several values "
+                f"('{issue_field_type}') and --custom-field sets a single value"
+            )
+            suggestion = (
+                "No value was sent, so the issue is unchanged. Set this field through the "
+                "YouTrack UI, or use a dedicated option where one exists"
+            )
+        else:
+            described = project_field_type or issue_field_type or "an unknown type"
+            message = (
+                f"Cannot set field '{field_name}': this CLI does not know how to write a field of type '{described}'"
+            )
+            suggestion = (
+                "No value was sent, so the issue is unchanged. Set the field through the YouTrack UI, "
+                "or use a dedicated option such as --assignee where one exists"
+            )
+
+        super().__init__(message, suggestion)

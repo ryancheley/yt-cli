@@ -230,13 +230,27 @@ Common Issues
 
 **Type Mismatch**: Ensure you're using the correct field type constants for your specific use case.
 
-**Guessed Field Type**: When you set a custom field with ``yt issues update --custom-field`` and
-the issue's project cannot be resolved, the field type cannot be discovered and the command falls
-back to treating the value as an enum. This is correct for enum fields, but **wrong for text,
-integer, user, version, build and state fields**, which would be sent with an enum payload and
-rejected by the server. The warning names the unresolved project so the cause is identifiable.
-Discovery resolves the project from the issue itself, so it works whether or not ``--state`` is
-also supplied.
+**Project and issue type names differ**: The project admin API names a field by *kind*
+(``UserProjectCustomField``, ``VersionProjectCustomField``) while the issue API names the same
+field differently (``SingleUserIssueCustomField``, ``MultiVersionIssueCustomField``). A lookup
+keyed on the issue-side spelling matches nothing, and the field is then written with a guessed
+type that the server rejects. When adding a mapping, key it on the string the project API
+actually returns -- ``GET /api/admin/projects/<key>/customFields`` reports the project
+``$type``, and ``GET /api/issues/<id>?fields=customFields(name,$type)`` reports what the same
+field is called on an issue. Note the two are not parallel: a version field is
+multi-valued on the issue side even though its project type has no "Multi" in it.
+
+**Unsupported field type**: ``yt issues update --custom-field`` and ``yt issues create
+--custom-field`` discover a field's type and refuse the write when they cannot type it,
+rather than sending a guessed payload. Three cases produce that refusal: the project
+cannot be resolved, discovery fails, or the field's type is not one a single value can
+express -- currently multi-valued fields such as *Fix versions*, which holds several
+values on an issue. The error names the field and its type, and no value is sent, so the
+issue is left unchanged. Set those fields through the YouTrack UI, or use a dedicated
+option such as ``--assignee`` where one exists.
+
+Supported by ``--custom-field``: enum, state, user, owned, single build, text and integer
+fields. Not supported: multi-valued fields (enum, user, owned, version, build).
 
 **Multi-Value Fields**: Remember that multi-value fields return comma-separated strings when extracted.
 

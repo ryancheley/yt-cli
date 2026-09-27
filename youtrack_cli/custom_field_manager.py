@@ -9,6 +9,7 @@ improving maintainability.
 from typing import Any
 
 from .custom_field_types import CustomFieldValueTypes, IssueCustomFieldTypes, ProjectCustomFieldTypes, get_display_name
+from .exceptions import UnsupportedCustomFieldTypeError
 
 
 class CustomFieldManager:
@@ -66,6 +67,28 @@ class CustomFieldManager:
             "$type": IssueCustomFieldTypes.STATE,
             "name": name,
             "value": {"$type": CustomFieldValueTypes.STATE_BUNDLE_ELEMENT, "name": value},
+        }
+
+    @staticmethod
+    def create_single_owned_field(name: str, owned_name: str) -> dict[str, Any]:
+        """
+        Create a single owned custom field dictionary.
+
+        An owned field is bundle-backed like an enum, but it has its own issue-side type
+        and its own value type: YouTrack rejects an OwnedBundleElement sent through the
+        enum field type, and rejects a bare string sent through the owned field type.
+
+        Args:
+            name: The field name
+            owned_name: The owned value name
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.SINGLE_OWNED,
+            "name": name,
+            "value": {"$type": CustomFieldValueTypes.OWNED_BUNDLE_ELEMENT, "name": owned_name},
         }
 
     @staticmethod
@@ -323,12 +346,15 @@ class CustomFieldManager:
             IssueCustomFieldTypes.MULTI_USER,
             IssueCustomFieldTypes.MULTI_VERSION,
             IssueCustomFieldTypes.MULTI_BUILD,
-            IssueCustomFieldTypes.MULTI_OWN_BUILD,
+            IssueCustomFieldTypes.MULTI_OWNED,
             ProjectCustomFieldTypes.MULTI_ENUM,
             ProjectCustomFieldTypes.MULTI_USER,
+            # A version field is single-named on the project ("VersionProjectCustomField")
+            # but holds several values on the issue, so both spellings count as multi.
+            ProjectCustomFieldTypes.SINGLE_VERSION,
             ProjectCustomFieldTypes.MULTI_VERSION,
             ProjectCustomFieldTypes.MULTI_BUILD,
-            ProjectCustomFieldTypes.MULTI_OWN_BUILD,
+            ProjectCustomFieldTypes.MULTI_OWNED,
         }
         return field_type in multi_value_types
 
@@ -432,8 +458,16 @@ class CustomFieldManager:
 
         Returns:
             Formatted custom field dictionary
+
+        Raises:
+            UnsupportedCustomFieldTypeError: The field's type is not one this CLI
+                knows how to write. Raised rather than guessed: an unrecognised type
+                sent as an enum is rejected by the server as a confusing type
+                mismatch, and the wrong value shape is indistinguishable from a bad
+                value at the call site.
         """
         issue_field_type = field_info.get("issue_field_type")
+        project_field_type = field_info.get("project_field_type")
 
         # Map issue field types to creation methods
         if issue_field_type == IssueCustomFieldTypes.TEXT:
@@ -442,14 +476,34 @@ class CustomFieldManager:
             return CustomFieldManager.create_simple_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.SINGLE_USER:
             return CustomFieldManager.create_single_user_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.SINGLE_OWNED:
+            return CustomFieldManager.create_single_owned_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.SINGLE_VERSION:
             return CustomFieldManager.create_single_version_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.SINGLE_BUILD:
             return CustomFieldManager.create_single_build_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.SINGLE_ENUM:
-            return CustomFieldManager.create_single_enum_field(name, value)
+            return CustomFieldManager._create_bundle_backed_enum_field(name, value, field_info)
         elif issue_field_type == IssueCustomFieldTypes.STATE:
             return CustomFieldManager.create_state_field(name, value)
         else:
-            # Fallback to enum for unknown types
-            return CustomFieldManager.create_single_enum_field(name, value)
+            raise UnsupportedCustomFieldTypeError(name, project_field_type, issue_field_type)
+
+    @staticmethod
+    def _create_bundle_backed_enum_field(
+        name: str,
+        value: str,
+        field_info: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build an enum-shaped field, taking the value discriminator from discovery.
+
+        A bundle that reports its element type is authoritative. A plain enum field always
+        reports EnumBundleElement, which is also the right default when the bundle is empty
+        and so has nothing to report.
+        """
+        element_type = field_info.get("bundle_element_type") or CustomFieldValueTypes.ENUM_BUNDLE_ELEMENT
+        return {
+            "$type": IssueCustomFieldTypes.SINGLE_ENUM,
+            "name": name,
+            "value": {"$type": element_type, "name": value},
+        }

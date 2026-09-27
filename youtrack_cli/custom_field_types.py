@@ -14,12 +14,12 @@ class IssueCustomFieldTypes:
     STATE = "StateIssueCustomField"
     SINGLE_USER = "SingleUserIssueCustomField"
     MULTI_USER = "MultiUserIssueCustomField"
+    SINGLE_OWNED = "SingleOwnedIssueCustomField"
+    MULTI_OWNED = "MultiOwnedIssueCustomField"
     SINGLE_VERSION = "SingleVersionIssueCustomField"
     MULTI_VERSION = "MultiVersionIssueCustomField"
     SINGLE_BUILD = "SingleBuildIssueCustomField"
     MULTI_BUILD = "MultiBuildIssueCustomField"
-    SINGLE_OWN_BUILD = "SingleOwnedIssueCustomField"
-    MULTI_OWN_BUILD = "MultiOwnedIssueCustomField"
     TEXT = "TextIssueCustomField"
     PERIOD = "PeriodIssueCustomField"
     DATE = "DateIssueCustomField"
@@ -29,19 +29,26 @@ class IssueCustomFieldTypes:
 
 
 class ProjectCustomFieldTypes:
-    """Custom field types for projects."""
+    """Custom field types for projects.
+
+    These are the ``$type`` discriminators the *project* admin API returns, which name
+    the kind of field (``UserProjectCustomField``) and not the issue-side spelling
+    (``SingleUserIssueCustomField``). Keeping the two vocabularies apart matters: a
+    project type that is spelled like its issue counterpart never matches a real
+    response, and the lookup that consumes these then falls through to a default.
+    """
 
     ENUM = "EnumProjectCustomField"
     MULTI_ENUM = "MultiEnumProjectCustomField"
     STATE = "StateProjectCustomField"
-    SINGLE_USER = "SingleUserProjectCustomField"
+    OWNED = "OwnedProjectCustomField"
+    MULTI_OWNED = "MultiOwnedProjectCustomField"
+    SINGLE_USER = "UserProjectCustomField"
     MULTI_USER = "MultiUserProjectCustomField"
-    SINGLE_VERSION = "SingleVersionProjectCustomField"
+    SINGLE_VERSION = "VersionProjectCustomField"
     MULTI_VERSION = "MultiVersionProjectCustomField"
-    SINGLE_BUILD = "SingleBuildProjectCustomField"
+    SINGLE_BUILD = "BuildProjectCustomField"
     MULTI_BUILD = "MultiBuildProjectCustomField"
-    SINGLE_OWN_BUILD = "SingleOwnedProjectCustomField"
-    MULTI_OWN_BUILD = "MultiOwnedProjectCustomField"
     TEXT = "TextProjectCustomField"
     PERIOD = "PeriodProjectCustomField"
     DATE = "DateProjectCustomField"
@@ -57,7 +64,7 @@ class CustomFieldValueTypes:
     STATE_BUNDLE_ELEMENT = "StateBundleElement"
     VERSION_BUNDLE_ELEMENT = "VersionBundleElement"
     BUILD_BUNDLE_ELEMENT = "BuildBundleElement"
-    OWN_BUILD_BUNDLE_ELEMENT = "OwnedBundleElement"
+    OWNED_BUNDLE_ELEMENT = "OwnedBundleElement"
     USER = "User"
     PERIOD_VALUE = "PeriodValue"
     DATE_VALUE = "DateValue"
@@ -85,8 +92,8 @@ FIELD_TYPE_DISPLAY_MAP = {
     IssueCustomFieldTypes.MULTI_VERSION: "Multi Version",
     IssueCustomFieldTypes.SINGLE_BUILD: "Single Build",
     IssueCustomFieldTypes.MULTI_BUILD: "Multi Build",
-    IssueCustomFieldTypes.SINGLE_OWN_BUILD: "Single Owned Build",
-    IssueCustomFieldTypes.MULTI_OWN_BUILD: "Multi Owned Build",
+    IssueCustomFieldTypes.SINGLE_OWNED: "Single Owned",
+    IssueCustomFieldTypes.MULTI_OWNED: "Multi Owned",
     IssueCustomFieldTypes.TEXT: "Text",
     IssueCustomFieldTypes.PERIOD: "Period",
     IssueCustomFieldTypes.DATE: "Date",
@@ -97,14 +104,14 @@ FIELD_TYPE_DISPLAY_MAP = {
     ProjectCustomFieldTypes.ENUM: "Enum",
     ProjectCustomFieldTypes.MULTI_ENUM: "Multi Enum",
     ProjectCustomFieldTypes.STATE: "State",
+    ProjectCustomFieldTypes.OWNED: "Owned",
+    ProjectCustomFieldTypes.MULTI_OWNED: "Multi Owned",
     ProjectCustomFieldTypes.SINGLE_USER: "Single User",
     ProjectCustomFieldTypes.MULTI_USER: "Multi User",
     ProjectCustomFieldTypes.SINGLE_VERSION: "Single Version",
     ProjectCustomFieldTypes.MULTI_VERSION: "Multi Version",
     ProjectCustomFieldTypes.SINGLE_BUILD: "Single Build",
     ProjectCustomFieldTypes.MULTI_BUILD: "Multi Build",
-    ProjectCustomFieldTypes.SINGLE_OWN_BUILD: "Single Owned Build",
-    ProjectCustomFieldTypes.MULTI_OWN_BUILD: "Multi Owned Build",
     ProjectCustomFieldTypes.TEXT: "Text",
     ProjectCustomFieldTypes.PERIOD: "Period",
     ProjectCustomFieldTypes.DATE: "Date",

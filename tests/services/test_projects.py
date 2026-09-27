@@ -667,3 +667,52 @@ class TestProjectServiceVersions:
 
             mock_error.assert_called_once_with("Error getting project versions: Network error")
             assert result["status"] == "error"
+
+
+class TestProjectToIssueFieldType:
+    """Test the project-field-type -> issue-field-type lookup.
+
+    The project admin API names a field by *kind* ("UserProjectCustomField"). A lookup
+    keyed on the issue-side spelling ("SingleUserProjectCustomField") matches nothing,
+    and anything that defaults the miss to a type writes every user, version and build
+    field with the wrong payload shape. These cases pin the real vocabulary.
+    """
+
+    @pytest.mark.parametrize(
+        ("project_type", "expected"),
+        [
+            ("EnumProjectCustomField", "SingleEnumIssueCustomField"),
+            ("MultiEnumProjectCustomField", "MultiEnumIssueCustomField"),
+            ("OwnedProjectCustomField", "SingleOwnedIssueCustomField"),
+            ("MultiOwnedProjectCustomField", "MultiOwnedIssueCustomField"),
+            ("StateProjectCustomField", "StateIssueCustomField"),
+            ("UserProjectCustomField", "SingleUserIssueCustomField"),
+            ("MultiUserProjectCustomField", "MultiUserIssueCustomField"),
+            ("VersionProjectCustomField", "MultiVersionIssueCustomField"),
+            ("MultiVersionProjectCustomField", "MultiVersionIssueCustomField"),
+            ("BuildProjectCustomField", "SingleBuildIssueCustomField"),
+            ("MultiBuildProjectCustomField", "MultiBuildIssueCustomField"),
+            ("TextProjectCustomField", "TextIssueCustomField"),
+            ("SimpleProjectCustomField", "SimpleIssueCustomField"),
+        ],
+    )
+    def test_known_project_types_map_to_issue_types(self, project_service, project_type, expected):
+        assert project_service._project_to_issue_field_type(project_type) == expected
+
+    @pytest.mark.parametrize(
+        "project_type",
+        [
+            "SomethingNewProjectCustomField",
+            "DateProjectCustomField",
+            "PeriodProjectCustomField",
+            "DateTimeProjectCustomField",
+            "",
+        ],
+    )
+    def test_unmapped_type_returns_none_rather_than_defaulting(self, project_service, project_type):
+        """An unmapped type must be reported as unknown, never defaulted.
+
+        Defaulting is what turned a missing mapping into a silently mistyped write: the
+        caller had no way to tell a real enum field from a user field it could not map.
+        """
+        assert project_service._project_to_issue_field_type(project_type) is None

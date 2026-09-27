@@ -3,6 +3,7 @@
 from typing import Any
 
 from ..custom_field_manager import CustomFieldManager
+from ..exceptions import UnsupportedCustomFieldTypeError
 from ..logging import get_logger
 from .base import BaseService
 
@@ -80,35 +81,26 @@ class IssueService(BaseService):
 
             # Handle generic custom fields with field type discovery
             if custom_fields:
+                from .projects import ProjectService
+
+                project_service = ProjectService(self.auth_manager)
+
                 for field_name, field_value in custom_fields.items():
-                    try:
-                        # Discover field type from project configuration
-                        from .projects import ProjectService
-
-                        project_service = ProjectService(self.auth_manager)
-                        field_info_result = await project_service.discover_custom_field(project_id, field_name)
-
-                        if field_info_result["status"] == "success":
-                            # Use discovered field type
-                            field_info = field_info_result["data"]
-                            custom_fields_list.append(
-                                CustomFieldManager.create_field_by_type(field_info, field_name, field_value)
-                            )
-                        else:
-                            # Fallback to enum type with helpful error message
-                            logger.warning(
-                                f"Could not discover type for field '{field_name}', "
-                                f"falling back to enum type. Error: {field_info_result.get('message')}"
-                            )
-                            custom_fields_list.append(
-                                CustomFieldManager.create_single_enum_field(field_name, field_value)
-                            )
-                    except Exception as e:
-                        # Fallback to enum type on any error
-                        logger.warning(
-                            f"Error discovering field type for '{field_name}': {str(e)}, falling back to enum type"
+                    field_info_result = await project_service.discover_custom_field(project_id, field_name)
+                    if field_info_result["status"] != "success":
+                        return self._create_error_response(
+                            f"Could not determine the type of field '{field_name}': "
+                            f"{field_info_result.get('message')}. The issue was not created."
                         )
-                        custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
+
+                    # Resolve every field before creating anything, so a field this CLI cannot
+                    # type creates no issue at all rather than one missing a value.
+                    try:
+                        custom_fields_list.append(
+                            CustomFieldManager.create_field_by_type(field_info_result["data"], field_name, field_value)
+                        )
+                    except UnsupportedCustomFieldTypeError as e:
+                        return self._create_error_response(f"{e.message}. {e.suggestion or ''}".strip())
 
             # Add custom fields if any were specified
             if custom_fields_list:
@@ -283,40 +275,34 @@ class IssueService(BaseService):
             if custom_fields:
                 if project_id is None:
                     project_id = await self._get_project_id_from_issue(issue_id)
+
+                from .projects import ProjectService
+
+                project_service = ProjectService(self.auth_manager)
+
                 for field_name, field_value in custom_fields.items():
-                    try:
-                        if project_id is None:
-                            raise ValueError(
-                                f"Could not resolve the project for issue '{issue_id}', "
-                                f"so the type of field '{field_name}' cannot be discovered"
-                            )
-                        # Discover field type from project configuration
-                        from .projects import ProjectService
-
-                        project_service = ProjectService(self.auth_manager)
-                        field_info_result = await project_service.discover_custom_field(project_id, field_name)
-
-                        if field_info_result["status"] == "success":
-                            # Use discovered field type
-                            field_info = field_info_result["data"]
-                            custom_fields_list.append(
-                                CustomFieldManager.create_field_by_type(field_info, field_name, field_value)
-                            )
-                        else:
-                            # Fallback to enum type with helpful error message
-                            logger.warning(
-                                f"Could not discover type for field '{field_name}', "
-                                f"falling back to enum type. Error: {field_info_result.get('message')}"
-                            )
-                            custom_fields_list.append(
-                                CustomFieldManager.create_single_enum_field(field_name, field_value)
-                            )
-                    except Exception as e:
-                        # Fallback to enum type on any error
-                        logger.warning(
-                            f"Error discovering field type for '{field_name}': {str(e)}, falling back to enum type"
+                    if project_id is None:
+                        return self._create_error_response(
+                            f"Could not resolve the project for issue '{issue_id}', so the type of field "
+                            f"'{field_name}' cannot be discovered. No values were sent."
                         )
-                        custom_fields_list.append(CustomFieldManager.create_single_enum_field(field_name, field_value))
+
+                    field_info_result = await project_service.discover_custom_field(project_id, field_name)
+                    if field_info_result["status"] != "success":
+                        return self._create_error_response(
+                            f"Could not determine the type of field '{field_name}': "
+                            f"{field_info_result.get('message')}. No values were sent."
+                        )
+
+                    # Every field is resolved before anything is sent, so a field this CLI
+                    # cannot type leaves the whole update unapplied rather than writing one
+                    # field correctly and silently mistyping the rest.
+                    try:
+                        custom_fields_list.append(
+                            CustomFieldManager.create_field_by_type(field_info_result["data"], field_name, field_value)
+                        )
+                    except UnsupportedCustomFieldTypeError as e:
+                        return self._create_error_response(f"{e.message}. {e.suggestion or ''}".strip())
 
             # Add custom fields if any
             if custom_fields_list:

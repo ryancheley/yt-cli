@@ -6,8 +6,13 @@ import httpx
 import pytest
 
 from youtrack_cli.auth import AuthManager
-from youtrack_cli.custom_field_types import IssueCustomFieldTypes
+from youtrack_cli.custom_field_types import (
+    CustomFieldValueTypes,
+    IssueCustomFieldTypes,
+    ProjectCustomFieldTypes,
+)
 from youtrack_cli.services.issues import IssueService
+from youtrack_cli.services.projects import ProjectService
 
 
 @pytest.fixture
@@ -316,11 +321,12 @@ class TestIssueServiceUpdate:
             )
 
     @pytest.mark.asyncio
-    async def test_update_issue_custom_fields_falls_back_when_project_unresolvable(self, issue_service, mock_response):
-        """An unresolvable project must degrade with a diagnostic, not a guess.
+    async def test_update_issue_custom_fields_refuses_when_project_unresolvable(self, issue_service, mock_response):
+        """An unresolvable project must refuse the write, not send a guessed type.
 
-        The fallback still sends an enum, because that is all the payload shape
-        can be without the real type -- but the warning has to name the cause.
+        Without the project there is no way to learn the field's type, and a guessed
+        enum is rejected by the server as a type mismatch. Refusing locally names the
+        cause and leaves the issue untouched.
         """
         with (
             patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
@@ -331,11 +337,150 @@ class TestIssueServiceUpdate:
             mock_handle.return_value = {"status": "success"}
             mock_get_project.return_value = None
 
-            with patch("youtrack_cli.services.issues.logger") as mock_logger:
-                await issue_service.update_issue("TEST-1", custom_fields={"Assigned": "someone"})
+            result = await issue_service.update_issue("TEST-1", custom_fields={"Assigned": "someone"})
 
-            warnings = [str(c) for c in mock_logger.warning.call_args_list]
-            assert any("Could not resolve the project" in w for w in warnings), warnings
+            assert result["status"] == "error"
+            assert "Could not resolve the project" in result["message"]
+            assert "No values were sent" in result["message"]
+            # Nothing may be sent: a partial write would apply the fields it could type.
+            mock_request.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_update_issue_custom_fields_use_real_type_for_user_field(self, issue_service, mock_response):
+        """A user field must be written as a user, not as a guessed enum.
+
+        Regression: the project->issue type lookup keyed on issue-side spellings
+        ("SingleUserProjectCustomField") that the admin API never returns, so every
+        user/version/build field missed the table and fell through to a default enum
+        payload, which YouTrack rejects with a type error.
+        """
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch.object(ProjectService, "discover_custom_field", new_callable=AsyncMock) as mock_discover,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "TEST"
+            mock_discover.return_value = {
+                "status": "success",
+                "data": {
+                    "project_field_type": ProjectCustomFieldTypes.SINGLE_USER,
+                    "issue_field_type": IssueCustomFieldTypes.SINGLE_USER,
+                },
+            }
+
+            await issue_service.update_issue("TEST-1", custom_fields={"Assigned": "someone"})
+
+            mock_request.assert_called_once_with(
+                "POST",
+                "issues/TEST-1",
+                json_data={
+                    "$type": "Issue",
+                    "customFields": [
+                        {
+                            "$type": IssueCustomFieldTypes.SINGLE_USER,
+                            "name": "Assigned",
+                            "value": {"$type": CustomFieldValueTypes.USER, "login": "someone"},
+                        }
+                    ],
+                },
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_issue_custom_fields_owned_field_uses_owned_bundle(self, issue_service, mock_response):
+        """An owned field carries an OwnedBundleElement value, not an EnumBundleElement."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch.object(ProjectService, "discover_custom_field", new_callable=AsyncMock) as mock_discover,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "TEST"
+            mock_discover.return_value = {
+                "status": "success",
+                "data": {
+                    "project_field_type": ProjectCustomFieldTypes.OWNED,
+                    "issue_field_type": IssueCustomFieldTypes.SINGLE_OWNED,
+                    "bundle_element_type": None,
+                },
+            }
+
+            await issue_service.update_issue("TEST-1", custom_fields={"Team": "core"})
+
+            sent = mock_request.call_args.kwargs["json_data"]["customFields"][0]
+            assert sent["$type"] == IssueCustomFieldTypes.SINGLE_OWNED
+            assert sent["value"] == {"$type": CustomFieldValueTypes.OWNED_BUNDLE_ELEMENT, "name": "core"}
+
+    @pytest.mark.asyncio
+    async def test_update_issue_custom_fields_enum_field_keeps_discovered_element_type(
+        self, issue_service, mock_response
+    ):
+        """A bundle-backed field prefers the element type discovery actually reports."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch.object(ProjectService, "discover_custom_field", new_callable=AsyncMock) as mock_discover,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "TEST"
+            mock_discover.return_value = {
+                "status": "success",
+                "data": {
+                    "project_field_type": ProjectCustomFieldTypes.ENUM,
+                    "issue_field_type": IssueCustomFieldTypes.SINGLE_ENUM,
+                    "bundle_element_type": CustomFieldValueTypes.ENUM_BUNDLE_ELEMENT,
+                },
+            }
+
+            await issue_service.update_issue("TEST-1", custom_fields={"Repo": "root"})
+
+            sent = mock_request.call_args.kwargs["json_data"]["customFields"][0]
+            assert sent["value"] == {"$type": CustomFieldValueTypes.ENUM_BUNDLE_ELEMENT, "name": "root"}
+
+    @pytest.mark.asyncio
+    async def test_update_issue_custom_fields_unmappable_type_blocks_whole_update(self, issue_service, mock_response):
+        """One untypable field must stop the update, not half-apply it."""
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch.object(ProjectService, "discover_custom_field", new_callable=AsyncMock) as mock_discover,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "TEST"
+
+            async def discover(_project_id, field_name):
+                if field_name == "Repo":
+                    return {
+                        "status": "success",
+                        "data": {
+                            "project_field_type": ProjectCustomFieldTypes.ENUM,
+                            "issue_field_type": IssueCustomFieldTypes.SINGLE_ENUM,
+                        },
+                    }
+                return {
+                    "status": "success",
+                    "data": {"project_field_type": "SomethingNewProjectCustomField", "issue_field_type": None},
+                }
+
+            mock_discover.side_effect = discover
+
+            result = await issue_service.update_issue(
+                "TEST-1", summary="Renamed", custom_fields={"Repo": "root", "Mystery": "x"}
+            )
+
+            assert result["status"] == "error"
+            assert "Mystery" in result["message"]
+            assert "SomethingNewProjectCustomField" in result["message"]
+            # The summary change must not land either: the update is all-or-nothing.
+            mock_request.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_update_issue_with_assignee(self, issue_service, mock_response):

@@ -1,5 +1,7 @@
 """Tests for CustomFieldManager and custom field utilities."""
 
+import pytest
+
 from youtrack_cli.custom_field_manager import CustomFieldManager
 from youtrack_cli.custom_field_types import (
     FIELD_TYPE_DISPLAY_MAP,
@@ -8,6 +10,7 @@ from youtrack_cli.custom_field_types import (
     ProjectCustomFieldTypes,
     get_display_name,
 )
+from youtrack_cli.exceptions import UnsupportedCustomFieldTypeError
 
 
 class TestCustomFieldTypes:
@@ -23,17 +26,39 @@ class TestCustomFieldTypes:
         assert IssueCustomFieldTypes.TEXT == "TextIssueCustomField"
 
     def test_project_custom_field_types(self):
-        """Test project custom field type constants."""
+        """Test project custom field type constants.
+
+        The project vocabulary names the *kind* of field. These must stay distinct from
+        the issue-side spellings: a project type written like its issue counterpart
+        ("SingleUserProjectCustomField") never matches a real API response, and the
+        lookup that consumes these then silently falls through to a default.
+        """
         assert ProjectCustomFieldTypes.ENUM == "EnumProjectCustomField"
         assert ProjectCustomFieldTypes.MULTI_ENUM == "MultiEnumProjectCustomField"
         assert ProjectCustomFieldTypes.STATE == "StateProjectCustomField"
-        assert ProjectCustomFieldTypes.SINGLE_USER == "SingleUserProjectCustomField"
+        assert ProjectCustomFieldTypes.OWNED == "OwnedProjectCustomField"
+        assert ProjectCustomFieldTypes.MULTI_OWNED == "MultiOwnedProjectCustomField"
+        assert ProjectCustomFieldTypes.SINGLE_USER == "UserProjectCustomField"
         assert ProjectCustomFieldTypes.MULTI_USER == "MultiUserProjectCustomField"
+        assert ProjectCustomFieldTypes.SINGLE_VERSION == "VersionProjectCustomField"
+        assert ProjectCustomFieldTypes.SINGLE_BUILD == "BuildProjectCustomField"
+        assert ProjectCustomFieldTypes.MULTI_OWNED == "MultiOwnedProjectCustomField"
+
+    def test_project_types_are_not_issue_spellings(self):
+        """No project constant may reuse an issue-side type name."""
+        project_values = {
+            v for k, v in vars(ProjectCustomFieldTypes).items() if not k.startswith("_") and isinstance(v, str)
+        }
+        issue_values = {
+            v for k, v in vars(IssueCustomFieldTypes).items() if not k.startswith("_") and isinstance(v, str)
+        }
+        assert not (project_values & issue_values)
 
     def test_custom_field_value_types(self):
         """Test custom field value type constants."""
         assert CustomFieldValueTypes.ENUM_BUNDLE_ELEMENT == "EnumBundleElement"
         assert CustomFieldValueTypes.STATE_BUNDLE_ELEMENT == "StateBundleElement"
+        assert CustomFieldValueTypes.OWNED_BUNDLE_ELEMENT == "OwnedBundleElement"
         assert CustomFieldValueTypes.USER == "User"
         assert CustomFieldValueTypes.TEXT_VALUE == "TextValue"
 
@@ -323,3 +348,91 @@ class TestCustomFieldManager:
         value = {"isResolved": True}
         result = CustomFieldManager._extract_dict_value(value)
         assert result == "True"
+
+
+class TestCreateFieldByType:
+    """Test payload construction from discovered field information."""
+
+    @staticmethod
+    def _info(project_type, issue_type, element_type=None):
+        return {
+            "project_field_type": project_type,
+            "issue_field_type": issue_type,
+            "bundle_element_type": element_type,
+        }
+
+    @pytest.mark.parametrize(
+        ("issue_type", "expected"),
+        [
+            (
+                IssueCustomFieldTypes.SINGLE_USER,
+                {"$type": "SingleUserIssueCustomField", "name": "F", "value": {"$type": "User", "login": "v"}},
+            ),
+            (
+                IssueCustomFieldTypes.SINGLE_VERSION,
+                {
+                    "$type": "SingleVersionIssueCustomField",
+                    "name": "F",
+                    "value": {"$type": "VersionBundleElement", "name": "v"},
+                },
+            ),
+            (
+                IssueCustomFieldTypes.SINGLE_BUILD,
+                {
+                    "$type": "SingleBuildIssueCustomField",
+                    "name": "F",
+                    "value": {"$type": "BuildBundleElement", "name": "v"},
+                },
+            ),
+            (
+                IssueCustomFieldTypes.TEXT,
+                {"$type": "TextIssueCustomField", "name": "F", "value": {"$type": "TextValue", "text": "v"}},
+            ),
+        ],
+    )
+    def test_builds_the_discovered_type(self, issue_type, expected):
+        assert (
+            CustomFieldManager.create_field_by_type(self._info("XProjectCustomField", issue_type), "F", "v") == expected
+        )
+
+    def test_owned_field_uses_its_own_type_and_bundle(self):
+        """An owned field is not enum-shaped: it has its own issue type and value type."""
+        result = CustomFieldManager.create_field_by_type(
+            self._info(ProjectCustomFieldTypes.OWNED, IssueCustomFieldTypes.SINGLE_OWNED), "Team", "core"
+        )
+        assert result == {
+            "$type": "SingleOwnedIssueCustomField",
+            "name": "Team",
+            "value": {"$type": "OwnedBundleElement", "name": "core"},
+        }
+
+    def test_discovered_element_type_is_used_for_enum_fields(self):
+        """A bundle that reports its element type is authoritative for an enum field."""
+        result = CustomFieldManager.create_field_by_type(
+            self._info(
+                ProjectCustomFieldTypes.ENUM,
+                IssueCustomFieldTypes.SINGLE_ENUM,
+                element_type=CustomFieldValueTypes.ENUM_BUNDLE_ELEMENT,
+            ),
+            "Repo",
+            "root",
+        )
+        assert result["value"]["$type"] == CustomFieldValueTypes.ENUM_BUNDLE_ELEMENT
+
+    def test_multi_valued_type_is_refused_with_a_reason(self):
+        """A version field is multi-valued on the issue, so one value cannot express it."""
+        with pytest.raises(UnsupportedCustomFieldTypeError) as exc:
+            CustomFieldManager.create_field_by_type(
+                self._info(ProjectCustomFieldTypes.SINGLE_VERSION, IssueCustomFieldTypes.MULTI_VERSION),
+                "Fix versions",
+                "1.0",
+            )
+        assert "several values" in str(exc.value)
+        assert "Fix versions" in str(exc.value)
+
+    def test_unmappable_type_raises_instead_of_guessing_enum(self):
+        """Refusing is the point: a guessed enum is rejected by the server as a type error."""
+        with pytest.raises(UnsupportedCustomFieldTypeError) as exc:
+            CustomFieldManager.create_field_by_type(self._info("SomethingNewProjectCustomField", None), "Mystery", "x")
+        assert "Mystery" in str(exc.value)
+        assert "SomethingNewProjectCustomField" in str(exc.value)

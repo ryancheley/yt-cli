@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 `yt issues update --custom-field` and `yt issues create --custom-field` now
+  write each field with the type that field actually reports, so user, owned,
+  version and build fields are no longer submitted as an enum payload and
+  rejected by the server. Two causes: type discovery read an unbound
+  `project_id` when `--state` was not also passed, and the project-side type
+  vocabulary used issue-side spellings, so those lookups matched nothing. A
+  field the CLI cannot type is now refused by name before any value is sent
+  rather than a guessed value being written, and a multi-valued field such as
+  *Fix versions* is refused for the same reason (#778)
+
 ## [0.25.1] - 2026-08-04
 
 ### Fixed
