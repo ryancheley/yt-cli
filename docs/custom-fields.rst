@@ -230,6 +230,14 @@ Common Issues
 
 **Type Mismatch**: Ensure you're using the correct field type constants for your specific use case.
 
+**Guessed Field Type**: When you set a custom field with ``yt issues update --custom-field`` and
+the issue's project cannot be resolved, the field type cannot be discovered and the command falls
+back to treating the value as an enum. This is correct for enum fields, but **wrong for text,
+integer, user, version, build and state fields**, which would be sent with an enum payload and
+rejected by the server. The warning names the unresolved project so the cause is identifiable.
+Discovery resolves the project from the issue itself, so it works whether or not ``--state`` is
+also supplied.
+
 **Multi-Value Fields**: Remember that multi-value fields return comma-separated strings when extracted.
 
 **Empty Values**: Empty custom field dictionaries return ``None`` when extracted.

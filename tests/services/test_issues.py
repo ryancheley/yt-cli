@@ -6,6 +6,7 @@ import httpx
 import pytest
 
 from youtrack_cli.auth import AuthManager
+from youtrack_cli.custom_field_types import IssueCustomFieldTypes
 from youtrack_cli.services.issues import IssueService
 
 
@@ -263,6 +264,78 @@ class TestIssueServiceUpdate:
                 ],
             }
             mock_request.assert_called_once_with("POST", "issues/TEST-1", json_data=expected_data)
+
+    @pytest.mark.asyncio
+    async def test_update_issue_custom_fields_without_state_discovers_type(self, issue_service, mock_response):
+        """A custom-fields-only update must discover each field's real type.
+
+        Regression: `project_id` was only ever bound inside the `state` branch,
+        so calling this without a state raised UnboundLocalError. The broad
+        `except` around field discovery swallowed it and downgraded every field
+        to a guessed enum, which happens to be correct for enum fields and
+        silently wrong for every other type.
+        """
+        discovered = {
+            "field_name": "Assigned",
+            "field_id": "cf-1",
+            "issue_field_type": IssueCustomFieldTypes.TEXT,
+        }
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch("youtrack_cli.services.projects.ProjectService") as mock_project_service,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "TEST"
+            mock_project_service.return_value.discover_custom_field = AsyncMock(
+                return_value={"status": "success", "data": discovered}
+            )
+
+            result = await issue_service.update_issue("TEST-1", custom_fields={"Assigned": "someone"})
+
+            assert result["status"] == "success"
+            # The project must be resolved even though no state was given.
+            mock_get_project.assert_awaited_once_with("TEST-1")
+            # Discovery must run against that project rather than falling back.
+            mock_project_service.return_value.discover_custom_field.assert_awaited_once_with("TEST", "Assigned")
+            mock_request.assert_called_once_with(
+                "POST",
+                "issues/TEST-1",
+                json_data={
+                    "$type": "Issue",
+                    "customFields": [
+                        {
+                            "$type": IssueCustomFieldTypes.TEXT,
+                            "name": "Assigned",
+                            "value": {"$type": "TextValue", "text": "someone"},
+                        },
+                    ],
+                },
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_issue_custom_fields_falls_back_when_project_unresolvable(self, issue_service, mock_response):
+        """An unresolvable project must degrade with a diagnostic, not a guess.
+
+        The fallback still sends an enum, because that is all the payload shape
+        can be without the real type -- but the warning has to name the cause.
+        """
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = None
+
+            with patch("youtrack_cli.services.issues.logger") as mock_logger:
+                await issue_service.update_issue("TEST-1", custom_fields={"Assigned": "someone"})
+
+            warnings = [str(c) for c in mock_logger.warning.call_args_list]
+            assert any("Could not resolve the project" in w for w in warnings), warnings
 
     @pytest.mark.asyncio
     async def test_update_issue_with_assignee(self, issue_service, mock_response):

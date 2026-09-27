@@ -181,6 +181,12 @@ class IssueService(BaseService):
         try:
             update_data: dict[str, Any] = {"$type": "Issue"}
             custom_fields_list = []
+            # Resolved lazily below. The state path needs it, and the
+            # custom-field path needs it to discover each field's real type.
+            # Binding it here keeps a custom-fields-only update from reading an
+            # unbound local -- which used to be swallowed and silently downgrade
+            # every field to a guessed enum.
+            project_id: str | None = None
 
             # Handle regular fields
             if summary is not None:
@@ -275,8 +281,15 @@ class IssueService(BaseService):
 
             # Handle generic custom fields with field type discovery
             if custom_fields:
+                if project_id is None:
+                    project_id = await self._get_project_id_from_issue(issue_id)
                 for field_name, field_value in custom_fields.items():
                     try:
+                        if project_id is None:
+                            raise ValueError(
+                                f"Could not resolve the project for issue '{issue_id}', "
+                                f"so the type of field '{field_name}' cannot be discovered"
+                            )
                         # Discover field type from project configuration
                         from .projects import ProjectService
 
