@@ -8,7 +8,7 @@ improving maintainability.
 
 from typing import Any
 
-from .custom_field_types import CustomFieldValueTypes, IssueCustomFieldTypes, ProjectCustomFieldTypes, get_display_name
+from .custom_field_types import CustomFieldValueTypes, IssueCustomFieldTypes, get_display_name
 
 
 class CustomFieldManager:
@@ -324,11 +324,6 @@ class CustomFieldManager:
             IssueCustomFieldTypes.MULTI_VERSION,
             IssueCustomFieldTypes.MULTI_BUILD,
             IssueCustomFieldTypes.MULTI_OWN_BUILD,
-            ProjectCustomFieldTypes.MULTI_ENUM,
-            ProjectCustomFieldTypes.MULTI_USER,
-            ProjectCustomFieldTypes.MULTI_VERSION,
-            ProjectCustomFieldTypes.MULTI_BUILD,
-            ProjectCustomFieldTypes.MULTI_OWN_BUILD,
         }
         return field_type in multi_value_types
 
@@ -421,6 +416,24 @@ class CustomFieldManager:
         }
 
     @staticmethod
+    def create_single_owned_field(name: str, value: str) -> dict[str, Any]:
+        """
+        Create a single owned custom field.
+
+        Args:
+            name: The field name
+            value: The owned value name
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.SINGLE_OWN_BUILD,
+            "name": name,
+            "value": {"$type": CustomFieldValueTypes.OWN_BUILD_BUNDLE_ELEMENT, "name": value},
+        }
+
+    @staticmethod
     def create_field_by_type(field_info: dict[str, Any], name: str, value: str) -> dict[str, Any]:
         """
         Create a custom field using discovered type information.
@@ -446,6 +459,8 @@ class CustomFieldManager:
             return CustomFieldManager.create_single_version_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.SINGLE_BUILD:
             return CustomFieldManager.create_single_build_field(name, value)
+        elif issue_field_type == IssueCustomFieldTypes.SINGLE_OWN_BUILD:
+            return CustomFieldManager.create_single_owned_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.SINGLE_ENUM:
             return CustomFieldManager.create_single_enum_field(name, value)
         elif issue_field_type == IssueCustomFieldTypes.STATE:

@@ -456,7 +456,9 @@ class ProjectService(BaseService):
             field_response = await self._make_request(
                 "GET",
                 f"admin/projects/{project_id}/customFields/{field_id}",
-                params={"fields": "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType,name)"},
+                params={
+                    "fields": "id,name,fieldType,localizedName,isPublic,ordinal,field(fieldType(id,isMultiValue),name)"
+                },
             )
             field_result = await self._handle_response(field_response)
 
@@ -652,7 +654,8 @@ class ProjectService(BaseService):
 
             # Determine the issue field type from project field type
             project_field_type = field_data.get("$type", "")
-            issue_field_type = self._project_to_issue_field_type(project_field_type)
+            is_multi_value = bool(field_data.get("field", {}).get("fieldType", {}).get("isMultiValue", False))
+            issue_field_type = self._project_to_issue_field_type(project_field_type, is_multi_value)
 
             # Determine bundle element type if applicable
             bundle_element_type = None
@@ -667,7 +670,7 @@ class ProjectService(BaseService):
                 "project_field_type": project_field_type,
                 "issue_field_type": issue_field_type,
                 "bundle_element_type": bundle_element_type,
-                "is_multi_value": "Multi" in project_field_type,
+                "is_multi_value": is_multi_value,
                 "field_details": field_data,
             }
 
@@ -681,30 +684,38 @@ class ProjectService(BaseService):
         except Exception as e:
             return self._create_error_response(f"Error discovering custom field '{field_name}': {str(e)}")
 
-    def _project_to_issue_field_type(self, project_field_type: str) -> str:
+    def _project_to_issue_field_type(self, project_field_type: str, is_multi_value: bool = False) -> str:
         """Convert project field type to issue field type.
 
         Args:
             project_field_type: The project field type string
+            is_multi_value: Whether the field holds several values
 
         Returns:
             The corresponding issue field type string
         """
         from ..custom_field_types import IssueCustomFieldTypes, ProjectCustomFieldTypes
 
+        bundle_mapping = {
+            ProjectCustomFieldTypes.ENUM: (IssueCustomFieldTypes.SINGLE_ENUM, IssueCustomFieldTypes.MULTI_ENUM),
+            ProjectCustomFieldTypes.USER: (IssueCustomFieldTypes.SINGLE_USER, IssueCustomFieldTypes.MULTI_USER),
+            ProjectCustomFieldTypes.VERSION: (
+                IssueCustomFieldTypes.SINGLE_VERSION,
+                IssueCustomFieldTypes.MULTI_VERSION,
+            ),
+            ProjectCustomFieldTypes.BUILD: (IssueCustomFieldTypes.SINGLE_BUILD, IssueCustomFieldTypes.MULTI_BUILD),
+            ProjectCustomFieldTypes.OWNED: (
+                IssueCustomFieldTypes.SINGLE_OWN_BUILD,
+                IssueCustomFieldTypes.MULTI_OWN_BUILD,
+            ),
+        }
+        if project_field_type in bundle_mapping:
+            single, multi = bundle_mapping[project_field_type]
+            return multi if is_multi_value else single
+
         mapping = {
-            ProjectCustomFieldTypes.ENUM: IssueCustomFieldTypes.SINGLE_ENUM,
-            ProjectCustomFieldTypes.MULTI_ENUM: IssueCustomFieldTypes.MULTI_ENUM,
             ProjectCustomFieldTypes.STATE: IssueCustomFieldTypes.STATE,
-            ProjectCustomFieldTypes.SINGLE_USER: IssueCustomFieldTypes.SINGLE_USER,
-            ProjectCustomFieldTypes.MULTI_USER: IssueCustomFieldTypes.MULTI_USER,
             ProjectCustomFieldTypes.TEXT: IssueCustomFieldTypes.TEXT,
             ProjectCustomFieldTypes.INTEGER: IssueCustomFieldTypes.INTEGER,
-            ProjectCustomFieldTypes.SINGLE_VERSION: IssueCustomFieldTypes.SINGLE_VERSION,
-            ProjectCustomFieldTypes.MULTI_VERSION: IssueCustomFieldTypes.MULTI_VERSION,
-            ProjectCustomFieldTypes.SINGLE_BUILD: IssueCustomFieldTypes.SINGLE_BUILD,
-            ProjectCustomFieldTypes.MULTI_BUILD: IssueCustomFieldTypes.MULTI_BUILD,
-            ProjectCustomFieldTypes.SINGLE_OWN_BUILD: IssueCustomFieldTypes.SINGLE_OWN_BUILD,
-            ProjectCustomFieldTypes.MULTI_OWN_BUILD: IssueCustomFieldTypes.MULTI_OWN_BUILD,
         }
         return mapping.get(project_field_type, IssueCustomFieldTypes.SINGLE_ENUM)

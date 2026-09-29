@@ -25,10 +25,10 @@ class TestCustomFieldTypes:
     def test_project_custom_field_types(self):
         """Test project custom field type constants."""
         assert ProjectCustomFieldTypes.ENUM == "EnumProjectCustomField"
-        assert ProjectCustomFieldTypes.MULTI_ENUM == "MultiEnumProjectCustomField"
         assert ProjectCustomFieldTypes.STATE == "StateProjectCustomField"
-        assert ProjectCustomFieldTypes.SINGLE_USER == "SingleUserProjectCustomField"
-        assert ProjectCustomFieldTypes.MULTI_USER == "MultiUserProjectCustomField"
+        assert ProjectCustomFieldTypes.USER == "UserProjectCustomField"
+        assert ProjectCustomFieldTypes.VERSION == "VersionProjectCustomField"
+        assert ProjectCustomFieldTypes.OWNED == "OwnedProjectCustomField"
 
     def test_custom_field_value_types(self):
         """Test custom field value type constants."""
@@ -40,14 +40,14 @@ class TestCustomFieldTypes:
     def test_get_display_name(self):
         """Test display name formatting."""
         assert get_display_name("SingleEnumIssueCustomField") == "Single Enum"
-        assert get_display_name("MultiUserProjectCustomField") == "Multi User"
+        assert get_display_name("MultiUserIssueCustomField") == "Multi User"
         assert get_display_name("UnknownType") == "UnknownType"
 
     def test_field_type_display_map_completeness(self):
         """Test that all field types have display mappings."""
         # Test some key field types
         assert "SingleEnumIssueCustomField" in FIELD_TYPE_DISPLAY_MAP
-        assert "MultiUserProjectCustomField" in FIELD_TYPE_DISPLAY_MAP
+        assert "UserProjectCustomField" in FIELD_TYPE_DISPLAY_MAP
         assert FIELD_TYPE_DISPLAY_MAP["SingleEnumIssueCustomField"] == "Single Enum"
 
 
@@ -276,8 +276,8 @@ class TestCustomFieldManager:
         """Test checking if field type is multi-value."""
         assert CustomFieldManager.is_multi_value_field("MultiEnumIssueCustomField") is True
         assert CustomFieldManager.is_multi_value_field("MultiUserIssueCustomField") is True
-        assert CustomFieldManager.is_multi_value_field("MultiEnumProjectCustomField") is True
-        assert CustomFieldManager.is_multi_value_field("MultiUserProjectCustomField") is True
+        assert CustomFieldManager.is_multi_value_field("MultiVersionIssueCustomField") is True
+        assert CustomFieldManager.is_multi_value_field("MultiOwnedIssueCustomField") is True
 
         assert CustomFieldManager.is_multi_value_field("SingleEnumIssueCustomField") is False
         assert CustomFieldManager.is_multi_value_field("SingleUserIssueCustomField") is False
@@ -323,3 +323,18 @@ class TestCustomFieldManager:
         value = {"isResolved": True}
         result = CustomFieldManager._extract_dict_value(value)
         assert result == "True"
+
+
+class TestCreateFieldByType:
+    """Test building a -cf payload from discovered field info."""
+
+    def test_single_owned_field(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "SingleOwnedIssueCustomField"}, "Subsystem", "backend"
+        )
+
+        assert field == {
+            "$type": "SingleOwnedIssueCustomField",
+            "name": "Subsystem",
+            "value": {"$type": "OwnedBundleElement", "name": "backend"},
+        }
