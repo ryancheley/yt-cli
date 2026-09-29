@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 `yt issues update --custom-field` without `--state` discovers the field's
+  type instead of failing on an unbound project ID and sending an enum (#778)
+
 ## [0.25.1] - 2026-08-04
 
 ### Fixed

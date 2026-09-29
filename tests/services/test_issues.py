@@ -838,3 +838,43 @@ class TestIssueServiceErrorHandling:
                     assert mock_error.call_count == 2
                 else:
                     mock_error.assert_called_once()
+
+
+class TestIssueServiceDiscoveredCustomFields:
+    """Test that -cf values are written with the discovered field type."""
+
+    @pytest.mark.asyncio
+    async def test_update_custom_field_without_state_discovers_type(self, issue_service, mock_response):
+        with (
+            patch.object(issue_service, "_make_request", new_callable=AsyncMock) as mock_request,
+            patch.object(issue_service, "_handle_response", new_callable=AsyncMock) as mock_handle,
+            patch.object(issue_service, "_get_project_id_from_issue", new_callable=AsyncMock) as mock_get_project,
+            patch(
+                "youtrack_cli.services.projects.ProjectService.discover_custom_field", new_callable=AsyncMock
+            ) as mock_discover,
+        ):
+            mock_request.return_value = mock_response
+            mock_handle.return_value = {"status": "success"}
+            mock_get_project.return_value = "0-1"
+            mock_discover.return_value = {
+                "status": "success",
+                "data": {"issue_field_type": "TextIssueCustomField"},
+            }
+
+            await issue_service.update_issue("TEST-1", custom_fields={"Notes": "hello"})
+
+            mock_discover.assert_awaited_once_with("0-1", "Notes")
+            mock_request.assert_called_once_with(
+                "POST",
+                "issues/TEST-1",
+                json_data={
+                    "$type": "Issue",
+                    "customFields": [
+                        {
+                            "$type": "TextIssueCustomField",
+                            "name": "Notes",
+                            "value": {"$type": "TextValue", "text": "hello"},
+                        }
+                    ],
+                },
+            )
