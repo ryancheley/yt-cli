@@ -200,6 +200,10 @@ Handle fields that can contain multiple values:
         "Reviewers", ["user1", "user2", "user3"]
     )
 
+    # Build a field from discovered type information; a list sets several values
+    field_info = {"issue_field_type": "MultiVersionIssueCustomField"}
+    versions = CustomFieldManager.create_field_by_type(field_info, "Fix versions", ["1.0", "1.1"])
+
 Project Field Configuration
 ---------------------------
 

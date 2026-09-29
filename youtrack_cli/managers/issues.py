@@ -101,7 +101,7 @@ class IssueManager:
         issue_type: str | None = None,
         priority: str | None = None,
         assignee: str | None = None,
-        custom_fields: dict[str, str] | None = None,
+        custom_fields: dict[str, str | list[str]] | None = None,
     ) -> dict[str, Any]:
         """Create a new issue with business logic and validation."""
         # Resolve project short name to internal ID if needed
@@ -171,7 +171,7 @@ class IssueManager:
         priority: str | None = None,
         assignee: str | None = None,
         issue_type: str | None = None,
-        custom_fields: dict[str, str] | None = None,
+        custom_fields: dict[str, str | list[str]] | None = None,
     ) -> dict[str, Any]:
         """Update an existing issue with validation."""
         return await self.issue_service.update_issue(

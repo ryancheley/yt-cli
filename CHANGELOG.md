@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🐛 Custom field type discovery recognises user, version, build and owned
   project fields and reads multiplicity from `fieldType.isMultiValue`; these
   fields were previously sent as enums and rejected
+- 🐛 `yt issues create/update --custom-field` can set multi-value fields
+  (version, enum, user, build and owned). Repeat the field name to pass several
+  values, e.g. `-cf "Fix versions=1.0" -cf "Fix versions=1.1"`; the values
+  replace the field's current ones
 
 ## [0.25.1] - 2026-08-04
 

@@ -9,6 +9,9 @@ improving maintainability.
 from typing import Any
 
 from .custom_field_types import CustomFieldValueTypes, IssueCustomFieldTypes, get_display_name
+from .logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class CustomFieldManager:
@@ -416,6 +419,60 @@ class CustomFieldManager:
         }
 
     @staticmethod
+    def create_multi_version_field(name: str, values: list[str]) -> dict[str, Any]:
+        """
+        Create a multi version custom field.
+
+        Args:
+            name: The field name
+            values: List of version names
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.MULTI_VERSION,
+            "name": name,
+            "value": [{"$type": CustomFieldValueTypes.VERSION_BUNDLE_ELEMENT, "name": value} for value in values],
+        }
+
+    @staticmethod
+    def create_multi_build_field(name: str, values: list[str]) -> dict[str, Any]:
+        """
+        Create a multi build custom field.
+
+        Args:
+            name: The field name
+            values: List of build names
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.MULTI_BUILD,
+            "name": name,
+            "value": [{"$type": CustomFieldValueTypes.BUILD_BUNDLE_ELEMENT, "name": value} for value in values],
+        }
+
+    @staticmethod
+    def create_multi_owned_field(name: str, values: list[str]) -> dict[str, Any]:
+        """
+        Create a multi owned custom field.
+
+        Args:
+            name: The field name
+            values: List of owned value names
+
+        Returns:
+            Dictionary representing the custom field
+        """
+        return {
+            "$type": IssueCustomFieldTypes.MULTI_OWN_BUILD,
+            "name": name,
+            "value": [{"$type": CustomFieldValueTypes.OWN_BUILD_BUNDLE_ELEMENT, "name": value} for value in values],
+        }
+
+    @staticmethod
     def create_single_owned_field(name: str, value: str) -> dict[str, Any]:
         """
         Create a single owned custom field.
@@ -434,19 +491,35 @@ class CustomFieldManager:
         }
 
     @staticmethod
-    def create_field_by_type(field_info: dict[str, Any], name: str, value: str) -> dict[str, Any]:
+    def create_field_by_type(field_info: dict[str, Any], name: str, value: str | list[str]) -> dict[str, Any]:
         """
         Create a custom field using discovered type information.
 
         Args:
             field_info: Field information from discover_custom_field
             name: Field name
-            value: Field value (as string from CLI)
+            value: Field value, or several values for a multi-value field (as strings from CLI)
 
         Returns:
             Formatted custom field dictionary
         """
         issue_field_type = field_info.get("issue_field_type")
+        values = value if isinstance(value, list) else [value]
+
+        if issue_field_type == IssueCustomFieldTypes.MULTI_ENUM:
+            return CustomFieldManager.create_multi_enum_field(name, values)
+        elif issue_field_type == IssueCustomFieldTypes.MULTI_USER:
+            return CustomFieldManager.create_multi_user_field(name, values)
+        elif issue_field_type == IssueCustomFieldTypes.MULTI_VERSION:
+            return CustomFieldManager.create_multi_version_field(name, values)
+        elif issue_field_type == IssueCustomFieldTypes.MULTI_BUILD:
+            return CustomFieldManager.create_multi_build_field(name, values)
+        elif issue_field_type == IssueCustomFieldTypes.MULTI_OWN_BUILD:
+            return CustomFieldManager.create_multi_owned_field(name, values)
+
+        if len(values) > 1:
+            logger.warning(f"Field '{name}' holds a single value, using the last of {values}")
+        value = values[-1]
 
         # Map issue field types to creation methods
         if issue_field_type == IssueCustomFieldTypes.TEXT:

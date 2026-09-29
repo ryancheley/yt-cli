@@ -24,7 +24,7 @@ class IssueService(BaseService):
         issue_type: str | None = None,
         priority: str | None = None,
         assignee: str | None = None,
-        custom_fields: dict[str, str] | None = None,
+        custom_fields: dict[str, str | list[str]] | None = None,
     ) -> dict[str, Any]:
         """Create a new issue via API.
 
@@ -161,7 +161,7 @@ class IssueService(BaseService):
         priority: str | None = None,
         assignee: str | None = None,
         issue_type: str | None = None,
-        custom_fields: dict[str, str] | None = None,
+        custom_fields: dict[str, str | list[str]] | None = None,
     ) -> dict[str, Any]:
         """Update an existing issue via API.
 

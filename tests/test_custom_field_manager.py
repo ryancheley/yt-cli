@@ -1,5 +1,7 @@
 """Tests for CustomFieldManager and custom field utilities."""
 
+import pytest
+
 from youtrack_cli.custom_field_manager import CustomFieldManager
 from youtrack_cli.custom_field_types import (
     FIELD_TYPE_DISPLAY_MAP,
@@ -338,3 +340,39 @@ class TestCreateFieldByType:
             "name": "Subsystem",
             "value": {"$type": "OwnedBundleElement", "name": "backend"},
         }
+
+    @pytest.mark.parametrize(
+        ("issue_field_type", "element"),
+        [
+            ("MultiVersionIssueCustomField", {"$type": "VersionBundleElement", "name": "1.0"}),
+            ("MultiEnumIssueCustomField", {"$type": "EnumBundleElement", "name": "1.0"}),
+            ("MultiUserIssueCustomField", {"$type": "User", "login": "1.0"}),
+            ("MultiBuildIssueCustomField", {"$type": "BuildBundleElement", "name": "1.0"}),
+            ("MultiOwnedIssueCustomField", {"$type": "OwnedBundleElement", "name": "1.0"}),
+        ],
+    )
+    def test_multi_value_types_send_a_list(self, issue_field_type, element):
+        field = CustomFieldManager.create_field_by_type({"issue_field_type": issue_field_type}, "Field", "1.0")
+
+        assert field == {"$type": issue_field_type, "name": "Field", "value": [element]}
+
+    def test_multi_value_keeps_every_value(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "MultiVersionIssueCustomField"}, "Fix versions", ["1.0", "1.1"]
+        )
+
+        assert [v["name"] for v in field["value"]] == ["1.0", "1.1"]
+
+    def test_single_value_field_accepts_one_item_list(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "SingleEnumIssueCustomField"}, "Priority", ["High"]
+        )
+
+        assert field["value"] == {"$type": "EnumBundleElement", "name": "High"}
+
+    def test_single_value_field_uses_last_of_several_values(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "SingleEnumIssueCustomField"}, "Priority", ["High", "Low"]
+        )
+
+        assert field["value"] == {"$type": "EnumBundleElement", "name": "Low"}

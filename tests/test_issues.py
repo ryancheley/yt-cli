@@ -2051,3 +2051,19 @@ class TestIssueTablePagination:
 
         result = issue_manager._get_field_with_fallback(issue, "state", ["State"])
         assert result == "Custom Open"
+
+
+class TestParseCustomFields:
+    """Test parsing of repeated --custom-field options."""
+
+    def test_repeated_name_collects_every_value(self):
+        from youtrack_cli.commands.issues import _parse_custom_fields
+
+        parsed = _parse_custom_fields(("Fix versions=1.0", "Priority=High", "Fix versions=1.1"))
+
+        assert parsed == {"Fix versions": ["1.0", "1.1"], "Priority": ["High"]}
+
+    def test_value_with_comma_stays_one_value(self):
+        from youtrack_cli.commands.issues import _parse_custom_fields
+
+        assert _parse_custom_fields(("Fix versions=1.0, beta",)) == {"Fix versions": ["1.0, beta"]}
