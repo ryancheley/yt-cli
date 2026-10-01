@@ -1,5 +1,7 @@
 """Tests for CustomFieldManager and custom field utilities."""
 
+import pytest
+
 from youtrack_cli.custom_field_manager import CustomFieldManager
 from youtrack_cli.custom_field_types import (
     FIELD_TYPE_DISPLAY_MAP,
@@ -25,10 +27,10 @@ class TestCustomFieldTypes:
     def test_project_custom_field_types(self):
         """Test project custom field type constants."""
         assert ProjectCustomFieldTypes.ENUM == "EnumProjectCustomField"
-        assert ProjectCustomFieldTypes.MULTI_ENUM == "MultiEnumProjectCustomField"
         assert ProjectCustomFieldTypes.STATE == "StateProjectCustomField"
-        assert ProjectCustomFieldTypes.SINGLE_USER == "SingleUserProjectCustomField"
-        assert ProjectCustomFieldTypes.MULTI_USER == "MultiUserProjectCustomField"
+        assert ProjectCustomFieldTypes.USER == "UserProjectCustomField"
+        assert ProjectCustomFieldTypes.VERSION == "VersionProjectCustomField"
+        assert ProjectCustomFieldTypes.OWNED == "OwnedProjectCustomField"
 
     def test_custom_field_value_types(self):
         """Test custom field value type constants."""
@@ -40,14 +42,14 @@ class TestCustomFieldTypes:
     def test_get_display_name(self):
         """Test display name formatting."""
         assert get_display_name("SingleEnumIssueCustomField") == "Single Enum"
-        assert get_display_name("MultiUserProjectCustomField") == "Multi User"
+        assert get_display_name("MultiUserIssueCustomField") == "Multi User"
         assert get_display_name("UnknownType") == "UnknownType"
 
     def test_field_type_display_map_completeness(self):
         """Test that all field types have display mappings."""
         # Test some key field types
         assert "SingleEnumIssueCustomField" in FIELD_TYPE_DISPLAY_MAP
-        assert "MultiUserProjectCustomField" in FIELD_TYPE_DISPLAY_MAP
+        assert "UserProjectCustomField" in FIELD_TYPE_DISPLAY_MAP
         assert FIELD_TYPE_DISPLAY_MAP["SingleEnumIssueCustomField"] == "Single Enum"
 
 
@@ -276,8 +278,8 @@ class TestCustomFieldManager:
         """Test checking if field type is multi-value."""
         assert CustomFieldManager.is_multi_value_field("MultiEnumIssueCustomField") is True
         assert CustomFieldManager.is_multi_value_field("MultiUserIssueCustomField") is True
-        assert CustomFieldManager.is_multi_value_field("MultiEnumProjectCustomField") is True
-        assert CustomFieldManager.is_multi_value_field("MultiUserProjectCustomField") is True
+        assert CustomFieldManager.is_multi_value_field("MultiVersionIssueCustomField") is True
+        assert CustomFieldManager.is_multi_value_field("MultiOwnedIssueCustomField") is True
 
         assert CustomFieldManager.is_multi_value_field("SingleEnumIssueCustomField") is False
         assert CustomFieldManager.is_multi_value_field("SingleUserIssueCustomField") is False
@@ -323,3 +325,54 @@ class TestCustomFieldManager:
         value = {"isResolved": True}
         result = CustomFieldManager._extract_dict_value(value)
         assert result == "True"
+
+
+class TestCreateFieldByType:
+    """Test building a -cf payload from discovered field info."""
+
+    def test_single_owned_field(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "SingleOwnedIssueCustomField"}, "Subsystem", "backend"
+        )
+
+        assert field == {
+            "$type": "SingleOwnedIssueCustomField",
+            "name": "Subsystem",
+            "value": {"$type": "OwnedBundleElement", "name": "backend"},
+        }
+
+    @pytest.mark.parametrize(
+        ("issue_field_type", "element"),
+        [
+            ("MultiVersionIssueCustomField", {"$type": "VersionBundleElement", "name": "1.0"}),
+            ("MultiEnumIssueCustomField", {"$type": "EnumBundleElement", "name": "1.0"}),
+            ("MultiUserIssueCustomField", {"$type": "User", "login": "1.0"}),
+            ("MultiBuildIssueCustomField", {"$type": "BuildBundleElement", "name": "1.0"}),
+            ("MultiOwnedIssueCustomField", {"$type": "OwnedBundleElement", "name": "1.0"}),
+        ],
+    )
+    def test_multi_value_types_send_a_list(self, issue_field_type, element):
+        field = CustomFieldManager.create_field_by_type({"issue_field_type": issue_field_type}, "Field", "1.0")
+
+        assert field == {"$type": issue_field_type, "name": "Field", "value": [element]}
+
+    def test_multi_value_keeps_every_value(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "MultiVersionIssueCustomField"}, "Fix versions", ["1.0", "1.1"]
+        )
+
+        assert [v["name"] for v in field["value"]] == ["1.0", "1.1"]
+
+    def test_single_value_field_accepts_one_item_list(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "SingleEnumIssueCustomField"}, "Priority", ["High"]
+        )
+
+        assert field["value"] == {"$type": "EnumBundleElement", "name": "High"}
+
+    def test_single_value_field_uses_last_of_several_values(self):
+        field = CustomFieldManager.create_field_by_type(
+            {"issue_field_type": "SingleEnumIssueCustomField"}, "Priority", ["High", "Low"]
+        )
+
+        assert field["value"] == {"$type": "EnumBundleElement", "name": "Low"}

@@ -29,19 +29,18 @@ class IssueCustomFieldTypes:
 
 
 class ProjectCustomFieldTypes:
-    """Custom field types for projects."""
+    """Custom field types for projects.
+
+    The project API names only the kind of field. Whether it holds one value or several
+    is reported separately, in ``field.fieldType.isMultiValue``.
+    """
 
     ENUM = "EnumProjectCustomField"
-    MULTI_ENUM = "MultiEnumProjectCustomField"
     STATE = "StateProjectCustomField"
-    SINGLE_USER = "SingleUserProjectCustomField"
-    MULTI_USER = "MultiUserProjectCustomField"
-    SINGLE_VERSION = "SingleVersionProjectCustomField"
-    MULTI_VERSION = "MultiVersionProjectCustomField"
-    SINGLE_BUILD = "SingleBuildProjectCustomField"
-    MULTI_BUILD = "MultiBuildProjectCustomField"
-    SINGLE_OWN_BUILD = "SingleOwnedProjectCustomField"
-    MULTI_OWN_BUILD = "MultiOwnedProjectCustomField"
+    USER = "UserProjectCustomField"
+    VERSION = "VersionProjectCustomField"
+    BUILD = "BuildProjectCustomField"
+    OWNED = "OwnedProjectCustomField"
     TEXT = "TextProjectCustomField"
     PERIOD = "PeriodProjectCustomField"
     DATE = "DateProjectCustomField"
@@ -95,16 +94,11 @@ FIELD_TYPE_DISPLAY_MAP = {
     IssueCustomFieldTypes.FLOAT: "Float",
     # Project field types
     ProjectCustomFieldTypes.ENUM: "Enum",
-    ProjectCustomFieldTypes.MULTI_ENUM: "Multi Enum",
     ProjectCustomFieldTypes.STATE: "State",
-    ProjectCustomFieldTypes.SINGLE_USER: "Single User",
-    ProjectCustomFieldTypes.MULTI_USER: "Multi User",
-    ProjectCustomFieldTypes.SINGLE_VERSION: "Single Version",
-    ProjectCustomFieldTypes.MULTI_VERSION: "Multi Version",
-    ProjectCustomFieldTypes.SINGLE_BUILD: "Single Build",
-    ProjectCustomFieldTypes.MULTI_BUILD: "Multi Build",
-    ProjectCustomFieldTypes.SINGLE_OWN_BUILD: "Single Owned Build",
-    ProjectCustomFieldTypes.MULTI_OWN_BUILD: "Multi Owned Build",
+    ProjectCustomFieldTypes.USER: "User",
+    ProjectCustomFieldTypes.VERSION: "Version",
+    ProjectCustomFieldTypes.BUILD: "Build",
+    ProjectCustomFieldTypes.OWNED: "Owned",
     ProjectCustomFieldTypes.TEXT: "Text",
     ProjectCustomFieldTypes.PERIOD: "Period",
     ProjectCustomFieldTypes.DATE: "Date",

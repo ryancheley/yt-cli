@@ -211,19 +211,22 @@ def show_issues_verbose_help(ctx):
     console.print("")
 
 
-def _parse_custom_fields(custom_field_tuples: tuple) -> dict:
+def _parse_custom_fields(custom_field_tuples: tuple) -> dict[str, list[str]]:
     """Parse custom field tuples into dict.
+
+    Values are not split on commas, since names such as versions can contain them.
+    A repeated field name collects every value instead.
 
     Args:
         custom_field_tuples: Tuple of strings in format "FieldName=value"
 
     Returns:
-        Dict mapping field names to values
+        Dict mapping field names to their values, in the order given
 
     Raises:
         click.BadParameter: If format is invalid
     """
-    parsed = {}
+    parsed: dict[str, list[str]] = {}
     for field_spec in custom_field_tuples:
         if "=" not in field_spec:
             raise click.BadParameter(f'Custom field must be in format "FieldName=value", got: {field_spec}')
@@ -232,7 +235,7 @@ def _parse_custom_fields(custom_field_tuples: tuple) -> dict:
         value = value.strip()
         if not name or not value:
             raise click.BadParameter(f"Field name and value cannot be empty: {field_spec}")
-        parsed[name] = value
+        parsed.setdefault(name, []).append(value)
     return parsed
 
 
@@ -306,7 +309,7 @@ def issues() -> None:
     "--custom-field",
     "-cf",
     multiple=True,
-    help='Custom field in format "FieldName=value" (can be used multiple times)',
+    help='Custom field in format "FieldName=value". Repeat a name to set several values on a multi-value field',
 )
 @click.pass_context
 def create(
@@ -338,6 +341,10 @@ def create(
         yt issues create INFRA-789 "Update certificates" \
             --type Task --priority Medium \
             --custom-field "Team=Infrastructure" --custom-field "Sprint=Sprint 1"
+
+        # Set several values on a multi-value field
+        yt issues create INFRA-789 "Update certificates" \
+            --custom-field "Fix versions=1.0" --custom-field "Fix versions=1.1"
 
     Tip: Issue types and priorities are project-specific. Use values that exist in your YouTrack project.
     """
@@ -698,7 +705,7 @@ def list_issues(
     "--custom-field",
     "-cf",
     multiple=True,
-    help='Custom field in format "FieldName=value" (can be used multiple times)',
+    help='Custom field in format "FieldName=value". Repeat a name to set several values on a multi-value field',
 )
 @click.option(
     "--show-details",
