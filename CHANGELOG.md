@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-10-04
+
+### Deprecated
+- ⚠️ Python 3.10 has reached end of life. A runtime warning is now shown when
+  running under Python 3.10, noting that support will stop in January 2027;
+  upgrade to Python 3.11 or newer (#786)
+
 ### Fixed
 - 🐛 `yt issues update --custom-field` without `--state` discovers the field's
   type instead of failing on an unbound project ID and sending an enum (#778)
@@ -17,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (version, enum, user, build and owned). Repeat the field name to pass several
   values, e.g. `-cf "Fix versions=1.0" -cf "Fix versions=1.1"`; the values
   replace the field's current ones
+
+### Security
+- 🔒 Bumped the transitive dev-group `virtualenv` dependency to 21.14.5,
+  resolving CVE-2026-102930 (high) and CVE-2026-102938 (medium) (#787)
 
 ## [0.25.1] - 2026-08-04
 
