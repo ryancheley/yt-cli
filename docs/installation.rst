@@ -8,6 +8,12 @@ Requirements
 * An active YouTrack instance
 * API access to your YouTrack instance
 
+.. note::
+
+   Python 3.10 has reached end of life. YouTrack CLI will stop supporting it
+   starting in January 2027; a deprecation warning is shown at runtime when
+   running under Python 3.10. Please upgrade to Python 3.11 or newer.
+
 Platform-Specific Setup
 ------------------------
 
