@@ -24,7 +24,7 @@ class IssueService(BaseService):
         issue_type: str | None = None,
         priority: str | None = None,
         assignee: str | None = None,
-        custom_fields: dict[str, str] | None = None,
+        custom_fields: dict[str, str | list[str]] | None = None,
     ) -> dict[str, Any]:
         """Create a new issue via API.
 
@@ -161,7 +161,7 @@ class IssueService(BaseService):
         priority: str | None = None,
         assignee: str | None = None,
         issue_type: str | None = None,
-        custom_fields: dict[str, str] | None = None,
+        custom_fields: dict[str, str | list[str]] | None = None,
     ) -> dict[str, Any]:
         """Update an existing issue via API.
 
@@ -181,6 +181,7 @@ class IssueService(BaseService):
         try:
             update_data: dict[str, Any] = {"$type": "Issue"}
             custom_fields_list = []
+            project_id: str | None = None
 
             # Handle regular fields
             if summary is not None:
@@ -275,6 +276,8 @@ class IssueService(BaseService):
 
             # Handle generic custom fields with field type discovery
             if custom_fields:
+                if project_id is None:
+                    project_id = await self._get_project_id_from_issue(issue_id)
                 for field_name, field_value in custom_fields.items():
                     try:
                         # Discover field type from project configuration

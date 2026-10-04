@@ -52,16 +52,20 @@ Create new issues in YouTrack projects.
 
 **Custom Fields**
 
-The ``--custom-field`` option supports all YouTrack custom field types:
+The ``--custom-field`` option supports:
 
 * **Enum fields**: Single and multi-value enum fields (e.g., Priority, Status)
+* **State fields**: Workflow state fields
 * **Text fields**: Free-form text fields
 * **Simple fields**: Integer and float numeric fields
 * **User fields**: Single and multi-user fields (use login names)
-* **Version fields**: Version bundle fields
-* **Build fields**: Build bundle fields
-* **Date/DateTime fields**: Date and date-time fields (use Unix timestamps in milliseconds)
-* **Period fields**: Time period fields
+* **Version fields**: Single and multi-value version fields (e.g., Fix versions)
+* **Build fields**: Single and multi-value build fields
+* **Owned fields**: Single and multi-value owned fields (e.g., Subsystem)
+
+To set several values on a multi-value field, repeat the field name. Values are not
+split on commas, so version names containing commas are safe. The given values replace
+the field's current values. A single-value field given several values uses the last one.
 
 The CLI automatically detects the field type from the project configuration. If type discovery fails, it falls back to enum type as a safe default.
 
@@ -82,6 +86,9 @@ The CLI automatically detects the field type from the project configuration. If 
 
    # User field (use login name)
    yt issues create PROJ-1 "Task" -cf "Reviewer=john.doe"
+
+   # Multi-value field: repeat the name for each value
+   yt issues create PROJ-1 "Task" -cf "Fix versions=1.0" -cf "Fix versions=1.1"
 
 List Issues
 ~~~~~~~~~~~
@@ -173,6 +180,9 @@ The ``--custom-field`` option is repeatable and supports all YouTrack custom fie
 
    # Update with custom fields
    yt issues update PROJ-123 -cf "Team=Frontend" -cf "StoryPoints=8"
+
+   # Replace the values of a multi-value field
+   yt issues update PROJ-123 -cf "Fix versions=1.0" -cf "Fix versions=1.1"
 
    # View current issue details
    yt issues update PROJ-123 --show-details

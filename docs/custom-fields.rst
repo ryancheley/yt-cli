@@ -42,16 +42,24 @@ Issue Custom Field Types
 - ``StateIssueCustomField`` - State/workflow fields
 - ``SingleUserIssueCustomField`` - Single user assignment fields
 - ``MultiUserIssueCustomField`` - Multi-user assignment fields
+- ``SingleVersionIssueCustomField`` / ``MultiVersionIssueCustomField`` - Version fields
+- ``SingleBuildIssueCustomField`` / ``MultiBuildIssueCustomField`` - Build fields
+- ``SingleOwnedIssueCustomField`` / ``MultiOwnedIssueCustomField`` - Owned fields
 - ``TextIssueCustomField`` - Text input fields
 
 Project Custom Field Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Project field types name only the kind of field. Whether a field holds one value or
+several is reported in ``field.fieldType.isMultiValue``, so ``EnumProjectCustomField``
+backs both ``SingleEnumIssueCustomField`` and ``MultiEnumIssueCustomField``.
+
 - ``EnumProjectCustomField`` - Project-level enum fields
-- ``MultiEnumProjectCustomField`` - Project-level multi-enum fields
 - ``StateProjectCustomField`` - Project-level state fields
-- ``SingleUserProjectCustomField`` - Project-level single user fields
-- ``MultiUserProjectCustomField`` - Project-level multi-user fields
+- ``UserProjectCustomField`` - Project-level user fields
+- ``VersionProjectCustomField`` - Project-level version fields
+- ``BuildProjectCustomField`` - Project-level build fields
+- ``OwnedProjectCustomField`` - Project-level owned fields
 
 Field Value Types
 ^^^^^^^^^^^^^^^^^
@@ -191,6 +199,10 @@ Handle fields that can contain multiple values:
     reviewers = CustomFieldManager.create_multi_user_field(
         "Reviewers", ["user1", "user2", "user3"]
     )
+
+    # Build a field from discovered type information; a list sets several values
+    field_info = {"issue_field_type": "MultiVersionIssueCustomField"}
+    versions = CustomFieldManager.create_field_by_type(field_info, "Fix versions", ["1.0", "1.1"])
 
 Project Field Configuration
 ---------------------------

@@ -667,3 +667,58 @@ class TestProjectServiceVersions:
 
             mock_error.assert_called_once_with("Error getting project versions: Network error")
             assert result["status"] == "error"
+
+
+class TestProjectServiceDiscoverCustomField:
+    """Test custom field type discovery."""
+
+    @pytest.fixture(autouse=True)
+    def clear_field_cache(self):
+        from youtrack_cli.services.field_cache import get_field_cache
+
+        get_field_cache().clear()
+        yield
+        get_field_cache().clear()
+
+    async def _discover(self, project_service, project_field_type, field_type_id, is_multi_value):
+        field = {"id": "92-1", "field": {"name": "Field", "fieldType": {"id": field_type_id}}}
+        details = {
+            "$type": project_field_type,
+            "field": {"name": "Field", "fieldType": {"id": field_type_id, "isMultiValue": is_multi_value}},
+        }
+        with (
+            patch.object(project_service, "get_project_custom_fields", new_callable=AsyncMock) as mock_fields,
+            patch.object(project_service, "get_custom_field_details", new_callable=AsyncMock) as mock_details,
+        ):
+            mock_fields.return_value = {"status": "success", "data": [field]}
+            mock_details.return_value = {"status": "success", "data": details}
+            return await project_service.discover_custom_field("TEST", "Field")
+
+    # The project admin API names the kind of field; multiplicity is only in fieldType.
+    @pytest.mark.parametrize(
+        ("project_field_type", "field_type_id", "is_multi_value", "issue_field_type"),
+        [
+            ("EnumProjectCustomField", "enum[1]", False, "SingleEnumIssueCustomField"),
+            ("EnumProjectCustomField", "enum[*]", True, "MultiEnumIssueCustomField"),
+            ("UserProjectCustomField", "user[1]", False, "SingleUserIssueCustomField"),
+            ("UserProjectCustomField", "user[*]", True, "MultiUserIssueCustomField"),
+            ("VersionProjectCustomField", "version[1]", False, "SingleVersionIssueCustomField"),
+            ("VersionProjectCustomField", "version[*]", True, "MultiVersionIssueCustomField"),
+            ("BuildProjectCustomField", "build[1]", False, "SingleBuildIssueCustomField"),
+            ("BuildProjectCustomField", "build[*]", True, "MultiBuildIssueCustomField"),
+            ("OwnedProjectCustomField", "ownedField[1]", False, "SingleOwnedIssueCustomField"),
+            ("OwnedProjectCustomField", "ownedField[*]", True, "MultiOwnedIssueCustomField"),
+            ("StateProjectCustomField", "state[1]", False, "StateIssueCustomField"),
+            ("TextProjectCustomField", "text", False, "TextIssueCustomField"),
+            ("SimpleProjectCustomField", "integer", False, "SimpleIssueCustomField"),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_discover_maps_kind_and_multiplicity(
+        self, project_service, project_field_type, field_type_id, is_multi_value, issue_field_type
+    ):
+        result = await self._discover(project_service, project_field_type, field_type_id, is_multi_value)
+
+        assert result["status"] == "success"
+        assert result["data"]["issue_field_type"] == issue_field_type
+        assert result["data"]["is_multi_value"] is is_multi_value
