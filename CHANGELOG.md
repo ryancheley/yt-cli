@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 Issue and project IDs whose project starts with a number, such as `4DM-123`,
+  are accepted by `yt issues comments add` and `yt issues create`; a project ID
+  still has to contain a letter (#790)
+
 ## [0.26.0] - 2026-10-04
 
 ### Deprecated

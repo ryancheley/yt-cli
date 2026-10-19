@@ -116,13 +116,14 @@ class TestParameterValidation:
         assert validate_project_id_format(ctx, param, "WEB") == "WEB"
         assert validate_project_id_format(ctx, param, "PROJECT-123") == "PROJECT-123"
         assert validate_project_id_format(ctx, param, "API") == "API"
+        assert validate_project_id_format(ctx, param, "4DM") == "4DM"  # starts with a number
 
         # Invalid project IDs should raise BadParameter
         with pytest.raises(click.BadParameter):
             validate_project_id_format(ctx, param, "web")  # lowercase
 
         with pytest.raises(click.BadParameter):
-            validate_project_id_format(ctx, param, "123")  # starts with number
+            validate_project_id_format(ctx, param, "123")  # numbers only
 
     def test_issue_id_validation(self):
         """Test issue ID format validation."""
@@ -141,6 +142,7 @@ class TestParameterValidation:
         # Valid issue IDs should pass
         assert validate_issue_id_format(ctx, param, "WEB-123") == "WEB-123"
         assert validate_issue_id_format(ctx, param, "PROJECT-456") == "PROJECT-456"
+        assert validate_issue_id_format(ctx, param, "4DM-123") == "4DM-123"  # project starts with a number
 
         # Invalid issue IDs should raise BadParameter
         with pytest.raises(click.BadParameter):
@@ -148,6 +150,9 @@ class TestParameterValidation:
 
         with pytest.raises(click.BadParameter):
             validate_issue_id_format(ctx, param, "web-123")  # lowercase
+
+        with pytest.raises(click.BadParameter):
+            validate_issue_id_format(ctx, param, "123-456")  # project of numbers only
 
 
 class TestCliIntegration:
