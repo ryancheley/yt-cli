@@ -591,7 +591,7 @@ Error Handling Patterns
    fi
 
    # 2. Validate inputs
-   if [[ ! "$ISSUE_ID" =~ ^[A-Z]+-[0-9]+$ ]]; then
+   if [[ ! "$ISSUE_ID" =~ ^[A-Z0-9]*[A-Z][A-Z0-9]*-[0-9]+$ ]]; then
      echo "Invalid issue ID format: $ISSUE_ID"
      exit 1
    fi

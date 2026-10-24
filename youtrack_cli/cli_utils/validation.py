@@ -122,10 +122,11 @@ def validate_project_id_format(ctx: click.Context, param: click.Parameter, value
     if value is None:
         return value
 
-    # YouTrack project IDs are typically uppercase letters and numbers, sometimes with hyphens
+    # YouTrack project IDs are uppercase letters and numbers, sometimes with hyphens. They may start with a
+    # number (e.g. 4DM) but cannot be all numbers, so the first part must contain a letter.
     import re
 
-    if not re.match(r"^[A-Z][A-Z0-9]*(-[A-Z0-9]+)*$", value):
+    if not re.match(r"^[A-Z0-9]*[A-Z][A-Z0-9]*(-[A-Z0-9]+)*$", value):
         error = ParameterError(
             f"Invalid project ID format: '{value}'",
             parameter_name=param.name,
@@ -145,10 +146,10 @@ def validate_issue_id_format(ctx: click.Context, param: click.Parameter, value: 
     if value is None:
         return value
 
-    # YouTrack issue IDs are typically PROJECT-NUMBER format
+    # YouTrack issue IDs are typically PROJECT-NUMBER format, with a project ID as above (e.g. 4DM-123)
     import re
 
-    if not re.match(r"^[A-Z][A-Z0-9]*(-[A-Z0-9]+)*-\d+$", value):
+    if not re.match(r"^[A-Z0-9]*[A-Z][A-Z0-9]*(-[A-Z0-9]+)*-\d+$", value):
         error = ParameterError(
             f"Invalid issue ID format: '{value}'",
             parameter_name=param.name,
