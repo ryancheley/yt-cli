@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- 🗑️ Dropped Python 3.10 support. It reached end of life, so it is removed from
+  the test matrix, classifiers and `requires-python` (now `>=3.11`); the 3.10 EOL
+  runtime warning and the now-unused `tomli` fallback are gone (#793)
+
 ### Fixed
 - 🐛 Issue and project IDs whose project starts with a number, such as `4DM-123`,
   are accepted by `yt issues comments add` and `yt issues create`; a project ID
