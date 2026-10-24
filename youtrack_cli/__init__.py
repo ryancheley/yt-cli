@@ -13,12 +13,8 @@ try:
 except Exception:
     # Fallback to reading from pyproject.toml
     try:
+        import tomllib
         from pathlib import Path
-
-        try:
-            import tomllib
-        except ImportError:
-            import tomli as tomllib
 
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         if pyproject_path.exists():
