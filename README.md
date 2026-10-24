@@ -2,7 +2,7 @@
 
 A powerful command line interface for JetBrains YouTrack issue tracking system.
 
-[![Documentation Status](https://readthedocs.org/projects/yt-cli/badge/?version=latest)](https://yt-cli.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://app.readthedocs.org/projects/yt-cli/badge/?version=latest)](https://yt-cli.readthedocs.io/en/latest/?badge=latest)
 
 ## Features
 
