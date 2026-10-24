@@ -16,24 +16,16 @@ concurrency:
 
 jobs:
   test:
-    # Full gate runs on PRs. Pushes to protected branches (post-merge) only run
-    # the `test-py315` early-warning job below, since the PR was already tested
-    # against the latest base (branch protection requires up-to-date branches).
+    # Full gate runs on PRs only; branch protection requires up-to-date branches,
+    # so the exact merge state is already tested before it lands on main.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 3.15 is a prerelease with no prebuilt native-extension wheels
-        # (cryptography, pydantic-core, ...), so tox-uv compiles them from
-        # source and the job runs ~3x slower (~137s vs ~45s) — the long pole on
-        # every PR (issue #736). 3.14 already covers newest-stable behavior, so
-        # 3.15 is exercised by the post-merge `test-py315` job below instead.
-        # To fold it back once cp315 wheels ship: add "3.15" here and delete the
-        # `test-py315` job.
-        # 3.15t (free-threaded) is omitted until cryptography ships free-threaded
-        # 3.15 wheels; building from source yields an abi3 wheel that the
-        # free-threaded ABI can't load. Re-add once upstream wheels exist.
-        python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t"]
+        # 3.15 (and its free-threaded build 3.15t) now have prebuilt wheels for
+        # the native deps (cryptography, cffi, pydantic-core), so they install
+        # fast enough to run in the per-PR matrix (#794).
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
@@ -241,31 +233,3 @@ jobs:
             echo "Some checks failed"
             exit 1
           fi
-
-  # Post-merge early-warning for Python 3.15 (prerelease). Kept off the per-PR
-  # matrix because its source-built deps make it ~3x slower (issue #736); running
-  # it on pushes to main still surfaces 3.15-specific breakage on every merge.
-  # Remove this job (and re-add "3.15" to the test matrix) once cp315 wheels ship.
-  test-py315:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      with:
-        persist-credentials: false
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v4
-      with:
-        version: "latest"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-
-    - name: Set up Python 3.15
-      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5
-      with:
-        python-version: "3.15"
-        allow-prereleases: true
-
-    - name: Run tests with tox-uv
-      run: uvx --with tox-uv tox -e py315

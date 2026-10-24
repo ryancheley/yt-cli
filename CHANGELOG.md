@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- 👷 Python 3.15 and its free-threaded build (3.15t) now run in the per-PR CI
+  matrix; prebuilt cp315 wheels for the native deps mean they install fast
+  enough that the separate post-merge early-warning job is no longer needed (#794)
+
 ### Removed
 - 🗑️ Dropped Python 3.10 support. It reached end of life, so it is removed from
   the test matrix, classifiers and `requires-python` (now `>=3.11`); the 3.10 EOL
