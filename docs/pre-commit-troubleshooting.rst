@@ -204,7 +204,22 @@ Top 10 Pre-commit Failure Categories
 **Prevention:**
 - Use environment variables for secrets
 - Review GitHub Actions for security issues
-- Use trusted, pinned action versions
+- Reference actions by exact version tag; commit SHAs are recorded in
+  ``.github/workflows/actions.lock``
+
+**Stale actions lockfile** — symptoms:
+
+- CI ``lockfile`` job fails on ``gh actions-lock --verify``
+
+**Quick Fix:**
+
+.. code-block:: bash
+
+   # One-time setup
+   gh extension install github/gh-actions-lock
+
+   # Regenerate after adding or editing any workflow, then commit the result
+   gh actions-lock
 
 7. Documentation and Docstring Issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

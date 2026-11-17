@@ -6,8 +6,7 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-permissions:
-  contents: read
+permissions: {}
 
 # Cancel superseded runs on the same ref so new pushes don't queue behind stale ones.
 concurrency:
@@ -20,6 +19,8 @@ jobs:
     # so the exact merge state is already tested before it lands on main.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         # 3.15 (and its free-threaded build 3.15t) now have prebuilt wheels for
@@ -28,19 +29,19 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
 
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v4
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: "latest"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -52,7 +53,7 @@ jobs:
       run: mv .coverage ".coverage.${{ matrix.python-version }}"
 
     - name: Upload coverage data
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: coverage-data-${{ matrix.python-version }}
         path: .coverage.${{ matrix.python-version }}
@@ -61,20 +62,22 @@ jobs:
   lint:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v4
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: "latest"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: "3.11"
 
@@ -84,20 +87,22 @@ jobs:
   type-check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v4
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: "latest"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: "3.11"
 
@@ -107,20 +112,22 @@ jobs:
   security:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v4
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: "latest"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: "3.11"
 
@@ -130,20 +137,22 @@ jobs:
   documentation:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v4
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: "latest"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: "3.11"
 
@@ -164,21 +173,23 @@ jobs:
     name: coverage
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [test]
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v4
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: "latest"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
     - name: Download coverage data
-      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      uses: actions/download-artifact@v8.0.2
       with:
         pattern: coverage-data-*
         merge-multiple: true
@@ -199,7 +210,7 @@ jobs:
         coverage report
 
     - name: Upload HTML report if the coverage gate failed
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      uses: actions/upload-artifact@v7.0.2
       if: ${{ failure() }}
       with:
         name: html-report
@@ -233,3 +244,18 @@ jobs:
             echo "Some checks failed"
             exit 1
           fi
+
+  # Fails when .github/workflows/actions.lock is out of sync with the
+  # workflows or a locked pin no longer verifies upstream.
+  lockfile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+    - run: gh extension install github/gh-actions-lock --pin v0.4.1
+    - run: gh actions-lock --verify

@@ -10,17 +10,18 @@ on:
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [opened]
 
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   profile-author:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+      - uses: astral-sh/setup-uv@v10.3.3
       - name: Determine target login and issue number
         id: meta
         env:

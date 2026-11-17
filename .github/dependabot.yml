@@ -8,6 +8,8 @@ updates:
       day: "friday"
       time: "09:00"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
     reviewers:
       - "@ryan"
     assignees:
@@ -27,6 +29,8 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     reviewers:
       - "@ryan"
